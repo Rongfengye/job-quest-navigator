@@ -6,6 +6,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Max-Age': '86400',
 };
 
 interface RequestBody {
@@ -93,16 +95,24 @@ serve(async (req) => {
       resumeContent = "Failed to process resume";
     }
     
+    // Build company information section for the prompt
+    let companyInfo = "";
+    if (requestData.companyName) {
+      companyInfo += `Company Name: ${requestData.companyName}\n`;
+    }
+    if (requestData.companyDescription) {
+      companyInfo += `Company Description: ${requestData.companyDescription}\n`;
+    }
+    
     // Prepare prompt for OpenAI
     const prompt = `
       Generate interview questions for a ${requestData.jobTitle} position.
       
       Job Description: ${requestData.jobDescription}
       
-      ${requestData.companyName ? `Company: ${requestData.companyName}` : ''}
-      ${requestData.companyDescription ? `Company Description: ${requestData.companyDescription}` : ''}
+      ${companyInfo}
       
-      Based on the job description, provide:
+      Based on the job description and company information, provide:
       1. 2 technical questions specific to the role
       2. 2 behavioral questions
       3. 2 questions about the candidate's experience
@@ -118,7 +128,7 @@ serve(async (req) => {
       }
     `;
 
-    console.log("Sending request to OpenAI API...");
+    console.log("Sending request to OpenAI API with prompt:", prompt);
 
     // Call OpenAI API
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -128,11 +138,11 @@ serve(async (req) => {
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo-1106",  // Updated model version
+        model: "gpt-3.5-turbo-1106",
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that generates interview questions based on job descriptions and resumes. Your response must be valid JSON that can be parsed directly, no additional text allowed."
+            content: "You are a helpful assistant that generates interview questions based on job descriptions and company information. Your response must be valid JSON that can be parsed directly, no additional text allowed."
           },
           {
             role: "user",
@@ -140,7 +150,7 @@ serve(async (req) => {
           }
         ],
         temperature: 0.7,
-        response_format: { type: "json_object" }  // Updated response format parameter
+        response_format: { type: "json_object" }
       }),
     });
 
