@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -125,53 +124,32 @@ const Create = () => {
 
       const storylineId = storylineData.id;
 
-      try {
-        // Call the edge function with explicit CORS handling
-        const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
-          body: {
-            jobTitle: formData.jobTitle,
-            jobDescription: formData.jobDescription,
-            companyName: formData.companyName,
-            companyDescription: formData.companyDescription,
-            resumePath: resumePath,
-            coverLetterPath: coverLetterPath,
-            additionalDocumentsPath: additionalDocumentsPath,
-          },
-        });
+      const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
+        body: {
+          jobTitle: formData.jobTitle,
+          jobDescription: formData.jobDescription,
+          companyName: formData.companyName,
+          companyDescription: formData.companyDescription,
+          resumePath: resumePath,
+          coverLetterPath: coverLetterPath,
+          additionalDocumentsPath: additionalDocumentsPath,
+        },
+      });
 
-        if (error) {
-          console.error("Edge function error:", error);
-          throw new Error(`Error processing your application: ${error.message}`);
-        }
+      if (error) {
+        throw new Error(`Error processing your application: ${error.message}`);
+      }
 
-        console.log("Edge function response:", data);
+      const { error: updateError } = await supabase
+        .from('storyline')
+        .update({
+          openai_response: data,
+          status: 'completed'
+        })
+        .eq('id', storylineId);
 
-        const { error: updateError } = await supabase
-          .from('storyline')
-          .update({
-            openai_response: data,
-            status: 'completed'
-          })
-          .eq('id', storylineId);
-
-        if (updateError) {
-          throw new Error(`Error updating your application: ${updateError.message}`);
-        }
-
-      } catch (apiError) {
-        console.error("API error:", apiError);
-        
-        // Still navigate to the questions page even if the API call fails
-        // The questions page will handle showing appropriate messaging
-        toast({
-          title: "Warning",
-          description: "There was an issue generating your questions, but you can check back later as the process continues in the background.",
-          variant: "default",
-        });
-        
-        setProcessingModal(false);
-        navigate(`/questions?id=${storylineId}`);
-        return;
+      if (updateError) {
+        throw new Error(`Error updating your application: ${updateError.message}`);
       }
 
       toast({
