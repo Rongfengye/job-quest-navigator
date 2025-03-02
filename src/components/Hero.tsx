@@ -27,7 +27,7 @@ const Hero = () => {
             No annoying subscription required.
           </p>
           
-          <div className="opacity-0 animate-fade-up animation-delay-900">
+          <div className="opacity-0 animate-fade-up animation-delay-900 flex justify-center">
             <Link to="/create">
               <Button className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg flex items-center justify-center gap-2 group">
                 Get Started
