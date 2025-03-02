@@ -1,7 +1,10 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
-import * as pdfParse from "https://esm.sh/pdf-parse@1.1.1";
+import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js";
+
+// Set up the worker source location
+pdfjs.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.worker.min.js";
 
 // Define CORS headers
 const corsHeaders = {
@@ -89,10 +92,25 @@ serve(async (req) => {
       
       if (resumeData) {
         try {
-          // Parse PDF content
-          const pdfData = await pdfParse.default(await resumeData.arrayBuffer());
+          // Parse PDF content using pdfjs
+          const arrayBuffer = await resumeData.arrayBuffer();
+          const typedArray = new Uint8Array(arrayBuffer);
+          
+          // Load the PDF document
+          const loadingTask = pdfjs.getDocument({ data: typedArray });
+          const pdfDocument = await loadingTask.promise;
+          
+          // Extract text from all pages
+          let fullText = "";
+          for (let i = 1; i <= pdfDocument.numPages; i++) {
+            const page = await pdfDocument.getPage(i);
+            const textContent = await page.getTextContent();
+            const textItems = textContent.items.map((item: any) => item.str);
+            fullText += textItems.join(' ') + '\n';
+          }
+          
           // Limit resume content to 3000 characters to prevent token overusage
-          resumeContent = pdfData.text.substring(0, 3000);
+          resumeContent = fullText.substring(0, 3000);
           console.log("Resume parsed successfully, first 100 chars:", resumeContent.substring(0, 100));
         } catch (pdfError) {
           console.error("Error parsing PDF:", pdfError);
