@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, FileText, Lightbulb, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Json } from '@/integrations/supabase/types';
 
 type Question = {
   question: string;
@@ -78,11 +79,11 @@ const Questions = () => {
           console.log("OpenAI response from database:", data.openai_response);
           
           // Validate the response structure
-          const responseData = data.openai_response;
-          if (typeof responseData === 'object' && 
-              responseData.technicalQuestions && 
-              responseData.behavioralQuestions && 
-              responseData.experienceQuestions) {
+          const responseData = data.openai_response as Record<string, any>;
+          if (responseData && 
+              Array.isArray(responseData.technicalQuestions) && 
+              Array.isArray(responseData.behavioralQuestions) && 
+              Array.isArray(responseData.experienceQuestions)) {
             
             setQuestions(responseData as QuestionsData);
           } else {

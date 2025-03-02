@@ -120,8 +120,7 @@ serve(async (req) => {
         ]
       }
       
-      Your entire response must be valid JSON that I can parse directly, without any markdown formatting or additional text.
-      Do not include any text like "```json" or "```" at the beginning or end.
+      Your entire response must be valid JSON that I can parse directly.
     `;
 
     console.log("Sending request to OpenAI API...");
