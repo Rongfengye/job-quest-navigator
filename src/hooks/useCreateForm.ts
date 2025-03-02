@@ -136,10 +136,25 @@ export const useCreateForm = () => {
         throw new Error(`Error processing your application: ${error.message}`);
       }
 
+      let parsedData;
+      try {
+        // If the response is already a string, parse it
+        if (typeof data === 'string') {
+          parsedData = JSON.parse(data);
+        } else {
+          // If it's already an object, use it directly
+          parsedData = data;
+        }
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        console.log('Raw response:', data);
+        throw new Error('Invalid response format from the interview questions generator');
+      }
+
       const { error: updateError } = await supabase
         .from('storyline')
         .update({
-          openai_response: data,
+          openai_response: parsedData,
           status: 'completed'
         })
         .eq('id', storylineId);
