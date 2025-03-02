@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Upload } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -11,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const Create = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     jobTitle: '',
@@ -35,7 +35,6 @@ const Create = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
-      // Check if file is a PDF
       if (file.type !== 'application/pdf') {
         toast({
           title: "Invalid file type",
@@ -77,7 +76,6 @@ const Create = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate required fields
     if (!formData.jobTitle || !formData.jobDescription || !resumeFile) {
       toast({
         title: "Missing required fields",
@@ -90,13 +88,10 @@ const Create = () => {
     setIsLoading(true);
     
     try {
-      // Show processing modal
       setProcessingModal(true);
 
-      // Upload resume (required)
       const resumePath = await uploadFile(resumeFile, 'resumes');
       
-      // Upload optional files if they exist
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
       
@@ -108,7 +103,27 @@ const Create = () => {
         additionalDocumentsPath = await uploadFile(additionalDocumentsFile, 'additional-documents');
       }
 
-      // Call Supabase Edge Function to process with OpenAI
+      const { data: storylineData, error: insertError } = await supabase
+        .from('storyline')
+        .insert({
+          job_title: formData.jobTitle,
+          job_description: formData.jobDescription,
+          company_name: formData.companyName,
+          company_description: formData.companyDescription,
+          resume_path: resumePath,
+          cover_letter_path: coverLetterPath,
+          additional_documents_path: additionalDocumentsPath,
+          status: 'processing'
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        throw new Error(`Error saving your application: ${insertError.message}`);
+      }
+
+      const storylineId = storylineData.id;
+
       const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
         body: {
           jobTitle: formData.jobTitle,
@@ -125,34 +140,25 @@ const Create = () => {
         throw new Error(`Error processing your application: ${error.message}`);
       }
 
-      // Save to storyline table
-      const { error: insertError } = await supabase
+      const { error: updateError } = await supabase
         .from('storyline')
-        .insert({
-          job_title: formData.jobTitle,
-          job_description: formData.jobDescription,
-          company_name: formData.companyName,
-          company_description: formData.companyDescription,
-          resume_path: resumePath,
-          cover_letter_path: coverLetterPath,
-          additional_documents_path: additionalDocumentsPath,
+        .update({
           openai_response: data,
-        });
+          status: 'completed'
+        })
+        .eq('id', storylineId);
 
-      if (insertError) {
-        throw new Error(`Error saving your application: ${insertError.message}`);
+      if (updateError) {
+        throw new Error(`Error updating your application: ${updateError.message}`);
       }
 
       toast({
         title: "Success!",
-        description: "Your interview questions are being generated. You'll be redirected shortly.",
+        description: "Your interview questions have been generated. Redirecting to results page.",
       });
 
-      // Redirect would happen here in a real app after a delay
-      setTimeout(() => {
-        setProcessingModal(false);
-        // Here you would redirect to questions page
-      }, 3000);
+      setProcessingModal(false);
+      navigate(`/questions?id=${storylineId}`);
 
     } catch (error) {
       setProcessingModal(false);
@@ -338,7 +344,6 @@ const Create = () => {
         </form>
       </div>
 
-      {/* Processing Modal */}
       {processingModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg max-w-md w-full">
