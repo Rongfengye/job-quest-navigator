@@ -18,6 +18,17 @@ interface RequestBody {
   additionalDocumentsPath?: string;
 }
 
+interface Question {
+  question: string;
+  explanation: string;
+}
+
+interface QuestionsResponse {
+  technicalQuestions: Question[];
+  behavioralQuestions: Question[];
+  experienceQuestions: Question[];
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -30,6 +41,7 @@ serve(async (req) => {
   try {
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
+      console.error("OpenAI API key not configured");
       return new Response(
         JSON.stringify({ error: "OpenAI API key not configured" }),
         { 
@@ -44,6 +56,7 @@ serve(async (req) => {
 
     // Parse request body
     const requestData: RequestBody = await req.json();
+    console.log("Request data received:", JSON.stringify(requestData, null, 2));
     
     // Create Supabase client
     const supabaseClient = createClient(
@@ -66,11 +79,15 @@ serve(async (req) => {
         .from("job_documents")
         .download(requestData.resumePath);
         
-      if (resumeError) throw new Error(`Error downloading resume: ${resumeError.message}`);
+      if (resumeError) {
+        console.error("Error downloading resume:", resumeError.message);
+        throw new Error(`Error downloading resume: ${resumeError.message}`);
+      }
       
       // For PDF files we would normally use a PDF parsing library,
       // but for this demo we'll just use placeholder text
       resumeContent = "Resume content would be extracted here";
+      console.log("Resume downloaded successfully");
     } catch (error) {
       console.error("Error processing resume:", error);
       resumeContent = "Failed to process resume";
@@ -78,19 +95,19 @@ serve(async (req) => {
     
     // Prepare prompt for OpenAI
     const prompt = `
-      Generate 10 likely interview questions for a ${requestData.jobTitle} position.
+      Generate interview questions for a ${requestData.jobTitle} position.
       
       Job Description: ${requestData.jobDescription}
       
       ${requestData.companyName ? `Company: ${requestData.companyName}` : ''}
       ${requestData.companyDescription ? `Company Description: ${requestData.companyDescription}` : ''}
       
-      Based on the resume content and job description, provide:
+      Based on the job description, provide:
       1. 5 technical questions specific to the role
       2. 3 behavioral questions
       3. 2 questions about the candidate's experience
       
-      Format the response as a JSON object with the following structure:
+      Format the response as a JSON object exactly matching this structure without any additional text:
       {
         "technicalQuestions": [
           { "question": "Question text", "explanation": "Why this is relevant" }
@@ -102,6 +119,9 @@ serve(async (req) => {
           { "question": "Question text", "explanation": "Why this is relevant" }
         ]
       }
+      
+      Your entire response must be valid JSON that I can parse directly, without any markdown formatting or additional text.
+      Do not include any text like "```json" or "```" at the beginning or end.
     `;
 
     console.log("Sending request to OpenAI API...");
@@ -118,7 +138,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that generates interview questions based on job descriptions and resumes."
+            content: "You are a helpful assistant that generates interview questions based on job descriptions and resumes. Your response must be valid JSON that can be parsed directly, no additional text allowed."
           },
           {
             role: "user",
@@ -131,22 +151,64 @@ serve(async (req) => {
 
     if (!openAIResponse.ok) {
       const errorText = await openAIResponse.text();
+      console.error(`OpenAI API error: ${openAIResponse.status} - ${errorText}`);
       throw new Error(`OpenAI API error: ${openAIResponse.status} - ${errorText}`);
     }
 
     const openAIData = await openAIResponse.json();
-    const generatedContent = openAIData.choices[0].message.content;
+    console.log("OpenAI response received, status:", openAIResponse.status);
     
-    console.log("OpenAI response received");
+    const generatedContent = openAIData.choices[0].message.content;
+    console.log("Raw generated content:", generatedContent);
     
     // Parse the generated content as JSON
-    let parsedQuestions;
+    let parsedQuestions: QuestionsResponse;
     try {
       parsedQuestions = JSON.parse(generatedContent);
+      console.log("Successfully parsed JSON response");
+      
+      // Validate the structure of the parsed questions
+      if (!parsedQuestions.technicalQuestions || !Array.isArray(parsedQuestions.technicalQuestions) || 
+          !parsedQuestions.behavioralQuestions || !Array.isArray(parsedQuestions.behavioralQuestions) || 
+          !parsedQuestions.experienceQuestions || !Array.isArray(parsedQuestions.experienceQuestions)) {
+        console.error("Response structure is invalid");
+        throw new Error("Invalid response structure from OpenAI");
+      }
+      
+      // Ensure each question has the required properties
+      const validateQuestions = (questions: any[]): Question[] => {
+        return questions.map(q => ({
+          question: q.question || "Question not provided",
+          explanation: q.explanation || "Explanation not provided"
+        }));
+      };
+      
+      // Create a properly structured response
+      const structuredResponse: QuestionsResponse = {
+        technicalQuestions: validateQuestions(parsedQuestions.technicalQuestions),
+        behavioralQuestions: validateQuestions(parsedQuestions.behavioralQuestions),
+        experienceQuestions: validateQuestions(parsedQuestions.experienceQuestions)
+      };
+      
+      console.log("Final structured response:", JSON.stringify(structuredResponse, null, 2));
+      
+      return new Response(
+        JSON.stringify(structuredResponse),
+        { 
+          status: 200, 
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          } 
+        }
+      );
     } catch (error) {
-      // If JSON parsing fails, create a structured format anyway
+      // If JSON parsing fails, create a structured format
       console.error("Failed to parse OpenAI response as JSON:", error);
-      parsedQuestions = {
+      console.error("Generated content that failed to parse:", generatedContent);
+      
+      // Create a fallback response with an error message
+      const fallbackResponse: QuestionsResponse = {
         technicalQuestions: [{ 
           question: "The API response was not in the expected format.", 
           explanation: "Please try again." 
@@ -154,18 +216,18 @@ serve(async (req) => {
         behavioralQuestions: [],
         experienceQuestions: []
       };
+      
+      return new Response(
+        JSON.stringify(fallbackResponse),
+        { 
+          status: 200, 
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          } 
+        }
+      );
     }
-
-    return new Response(
-      JSON.stringify(parsedQuestions),
-      { 
-        status: 200, 
-        headers: { 
-          ...corsHeaders,
-          "Content-Type": "application/json" 
-        } 
-      }
-    );
   } catch (error) {
     console.error("Function error:", error);
     return new Response(

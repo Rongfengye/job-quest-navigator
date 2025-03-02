@@ -28,6 +28,7 @@ const Questions = () => {
     jobTitle: '',
     companyName: '',
   });
+  const [error, setError] = useState<string | null>(null);
 
   // Get the storyline ID from the URL query parameter
   const queryParams = new URLSearchParams(location.search);
@@ -64,6 +65,8 @@ const Questions = () => {
           return;
         }
 
+        console.log("Storyline data retrieved:", data);
+
         // Set job details
         setJobDetails({
           jobTitle: data.job_title || 'Untitled Position',
@@ -72,7 +75,25 @@ const Questions = () => {
 
         // Parse the OpenAI response from the database
         if (data.openai_response) {
-          setQuestions(data.openai_response as QuestionsData);
+          console.log("OpenAI response from database:", data.openai_response);
+          
+          // Validate the response structure
+          const responseData = data.openai_response;
+          if (typeof responseData === 'object' && 
+              responseData.technicalQuestions && 
+              responseData.behavioralQuestions && 
+              responseData.experienceQuestions) {
+            
+            setQuestions(responseData as QuestionsData);
+          } else {
+            console.error("Invalid response structure:", responseData);
+            setError("The questions data is not in the expected format. Please try again.");
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "The interview questions data is not in the expected format.",
+            });
+          }
         } else {
           toast({
             variant: "destructive",
@@ -82,6 +103,7 @@ const Questions = () => {
         }
       } catch (error) {
         console.error('Error fetching questions:', error);
+        setError(error instanceof Error ? error.message : "Failed to load interview questions");
         toast({
           variant: "destructive",
           title: "Error",
@@ -149,6 +171,14 @@ const Questions = () => {
             Review them carefully and prepare your answers to make a great impression.
           </p>
         </div>
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <h3 className="text-red-800 font-semibold">Error</h3>
+            <p className="text-red-600">{error}</p>
+            <p className="text-red-600 mt-2">Please check the console for more details or try again.</p>
+          </div>
+        )}
 
         {questions ? (
           <Tabs defaultValue="technical" className="w-full">
