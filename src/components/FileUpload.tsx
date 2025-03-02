@@ -30,6 +30,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   // Function to extract text from PDF
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
+      console.log(`Starting text extraction from ${file.name}...`);
       const arrayBuffer = await file.arrayBuffer();
       const typedArray = new Uint8Array(arrayBuffer);
       
@@ -37,11 +38,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
       const loadingTask = pdfjsLib.getDocument({ data: typedArray });
       const pdfDocument = await loadingTask.promise;
       
+      console.log(`PDF loaded successfully. Total pages: ${pdfDocument.numPages}`);
+      
       // Extract text from all pages
       let fullText = "";
       const maxPages = pdfDocument.numPages;
       
       for (let i = 1; i <= maxPages; i++) {
+        console.log(`Processing page ${i} of ${maxPages}...`);
         const page = await pdfDocument.getPage(i);
         const textContent = await page.getTextContent();
         const pageText = textContent.items
@@ -52,12 +56,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
         
         // Limit text extraction if it's getting too large
         if (fullText.length > 10000) {
+          console.log("Text extraction reached 10000 characters, stopping...");
           break;
         }
       }
       
       // Limit to 3000 characters to prevent token overusage
-      return fullText.substring(0, 3000);
+      const truncatedText = fullText.substring(0, 3000);
+      console.log(`Text extraction complete. Total characters: ${fullText.length}, truncated to 3000 characters.`);
+      console.log("Text preview:", truncatedText.substring(0, 100) + "...");
+      
+      return truncatedText;
     } catch (error) {
       console.error("Error extracting text from PDF:", error);
       toast({
@@ -72,6 +81,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      console.log(`File selected: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
       
       if (file.type !== 'application/pdf') {
         toast({
@@ -82,8 +92,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
         return;
       }
 
-      const extractedText = await extractTextFromPDF(file);
-      onFileChange(file, extractedText);
+      try {
+        const extractedText = await extractTextFromPDF(file);
+        onFileChange(file, extractedText);
+      } catch (e) {
+        console.error("Error in file processing:", e);
+        toast({
+          title: "File processing error",
+          description: "There was an error processing your file.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -39,14 +40,17 @@ export const useCreateForm = () => {
   };
 
   const handleResumeChange = (file: File | null, text: string) => {
+    console.log("Resume text extracted:", text.substring(0, 100) + "...");
     setResumeFile({ file, text });
   };
 
   const handleCoverLetterChange = (file: File | null, text: string) => {
+    console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
     setCoverLetterFile({ file, text });
   };
 
   const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
+    console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
     setAdditionalDocumentsFile({ file, text });
   };
 
@@ -116,24 +120,35 @@ export const useCreateForm = () => {
 
       const storylineId = storylineData.id;
 
+      // Log the data being sent to the OpenAI function
+      const requestBody = {
+        jobTitle: formData.jobTitle,
+        jobDescription: formData.jobDescription,
+        companyName: formData.companyName,
+        companyDescription: formData.companyDescription,
+        resumeText: resumeFile.text,
+        coverLetterText: coverLetterFile.text,
+        additionalDocumentsText: additionalDocumentsFile.text,
+        resumePath: resumePath,
+        coverLetterPath: coverLetterPath,
+        additionalDocumentsPath: additionalDocumentsPath,
+      };
+
+      console.log("Sending data to OpenAI function:");
+      console.log("Resume text length:", resumeFile.text?.length || 0);
+      console.log("Resume text preview:", resumeFile.text?.substring(0, 200) + "...");
+      console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
+      console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
+
       const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
-        body: {
-          jobTitle: formData.jobTitle,
-          jobDescription: formData.jobDescription,
-          companyName: formData.companyName,
-          companyDescription: formData.companyDescription,
-          resumeText: resumeFile.text,
-          coverLetterText: coverLetterFile.text,
-          additionalDocumentsText: additionalDocumentsFile.text,
-          resumePath: resumePath,
-          coverLetterPath: coverLetterPath,
-          additionalDocumentsPath: additionalDocumentsPath,
-        },
+        body: requestBody,
       });
 
       if (error) {
         throw new Error(`Error processing your application: ${error.message}`);
       }
+
+      console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
       const { error: updateError } = await supabase
         .from('storyline')
@@ -157,6 +172,7 @@ export const useCreateForm = () => {
 
     } catch (error) {
       setProcessingModal(false);
+      console.error("Form submission error:", error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An unknown error occurred",
