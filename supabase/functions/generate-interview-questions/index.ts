@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -103,24 +102,20 @@ serve(async (req) => {
       ${requestData.companyDescription ? `Company Description: ${requestData.companyDescription}` : ''}
       
       Based on the job description, provide:
-      1. 5 technical questions specific to the role
-      2. 3 behavioral questions
+      1. 2 technical questions specific to the role
+      2. 2 behavioral questions
       3. 2 questions about the candidate's experience
       
-      Format the response as a JSON object exactly matching this structure without any additional text:
+      You must return only valid JSON output. Ensure that:
+      - The JSON follows strict syntax with properly closed brackets and commas.
+      - There are no trailing commas.
+      - The JSON format strictly matches this:
       {
-        "technicalQuestions": [
-          { "question": "Question text", "explanation": "Why this is relevant" }
-        ],
-        "behavioralQuestions": [
-          { "question": "Question text", "explanation": "Why this is relevant" }
-        ],
-        "experienceQuestions": [
-          { "question": "Question text", "explanation": "Why this is relevant" }
-        ]
+        "technicalQuestions": [{ "question": "Qt1", "explanation": "Et1" }, { "question": "Qt2", "explanation": "Et2" }],
+        "behavioralQuestions": [{ "question": "Qb1", "explanation": "Eb1" }, { "question": "Qb2", "explanation": "Eb2" }],
+        "experienceQuestions": [{ "question": "Qe1", "explanation": "Ee1" }, { "question": "Qe2", "explanation": "Ee2" }]
       }
-      
-      Your entire response must be valid JSON that I can parse directly.
+      Do not include any other text, explanations, or comments.
     `;
 
     console.log("Sending request to OpenAI API...");
@@ -145,6 +140,7 @@ serve(async (req) => {
           }
         ],
         temperature: 0.7,
+        response_format: "json",  // ✅ Enforce JSON response format
       }),
     });
 
@@ -155,7 +151,7 @@ serve(async (req) => {
     }
 
     const openAIData = await openAIResponse.json();
-    console.log("OpenAI response received, status:", openAIResponse.status);
+    console.log("OpenAI response received:", JSON.stringify(openAIData, null, 2)); // Log full response
     
     const generatedContent = openAIData.choices[0].message.content;
     console.log("Raw generated content:", generatedContent);
@@ -202,24 +198,13 @@ serve(async (req) => {
         }
       );
     } catch (error) {
-      // If JSON parsing fails, create a structured format
       console.error("Failed to parse OpenAI response as JSON:", error);
       console.error("Generated content that failed to parse:", generatedContent);
       
-      // Create a fallback response with an error message
-      const fallbackResponse: QuestionsResponse = {
-        technicalQuestions: [{ 
-          question: "The API response was not in the expected format.", 
-          explanation: "Please try again." 
-        }],
-        behavioralQuestions: [],
-        experienceQuestions: []
-      };
-      
       return new Response(
-        JSON.stringify(fallbackResponse),
+        JSON.stringify({ error: "Invalid JSON format from OpenAI" }),
         { 
-          status: 200, 
+          status: 500, 
           headers: { 
             ...corsHeaders,
             "Content-Type": "application/json" 

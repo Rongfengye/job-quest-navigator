@@ -78,17 +78,19 @@ const Questions = () => {
         if (data.openai_response) {
           console.log("OpenAI response from database:", data.openai_response);
           
-          // Validate the response structure
+          // Validate that the API returned expected fields
           const responseData = data.openai_response as Record<string, any>;
-          if (responseData && 
-              Array.isArray(responseData.technicalQuestions) && 
-              Array.isArray(responseData.behavioralQuestions) && 
-              Array.isArray(responseData.experienceQuestions)) {
-            
+        
+          if (
+            responseData &&
+            Array.isArray(responseData.technicalQuestions) &&
+            Array.isArray(responseData.behavioralQuestions) &&
+            Array.isArray(responseData.experienceQuestions)
+          ) {
             setQuestions(responseData as QuestionsData);
           } else {
             console.error("Invalid response structure:", responseData);
-            setError("The questions data is not in the expected format. Please try again.");
+            setError("The questions data is not in the expected format.");
             toast({
               variant: "destructive",
               title: "Error",
@@ -120,9 +122,13 @@ const Questions = () => {
 
   const renderQuestions = (questionsList: Question[] = []) => {
     if (!questionsList.length) {
-      return <p className="text-gray-500 italic py-4">No questions available in this category.</p>;
+      return (
+        <p className="text-gray-500 italic py-4">
+          No questions available in this category. OpenAI might not have generated them correctly.
+        </p>
+      );
     }
-
+  
     return questionsList.map((item, index) => (
       <Card key={index} className="mb-4 border-l-4 border-l-interview-primary">
         <CardHeader>
@@ -136,6 +142,7 @@ const Questions = () => {
       </Card>
     ));
   };
+  
 
   if (isLoading) {
     return (
