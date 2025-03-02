@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -138,12 +137,54 @@ export const useCreateForm = () => {
 
       let parsedData;
       try {
-        // If the response is already a string, parse it
         if (typeof data === 'string') {
           parsedData = JSON.parse(data);
         } else {
-          // If it's already an object, use it directly
           parsedData = data;
+        }
+        
+        if (!parsedData.technicalQuestions && !parsedData.questions) {
+          console.error('Invalid response structure:', parsedData);
+          throw new Error('The AI did not return questions in the expected format');
+        }
+        
+        if (parsedData.questions && !parsedData.technicalQuestions) {
+          const technicalQuestions = [];
+          const behavioralQuestions = [];
+          const experienceQuestions = [];
+          
+          parsedData.questions.forEach((q: any) => {
+            const questionLower = q.question.toLowerCase();
+            
+            if (questionLower.includes('technical') || 
+                questionLower.includes('tool') || 
+                questionLower.includes('skill') ||
+                questionLower.includes('technology')) {
+              technicalQuestions.push({
+                ...q,
+                explanation: q.modelAnswer
+              });
+            } else if (questionLower.includes('experience') || 
+                       questionLower.includes('previous') || 
+                       questionLower.includes('past') ||
+                       questionLower.includes('worked')) {
+              experienceQuestions.push({
+                ...q,
+                explanation: q.modelAnswer
+              });
+            } else {
+              behavioralQuestions.push({
+                ...q,
+                explanation: q.modelAnswer
+              });
+            }
+          });
+          
+          parsedData = {
+            technicalQuestions,
+            behavioralQuestions,
+            experienceQuestions
+          };
         }
       } catch (parseError) {
         console.error('Error parsing JSON response:', parseError);

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,9 @@ import { Json } from '@/integrations/supabase/types';
 
 type Question = {
   question: string;
-  explanation: string;
+  explanation?: string;
+  modelAnswer?: string;
+  followUp?: string[];
 };
 
 type QuestionsData = {
@@ -19,6 +20,14 @@ type QuestionsData = {
   behavioralQuestions: Question[];
   experienceQuestions: Question[];
 };
+
+interface ApiResponse {
+  questions?: {
+    question: string;
+    modelAnswer: string;
+    followUp: string[];
+  }[];
+}
 
 const Questions = () => {
   const location = useLocation();
@@ -31,7 +40,6 @@ const Questions = () => {
   });
   const [error, setError] = useState<string | null>(null);
 
-  // Get the storyline ID from the URL query parameter
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
 
@@ -68,35 +76,129 @@ const Questions = () => {
 
         console.log("Storyline data retrieved:", data);
 
-        // Set job details
         setJobDetails({
           jobTitle: data.job_title || 'Untitled Position',
           companyName: data.company_name || 'Unnamed Company',
         });
 
-        // Parse the OpenAI response from the database
         if (data.openai_response) {
           console.log("OpenAI response from database:", data.openai_response);
           
-          // Validate that the API returned expected fields
-          const responseData = data.openai_response as Record<string, any>;
-        
+          let processedQuestions: QuestionsData = {
+            technicalQuestions: [],
+            behavioralQuestions: [],
+            experienceQuestions: []
+          };
+          
           if (
-            responseData &&
-            Array.isArray(responseData.technicalQuestions) &&
-            Array.isArray(responseData.behavioralQuestions) &&
-            Array.isArray(responseData.experienceQuestions)
+            data.openai_response.technicalQuestions && 
+            data.openai_response.behavioralQuestions && 
+            data.openai_response.experienceQuestions
           ) {
-            setQuestions(responseData as QuestionsData);
-          } else {
-            console.error("Invalid response structure:", responseData);
-            setError("The questions data is not in the expected format.");
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "The interview questions data is not in the expected format.",
+            processedQuestions = data.openai_response as QuestionsData;
+          } 
+          else if (data.openai_response.questions) {
+            const apiResponse = data.openai_response as ApiResponse;
+            const allQuestions = apiResponse.questions || [];
+            
+            allQuestions.forEach(q => {
+              const questionObj: Question = {
+                question: q.question,
+                explanation: q.modelAnswer,
+                modelAnswer: q.modelAnswer,
+                followUp: q.followUp
+              };
+              
+              const questionLower = q.question.toLowerCase();
+              
+              if (questionLower.includes('technical') || 
+                  questionLower.includes('tool') || 
+                  questionLower.includes('technology') || 
+                  questionLower.includes('gcp') ||
+                  questionLower.includes('design')) {
+                processedQuestions.technicalQuestions.push(questionObj);
+              } else if (questionLower.includes('experience') || 
+                        questionLower.includes('previous') || 
+                        questionLower.includes('worked') ||
+                        questionLower.includes('implement')) {
+                processedQuestions.experienceQuestions.push(questionObj);
+              } else {
+                processedQuestions.behavioralQuestions.push(questionObj);
+              }
             });
+            
+            if (processedQuestions.technicalQuestions.length === 0) {
+              const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
+              if (toMove > 0) {
+                processedQuestions.technicalQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
+              }
+            }
+            
+            if (processedQuestions.experienceQuestions.length === 0) {
+              const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
+              if (toMove > 0) {
+                processedQuestions.experienceQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
+              }
+            }
+          } else {
+            try {
+              const parsed = typeof data.openai_response === 'string' 
+                ? JSON.parse(data.openai_response) 
+                : data.openai_response;
+                
+              if (parsed.technicalQuestions && parsed.behavioralQuestions && parsed.experienceQuestions) {
+                processedQuestions = parsed as QuestionsData;
+              } else if (parsed.questions) {
+                const allQuestions = parsed.questions || [];
+                allQuestions.forEach(q => {
+                  const questionObj: Question = {
+                    question: q.question,
+                    explanation: q.modelAnswer,
+                    modelAnswer: q.modelAnswer,
+                    followUp: q.followUp
+                  };
+                  
+                  const questionLower = q.question.toLowerCase();
+                  
+                  if (questionLower.includes('technical') || 
+                      questionLower.includes('tool') || 
+                      questionLower.includes('technology') || 
+                      questionLower.includes('gcp') ||
+                      questionLower.includes('design')) {
+                    processedQuestions.technicalQuestions.push(questionObj);
+                  } else if (questionLower.includes('experience') || 
+                            questionLower.includes('previous') || 
+                            questionLower.includes('worked') ||
+                            questionLower.includes('implement')) {
+                    processedQuestions.experienceQuestions.push(questionObj);
+                  } else {
+                    processedQuestions.behavioralQuestions.push(questionObj);
+                  }
+                });
+                
+                if (processedQuestions.technicalQuestions.length === 0) {
+                  const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
+                  if (toMove > 0) {
+                    processedQuestions.technicalQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
+                  }
+                }
+                
+                if (processedQuestions.experienceQuestions.length === 0) {
+                  const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
+                  if (toMove > 0) {
+                    processedQuestions.experienceQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
+                  }
+                }
+              } else {
+                throw new Error("Unexpected response format");
+              }
+            } catch (parseError) {
+              console.error('Error parsing response:', parseError);
+              throw new Error("Failed to parse the interview questions data");
+            }
           }
+          
+          setQuestions(processedQuestions);
         } else {
           toast({
             variant: "destructive",
@@ -136,8 +238,19 @@ const Questions = () => {
         </CardHeader>
         <CardContent>
           <CardDescription className="text-gray-600">
-            <strong>Why this matters:</strong> {item.explanation}
+            <strong>Why this matters:</strong> {item.explanation || item.modelAnswer || "No explanation provided."}
           </CardDescription>
+          
+          {item.followUp && item.followUp.length > 0 && (
+            <div className="mt-4">
+              <p className="font-medium text-sm text-gray-700">Follow-up questions:</p>
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                {item.followUp.map((followUpQ, idx) => (
+                  <li key={idx} className="text-sm text-gray-600">{followUpQ}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </CardContent>
       </Card>
     ));

@@ -54,10 +54,16 @@ serve(async (req) => {
     - A "modelAnswer" field that provides a good sample answer from the candidate's perspective
     - A "followUp" array that contains 2 follow-up questions for deeper discussion
     
-    Format your response as a JSON object with a 'questions' array. Each question in the array should have these fields:
-    - 'question': The main interview question
-    - 'modelAnswer': A sample answer from the candidate's perspective
-    - 'followUp': An array of 2 follow-up questions
+    Format your response as a JSON object with these fields:
+    - 'technicalQuestions': An array of question objects related to technical skills
+    - 'behavioralQuestions': An array of question objects related to behaviors and soft skills
+    - 'experienceQuestions': An array of question objects related to past experiences
+    
+    Each question object should have:
+    - 'question': The main interview question (string)
+    - 'explanation': A brief explanation of why this question matters (string)
+    - 'modelAnswer': A sample answer (string)
+    - 'followUp': An array of follow-up questions (array of strings)
     
     Ensure the questions are tailored to reflect the intersection of the candidate's experience and the job requirements.`;
 
@@ -104,7 +110,72 @@ serve(async (req) => {
     const generatedContent = openAIData.choices[0].message.content;
     console.log('Generated content length:', generatedContent.length);
 
-    return new Response(JSON.stringify(generatedContent), {
+    // Parse the JSON content
+    let parsedContent;
+    try {
+      // If it's a string, parse it
+      if (typeof generatedContent === 'string') {
+        parsedContent = JSON.parse(generatedContent);
+      } else {
+        // If it's already an object, use it directly
+        parsedContent = generatedContent;
+      }
+      
+      // Validate the structure
+      if (!parsedContent.technicalQuestions && !parsedContent.questions) {
+        console.error('Invalid response structure:', parsedContent);
+        throw new Error('OpenAI did not return the expected data structure');
+      }
+      
+      // If we have a questions array but not the categorized format,
+      // transform it to the expected format with categories
+      if (parsedContent.questions && !parsedContent.technicalQuestions) {
+        const transformedContent = {
+          technicalQuestions: [],
+          behavioralQuestions: [],
+          experienceQuestions: []
+        };
+        
+        // Simple classification based on content
+        parsedContent.questions.forEach((q: any) => {
+          const questionLower = q.question.toLowerCase();
+          
+          if (questionLower.includes('technical') || 
+              questionLower.includes('tool') || 
+              questionLower.includes('skill') ||
+              questionLower.includes('technology')) {
+            transformedContent.technicalQuestions.push(q);
+          } else if (questionLower.includes('experience') || 
+                    questionLower.includes('previous') || 
+                    questionLower.includes('past') ||
+                    questionLower.includes('worked')) {
+            transformedContent.experienceQuestions.push(q);
+          } else {
+            transformedContent.behavioralQuestions.push(q);
+          }
+        });
+        
+        // Ensure each category has at least some questions
+        if (transformedContent.technicalQuestions.length === 0 && parsedContent.questions.length > 0) {
+          transformedContent.technicalQuestions.push(parsedContent.questions[0]);
+        }
+        if (transformedContent.experienceQuestions.length === 0 && parsedContent.questions.length > 1) {
+          transformedContent.experienceQuestions.push(parsedContent.questions[1]);
+        }
+        if (transformedContent.behavioralQuestions.length === 0 && parsedContent.questions.length > 2) {
+          transformedContent.behavioralQuestions.push(parsedContent.questions[2]);
+        }
+        
+        parsedContent = transformedContent;
+      }
+      
+    } catch (parseError) {
+      console.error('Error parsing JSON response:', parseError);
+      console.log('Raw response:', generatedContent);
+      throw new Error('Invalid JSON format in the OpenAI response');
+    }
+
+    return new Response(JSON.stringify(parsedContent), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
