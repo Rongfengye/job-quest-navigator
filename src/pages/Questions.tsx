@@ -17,6 +17,13 @@ type Question = {
   type?: 'technical' | 'behavioral' | 'experience';
 };
 
+type ParsedResponse = {
+  technicalQuestions?: Question[];
+  behavioralQuestions?: Question[];
+  experienceQuestions?: Question[];
+  questions?: Question[];
+};
+
 const Questions = () => {
   const location = useLocation();
   const { toast } = useToast();
@@ -30,6 +37,43 @@ const Questions = () => {
 
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
+
+  // Function to categorize a question by keywords in the text
+  const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' | 'experience' => {
+    const lowerQuestion = questionText.toLowerCase();
+    
+    if (lowerQuestion.includes('technical') || 
+        lowerQuestion.includes('tool') || 
+        lowerQuestion.includes('technology') || 
+        lowerQuestion.includes('gcp') ||
+        lowerQuestion.includes('design') ||
+        lowerQuestion.includes('skill')) {
+      return 'technical';
+    } else if (lowerQuestion.includes('experience') || 
+              lowerQuestion.includes('previous') || 
+              lowerQuestion.includes('worked') ||
+              lowerQuestion.includes('implement')) {
+      return 'experience';
+    } else {
+      return 'behavioral';
+    }
+  };
+
+  // Parse JSON safely
+  const safeJsonParse = (data: Json): ParsedResponse => {
+    if (typeof data === 'string') {
+      try {
+        return JSON.parse(data) as ParsedResponse;
+      } catch (e) {
+        console.error('Failed to parse JSON string:', e);
+        return {};
+      }
+    } else if (typeof data === 'object' && data !== null) {
+      return data as unknown as ParsedResponse;
+    }
+    
+    return {};
+  };
 
   useEffect(() => {
     const fetchQuestions = async () => {
@@ -73,97 +117,39 @@ const Questions = () => {
           console.log("OpenAI response from database:", data.openai_response);
           
           let processedQuestions: Question[] = [];
-          const response = data.openai_response;
+          const parsedResponse = safeJsonParse(data.openai_response);
           
-          // Function to categorize a question by keywords in the text
-          const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' | 'experience' => {
-            const lowerQuestion = questionText.toLowerCase();
-            
-            if (lowerQuestion.includes('technical') || 
-                lowerQuestion.includes('tool') || 
-                lowerQuestion.includes('technology') || 
-                lowerQuestion.includes('gcp') ||
-                lowerQuestion.includes('design') ||
-                lowerQuestion.includes('skill')) {
-              return 'technical';
-            } else if (lowerQuestion.includes('experience') || 
-                      lowerQuestion.includes('previous') || 
-                      lowerQuestion.includes('worked') ||
-                      lowerQuestion.includes('implement')) {
-              return 'experience';
-            } else {
-              return 'behavioral';
-            }
-          };
-
           // Handle old format with separate question categories
-          if (typeof response === 'object' && 
-              response && 
-              'technicalQuestions' in response && 
-              'behavioralQuestions' in response && 
-              'experienceQuestions' in response) {
+          if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
+              parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions) && 
+              parsedResponse.experienceQuestions && Array.isArray(parsedResponse.experienceQuestions)) {
             
-            // Add type field to each question
-            const technical = Array.isArray(response.technicalQuestions) 
-              ? response.technicalQuestions.map(q => ({...q, type: 'technical' as const})) 
-              : [];
+            const technical = parsedResponse.technicalQuestions.map(q => ({
+              ...q, 
+              type: 'technical' as const
+            }));
               
-            const behavioral = Array.isArray(response.behavioralQuestions)  
-              ? response.behavioralQuestions.map(q => ({...q, type: 'behavioral' as const}))
-              : [];
+            const behavioral = parsedResponse.behavioralQuestions.map(q => ({
+              ...q, 
+              type: 'behavioral' as const
+            }));
               
-            const experience = Array.isArray(response.experienceQuestions)
-              ? response.experienceQuestions.map(q => ({...q, type: 'experience' as const}))
-              : [];
+            const experience = parsedResponse.experienceQuestions.map(q => ({
+              ...q, 
+              type: 'experience' as const
+            }));
             
             processedQuestions = [...technical, ...behavioral, ...experience];
           } 
           // Handle new format with a single questions array
-          else if (typeof response === 'object' && response && 'questions' in response) {
-            const allQuestions = Array.isArray(response.questions) ? response.questions : [];
-            
-            processedQuestions = allQuestions.map(q => ({
+          else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
+            processedQuestions = parsedResponse.questions.map(q => ({
               question: q.question,
               explanation: q.modelAnswer,
               modelAnswer: q.modelAnswer,
               followUp: q.followUp,
               type: categorizeQuestion(q.question)
             }));
-          }
-          // Try to handle string response (JSON string)
-          else if (typeof response === 'string') {
-            try {
-              const parsed = JSON.parse(response);
-              
-              if (parsed.technicalQuestions && parsed.behavioralQuestions && parsed.experienceQuestions) {
-                const technical = Array.isArray(parsed.technicalQuestions) 
-                  ? parsed.technicalQuestions.map(q => ({...q, type: 'technical' as const}))
-                  : [];
-                  
-                const behavioral = Array.isArray(parsed.behavioralQuestions)
-                  ? parsed.behavioralQuestions.map(q => ({...q, type: 'behavioral' as const}))
-                  : [];
-                  
-                const experience = Array.isArray(parsed.experienceQuestions)
-                  ? parsed.experienceQuestions.map(q => ({...q, type: 'experience' as const}))
-                  : [];
-                
-                processedQuestions = [...technical, ...behavioral, ...experience];
-              } else if (parsed.questions) {
-                const allQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
-                
-                processedQuestions = allQuestions.map(q => ({
-                  question: q.question,
-                  explanation: q.modelAnswer,
-                  modelAnswer: q.modelAnswer,
-                  followUp: q.followUp,
-                  type: categorizeQuestion(q.question)
-                }));
-              }
-            } catch (parseError) {
-              console.error('Error parsing response string:', parseError);
-              throw new Error("Failed to parse the interview questions data");
-            }
           }
           
           setQuestions(processedQuestions);
