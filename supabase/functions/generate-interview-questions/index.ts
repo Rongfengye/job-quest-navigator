@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -115,7 +116,6 @@ serve(async (req) => {
         "behavioralQuestions": [{ "question": "Qb1", "explanation": "Eb1" }, { "question": "Qb2", "explanation": "Eb2" }],
         "experienceQuestions": [{ "question": "Qe1", "explanation": "Ee1" }, { "question": "Qe2", "explanation": "Ee2" }]
       }
-      Do not include any other text, explanations, or comments.
     `;
 
     console.log("Sending request to OpenAI API...");
@@ -128,7 +128,7 @@ serve(async (req) => {
         "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "gpt-3.5-turbo-1106",  // Updated model version
         messages: [
           {
             role: "system",
@@ -140,7 +140,7 @@ serve(async (req) => {
           }
         ],
         temperature: 0.7,
-        response_format: "json",  // ✅ Enforce JSON response format
+        response_format: { type: "json_object" }  // Updated response format parameter
       }),
     });
 
