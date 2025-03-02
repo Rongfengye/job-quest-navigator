@@ -1,9 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, FileText, Lightbulb, User } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
@@ -13,27 +14,14 @@ type Question = {
   explanation?: string;
   modelAnswer?: string;
   followUp?: string[];
+  type?: 'technical' | 'behavioral' | 'experience';
 };
-
-type QuestionsData = {
-  technicalQuestions: Question[];
-  behavioralQuestions: Question[];
-  experienceQuestions: Question[];
-};
-
-interface ApiResponse {
-  questions?: {
-    question: string;
-    modelAnswer: string;
-    followUp: string[];
-  }[];
-}
 
 const Questions = () => {
   const location = useLocation();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [questions, setQuestions] = useState<QuestionsData | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [jobDetails, setJobDetails] = useState({
     jobTitle: '',
     companyName: '',
@@ -84,116 +72,96 @@ const Questions = () => {
         if (data.openai_response) {
           console.log("OpenAI response from database:", data.openai_response);
           
-          let processedQuestions: QuestionsData = {
-            technicalQuestions: [],
-            behavioralQuestions: [],
-            experienceQuestions: []
-          };
+          let processedQuestions: Question[] = [];
+          const response = data.openai_response;
           
-          if (
-            data.openai_response.technicalQuestions && 
-            data.openai_response.behavioralQuestions && 
-            data.openai_response.experienceQuestions
-          ) {
-            processedQuestions = data.openai_response as QuestionsData;
+          // Function to categorize a question by keywords in the text
+          const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' | 'experience' => {
+            const lowerQuestion = questionText.toLowerCase();
+            
+            if (lowerQuestion.includes('technical') || 
+                lowerQuestion.includes('tool') || 
+                lowerQuestion.includes('technology') || 
+                lowerQuestion.includes('gcp') ||
+                lowerQuestion.includes('design') ||
+                lowerQuestion.includes('skill')) {
+              return 'technical';
+            } else if (lowerQuestion.includes('experience') || 
+                      lowerQuestion.includes('previous') || 
+                      lowerQuestion.includes('worked') ||
+                      lowerQuestion.includes('implement')) {
+              return 'experience';
+            } else {
+              return 'behavioral';
+            }
+          };
+
+          // Handle old format with separate question categories
+          if (typeof response === 'object' && 
+              response && 
+              'technicalQuestions' in response && 
+              'behavioralQuestions' in response && 
+              'experienceQuestions' in response) {
+            
+            // Add type field to each question
+            const technical = Array.isArray(response.technicalQuestions) 
+              ? response.technicalQuestions.map(q => ({...q, type: 'technical' as const})) 
+              : [];
+              
+            const behavioral = Array.isArray(response.behavioralQuestions)  
+              ? response.behavioralQuestions.map(q => ({...q, type: 'behavioral' as const}))
+              : [];
+              
+            const experience = Array.isArray(response.experienceQuestions)
+              ? response.experienceQuestions.map(q => ({...q, type: 'experience' as const}))
+              : [];
+            
+            processedQuestions = [...technical, ...behavioral, ...experience];
           } 
-          else if (data.openai_response.questions) {
-            const apiResponse = data.openai_response as ApiResponse;
-            const allQuestions = apiResponse.questions || [];
+          // Handle new format with a single questions array
+          else if (typeof response === 'object' && response && 'questions' in response) {
+            const allQuestions = Array.isArray(response.questions) ? response.questions : [];
             
-            allQuestions.forEach(q => {
-              const questionObj: Question = {
-                question: q.question,
-                explanation: q.modelAnswer,
-                modelAnswer: q.modelAnswer,
-                followUp: q.followUp
-              };
-              
-              const questionLower = q.question.toLowerCase();
-              
-              if (questionLower.includes('technical') || 
-                  questionLower.includes('tool') || 
-                  questionLower.includes('technology') || 
-                  questionLower.includes('gcp') ||
-                  questionLower.includes('design')) {
-                processedQuestions.technicalQuestions.push(questionObj);
-              } else if (questionLower.includes('experience') || 
-                        questionLower.includes('previous') || 
-                        questionLower.includes('worked') ||
-                        questionLower.includes('implement')) {
-                processedQuestions.experienceQuestions.push(questionObj);
-              } else {
-                processedQuestions.behavioralQuestions.push(questionObj);
-              }
-            });
-            
-            if (processedQuestions.technicalQuestions.length === 0) {
-              const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
-              if (toMove > 0) {
-                processedQuestions.technicalQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
-              }
-            }
-            
-            if (processedQuestions.experienceQuestions.length === 0) {
-              const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
-              if (toMove > 0) {
-                processedQuestions.experienceQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
-              }
-            }
-          } else {
+            processedQuestions = allQuestions.map(q => ({
+              question: q.question,
+              explanation: q.modelAnswer,
+              modelAnswer: q.modelAnswer,
+              followUp: q.followUp,
+              type: categorizeQuestion(q.question)
+            }));
+          }
+          // Try to handle string response (JSON string)
+          else if (typeof response === 'string') {
             try {
-              const parsed = typeof data.openai_response === 'string' 
-                ? JSON.parse(data.openai_response) 
-                : data.openai_response;
-                
+              const parsed = JSON.parse(response);
+              
               if (parsed.technicalQuestions && parsed.behavioralQuestions && parsed.experienceQuestions) {
-                processedQuestions = parsed as QuestionsData;
+                const technical = Array.isArray(parsed.technicalQuestions) 
+                  ? parsed.technicalQuestions.map(q => ({...q, type: 'technical' as const}))
+                  : [];
+                  
+                const behavioral = Array.isArray(parsed.behavioralQuestions)
+                  ? parsed.behavioralQuestions.map(q => ({...q, type: 'behavioral' as const}))
+                  : [];
+                  
+                const experience = Array.isArray(parsed.experienceQuestions)
+                  ? parsed.experienceQuestions.map(q => ({...q, type: 'experience' as const}))
+                  : [];
+                
+                processedQuestions = [...technical, ...behavioral, ...experience];
               } else if (parsed.questions) {
-                const allQuestions = parsed.questions || [];
-                allQuestions.forEach(q => {
-                  const questionObj: Question = {
-                    question: q.question,
-                    explanation: q.modelAnswer,
-                    modelAnswer: q.modelAnswer,
-                    followUp: q.followUp
-                  };
-                  
-                  const questionLower = q.question.toLowerCase();
-                  
-                  if (questionLower.includes('technical') || 
-                      questionLower.includes('tool') || 
-                      questionLower.includes('technology') || 
-                      questionLower.includes('gcp') ||
-                      questionLower.includes('design')) {
-                    processedQuestions.technicalQuestions.push(questionObj);
-                  } else if (questionLower.includes('experience') || 
-                            questionLower.includes('previous') || 
-                            questionLower.includes('worked') ||
-                            questionLower.includes('implement')) {
-                    processedQuestions.experienceQuestions.push(questionObj);
-                  } else {
-                    processedQuestions.behavioralQuestions.push(questionObj);
-                  }
-                });
+                const allQuestions = Array.isArray(parsed.questions) ? parsed.questions : [];
                 
-                if (processedQuestions.technicalQuestions.length === 0) {
-                  const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
-                  if (toMove > 0) {
-                    processedQuestions.technicalQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
-                  }
-                }
-                
-                if (processedQuestions.experienceQuestions.length === 0) {
-                  const toMove = Math.min(2, processedQuestions.behavioralQuestions.length);
-                  if (toMove > 0) {
-                    processedQuestions.experienceQuestions = processedQuestions.behavioralQuestions.splice(0, toMove);
-                  }
-                }
-              } else {
-                throw new Error("Unexpected response format");
+                processedQuestions = allQuestions.map(q => ({
+                  question: q.question,
+                  explanation: q.modelAnswer,
+                  modelAnswer: q.modelAnswer,
+                  followUp: q.followUp,
+                  type: categorizeQuestion(q.question)
+                }));
               }
             } catch (parseError) {
-              console.error('Error parsing response:', parseError);
+              console.error('Error parsing response string:', parseError);
               throw new Error("Failed to parse the interview questions data");
             }
           }
@@ -226,7 +194,7 @@ const Questions = () => {
     if (!questionsList.length) {
       return (
         <p className="text-gray-500 italic py-4">
-          No questions available in this category. OpenAI might not have generated them correctly.
+          No questions available. OpenAI might not have generated them correctly.
         </p>
       );
     }
@@ -234,7 +202,18 @@ const Questions = () => {
     return questionsList.map((item, index) => (
       <Card key={index} className="mb-4 border-l-4 border-l-interview-primary">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">{item.question}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold">{item.question}</CardTitle>
+            <Badge 
+              variant={
+                item.type === 'technical' ? 'secondary' : 
+                item.type === 'experience' ? 'outline' : 'default'
+              }
+              className="ml-2"
+            >
+              {item.type || 'Question'}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
           <CardDescription className="text-gray-600">
@@ -301,41 +280,14 @@ const Questions = () => {
           </div>
         )}
 
-        {questions ? (
-          <Tabs defaultValue="technical" className="w-full">
-            <TabsList className="grid grid-cols-3 mb-8">
-              <TabsTrigger value="technical" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                <span className="hidden sm:inline">Technical</span>
-                <span className="inline sm:hidden">Tech</span>
-              </TabsTrigger>
-              <TabsTrigger value="behavioral" className="flex items-center gap-2">
-                <Lightbulb className="w-4 h-4" />
-                <span className="hidden sm:inline">Behavioral</span>
-                <span className="inline sm:hidden">Behav</span>
-              </TabsTrigger>
-              <TabsTrigger value="experience" className="flex items-center gap-2">
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Experience</span>
-                <span className="inline sm:hidden">Exp</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="technical" className="pt-2">
-              <h2 className="text-xl font-semibold mb-4">Technical Questions</h2>
-              {renderQuestions(questions.technicalQuestions)}
-            </TabsContent>
-
-            <TabsContent value="behavioral" className="pt-2">
-              <h2 className="text-xl font-semibold mb-4">Behavioral Questions</h2>
-              {renderQuestions(questions.behavioralQuestions)}
-            </TabsContent>
-
-            <TabsContent value="experience" className="pt-2">
-              <h2 className="text-xl font-semibold mb-4">Experience Questions</h2>
-              {renderQuestions(questions.experienceQuestions)}
-            </TabsContent>
-          </Tabs>
+        {questions.length > 0 ? (
+          <div className="pt-2">
+            <div className="flex items-center mb-4">
+              <FileText className="w-5 h-5 mr-2 text-interview-primary" />
+              <h2 className="text-xl font-semibold">Interview Questions</h2>
+            </div>
+            {renderQuestions(questions)}
+          </div>
         ) : (
           <div className="bg-gray-100 rounded-lg p-8 text-center">
             <h2 className="text-xl font-semibold mb-4">Questions Not Available</h2>

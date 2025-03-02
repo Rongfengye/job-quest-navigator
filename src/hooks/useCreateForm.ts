@@ -135,67 +135,10 @@ export const useCreateForm = () => {
         throw new Error(`Error processing your application: ${error.message}`);
       }
 
-      let parsedData;
-      try {
-        if (typeof data === 'string') {
-          parsedData = JSON.parse(data);
-        } else {
-          parsedData = data;
-        }
-        
-        if (!parsedData.technicalQuestions && !parsedData.questions) {
-          console.error('Invalid response structure:', parsedData);
-          throw new Error('The AI did not return questions in the expected format');
-        }
-        
-        if (parsedData.questions && !parsedData.technicalQuestions) {
-          const technicalQuestions = [];
-          const behavioralQuestions = [];
-          const experienceQuestions = [];
-          
-          parsedData.questions.forEach((q: any) => {
-            const questionLower = q.question.toLowerCase();
-            
-            if (questionLower.includes('technical') || 
-                questionLower.includes('tool') || 
-                questionLower.includes('skill') ||
-                questionLower.includes('technology')) {
-              technicalQuestions.push({
-                ...q,
-                explanation: q.modelAnswer
-              });
-            } else if (questionLower.includes('experience') || 
-                       questionLower.includes('previous') || 
-                       questionLower.includes('past') ||
-                       questionLower.includes('worked')) {
-              experienceQuestions.push({
-                ...q,
-                explanation: q.modelAnswer
-              });
-            } else {
-              behavioralQuestions.push({
-                ...q,
-                explanation: q.modelAnswer
-              });
-            }
-          });
-          
-          parsedData = {
-            technicalQuestions,
-            behavioralQuestions,
-            experienceQuestions
-          };
-        }
-      } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        console.log('Raw response:', data);
-        throw new Error('Invalid response format from the interview questions generator');
-      }
-
       const { error: updateError } = await supabase
         .from('storyline')
         .update({
-          openai_response: parsedData,
+          openai_response: data,
           status: 'completed'
         })
         .eq('id', storylineId);
