@@ -79,7 +79,7 @@ serve(async (req) => {
     ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
     `;
 
-    console.log('Calling OpenAI API...');
+    console.log('Calling OpenAI API with the prompt', userPrompt);
 
     // Call the OpenAI API
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
