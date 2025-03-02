@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import * as pdfParse from "https://esm.sh/pdf-parse@1.1.1";
 
 // Define CORS headers
 const corsHeaders = {
@@ -86,10 +87,18 @@ serve(async (req) => {
         throw new Error(`Error downloading resume: ${resumeError.message}`);
       }
       
-      // For PDF files we would normally use a PDF parsing library,
-      // but for this demo we'll just use placeholder text
-      resumeContent = "Resume content would be extracted here";
-      console.log("Resume downloaded successfully");
+      if (resumeData) {
+        try {
+          // Parse PDF content
+          const pdfData = await pdfParse.default(await resumeData.arrayBuffer());
+          // Limit resume content to 3000 characters to prevent token overusage
+          resumeContent = pdfData.text.substring(0, 3000);
+          console.log("Resume parsed successfully, first 100 chars:", resumeContent.substring(0, 100));
+        } catch (pdfError) {
+          console.error("Error parsing PDF:", pdfError);
+          resumeContent = "Failed to parse resume content";
+        }
+      }
     } catch (error) {
       console.error("Error processing resume:", error);
       resumeContent = "Failed to process resume";
@@ -112,10 +121,12 @@ serve(async (req) => {
       
       ${companyInfo}
       
-      Based on the job description and company information, provide:
-      1. 2 technical questions specific to the role
-      2. 2 behavioral questions
-      3. 2 questions about the candidate's experience
+      Candidate Resume: ${resumeContent}
+      
+      Based on the job description, company information, and candidate's resume, provide:
+      1. 2 technical questions specific to the role and tailored to the candidate's background
+      2. 2 behavioral questions relevant to the position
+      3. 2 questions about the candidate's specific experience mentioned in their resume
       
       You must return only valid JSON output. Ensure that:
       - The JSON follows strict syntax with properly closed brackets and commas.
@@ -128,7 +139,7 @@ serve(async (req) => {
       }
     `;
 
-    console.log("Sending request to OpenAI API with prompt:", prompt);
+    console.log("Sending request to OpenAI API with resume content included");
 
     // Call OpenAI API
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -142,7 +153,7 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that generates interview questions based on job descriptions and company information. Your response must be valid JSON that can be parsed directly, no additional text allowed."
+            content: "You are a helpful assistant that generates interview questions based on job descriptions, company information, and candidate resumes. Your response must be valid JSON that can be parsed directly, no additional text allowed."
           },
           {
             role: "user",
@@ -161,10 +172,10 @@ serve(async (req) => {
     }
 
     const openAIData = await openAIResponse.json();
-    console.log("OpenAI response received:", JSON.stringify(openAIData, null, 2)); // Log full response
+    console.log("OpenAI response received"); // Log that we received a response
     
     const generatedContent = openAIData.choices[0].message.content;
-    console.log("Raw generated content:", generatedContent);
+    console.log("Raw generated content length:", generatedContent.length);
     
     // Parse the generated content as JSON
     let parsedQuestions: QuestionsResponse;
@@ -195,7 +206,7 @@ serve(async (req) => {
         experienceQuestions: validateQuestions(parsedQuestions.experienceQuestions)
       };
       
-      console.log("Final structured response:", JSON.stringify(structuredResponse, null, 2));
+      console.log("Final structured response created");
       
       return new Response(
         JSON.stringify(structuredResponse),
