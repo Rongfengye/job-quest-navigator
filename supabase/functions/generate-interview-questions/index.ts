@@ -2,6 +2,12 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
+// Define CORS headers
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
 interface RequestBody {
   jobTitle: string;
   jobDescription: string;
@@ -13,12 +19,26 @@ interface RequestBody {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 204
+    });
+  }
+
   try {
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
       return new Response(
         JSON.stringify({ error: "OpenAI API key not configured" }),
-        { status: 500, headers: { "Content-Type": "application/json" } }
+        { 
+          status: 500, 
+          headers: { 
+            ...corsHeaders,
+            "Content-Type": "application/json" 
+          } 
+        }
       );
     }
 
@@ -84,6 +104,8 @@ serve(async (req) => {
       }
     `;
 
+    console.log("Sending request to OpenAI API...");
+
     // Call OpenAI API
     const openAIResponse = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -115,6 +137,8 @@ serve(async (req) => {
     const openAIData = await openAIResponse.json();
     const generatedContent = openAIData.choices[0].message.content;
     
+    console.log("OpenAI response received");
+    
     // Parse the generated content as JSON
     let parsedQuestions;
     try {
@@ -134,13 +158,25 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify(parsedQuestions),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 200, 
+        headers: { 
+          ...corsHeaders,
+          "Content-Type": "application/json" 
+        } 
+      }
     );
   } catch (error) {
     console.error("Function error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
+      { 
+        status: 500, 
+        headers: { 
+          ...corsHeaders,
+          "Content-Type": "application/json" 
+        } 
+      }
     );
   }
 });
