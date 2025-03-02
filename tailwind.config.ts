@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,19 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				interview: {
+					primary: '#8B5CF6',
+					light: '#E5DEFF',
+					dark: '#4C1D95',
+					accent: '#F59E0B',
+					background: '#FFFFFF',
+					card: '#F9FAFB',
+					text: {
+						primary: '#1F2937',
+						secondary: '#6B7280',
+						light: '#9CA3AF'
+					}
 				}
 			},
 			borderRadius: {
@@ -84,11 +98,38 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'fade-in': {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' }
+				},
+				'fade-up': {
+					'0%': { 
+						opacity: '0',
+						transform: 'translateY(20px)'
+					},
+					'100%': { 
+						opacity: '1',
+						transform: 'translateY(0)' 
+					}
+				},
+				'fade-down': {
+					'0%': { 
+						opacity: '0',
+						transform: 'translateY(-20px)'
+					},
+					'100%': { 
+						opacity: '1',
+						transform: 'translateY(0)' 
+					}
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fade-in 0.7s ease-in-out forwards',
+				'fade-up': 'fade-up 0.7s ease-out forwards',
+				'fade-down': 'fade-down 0.7s ease-out forwards'
 			}
 		}
 	},
