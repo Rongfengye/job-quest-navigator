@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
@@ -7,6 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
+import * as pdfjsLib from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.entry';
+
+// Set up the worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
 
 const Create = () => {
   const { toast } = useToast();
@@ -19,8 +25,11 @@ const Create = () => {
     companyDescription: '',
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState<string>('');
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
+  const [coverLetterText, setCoverLetterText] = useState<string>('');
   const [additionalDocumentsFile, setAdditionalDocumentsFile] = useState<File | null>(null);
+  const [additionalDocumentsText, setAdditionalDocumentsText] = useState<string>('');
   const [processingModal, setProcessingModal] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -31,7 +40,49 @@ const Create = () => {
     }));
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, fileType: 'resume' | 'coverLetter' | 'additionalDocuments') => {
+  // Function to extract text from PDF
+  const extractTextFromPDF = async (file: File): Promise<string> => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const typedArray = new Uint8Array(arrayBuffer);
+      
+      // Load the PDF document
+      const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+      const pdfDocument = await loadingTask.promise;
+      
+      // Extract text from all pages
+      let fullText = "";
+      const maxPages = pdfDocument.numPages;
+      
+      for (let i = 1; i <= maxPages; i++) {
+        const page = await pdfDocument.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ');
+        
+        fullText += pageText + '\n';
+        
+        // Limit text extraction if it's getting too large
+        if (fullText.length > 10000) {
+          break;
+        }
+      }
+      
+      // Limit to 3000 characters to prevent token overusage
+      return fullText.substring(0, 3000);
+    } catch (error) {
+      console.error("Error extracting text from PDF:", error);
+      toast({
+        title: "Error parsing PDF",
+        description: "There was an issue extracting text from your PDF. Please try another file.",
+        variant: "destructive",
+      });
+      return "";
+    }
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fileType: 'resume' | 'coverLetter' | 'additionalDocuments') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
@@ -47,12 +98,18 @@ const Create = () => {
       switch (fileType) {
         case 'resume':
           setResumeFile(file);
+          const resumeText = await extractTextFromPDF(file);
+          setResumeText(resumeText);
           break;
         case 'coverLetter':
           setCoverLetterFile(file);
+          const coverLetterText = await extractTextFromPDF(file);
+          setCoverLetterText(coverLetterText);
           break;
         case 'additionalDocuments':
           setAdditionalDocumentsFile(file);
+          const additionalDocumentsText = await extractTextFromPDF(file);
+          setAdditionalDocumentsText(additionalDocumentsText);
           break;
       }
     }
@@ -130,6 +187,9 @@ const Create = () => {
           jobDescription: formData.jobDescription,
           companyName: formData.companyName,
           companyDescription: formData.companyDescription,
+          resumeText: resumeText,
+          coverLetterText: coverLetterText,
+          additionalDocumentsText: additionalDocumentsText,
           resumePath: resumePath,
           coverLetterPath: coverLetterPath,
           additionalDocumentsPath: additionalDocumentsPath,
