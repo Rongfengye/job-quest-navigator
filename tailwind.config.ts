@@ -64,9 +64,9 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				interview: {
-					primary: '#8B5CF6',
-					light: '#E5DEFF',
-					dark: '#4C1D95',
+					primary: '#1877F2', // Facebook blue
+					light: '#E7F3FF',   // Light Facebook blue
+					dark: '#0B5ED7',    // Dark Facebook blue
 					accent: '#F59E0B',
 					background: '#FFFFFF',
 					card: '#F9FAFB',

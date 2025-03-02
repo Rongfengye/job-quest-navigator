@@ -8,7 +8,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <header className="py-6 px-6 flex items-center justify-between max-w-7xl mx-auto w-full">
-        <h1 className="text-xl font-bold text-interview-text-primary">Perfect Interview</h1>
+        <h1 className="text-xl font-bold text-interview-primary">Storyline</h1>
         <nav className="hidden md:flex items-center space-x-8">
           <a href="#features" className="text-interview-text-secondary hover:text-interview-primary transition-colors">Features</a>
           <a href="#" className="text-interview-text-secondary hover:text-interview-primary transition-colors">Pricing</a>
@@ -24,7 +24,7 @@ const Index = () => {
       
       <footer className="py-8 px-6 bg-gray-50">
         <div className="max-w-7xl mx-auto text-center text-interview-text-light text-sm">
-          <p>© {new Date().getFullYear()} Perfect Interview. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Storyline. All rights reserved.</p>
         </div>
       </footer>
     </div>

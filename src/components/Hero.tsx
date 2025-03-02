@@ -15,12 +15,12 @@ const Hero = () => {
             NO SUBSCRIPTION REQUIRED
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold text-interview-text-primary mb-6 leading-tight opacity-0 animate-fade-up">
-            Crush Your Next Interview
+          <h1 className="text-4xl md:text-6xl font-bold text-interview-primary mb-6 leading-tight opacity-0 animate-fade-up">
+            Storyline
           </h1>
           
           <p className="text-interview-text-secondary max-w-2xl mx-auto mb-8 text-lg opacity-0 animate-fade-up animation-delay-300">
-            From interview prep to real-time interview help, Perfect Interview is a complete solution to help you land any job and get the bag.
+            From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
           </p>
           
           <p className="text-interview-text-light mb-8 opacity-0 animate-fade-up animation-delay-600">
