@@ -1,236 +1,23 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, FileText } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { Json } from '@/integrations/supabase/types';
-
-type Question = {
-  question: string;
-  explanation?: string;
-  modelAnswer?: string;
-  followUp?: string[];
-  type?: 'technical' | 'behavioral' | 'experience';
-};
-
-type ParsedResponse = {
-  technicalQuestions?: Question[];
-  behavioralQuestions?: Question[];
-  experienceQuestions?: Question[];
-  questions?: Question[];
-};
+import { ArrowLeft } from 'lucide-react';
+import { useQuestionData } from '@/hooks/useQuestionData';
+import Loading from '@/components/ui/loading';
+import ErrorDisplay from '@/components/ui/error-display';
+import QuestionsList from '@/components/questions/QuestionsList';
+import NoQuestions from '@/components/questions/NoQuestions';
 
 const Questions = () => {
   const location = useLocation();
-  const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(true);
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [jobDetails, setJobDetails] = useState({
-    jobTitle: '',
-    companyName: '',
-  });
-  const [error, setError] = useState<string | null>(null);
-
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
-
-  // Function to categorize a question by keywords in the text
-  const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' | 'experience' => {
-    const lowerQuestion = questionText.toLowerCase();
-    
-    if (lowerQuestion.includes('technical') || 
-        lowerQuestion.includes('tool') || 
-        lowerQuestion.includes('technology') || 
-        lowerQuestion.includes('gcp') ||
-        lowerQuestion.includes('design') ||
-        lowerQuestion.includes('skill')) {
-      return 'technical';
-    } else if (lowerQuestion.includes('experience') || 
-              lowerQuestion.includes('previous') || 
-              lowerQuestion.includes('worked') ||
-              lowerQuestion.includes('implement')) {
-      return 'experience';
-    } else {
-      return 'behavioral';
-    }
-  };
-
-  // Parse JSON safely
-  const safeJsonParse = (data: Json): ParsedResponse => {
-    if (typeof data === 'string') {
-      try {
-        return JSON.parse(data) as ParsedResponse;
-      } catch (e) {
-        console.error('Failed to parse JSON string:', e);
-        return {};
-      }
-    } else if (typeof data === 'object' && data !== null) {
-      return data as unknown as ParsedResponse;
-    }
-    
-    return {};
-  };
-
-  useEffect(() => {
-    const fetchQuestions = async () => {
-      if (!storylineId) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "No storyline ID provided. Please go back and try again.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('storyline')
-          .select('*')
-          .eq('id', storylineId)
-          .single();
-
-        if (error) throw error;
-
-        if (!data) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "No data found for this interview preparation.",
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("Storyline data retrieved:", data);
-
-        setJobDetails({
-          jobTitle: data.job_title || 'Untitled Position',
-          companyName: data.company_name || 'Unnamed Company',
-        });
-
-        if (data.openai_response) {
-          console.log("OpenAI response from database:", data.openai_response);
-          
-          let processedQuestions: Question[] = [];
-          const parsedResponse = safeJsonParse(data.openai_response);
-          
-          // Handle old format with separate question categories
-          if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
-              parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions) && 
-              parsedResponse.experienceQuestions && Array.isArray(parsedResponse.experienceQuestions)) {
-            
-            const technical = parsedResponse.technicalQuestions.map(q => ({
-              ...q, 
-              type: 'technical' as const
-            }));
-              
-            const behavioral = parsedResponse.behavioralQuestions.map(q => ({
-              ...q, 
-              type: 'behavioral' as const
-            }));
-              
-            const experience = parsedResponse.experienceQuestions.map(q => ({
-              ...q, 
-              type: 'experience' as const
-            }));
-            
-            processedQuestions = [...technical, ...behavioral, ...experience];
-          } 
-          // Handle new format with a single questions array
-          else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
-            processedQuestions = parsedResponse.questions.map(q => ({
-              question: q.question,
-              explanation: q.modelAnswer,
-              modelAnswer: q.modelAnswer,
-              followUp: q.followUp,
-              type: categorizeQuestion(q.question)
-            }));
-          }
-          
-          setQuestions(processedQuestions);
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Processing",
-            description: "Your interview questions are still being generated. Please check back later.",
-          });
-        }
-      } catch (error) {
-        console.error('Error fetching questions:', error);
-        setError(error instanceof Error ? error.message : "Failed to load interview questions");
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load interview questions",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchQuestions();
-  }, [storylineId, toast]);
-
-  const renderQuestions = (questionsList: Question[] = []) => {
-    if (!questionsList.length) {
-      return (
-        <p className="text-gray-500 italic py-4">
-          No questions available. OpenAI might not have generated them correctly.
-        </p>
-      );
-    }
   
-    return questionsList.map((item, index) => (
-      <Card key={index} className="mb-4 border-l-4 border-l-interview-primary">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold">{item.question}</CardTitle>
-            <Badge 
-              variant={
-                item.type === 'technical' ? 'secondary' : 
-                item.type === 'experience' ? 'outline' : 'default'
-              }
-              className="ml-2"
-            >
-              {item.type || 'Question'}
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <CardDescription className="text-gray-600">
-            <strong>Why this matters:</strong> {item.explanation || item.modelAnswer || "No explanation provided."}
-          </CardDescription>
-          
-          {item.followUp && item.followUp.length > 0 && (
-            <div className="mt-4">
-              <p className="font-medium text-sm text-gray-700">Follow-up questions:</p>
-              <ul className="list-disc pl-5 mt-2 space-y-1">
-                {item.followUp.map((followUpQ, idx) => (
-                  <li key={idx} className="text-sm text-gray-600">{followUpQ}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    ));
-  };
-  
+  const { isLoading, questions, jobDetails, error } = useQuestionData(storylineId);
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-interview-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading your interview questions...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="Loading your interview questions..." />;
   }
 
   return (
@@ -258,33 +45,12 @@ const Questions = () => {
           </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-            <h3 className="text-red-800 font-semibold">Error</h3>
-            <p className="text-red-600">{error}</p>
-            <p className="text-red-600 mt-2">Please check the console for more details or try again.</p>
-          </div>
-        )}
+        <ErrorDisplay message={error} />
 
         {questions.length > 0 ? (
-          <div className="pt-2">
-            <div className="flex items-center mb-4">
-              <FileText className="w-5 h-5 mr-2 text-interview-primary" />
-              <h2 className="text-xl font-semibold">Interview Questions</h2>
-            </div>
-            {renderQuestions(questions)}
-          </div>
+          <QuestionsList questions={questions} />
         ) : (
-          <div className="bg-gray-100 rounded-lg p-8 text-center">
-            <h2 className="text-xl font-semibold mb-4">Questions Not Available</h2>
-            <p className="text-gray-600 mb-4">
-              We couldn't find any interview questions for this job application.
-              This could be because they're still being generated or there was an error.
-            </p>
-            <Link to="/create">
-              <Button>Create New Interview Prep</Button>
-            </Link>
-          </div>
+          <NoQuestions />
         )}
       </div>
     </div>
