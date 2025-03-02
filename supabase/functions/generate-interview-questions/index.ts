@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { PdfReader } from "https://esm.sh/pdfreader@3.0.0";
 
 // Define CORS headers
 const corsHeaders = {
@@ -84,10 +85,51 @@ serve(async (req) => {
         throw new Error(`Error downloading resume: ${resumeError.message}`);
       }
       
-      // For PDF files we would normally use a PDF parsing library,
-      // but for this demo we'll just use placeholder text
-      resumeContent = "Resume content would be extracted here";
       console.log("Resume downloaded successfully");
+      
+      // Check if it's a PDF file
+      if (requestData.resumePath.toLowerCase().endsWith('.pdf')) {
+        // Convert the ArrayBuffer to Uint8Array for PDF parsing
+        const pdfBuffer = new Uint8Array(await resumeData.arrayBuffer());
+        
+        // Parse PDF content
+        let extractedText = "";
+        const pdfReader = new PdfReader();
+        
+        // This is a simplified approach - in production, you might need a more robust solution
+        try {
+          // Convert the parsing to a promise-based approach
+          const parsedItems = await new Promise((resolve, reject) => {
+            const items: any[] = [];
+            pdfReader.parseBuffer(pdfBuffer, (err: any, item: any) => {
+              if (err) reject(err);
+              if (!item) resolve(items);
+              if (item.text) items.push(item.text);
+            });
+          });
+          
+          // Join all text items
+          if (Array.isArray(parsedItems)) {
+            extractedText = parsedItems.join(" ");
+          }
+        } catch (pdfError) {
+          console.error("Error parsing PDF:", pdfError);
+          extractedText = "Failed to parse PDF content";
+        }
+        
+        resumeContent = extractedText;
+      } else {
+        // For non-PDF files, assume text content
+        resumeContent = await resumeData.text();
+      }
+      
+      // Limit resume content to 3000 characters to prevent token overflow
+      if (resumeContent.length > 3000) {
+        console.log(`Limiting resume content from ${resumeContent.length} to 3000 characters`);
+        resumeContent = resumeContent.substring(0, 3000) + "... (content truncated)";
+      }
+      
+      console.log("Resume content extracted, length:", resumeContent.length);
     } catch (error) {
       console.error("Error processing resume:", error);
       resumeContent = "Failed to process resume";
@@ -102,10 +144,13 @@ serve(async (req) => {
       ${requestData.companyName ? `Company: ${requestData.companyName}` : ''}
       ${requestData.companyDescription ? `Company Description: ${requestData.companyDescription}` : ''}
       
-      Based on the job description, provide:
-      1. 2 technical questions specific to the role
-      2. 2 behavioral questions
-      3. 2 questions about the candidate's experience
+      Resume Content:
+      ${resumeContent}
+      
+      Based on the job description and the candidate's resume, provide:
+      1. 2 technical questions specific to the role and candidate's skills
+      2. 2 behavioral questions relevant to the position and candidate's past experiences
+      3. 2 questions about the candidate's experience that highlight their fit for this role
       
       You must return only valid JSON output. Ensure that:
       - The JSON follows strict syntax with properly closed brackets and commas.
