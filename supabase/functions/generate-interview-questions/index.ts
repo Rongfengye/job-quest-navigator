@@ -1,141 +1,142 @@
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import 'https://deno.land/x/xhr@0.1.0/mod.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+// Follow this setup guide to integrate the Edgedb JavaScript client with your project:
+// https://edgedb.com/docs/clients/js/index
+
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    // Create a Supabase client with the Auth context of the function
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
+        },
+      }
+    )
 
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY is not set');
-    }
-
-    // Initialize Supabase client
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    // Parse request body
+    // Get the request body
+    const requestData = await req.json()
+    
+    // Extract data from request
     const { 
-      jobTitle, 
-      jobDescription, 
-      companyName, 
+      jobTitle,
+      jobDescription,
+      companyName,
       companyDescription,
       resumePath,
       coverLetterPath,
-      additionalDocumentsPath 
-    } = await req.json();
+      additionalDocumentsPath
+    } = requestData
 
-    // Get resume content if available
-    let resumeContent = '';
-    if (resumePath) {
-      try {
-        // For simplicity, we're just using the path here.
-        // In a real implementation, you'd need to extract text from the PDF
-        resumeContent = `Resume is available at path: ${resumePath}`;
-      } catch (error) {
-        console.error('Error getting resume:', error);
+    // Basic validation
+    if (!jobTitle || !jobDescription || !resumePath) {
+      return new Response(
+        JSON.stringify({ error: 'Missing required fields' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // TODO: In future implementation, you would:
+    // 1. Download the files from Supabase Storage
+    // 2. Process them for input to OpenAI
+    // 3. Make the OpenAI API request using credentials from Deno.env
+    
+    // For now, we'll mock an OpenAI response
+    const mockOpenAIResponse = {
+      questions: [
+        {
+          question: `Tell me about your experience related to ${jobTitle}?`,
+          type: "behavioral",
+          difficulty: "easy"
+        },
+        {
+          question: `What drew you to apply for this ${jobTitle} position${companyName ? ` at ${companyName}` : ''}?`,
+          type: "behavioral",
+          difficulty: "easy"
+        },
+        {
+          question: "Describe a challenging situation you faced in your previous role and how you overcame it.",
+          type: "behavioral",
+          difficulty: "medium"
+        },
+        {
+          question: "How do you stay updated with the latest trends and technologies in this field?",
+          type: "technical",
+          difficulty: "medium"
+        },
+        {
+          question: "Where do you see yourself professionally in 5 years?",
+          type: "behavioral",
+          difficulty: "medium"
+        }
+      ],
+      summary: {
+        resumeMatchPercentage: 78,
+        keySkillsIdentified: ["Communication", "Problem Solving", "Team Leadership"],
+        areasOfImprovement: ["Technical depth", "Project management experience"]
       }
     }
 
-    // Same for cover letter
-    let coverLetterContent = '';
-    if (coverLetterPath) {
-      coverLetterContent = `Cover letter is available at path: ${coverLetterPath}`;
+    // In a real implementation, you would use the OpenAI API like this:
+    /*
+    const openAIKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIKey) {
+      return new Response(
+        JSON.stringify({ error: 'OpenAI API key not configured' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      )
     }
 
-    // Prepare the prompt for OpenAI
-    const prompt = `
-    I need to create interview questions for a job application. Here are the details:
-    
-    Job Title: ${jobTitle}
-    
-    Job Description: ${jobDescription}
-    
-    ${companyName ? `Company Name: ${companyName}` : ''}
-    ${companyDescription ? `Company Description: ${companyDescription}` : ''}
-    
-    ${resumeContent ? `Resume Information: ${resumeContent}` : ''}
-    ${coverLetterContent ? `Cover Letter Information: ${coverLetterContent}` : ''}
-    
-    Based on this information, please generate:
-    1. 10 technical interview questions specific to this job role
-    2. 5 behavioral questions relevant to the requirements
-    3. 3 questions the candidate should ask the interviewer
-    4. Preparation tips for this specific interview
-    
-    Format the response as JSON with the following structure:
-    {
-      "technicalQuestions": [...],
-      "behavioralQuestions": [...],
-      "questionsToAsk": [...],
-      "preparationTips": [...]
-    }
-    `;
-
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openAIKey}`,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4-turbo',
         messages: [
-          { role: 'system', content: 'You are an expert career coach and interviewer. Your task is to generate tailored interview questions and preparation material.' },
-          { role: 'user', content: prompt }
+          {
+            role: 'system',
+            content: 'You are an expert interviewer. Generate personalized interview questions based on the job description and resume provided.'
+          },
+          {
+            role: 'user',
+            content: `Job Title: ${jobTitle}\n\nJob Description: ${jobDescription}\n\nCompany: ${companyName || 'Not specified'}\n\nCompany Description: ${companyDescription || 'Not specified'}\n\nResume: [Resume content would be here in production]`
+          }
         ],
-        temperature: 0.7,
-      }),
+        temperature: 0.7
+      })
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
+    const openAIData = await openAIResponse.json();
+    */
 
-    const openaiResponse = await response.json();
-    let generatedContent;
-    
-    try {
-      // Try to parse the content as JSON
-      const contentText = openaiResponse.choices[0].message.content;
-      generatedContent = JSON.parse(contentText);
-    } catch (error) {
-      // If JSON parsing fails, use the raw content
-      generatedContent = {
-        rawContent: openaiResponse.choices[0].message.content,
-      };
-    }
-
-    // Log success
-    console.log('Successfully generated interview questions');
-
-    // Return the generated content
-    return new Response(JSON.stringify(generatedContent), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
-
+    // Return the mock response for now
+    return new Response(
+      JSON.stringify(mockOpenAIResponse),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    )
   } catch (error) {
-    console.error('Error in generate-interview-questions function:', error);
+    console.error('Error:', error)
     
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: 'An error occurred processing your request' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    )
   }
-});
+})

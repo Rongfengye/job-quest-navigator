@@ -9,6 +9,48 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      storyline: {
+        Row: {
+          additional_documents_path: string | null
+          company_description: string | null
+          company_name: string | null
+          cover_letter_path: string | null
+          created_at: string | null
+          id: string
+          job_description: string
+          job_title: string
+          openai_response: Json | null
+          resume_path: string
+          status: string | null
+        }
+        Insert: {
+          additional_documents_path?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          cover_letter_path?: string | null
+          created_at?: string | null
+          id?: string
+          job_description: string
+          job_title: string
+          openai_response?: Json | null
+          resume_path: string
+          status?: string | null
+        }
+        Update: {
+          additional_documents_path?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          cover_letter_path?: string | null
+          created_at?: string | null
+          id?: string
+          job_description?: string
+          job_title?: string
+          openai_response?: Json | null
+          resume_path?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       waitlist_contacts: {
         Row: {
           auth_provider: Database["public"]["Enums"]["auth_provider"]
