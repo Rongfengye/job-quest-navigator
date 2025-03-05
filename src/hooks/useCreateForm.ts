@@ -84,7 +84,7 @@ export const useCreateForm = () => {
     setIsLoading(true);
     
     try {
-      setProcessingModal(true);
+      setProcessingModal(true); // TODO we probably want this to have a progress bar
 
       const resumePath = await uploadFile(resumeFile.file, 'resumes');
       
