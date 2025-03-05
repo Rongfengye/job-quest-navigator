@@ -86,7 +86,8 @@ export const useCreateForm = () => {
     try {
       setProcessingModal(true); // TODO we probably want this to have a progress bar
 
-      const resumePath = await uploadFile(resumeFile.file, 'resumes');
+      const resumePath = await uploadFile(resumeFile.file, 'resumes'); 
+      // Question to self, do we even want to retain their resume? I guess for observation purposes but it is costly
       
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
