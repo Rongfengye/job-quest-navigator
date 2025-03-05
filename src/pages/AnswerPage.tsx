@@ -46,6 +46,8 @@ const AnswerPage = () => {
     }
   };
 
+  // TODO: eventually make the option to continously iterate on this response to become more complex
+  // Eventually add a TOKEN structure to prevent over prompting
   const handleGenerateAnswer = async () => {
     if (!question) return;
     
