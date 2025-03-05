@@ -5,9 +5,10 @@ import QuestionCard, { Question } from './QuestionCard';
 
 interface QuestionsListProps {
   questions: Question[];
+  storylineId: string;
 }
 
-const QuestionsList: React.FC<QuestionsListProps> = ({ questions }) => {
+const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId }) => {
   if (!questions.length) {
     return (
       <p className="text-gray-500 italic py-4">
@@ -23,7 +24,12 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions }) => {
         <h2 className="text-xl font-semibold">Interview Questions</h2>
       </div>
       {questions.map((question, index) => (
-        <QuestionCard key={index} question={question} index={index} />
+        <QuestionCard 
+          key={index} 
+          question={question} 
+          index={index} 
+          storylineId={storylineId} 
+        />
       ))}
     </div>
   );

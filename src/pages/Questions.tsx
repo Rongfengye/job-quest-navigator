@@ -48,7 +48,7 @@ const Questions = () => {
         <ErrorDisplay message={error} />
 
         {questions.length > 0 ? (
-          <QuestionsList questions={questions} />
+          <QuestionsList questions={questions} storylineId={storylineId || ''} />
         ) : (
           <NoQuestions />
         )}
