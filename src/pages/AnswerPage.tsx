@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, Save, Sparkles, Mic } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
+import { Input } from '@/components/ui/input';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -52,7 +53,6 @@ const AnswerPage = () => {
     
     try {
       // Generate a sample answer based on the model answer or explanation
-      // In a real implementation, you could call OpenAI API here for a generated answer
       const generatedText = question.modelAnswer || 
         "Throughout my career, I've gained significant experience in this area. " +
         "I've worked with various tools and technologies to solve complex problems. " +
@@ -60,13 +60,15 @@ const AnswerPage = () => {
         "I ensure quality by following best practices and conducting thorough testing.";
       
       setInputAnswer(generatedText);
-      
-      // Don't auto-save the generated answer, let the user edit it first
     } catch (error) {
       console.error('Error generating answer:', error);
     } finally {
       setGeneratingAnswer(false);
     }
+  };
+
+  const formatQuestionIndex = (index: number) => {
+    return index < 9 ? `0${index + 1}` : `${index + 1}`;
   };
 
   if (isLoading) {
@@ -110,9 +112,12 @@ const AnswerPage = () => {
         <ErrorDisplay message={error} />
 
         <Card className="mb-8">
-          <CardHeader>
+          <CardHeader className="border-b">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl text-interview-primary">Question</CardTitle>
+              <div className="flex items-center gap-3">
+                <span className="text-gray-500 font-mono font-medium">{formatQuestionIndex(questionIndex)}</span>
+                <CardTitle className="text-xl">Question</CardTitle>
+              </div>
               {question.type && (
                 <Badge 
                   variant={
@@ -128,7 +133,7 @@ const AnswerPage = () => {
               {question.question}
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-4">
             {question.explanation && (
               <div className="mb-4 p-4 bg-gray-50 rounded-md">
                 <p className="text-sm font-medium text-gray-700">Why this matters:</p>
@@ -150,22 +155,37 @@ const AnswerPage = () => {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Your Answer</CardTitle>
+          <CardHeader className="border-b">
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl">Your Answer</CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-sm">Submissions</span>
+              </div>
+            </div>
             <CardDescription>
-              Practice your response to this question below. You can save it for later reference.
+              Practice your response to this question below.
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-4">
-              <Textarea 
-                value={inputAnswer}
-                onChange={(e) => setInputAnswer(e.target.value)}
-                placeholder="Type your response here..."
-                className="min-h-[200px]"
-              />
+              <div className="relative">
+                <Textarea 
+                  value={inputAnswer}
+                  onChange={(e) => setInputAnswer(e.target.value)}
+                  placeholder="Type your response here..."
+                  className="min-h-[200px] resize-y pr-10"
+                />
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  variant="ghost" 
+                  className="absolute right-2 top-2 opacity-70 hover:opacity-100"
+                >
+                  <Mic className="h-4 w-4" />
+                </Button>
+              </div>
               
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2">
                 <Button
                   type="button"
                   variant="outline"
@@ -182,8 +202,7 @@ const AnswerPage = () => {
                   disabled={isSaving || inputAnswer.trim() === ''}
                   className="flex items-center gap-2"
                 >
-                  <Save className="w-4 h-4" />
-                  {isSaving ? 'Saving...' : 'Save Answer'}
+                  {isSaving ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
             </form>

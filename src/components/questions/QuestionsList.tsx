@@ -21,7 +21,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
     <div className="pt-2">
       <div className="flex items-center mb-4">
         <FileText className="w-5 h-5 mr-2 text-interview-primary" />
-        <h2 className="text-xl font-semibold">Interview Questions</h2>
+        <h2 className="text-xl font-semibold">Practice Interview Questions</h2>
       </div>
       {questions.map((question, index) => (
         <QuestionCard 
