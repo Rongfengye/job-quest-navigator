@@ -54,7 +54,7 @@ serve(async (req) => {
     3. Problem-solving abilities specific to the challenges in this role
     
     For each question, also include:
-    - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company's culture and values to demonstrate a strong fit for the role
+    - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company’s culture and values to demonstrate a strong fit for the role
     - A "followUp" array that contains 2 follow-up questions for deeper discussion
     
     Format your response as a JSON object with these fields:

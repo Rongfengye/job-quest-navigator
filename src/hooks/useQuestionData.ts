@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
-import { useAuth } from '@/hooks/useAuth';
 
 export type Question = {
   question: string;
@@ -46,25 +45,24 @@ export const categorizeQuestion = (questionText: string): 'technical' | 'behavio
   }
 };
 
-// Parse JSON safely with explicit return type
+// Parse JSON safely
 export const safeJsonParse = (data: Json): ParsedResponse => {
   if (typeof data === 'string') {
     try {
       return JSON.parse(data) as ParsedResponse;
     } catch (e) {
       console.error('Failed to parse JSON string:', e);
-      return {} as ParsedResponse;
+      return {};
     }
   } else if (typeof data === 'object' && data !== null) {
-    return data as ParsedResponse;
+    return data as unknown as ParsedResponse;
   }
   
-  return {} as ParsedResponse;
+  return {};
 };
 
 export const useQuestionData = (storylineId: string | null) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [jobDetails, setJobDetails] = useState<JobDetails>({
@@ -85,22 +83,11 @@ export const useQuestionData = (storylineId: string | null) => {
         return;
       }
 
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please sign in to view this content.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const { data, error } = await supabase
-          .from('storyline_jobs')
+          .from('storyline')
           .select('*')
           .eq('id', storylineId)
-          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;
@@ -126,10 +113,7 @@ export const useQuestionData = (storylineId: string | null) => {
           console.log("OpenAI response from database:", data.openai_response);
           
           let processedQuestions: Question[] = [];
-          // Using approach 1: Check if already an object before parsing
-          const parsedResponse = typeof data.openai_response === 'string'
-            ? safeJsonParse(data.openai_response)
-            : data.openai_response as ParsedResponse;
+          const parsedResponse = safeJsonParse(data.openai_response);
           
           // Handle old format with separate question categories
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
@@ -186,7 +170,7 @@ export const useQuestionData = (storylineId: string | null) => {
     };
 
     fetchQuestions();
-  }, [storylineId, toast, user]);
+  }, [storylineId, toast]);
 
   return { isLoading, questions, jobDetails, error };
 };

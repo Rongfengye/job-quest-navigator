@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Question } from '@/components/questions/QuestionCard';
-import { useAuth } from '@/hooks/useAuth';
 
 interface AnswerData {
   id?: string;
@@ -16,7 +15,6 @@ interface AnswerData {
 
 export const useAnswers = (storylineId: string, questionIndex: number) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [answer, setAnswer] = useState<string>('');
@@ -31,19 +29,12 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         return;
       }
 
-      if (!user) {
-        setError("Authentication required");
-        setIsLoading(false);
-        return;
-      }
-
       try {
         // First get the storyline to fetch the question
         const { data: storylineData, error: storylineError } = await supabase
-          .from('storyline_jobs')
+          .from('storyline')
           .select('openai_response')
           .eq('id', storylineId)
-          .eq('user_id', user.id)
           .single();
 
         if (storylineError) throw storylineError;
@@ -106,20 +97,11 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     };
 
     fetchQuestionAndAnswer();
-  }, [storylineId, questionIndex, toast, user]);
+  }, [storylineId, questionIndex, toast]);
 
   // Save the answer
   const saveAnswer = async (answerText: string) => {
     if (!storylineId) return;
-    
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication required",
-        description: "Please sign in to save your answer.",
-      });
-      return;
-    }
     
     setIsSaving(true);
     

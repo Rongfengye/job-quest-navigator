@@ -24,7 +24,7 @@ const Hero = () => {
           </p>
           
           <div className="opacity-0 animate-fade-up animation-delay-900 flex justify-center">
-            <Link to="/auth">
+            <Link to="/create">
               <Button className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg flex items-center justify-center gap-2 group">
                 Get Started
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

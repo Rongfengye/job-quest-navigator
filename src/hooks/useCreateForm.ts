@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
 
 interface FormData {
   jobTitle: string;
@@ -20,7 +19,6 @@ interface FileData {
 export const useCreateForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     jobTitle: '',
@@ -83,22 +81,13 @@ export const useCreateForm = () => {
       return;
     }
 
-    if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to continue.",
-        variant: "destructive",
-      });
-      navigate('/auth');
-      return;
-    }
-
     setIsLoading(true);
     
     try {
-      setProcessingModal(true);
+      setProcessingModal(true); // TODO we probably want this to have a progress bar
 
       const resumePath = await uploadFile(resumeFile.file, 'resumes'); 
+      // Question to self, do we even want to retain their resume? I guess for observation purposes but it is costly
       
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
@@ -112,7 +101,7 @@ export const useCreateForm = () => {
       }
 
       const { data: storylineData, error: insertError } = await supabase
-        .from('storyline_jobs')
+        .from('storyline')
         .insert({
           job_title: formData.jobTitle,
           job_description: formData.jobDescription,
@@ -121,8 +110,7 @@ export const useCreateForm = () => {
           resume_path: resumePath,
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
-          status: 'processing',
-          user_id: user.id
+          status: 'processing'
         })
         .select('id')
         .single();
@@ -164,7 +152,7 @@ export const useCreateForm = () => {
       console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
       const { error: updateError } = await supabase
-        .from('storyline_jobs')
+        .from('storyline')
         .update({
           openai_response: data,
           status: 'completed'
