@@ -23,10 +23,6 @@ const Hero = () => {
             From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
           </p>
           
-          <p className="text-interview-text-light mb-8 opacity-0 animate-fade-up animation-delay-600">
-            No annoying subscription required.
-          </p>
-          
           <div className="opacity-0 animate-fade-up animation-delay-900 flex justify-center">
             <Link to="/create">
               <Button className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg flex items-center justify-center gap-2 group">
