@@ -32,7 +32,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       try {
         // First get the storyline to fetch the question
         const { data: storylineData, error: storylineError } = await supabase
-          .from('storyline')
+          .from('storyline_jobs')
           .select('openai_response')
           .eq('id', storylineId)
           .single();

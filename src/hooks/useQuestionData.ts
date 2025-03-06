@@ -85,7 +85,7 @@ export const useQuestionData = (storylineId: string | null) => {
 
       try {
         const { data, error } = await supabase
-          .from('storyline')
+          .from('storyline_jobs')
           .select('*')
           .eq('id', storylineId)
           .single();
@@ -113,7 +113,9 @@ export const useQuestionData = (storylineId: string | null) => {
           console.log("OpenAI response from database:", data.openai_response);
           
           let processedQuestions: Question[] = [];
-          const parsedResponse = safeJsonParse(data.openai_response);
+          const parsedResponse = typeof data.openai_response === 'string' 
+            ? safeJsonParse(data.openai_response)
+            : data.openai_response as unknown as ParsedResponse;
           
           // Handle old format with separate question categories
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
