@@ -9,7 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
+import QuestionDisplay from '@/components/questions/QuestionDisplay';
+import AnswerForm from '@/components/questions/AnswerForm';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -46,8 +47,6 @@ const AnswerPage = () => {
     }
   };
 
-  // TODO: eventually make the option to continously iterate on this response to become more complex
-  // Eventually add a TOKEN structure to prevent over prompting
   const handleGenerateAnswer = async () => {
     if (!question) return;
     
@@ -67,10 +66,6 @@ const AnswerPage = () => {
     } finally {
       setGeneratingAnswer(false);
     }
-  };
-
-  const formatQuestionIndex = (index: number) => {
-    return index < 9 ? `0${index + 1}` : `${index + 1}`;
   };
 
   if (isLoading) {
@@ -113,103 +108,16 @@ const AnswerPage = () => {
 
         <ErrorDisplay message={error} />
 
-        <Card className="mb-8">
-          <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-gray-500 font-mono font-medium">{formatQuestionIndex(questionIndex)}</span>
-                <CardTitle className="text-xl">Question</CardTitle>
-              </div>
-              {question.type && (
-                <Badge 
-                  variant={
-                    question.type === 'technical' ? 'secondary' : 
-                    question.type === 'experience' ? 'outline' : 'default'
-                  }
-                >
-                  {question.type}
-                </Badge>
-              )}
-            </div>
-            <CardDescription className="text-lg font-medium text-gray-800 mt-2">
-              {question.question}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            {question.explanation && (
-              <div className="mb-4 p-4 bg-gray-50 rounded-md">
-                <p className="text-sm font-medium text-gray-700">Why this matters:</p>
-                <p className="text-sm text-gray-600 mt-1">{question.explanation}</p>
-              </div>
-            )}
-            
-            {question.followUp && question.followUp.length > 0 && (
-              <div className="mt-4">
-                <p className="font-medium text-sm text-gray-700">Follow-up questions to consider:</p>
-                <ul className="list-disc pl-5 mt-2 space-y-1">
-                  {question.followUp.map((followUpQ, idx) => (
-                    <li key={idx} className="text-sm text-gray-600">{followUpQ}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <QuestionDisplay question={question} questionIndex={questionIndex} />
 
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Your Answer</CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 text-sm">Submissions</span>
-              </div>
-            </div>
-            <CardDescription>
-              Practice your response to this question below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <Textarea 
-                  value={inputAnswer}
-                  onChange={(e) => setInputAnswer(e.target.value)}
-                  placeholder="Type your response here..."
-                  className="min-h-[200px] resize-y pr-10"
-                />
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  variant="ghost" 
-                  className="absolute right-2 top-2 opacity-70 hover:opacity-100"
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateAnswer}
-                  disabled={generatingAnswer}
-                  className="flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {generatingAnswer ? 'Generating...' : 'Generate Answer'}
-                </Button>
-                
-                <Button 
-                  type="submit" 
-                  disabled={isSaving || inputAnswer.trim() === ''}
-                  className="flex items-center gap-2"
-                >
-                  {isSaving ? 'Saving...' : 'Submit'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <AnswerForm 
+          inputAnswer={inputAnswer} 
+          setInputAnswer={setInputAnswer} 
+          handleSubmit={handleSubmit}
+          handleGenerateAnswer={handleGenerateAnswer}
+          generatingAnswer={generatingAnswer}
+          isSaving={isSaving}
+        />
       </div>
     </div>
   );

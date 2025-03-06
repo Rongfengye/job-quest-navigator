@@ -1,6 +1,10 @@
 
 createform // Added progress bar to processing modal
-answerpage TODO: eventually make the option to continously iterate on this response to become more complex
+answerpage // Refactored to use smaller components
 prompt TODO: need to ensure this is formatted better with clear demarkations
 
-answer page: add audio responses, as well as navigable tab between the different questions 
+AnswerPage:
+- Add audio responses
+- Add navigable tabs between the different questions 
+- Make the option to continuously iterate on this response to become more complex
+
