@@ -1,4 +1,5 @@
 
+
 createform // Added progress bar to processing modal
 answerpage // Refactored to use smaller components
 prompt TODO: need to ensure this is formatted better with clear demarkations
@@ -7,4 +8,8 @@ AnswerPage:
 - Add audio responses
 - Add navigable tabs between the different questions 
 - Make the option to continuously iterate on this response to become more complex
+
+FUTURE IMPROVEMENTS:
+- Refactor useCreateForm.ts into smaller files
+- Implement API to save answers in database rather than local storage
 
