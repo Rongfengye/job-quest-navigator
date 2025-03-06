@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -125,7 +126,10 @@ export const useQuestionData = (storylineId: string | null) => {
           console.log("OpenAI response from database:", data.openai_response);
           
           let processedQuestions: Question[] = [];
-          const parsedResponse = safeJsonParse(data.openai_response);
+          // Using approach 1: Check if already an object before parsing
+          const parsedResponse = typeof data.openai_response === 'string'
+            ? safeJsonParse(data.openai_response)
+            : data.openai_response as ParsedResponse;
           
           // Handle old format with separate question categories
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
