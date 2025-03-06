@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -46,20 +45,20 @@ export const categorizeQuestion = (questionText: string): 'technical' | 'behavio
   }
 };
 
-// Parse JSON safely
+// Parse JSON safely with explicit return type
 export const safeJsonParse = (data: Json): ParsedResponse => {
   if (typeof data === 'string') {
     try {
       return JSON.parse(data) as ParsedResponse;
     } catch (e) {
       console.error('Failed to parse JSON string:', e);
-      return {};
+      return {} as ParsedResponse;
     }
   } else if (typeof data === 'object' && data !== null) {
-    return data as unknown as ParsedResponse;
+    return data as ParsedResponse;
   }
   
-  return {};
+  return {} as ParsedResponse;
 };
 
 export const useQuestionData = (storylineId: string | null) => {
