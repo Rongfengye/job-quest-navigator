@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -16,16 +17,7 @@ export const useAuth = () => {
 
   // Log current auth state whenever it changes
   useEffect(() => {
-    console.log('useAuth hook state updated:', { 
-      user, 
-      isAuthenticated: !!user,
-      userDetails: user ? {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName
-      } : 'No user'
-    });
+    console.log('useAuth hook state updated:', { user, isAuthenticated: !!user });
   }, [user]);
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
@@ -63,15 +55,13 @@ export const useAuth = () => {
       
       // Set user in state
       console.log('Setting user in local state...');
-      const userData = {
+      setUser({
         id: authData.user.id,
         email: authData.user.email || email,
         firstName,
         lastName
-      };
-      console.log('User data being set:', userData);
-      setUser(userData);
-      console.log('User state set successfully, checking if state updated:', user);
+      });
+      console.log('User state set successfully');
 
       console.log('Showing success toast...');
       toast({
@@ -178,22 +168,12 @@ export const useAuth = () => {
     }
   };
 
-  // Create a more reliable setUser function that ensures state updates
-  const setUserState = (userData: UserData | null) => {
-    console.log('setUserState called with:', userData);
-    setUser(userData);
-    // Log immediately after setting
-    setTimeout(() => {
-      console.log('User state after setUserState:', user);
-    }, 0);
-  };
-
   return {
     user,
     isLoading,
     signup,
     login,
     logout,
-    setUser: setUserState
+    setUser
   };
 };
