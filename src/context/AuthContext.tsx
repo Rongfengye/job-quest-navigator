@@ -29,16 +29,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .from('storyline_users')
             .select('*')
             .eq('id', data.session.user.id)
-            .maybeSingle();
+            .single();
           
           if (userData && !error) {
             // Set user in auth hook
-            auth.user = {
+            auth.setUser({
               id: userData.id,
               email: userData.email,
               firstName: userData.first_name,
               lastName: userData.last_name
-            };
+            });
           }
         }
       } catch (error) {
@@ -58,18 +58,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('storyline_users')
           .select('*')
           .eq('id', session.user.id)
-          .maybeSingle();
+          .single();
         
         if (userData && !error) {
-          auth.user = {
+          auth.setUser({
             id: userData.id,
             email: userData.email,
             firstName: userData.first_name,
             lastName: userData.last_name
-          };
+          });
         }
       } else {
-        auth.user = null;
+        auth.setUser(null);
       }
     });
     
@@ -79,9 +79,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const value = {
-    ...auth,
+    user: auth.user,
     isLoading: isLoading || auth.isLoading,
-    isAuthenticated: !!auth.user
+    isAuthenticated: !!auth.user,
+    login: auth.login,
+    signup: auth.signup,
+    logout: auth.logout
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
