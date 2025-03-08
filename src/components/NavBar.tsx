@@ -34,16 +34,6 @@ const NavBar = () => {
     }
   };
 
-  // This ensures that once we get out of loading state, we render the correct UI
-  useEffect(() => {
-    if (!isLoading) {
-      console.log('NavBar: Loading complete, auth state is:', { 
-        isAuthenticated, 
-        userExists: !!user 
-      });
-    }
-  }, [isLoading, isAuthenticated, user]);
-
   return (
     <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-200">
       <Link to="/" className="text-xl font-bold text-interview-primary hover:opacity-90 transition-opacity">
@@ -54,7 +44,7 @@ const NavBar = () => {
         {isLoading ? (
           <div className="flex items-center text-sm text-interview-text-secondary">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            <span>Loading...</span>
+            <span>Loading auth state...</span>
           </div>
         ) : isAuthenticated ? (
           <>

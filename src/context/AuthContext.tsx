@@ -29,60 +29,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // We have a session, so the user is authenticated
           console.log('User is authenticated via session, userId:', data.session.user.id);
           
-          // Fetch user profile from storyline_users which is automatically generated via trigger
-          console.log('Fetching user profile from storyline_users...');
-          
-          try {
-            // Use a more reliable approach with better error handling
-            const { data: userData, error, status } = await supabase
-              .from('storyline_users')
-              .select('*')
-              .eq('id', data.session.user.id)
-              .maybeSingle();
-            
-            console.log('User data fetch completed with status:', status);
-            
-            if (userData && !error) {
-              console.log('User data fetched successfully:', userData);
-              // Set user in auth hook
-              auth.setUser({
-                id: userData.id,
-                email: userData.email,
-                firstName: userData.first_name,
-                lastName: userData.last_name
-              });
-            } else {
-              console.warn('Failed to fetch user data but session exists:', error);
-              // Log more details about the error
-              if (error) {
-                console.error('Error details:', {
-                  message: error.message,
-                  code: error.code,
-                  details: error.details
-                });
-              }
-              
-              // Even if we failed to fetch user data, we still have a valid session
-              // Set minimal user data from session
-              console.log('Setting minimal user data from session');
-              auth.setUser({
-                id: data.session.user.id,
-                email: data.session.user.email || '',
-                firstName: data.session.user.user_metadata?.first_name || '',
-                lastName: data.session.user.user_metadata?.last_name || ''
-              });
-            }
-          } catch (queryError) {
-            console.error('Error fetching user data:', queryError);
-            // Handle timeout or other errors by falling back to session data
-            console.log('Setting minimal user data from session after query error');
-            auth.setUser({
-              id: data.session.user.id,
-              email: data.session.user.email || '',
-              firstName: data.session.user.user_metadata?.first_name || '',
-              lastName: data.session.user.user_metadata?.last_name || ''
-            });
-          }
+          // Set user directly from session data - no need to query the database
+          console.log('Setting user data from session');
+          auth.setUser({
+            id: data.session.user.id,
+            email: data.session.user.email || '',
+            firstName: data.session.user.user_metadata?.first_name || '',
+            lastName: data.session.user.user_metadata?.last_name || ''
+          });
         } else {
           console.log('No session found, user is not authenticated');
           auth.setUser(null);
@@ -106,78 +60,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
           
-          try {
-            // More reliable approach for fetching user profile
-            console.log('Fetching user profile after auth state change...');
-            
-            const { data: userData, error, status } = await supabase
-              .from('storyline_users')
-              .select('*')
-              .eq('id', session.user.id)
-              .maybeSingle();
-            
-            console.log('User profile fetch status:', status);
-            
-            if (error) {
-              throw error;
-            }
-            
-            if (userData) {
-              console.log('Setting user data from database');
-              auth.setUser({
-                id: userData.id,
-                email: userData.email,
-                firstName: userData.first_name,
-                lastName: userData.last_name
-              });
-            } else {
-              console.log('No user data found in storyline_users, checking if user exists in auth');
-              
-              // Check if user exists in auth.users
-              const { data: authUser, error: authError } = await supabase.auth.getUser();
-              
-              if (authError) {
-                console.error('Error getting auth user:', authError);
-              }
-              
-              if (authUser && authUser.user) {
-                console.log('User exists in auth, creating profile in storyline_users');
-                
-                // Try to insert the user into storyline_users as a fallback
-                const { error: insertError } = await supabase
-                  .from('storyline_users')
-                  .insert({
-                    id: session.user.id,
-                    email: session.user.email || '',
-                    first_name: session.user.user_metadata?.first_name || '',
-                    last_name: session.user.user_metadata?.last_name || ''
-                  });
-                
-                if (insertError) {
-                  console.error('Error inserting user into storyline_users:', insertError);
-                }
-                
-                // Set minimal user data from session
-                console.log('Setting minimal user data from session');
-                auth.setUser({
-                  id: session.user.id,
-                  email: session.user.email || '',
-                  firstName: session.user.user_metadata?.first_name || '',
-                  lastName: session.user.user_metadata?.last_name || ''
-                });
-              }
-            }
-          } catch (queryError) {
-            console.error('Error fetching user data after auth change:', queryError);
-            // Handle errors by falling back to session data
-            console.log('Setting minimal user data from session after query error');
-            auth.setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              firstName: session.user.user_metadata?.first_name || '',
-              lastName: session.user.user_metadata?.last_name || ''
-            });
-          }
+          // Set user directly from session data - no need to query the database
+          console.log('Setting user data from session');
+          auth.setUser({
+            id: session.user.id,
+            email: session.user.email || '',
+            firstName: session.user.user_metadata?.first_name || '',
+            lastName: session.user.user_metadata?.last_name || ''
+          });
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('User signed out, clearing auth state');
