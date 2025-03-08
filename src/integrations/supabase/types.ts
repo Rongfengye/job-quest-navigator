@@ -22,6 +22,7 @@ export type Database = {
           openai_response: Json | null
           resume_path: string
           status: string | null
+          user_id: string | null
         }
         Insert: {
           additional_documents_path?: string | null
@@ -35,6 +36,7 @@ export type Database = {
           openai_response?: Json | null
           resume_path: string
           status?: string | null
+          user_id?: string | null
         }
         Update: {
           additional_documents_path?: string | null
@@ -48,6 +50,39 @@ export type Database = {
           openai_response?: Json | null
           resume_path?: string
           status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storyline_jobs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "storyline_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      storyline_users: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string
+          id: string
+          last_name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name: string
+          id?: string
+          last_name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string
+          id?: string
+          last_name?: string
         }
         Relationships: []
       }
