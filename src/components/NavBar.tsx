@@ -2,11 +2,11 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
-import { LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { LogOut, User } from 'lucide-react';
+import { useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
-  const { isAuthenticated, logout } = useAuthContext();
+  const { isAuthenticated, logout, user } = useAuthContext();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -17,19 +17,40 @@ const NavBar = () => {
   };
 
   return (
-    <div className="w-full flex items-center justify-between py-4 px-6">
-      <h1 className="text-xl font-bold text-interview-primary">Storyline</h1>
+    <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-200">
+      <Link to="/" className="text-xl font-bold text-interview-primary hover:opacity-90 transition-opacity">
+        Storyline
+      </Link>
       
-      {isAuthenticated && (
-        <Button 
-          variant="ghost" 
-          onClick={handleLogout}
-          className="flex items-center gap-2"
-        >
-          <LogOut className="h-4 w-4" />
-          Sign out
-        </Button>
-      )}
+      <div className="flex items-center gap-4">
+        {isAuthenticated && user && (
+          <>
+            <div className="flex items-center text-sm text-interview-text-secondary">
+              <User className="h-4 w-4 mr-2" />
+              <span>Logged in as {user.firstName} {user.lastName}</span>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              onClick={handleLogout}
+              className="flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </Button>
+          </>
+        )}
+        
+        {!isAuthenticated && (
+          <Button
+            variant="outline"
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2"
+          >
+            Sign in
+          </Button>
+        )}
+      </div>
     </div>
   );
 };

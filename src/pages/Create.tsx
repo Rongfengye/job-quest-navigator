@@ -1,20 +1,31 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import FormField from '@/components/FormField';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
 import { useCreateForm } from '@/hooks/useCreateForm';
+import { useAuthContext } from '@/context/AuthContext';
 
 const Create = () => {
+  const { isAuthenticated, isLoading } = useAuthContext();
+  const navigate = useNavigate();
+
+  // Redirect to home if not authenticated
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
   const {
     formData,
     resumeFile,
     coverLetterFile,
     additionalDocumentsFile,
-    isLoading,
+    isLoading: formLoading,
     processingModal,
     handleInputChange,
     handleResumeChange,
@@ -22,6 +33,14 @@ const Create = () => {
     handleAdditionalDocumentsChange,
     handleSubmit,
   } = useCreateForm();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-interview-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
