@@ -17,13 +17,28 @@ export const useAuth = () => {
 
   // Log current auth state whenever it changes
   useEffect(() => {
-    console.log('useAuth hook state updated:', { user, isAuthenticated: !!user });
+    console.log('useAuth hook state updated:', { 
+      user: user ? {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName
+      } : null, 
+      isAuthenticated: !!user 
+    });
   }, [user]);
 
+  const setUserSafely = (userData: UserData | null) => {
+    console.log('setUserSafely called with:', userData);
+    setUser(userData);
+  };
+
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
+    console.log('Signup function called with:', { email, firstName, lastName });
     setIsLoading(true);
     
     try {
+      console.log('Creating auth user with Supabase...');
       // Create auth user with metadata for the trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -36,22 +51,31 @@ export const useAuth = () => {
         }
       });
 
+      console.log('Supabase signup response:', { 
+        success: !authError, 
+        userId: authData?.user?.id,
+        error: authError ? authError.message : null
+      });
+
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
 
+      console.log('Setting user state after signup');
       // Set user in state
-      setUser({
+      setUserSafely({
         id: authData.user.id,
         email: authData.user.email || email,
         firstName,
         lastName
       });
 
+      console.log('Showing success toast');
       toast({
         title: "Account created",
         description: "Your account has been created successfully.",
       });
       
+      console.log('Signup function completed successfully');
       return { success: true, user: authData.user };
     } catch (error) {
       console.error('Signup error:', error);
@@ -62,21 +86,31 @@ export const useAuth = () => {
       });
       return { success: false, error };
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
+    console.log('Login function called with email:', email);
     setIsLoading(true);
     
     try {
+      console.log('Attempting to sign in with Supabase...');
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
+      console.log('Supabase login response:', { 
+        success: !error, 
+        userId: data?.user?.id,
+        error: error ? error.message : null
+      });
+
       if (error) throw error;
       
+      console.log('Fetching user profile data...');
       // Fetch user profile data - the storyline_users row should exist due to the trigger
       const { data: userData, error: userError } = await supabase
         .from('storyline_users')
@@ -84,17 +118,24 @@ export const useAuth = () => {
         .eq('id', data.user.id)
         .single();
       
+      console.log('User profile fetch result:', { 
+        success: !userError, 
+        userData: userData || null,
+        error: userError ? userError.message : null
+      });
+
       if (userError) {
         // Even if we couldn't get profile data, we know the user is logged in
         console.log('User authenticated but profile not found, using session data');
-        setUser({
+        setUserSafely({
           id: data.user.id,
           email: data.user.email || email,
           firstName: data.user.user_metadata?.first_name || '',
           lastName: data.user.user_metadata?.last_name || ''
         });
       } else {
-        setUser({
+        console.log('Setting user with profile data');
+        setUserSafely({
           id: userData.id,
           email: userData.email,
           firstName: userData.first_name,
@@ -102,11 +143,13 @@ export const useAuth = () => {
         });
       }
 
+      console.log('Showing success toast');
       toast({
         title: "Logged in",
         description: "You have been logged in successfully.",
       });
       
+      console.log('Login function completed successfully');
       return { success: true, user: data.user };
     } catch (error) {
       console.error('Login error:', error);
@@ -117,23 +160,36 @@ export const useAuth = () => {
       });
       return { success: false, error };
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
 
   const logout = async () => {
+    console.log('Logout function called');
     setIsLoading(true);
     
     try {
+      console.log('Calling Supabase signOut...');
       const { error } = await supabase.auth.signOut();
+      
+      console.log('Supabase signOut response:', { 
+        success: !error, 
+        error: error ? error.message : null
+      });
+      
       if (error) throw error;
       
-      setUser(null);
+      console.log('Clearing user state');
+      setUserSafely(null);
+      
+      console.log('Showing success toast');
       toast({
         title: "Logged out",
         description: "You have been logged out successfully.",
       });
       
+      console.log('Logout function completed successfully');
       return { success: true };
     } catch (error) {
       console.error('Logout error:', error);
@@ -144,6 +200,7 @@ export const useAuth = () => {
       });
       return { success: false, error };
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
     }
   };
@@ -154,6 +211,6 @@ export const useAuth = () => {
     signup,
     login,
     logout,
-    setUser
+    setUser: setUserSafely
   };
 };

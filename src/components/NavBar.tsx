@@ -6,21 +6,28 @@ import { LogOut, User } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
-  const { isAuthenticated, logout, user } = useAuthContext();
+  const { isAuthenticated, logout, user, isLoading } = useAuthContext();
   const navigate = useNavigate();
 
   // Add enhanced debugging to see the current auth state
   useEffect(() => {
-    console.log('NavBar auth state:', { 
+    console.log('NavBar rendering with auth state:', { 
       isAuthenticated, 
-      user,
+      user: user ? {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName
+      } : null,
+      isLoading,
       userExists: !!user
     });
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, isLoading]);
 
   const handleLogout = async () => {
+    console.log('NavBar: Logout button clicked');
     const { success } = await logout();
     if (success) {
+      console.log('NavBar: Logout successful, navigating to home');
       navigate('/');
     }
   };
@@ -32,7 +39,9 @@ const NavBar = () => {
       </Link>
       
       <div className="flex items-center gap-4">
-        {isAuthenticated ? (
+        {isLoading ? (
+          <div className="text-sm text-interview-text-secondary">Loading...</div>
+        ) : isAuthenticated ? (
           <>
             <div className="flex items-center text-sm text-interview-text-secondary">
               <User className="h-4 w-4 mr-2" />
