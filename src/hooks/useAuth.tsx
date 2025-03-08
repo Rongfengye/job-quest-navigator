@@ -21,9 +21,11 @@ export const useAuth = () => {
   }, [user]);
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
+    console.log('Signup function called with:', { email, firstName, lastName });
     setIsLoading(true);
     
     try {
+      console.log('Creating auth user with Supabase...');
       // Create auth user with metadata for the trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -36,25 +38,41 @@ export const useAuth = () => {
         }
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      console.log('Supabase auth.signUp response:', { authData, authError });
 
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        throw authError;
+      }
+      
+      if (!authData.user) {
+        console.error('No user data returned from Supabase');
+        throw new Error('Failed to create user');
+      }
+
+      console.log('Auth user created successfully:', authData.user);
+      console.log('User session state:', authData.session);
+      
       // Set user in state
+      console.log('Setting user in local state...');
       setUser({
         id: authData.user.id,
         email: authData.user.email || email,
         firstName,
         lastName
       });
+      console.log('User state set successfully');
 
+      console.log('Showing success toast...');
       toast({
         title: "Account created",
         description: "Your account has been created successfully.",
       });
       
+      console.log('Signup process completed successfully');
       return { success: true, user: authData.user };
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Signup error details:', error);
       toast({
         variant: "destructive",
         title: "Error creating account",
@@ -62,7 +80,9 @@ export const useAuth = () => {
       });
       return { success: false, error };
     } finally {
+      console.log('Setting isLoading to false');
       setIsLoading(false);
+      console.log('Signup function completed');
     }
   };
 
