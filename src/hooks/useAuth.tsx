@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -19,7 +18,7 @@ export const useAuth = () => {
     setIsLoading(true);
     
     try {
-      // 1. Create auth user with metadata for the trigger
+      // Create auth user with metadata for the trigger
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -33,20 +32,6 @@ export const useAuth = () => {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
-
-      // 2. Add user to storyline_users table
-      const { error: profileError } = await supabase
-        .from('storyline_users')
-        .insert([
-          { 
-            id: authData.user.id,
-            email,
-            first_name: firstName,
-            last_name: lastName
-          }
-        ]);
-
-      if (profileError) throw profileError;
 
       // Set user in state
       setUser({
@@ -86,7 +71,7 @@ export const useAuth = () => {
 
       if (error) throw error;
       
-      // Fetch user profile data
+      // Fetch user profile data - the storyline_users row should exist due to the trigger
       const { data: userData, error: userError } = await supabase
         .from('storyline_users')
         .select('*')

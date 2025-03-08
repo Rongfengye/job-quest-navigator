@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
-          // Fetch user profile from storyline_users
+          // Fetch user profile from storyline_users which is automatically generated via trigger
           const { data: userData, error } = await supabase
             .from('storyline_users')
             .select('*')
