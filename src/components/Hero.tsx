@@ -1,16 +1,23 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
+import { useAuthContext } from '@/context/AuthContext';
 
 const Hero = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthContext();
 
   const handleGetStarted = () => {
-    setShowAuthModal(true);
+    if (isAuthenticated) {
+      // If user is already logged in, navigate directly to Create page
+      navigate('/create');
+    } else {
+      // Otherwise show auth modal for login/signup
+      setShowAuthModal(true);
+    }
   };
 
   return (
