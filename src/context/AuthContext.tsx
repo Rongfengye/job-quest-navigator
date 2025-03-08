@@ -31,26 +31,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Fetch user profile from storyline_users which is automatically generated via trigger
           console.log('Fetching user profile from storyline_users...');
-          const { data: userData, error } = await supabase
-            .from('storyline_users')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .single();
           
-          if (userData && !error) {
-            console.log('User data fetched successfully:', userData);
-            // Set user in auth hook
-            auth.setUser({
-              id: userData.id,
-              email: userData.email,
-              firstName: userData.first_name,
-              lastName: userData.last_name
-            });
-          } else {
-            console.error('Failed to fetch user data but session exists:', error);
-            // Even if we failed to fetch user data, we still have a valid session
-            // Set minimal user data from session
-            console.log('Setting minimal user data from session');
+          // Use timeout to prevent hanging queries
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
+          );
+          
+          try {
+            // Race the query against the timeout
+            const result = await Promise.race([
+              supabase
+                .from('storyline_users')
+                .select('*')
+                .eq('id', data.session.user.id)
+                .maybeSingle(),
+              timeoutPromise
+            ]);
+            
+            // The result is now either the query result or it threw a timeout error
+            console.log('User data fetch completed with result:', result);
+            
+            const { data: userData, error } = result as any;
+            
+            if (userData && !error) {
+              console.log('User data fetched successfully:', userData);
+              // Set user in auth hook
+              auth.setUser({
+                id: userData.id,
+                email: userData.email,
+                firstName: userData.first_name,
+                lastName: userData.last_name
+              });
+            } else {
+              console.warn('Failed to fetch user data but session exists:', error);
+              // Even if we failed to fetch user data, we still have a valid session
+              // Set minimal user data from session
+              console.log('Setting minimal user data from session');
+              auth.setUser({
+                id: data.session.user.id,
+                email: data.session.user.email || '',
+                firstName: data.session.user.user_metadata?.first_name || '',
+                lastName: data.session.user.user_metadata?.last_name || ''
+              });
+            }
+          } catch (queryError) {
+            console.error('Error fetching user data:', queryError);
+            // Handle timeout or other errors by falling back to session data
+            console.log('Setting minimal user data from session after query error');
             auth.setUser({
               id: data.session.user.id,
               email: data.session.user.email || '',
@@ -83,26 +110,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Fetch user profile when auth state changes
           console.log('Fetching user profile after auth state change...');
-          const { data: userData, error } = await supabase
-            .from('storyline_users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
           
-          console.log('User data fetch result:', userData ? 'Data found' : 'No data', error ? `Error: ${error.message}` : 'No error');
+          // Use timeout to prevent hanging queries
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Query timeout after 5 seconds')), 5000)
+          );
           
-          if (userData && !error) {
-            console.log('Setting user data from database');
-            auth.setUser({
-              id: userData.id,
-              email: userData.email,
-              firstName: userData.first_name,
-              lastName: userData.last_name
-            });
-          } else {
-            console.log('Setting minimal user data from session');
-            // Even if we failed to fetch user data, we still have a valid session
-            // Set minimal user data from session
+          try {
+            // Race the query against the timeout
+            const result = await Promise.race([
+              supabase
+                .from('storyline_users')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle(),
+              timeoutPromise
+            ]);
+            
+            // The result is now either the query result or it threw a timeout error
+            console.log('User data fetch after auth change completed with result:', result);
+            
+            const { data: userData, error } = result as any;
+            
+            console.log('User data fetch result:', userData ? 'Data found' : 'No data', error ? `Error: ${error.message}` : 'No error');
+            
+            if (userData && !error) {
+              console.log('Setting user data from database');
+              auth.setUser({
+                id: userData.id,
+                email: userData.email,
+                firstName: userData.first_name,
+                lastName: userData.last_name
+              });
+            } else {
+              console.log('Setting minimal user data from session');
+              // Even if we failed to fetch user data, we still have a valid session
+              // Set minimal user data from session
+              auth.setUser({
+                id: session.user.id,
+                email: session.user.email || '',
+                firstName: session.user.user_metadata?.first_name || '',
+                lastName: session.user.user_metadata?.last_name || ''
+              });
+            }
+          } catch (queryError) {
+            console.error('Error fetching user data after auth change:', queryError);
+            // Handle timeout or other errors by falling back to session data
+            console.log('Setting minimal user data from session after query error');
             auth.setUser({
               id: session.user.id,
               email: session.user.email || '',

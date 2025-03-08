@@ -29,8 +29,20 @@ const NavBar = () => {
     if (success) {
       console.log('NavBar: Logout successful, navigating to home');
       navigate('/');
+    } else {
+      console.error('NavBar: Logout failed');
     }
   };
+
+  // This ensures that once we get out of loading state, we render the correct UI
+  useEffect(() => {
+    if (!isLoading) {
+      console.log('NavBar: Loading complete, auth state is:', { 
+        isAuthenticated, 
+        userExists: !!user 
+      });
+    }
+  }, [isLoading, isAuthenticated, user]);
 
   return (
     <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-200">
