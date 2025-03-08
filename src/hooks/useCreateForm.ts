@@ -101,7 +101,7 @@ export const useCreateForm = () => {
       }
 
       const { data: storylineData, error: insertError } = await supabase
-        .from('storyline_jobs')
+        .from('storyline')
         .insert({
           job_title: formData.jobTitle,
           job_description: formData.jobDescription,
@@ -152,7 +152,7 @@ export const useCreateForm = () => {
       console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
       const { error: updateError } = await supabase
-        .from('storyline_jobs')
+        .from('storyline')
         .update({
           openai_response: data,
           status: 'completed'

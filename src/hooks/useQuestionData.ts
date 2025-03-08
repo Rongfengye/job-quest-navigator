@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
-import { useAuth } from '@/hooks/useAuth';
 
 export type Question = {
   question: string;
@@ -64,7 +63,6 @@ export const safeJsonParse = (data: Json): ParsedResponse => {
 
 export const useQuestionData = (storylineId: string | null) => {
   const { toast } = useToast();
-  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [jobDetails, setJobDetails] = useState<JobDetails>({
@@ -85,22 +83,11 @@ export const useQuestionData = (storylineId: string | null) => {
         return;
       }
 
-      if (!user) {
-        toast({
-          variant: "destructive",
-          title: "Authentication required",
-          description: "Please sign in to view this content.",
-        });
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const { data, error } = await supabase
-          .from('storyline_jobs')
+          .from('storyline')
           .select('*')
           .eq('id', storylineId)
-          .eq('user_id', user.id)
           .single();
 
         if (error) throw error;
@@ -183,7 +170,7 @@ export const useQuestionData = (storylineId: string | null) => {
     };
 
     fetchQuestions();
-  }, [storylineId, toast, user]);
+  }, [storylineId, toast]);
 
   return { isLoading, questions, jobDetails, error };
 };
