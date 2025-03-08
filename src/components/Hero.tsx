@@ -19,9 +19,10 @@ const Hero = () => {
       
       <div className="relative px-6 py-24 md:py-32 max-w-7xl mx-auto">
         <div className="text-center">
-          <div className="inline-block bg-interview-light text-interview-primary text-sm font-medium px-4 py-1.5 rounded-full mb-6 opacity-0 animate-fade-down">
+          {/* Comment this out for the time being */}
+          {/* <div className="inline-block bg-interview-light text-interview-primary text-sm font-medium px-4 py-1.5 rounded-full mb-6 opacity-0 animate-fade-down">
             NO SUBSCRIPTION REQUIRED
-          </div>
+          </div> */}
           
           <h1 className="text-4xl md:text-6xl font-bold text-interview-primary mb-6 leading-tight opacity-0 animate-fade-up">
             Storyline
