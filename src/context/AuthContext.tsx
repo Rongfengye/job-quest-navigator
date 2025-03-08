@@ -22,6 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkSession = async () => {
       try {
         const { data } = await supabase.auth.getSession();
+        console.log('Initial session check:', data.session);
         
         if (data.session) {
           // Fetch user profile from storyline_users which is automatically generated via trigger
@@ -30,6 +31,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .select('*')
             .eq('id', data.session.user.id)
             .single();
+          
+          console.log('User data from storyline_users:', userData, error);
           
           if (userData && !error) {
             // Set user in auth hook
@@ -60,6 +63,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .select('*')
           .eq('id', session.user.id)
           .single();
+        
+        console.log('User data after auth change:', userData, error);
         
         if (userData && !error) {
           auth.setUser({
