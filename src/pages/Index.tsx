@@ -7,15 +7,6 @@ import { Separator } from '@/components/ui/separator';
 const Index = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      <header className="py-6 px-6 flex items-center justify-between max-w-7xl mx-auto w-full">
-        <h1 className="text-xl font-bold text-interview-primary">Storyline</h1>
-        <nav className="hidden md:flex items-center space-x-8">
-          <a href="#features" className="text-interview-text-secondary hover:text-interview-primary transition-colors">Features</a>
-          <a href="#" className="text-interview-text-secondary hover:text-interview-primary transition-colors">Pricing</a>
-          <a href="#" className="text-interview-text-secondary hover:text-interview-primary transition-colors">FAQ</a>
-        </nav>
-      </header>
-      
       <main className="flex-1">
         <Hero />
         <Separator className="max-w-5xl mx-auto" />
