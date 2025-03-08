@@ -25,6 +25,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Initial session check:', data.session);
         
         if (data.session) {
+          // We have a session, so the user is authenticated
+          console.log('User is authenticated via session');
+          
           // Fetch user profile from storyline_users which is automatically generated via trigger
           const { data: userData, error } = await supabase
             .from('storyline_users')
@@ -42,10 +45,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               firstName: userData.first_name,
               lastName: userData.last_name
             });
+          } else {
+            console.error('Failed to fetch user data but session exists:', error);
+            // Even if we failed to fetch user data, we still have a valid session
+            // Set minimal user data from session
+            auth.setUser({
+              id: data.session.user.id,
+              email: data.session.user.email || '',
+              firstName: data.session.user.user_metadata?.first_name || '',
+              lastName: data.session.user.user_metadata?.last_name || ''
+            });
           }
+        } else {
+          console.log('No session found, user is not authenticated');
+          auth.setUser(null);
         }
       } catch (error) {
         console.error("Error checking session:", error);
+        auth.setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -56,25 +73,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session);
-      if (session) {
-        // Fetch user profile when auth state changes
-        const { data: userData, error } = await supabase
-          .from('storyline_users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        
-        console.log('User data after auth change:', userData, error);
-        
-        if (userData && !error) {
-          auth.setUser({
-            id: userData.id,
-            email: userData.email,
-            firstName: userData.first_name,
-            lastName: userData.last_name
-          });
+      
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session) {
+          console.log('User signed in or token refreshed, updating auth state');
+          
+          // Fetch user profile when auth state changes
+          const { data: userData, error } = await supabase
+            .from('storyline_users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          console.log('User data after auth change:', userData, error);
+          
+          if (userData && !error) {
+            auth.setUser({
+              id: userData.id,
+              email: userData.email,
+              firstName: userData.first_name,
+              lastName: userData.last_name
+            });
+          } else {
+            console.error('Failed to fetch user data after auth change:', error);
+            // Even if we failed to fetch user data, we still have a valid session
+            // Set minimal user data from session
+            auth.setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              firstName: session.user.user_metadata?.first_name || '',
+              lastName: session.user.user_metadata?.last_name || ''
+            });
+          }
         }
-      } else {
+      } else if (event === 'SIGNED_OUT') {
+        console.log('User signed out, clearing auth state');
         auth.setUser(null);
       }
     });

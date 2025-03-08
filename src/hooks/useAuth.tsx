@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -13,6 +14,11 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<UserData | null>(null);
   const { toast } = useToast();
+
+  // Log current auth state whenever it changes
+  useEffect(() => {
+    console.log('useAuth hook state updated:', { user, isAuthenticated: !!user });
+  }, [user]);
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
     setIsLoading(true);
@@ -78,14 +84,23 @@ export const useAuth = () => {
         .eq('id', data.user.id)
         .single();
       
-      if (userError) throw userError;
-      
-      setUser({
-        id: userData.id,
-        email: userData.email,
-        firstName: userData.first_name,
-        lastName: userData.last_name
-      });
+      if (userError) {
+        // Even if we couldn't get profile data, we know the user is logged in
+        console.log('User authenticated but profile not found, using session data');
+        setUser({
+          id: data.user.id,
+          email: data.user.email || email,
+          firstName: data.user.user_metadata?.first_name || '',
+          lastName: data.user.user_metadata?.last_name || ''
+        });
+      } else {
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name
+        });
+      }
 
       toast({
         title: "Logged in",

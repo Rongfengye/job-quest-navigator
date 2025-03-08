@@ -9,9 +9,13 @@ const NavBar = () => {
   const { isAuthenticated, logout, user } = useAuthContext();
   const navigate = useNavigate();
 
-  // Add debugging to see the current auth state
+  // Add enhanced debugging to see the current auth state
   useEffect(() => {
-    console.log('NavBar auth state:', { isAuthenticated, user });
+    console.log('NavBar auth state:', { 
+      isAuthenticated, 
+      user,
+      userExists: !!user
+    });
   }, [isAuthenticated, user]);
 
   const handleLogout = async () => {
@@ -32,7 +36,9 @@ const NavBar = () => {
           <>
             <div className="flex items-center text-sm text-interview-text-secondary">
               <User className="h-4 w-4 mr-2" />
-              <span>Logged in as {user?.firstName} {user?.lastName}</span>
+              <span>
+                Logged in as {user?.firstName || 'User'} {user?.lastName || ''}
+              </span>
             </div>
             
             <Button 
