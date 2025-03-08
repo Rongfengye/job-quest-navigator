@@ -85,7 +85,7 @@ export const useQuestionData = (storylineId: string | null) => {
 
       try {
         const { data, error } = await supabase
-          .from('storyline')
+          .from('storyline_jobs')
           .select('*')
           .eq('id', storylineId)
           .single();
