@@ -1,8 +1,8 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuthContext } from '@/context/AuthContext';
 
 interface FormData {
   jobTitle: string;
@@ -19,6 +19,7 @@ interface FileData {
 export const useCreateForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     jobTitle: '',
@@ -81,13 +82,22 @@ export const useCreateForm = () => {
       return;
     }
 
+    if (!user || !user.id) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to submit an application.",
+        variant: "destructive",
+      });
+      navigate('/');
+      return;
+    }
+
     setIsLoading(true);
     
     try {
-      setProcessingModal(true); // TODO we probably want this to have a progress bar
+      setProcessingModal(true);
 
-      const resumePath = await uploadFile(resumeFile.file, 'resumes'); 
-      // Question to self, do we even want to retain their resume? I guess for observation purposes but it is costly
+      const resumePath = await uploadFile(resumeFile.file, 'resumes');
       
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
@@ -100,6 +110,7 @@ export const useCreateForm = () => {
         additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
       }
 
+      console.log("Inserting job with user_id:", user.id);
       const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
@@ -110,18 +121,19 @@ export const useCreateForm = () => {
           resume_path: resumePath,
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
-          status: 'processing'
+          status: 'processing',
+          user_id: user.id
         })
         .select('id')
         .single();
 
       if (insertError) {
+        console.error("Insert error details:", insertError);
         throw new Error(`Error saving your application: ${insertError.message}`);
       }
 
       const storylineId = storylineData.id;
 
-      // Log the data being sent to the OpenAI function
       const requestBody = {
         jobTitle: formData.jobTitle,
         jobDescription: formData.jobDescription,
