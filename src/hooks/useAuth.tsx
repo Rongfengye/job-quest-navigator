@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -28,10 +28,79 @@ export const useAuth = () => {
     });
   }, [user]);
 
-  const setUserSafely = (userData: UserData | null) => {
+  const setUserSafely = useCallback((userData: UserData | null) => {
     console.log('setUserSafely called with:', userData);
     setUser(userData);
-  };
+  }, []);
+
+  // Function to manually sync user data from Supabase
+  const syncUserData = useCallback(async () => {
+    console.log('Manually syncing user data from Supabase');
+    setIsLoading(true);
+    
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        console.log('No active session found during manual sync');
+        setUserSafely(null);
+        return { success: false, error: 'No active session' };
+      }
+      
+      const userId = sessionData.session.user.id;
+      console.log('Found active session for user ID:', userId);
+      
+      // Try to get user data from storyline_users
+      const { data: userData, error } = await supabase
+        .from('storyline_users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching user data during manual sync:', error);
+        
+        // Fall back to session data
+        setUserSafely({
+          id: userId,
+          email: sessionData.session.user.email || '',
+          firstName: sessionData.session.user.user_metadata?.first_name || '',
+          lastName: sessionData.session.user.user_metadata?.last_name || ''
+        });
+        
+        return { success: true, error };
+      }
+      
+      if (userData) {
+        console.log('Successfully fetched user data during manual sync');
+        setUserSafely({
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name
+        });
+        
+        return { success: true, user: userData };
+      } else {
+        console.log('No user data found during manual sync, falling back to session data');
+        
+        // Fall back to session data
+        setUserSafely({
+          id: userId,
+          email: sessionData.session.user.email || '',
+          firstName: sessionData.session.user.user_metadata?.first_name || '',
+          lastName: sessionData.session.user.user_metadata?.last_name || ''
+        });
+        
+        return { success: true, user: null };
+      }
+    } catch (error) {
+      console.error('Unexpected error during manual sync:', error);
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [setUserSafely]);
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
     console.log('Signup function called with:', { email, firstName, lastName });
@@ -116,7 +185,7 @@ export const useAuth = () => {
         .from('storyline_users')
         .select('*')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
       
       console.log('User profile fetch result:', { 
         success: !userError, 
@@ -124,7 +193,7 @@ export const useAuth = () => {
         error: userError ? userError.message : null
       });
 
-      if (userError) {
+      if (userError || !userData) {
         // Even if we couldn't get profile data, we know the user is logged in
         console.log('User authenticated but profile not found, using session data');
         setUserSafely({
@@ -133,6 +202,25 @@ export const useAuth = () => {
           firstName: data.user.user_metadata?.first_name || '',
           lastName: data.user.user_metadata?.last_name || ''
         });
+        
+        // Try to create the user profile if it doesn't exist
+        if (!userData) {
+          console.log('Attempting to create missing user profile');
+          const { error: insertError } = await supabase
+            .from('storyline_users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email || email,
+              first_name: data.user.user_metadata?.first_name || '',
+              last_name: data.user.user_metadata?.last_name || ''
+            });
+          
+          if (insertError) {
+            console.error('Error creating missing user profile:', insertError);
+          } else {
+            console.log('Successfully created missing user profile');
+          }
+        }
       } else {
         console.log('Setting user with profile data');
         setUserSafely({
@@ -211,6 +299,7 @@ export const useAuth = () => {
     signup,
     login,
     logout,
+    syncUserData,
     setUser: setUserSafely
   };
 };

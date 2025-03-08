@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, User, Loader2 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 
 const NavBar = () => {
@@ -52,7 +52,10 @@ const NavBar = () => {
       
       <div className="flex items-center gap-4">
         {isLoading ? (
-          <div className="text-sm text-interview-text-secondary">Loading...</div>
+          <div className="flex items-center text-sm text-interview-text-secondary">
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            <span>Loading...</span>
+          </div>
         ) : isAuthenticated ? (
           <>
             <div className="flex items-center text-sm text-interview-text-secondary">
