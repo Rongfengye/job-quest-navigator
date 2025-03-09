@@ -11,6 +11,9 @@ import Create from "./pages/Create";
 import Questions from "./pages/Questions";
 import AnswerPage from "./pages/AnswerPage";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -21,12 +24,14 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <NavBar />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/questions" element={<Questions />} />
-            <Route path="/answer" element={<AnswerPage />} />
+            <Route path="/" element={<><NavBar /><Index /></>} />
+            <Route path="/create" element={<><NavBar /><Create /></>} />
+            <Route path="/questions" element={<><NavBar /><Questions /></>} />
+            <Route path="/answer" element={<><NavBar /><AnswerPage /></>} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -3,8 +3,18 @@ import React from 'react';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
 import { Separator } from '@/components/ui/separator';
+import { useAuthContext } from '@/context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const Index = () => {
+  const { isAuthenticated, isLoading } = useAuthContext();
+  
+  // If authenticated, redirect to dashboard
+  if (isAuthenticated && !isLoading) {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Show landing page for non-authenticated users
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
