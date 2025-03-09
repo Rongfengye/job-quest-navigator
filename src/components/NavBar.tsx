@@ -1,13 +1,15 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
-import { LogOut, User, Loader2 } from 'lucide-react';
+import { LogOut, User, Loader2, LogIn } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import AuthModal from '@/components/auth/AuthModal';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
   const navigate = useNavigate();
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   // Add enhanced debugging to see the current auth state
   useEffect(() => {
@@ -32,6 +34,10 @@ const NavBar = () => {
     } else {
       console.error('NavBar: Logout failed');
     }
+  };
+
+  const handleSignInClick = () => {
+    setShowAuthModal(true);
   };
 
   return (
@@ -67,13 +73,16 @@ const NavBar = () => {
         ) : (
           <Button
             variant="outline"
-            onClick={() => navigate('/')}
+            onClick={handleSignInClick}
             className="flex items-center gap-2"
           >
-            Sign in
+            <LogIn className="h-4 w-4" />
+            Sign up / Log in
           </Button>
         )}
       </div>
+
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 };
