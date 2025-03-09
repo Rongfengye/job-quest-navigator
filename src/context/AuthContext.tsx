@@ -29,7 +29,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // We have a session, so the user is authenticated
           console.log('User is authenticated via session, userId:', data.session.user.id);
           
-          // Set user directly from session data - no need to query the database
+          // Set user directly from session data
           console.log('Setting user data from session');
           auth.setUser({
             id: data.session.user.id,
@@ -60,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
           
-          // Set user directly from session data - no need to query the database
+          // Set user directly from session data
           console.log('Setting user data from session');
           auth.setUser({
             id: session.user.id,
