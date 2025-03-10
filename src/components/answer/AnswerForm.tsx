@@ -10,7 +10,7 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 
 interface AnswerFormProps {
   inputAnswer: string;
-  setInputAnswer: (value: string) => void;
+  setInputAnswer: React.Dispatch<React.SetStateAction<string>>;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   handleGenerateAnswer: () => void;
   isSaving: boolean;
