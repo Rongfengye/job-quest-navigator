@@ -46,28 +46,9 @@ export const useCreateForm = () => {
     setAdditionalDocumentsFile(file);
   };
 
-  const uploadFile = async (file: File, path: string): Promise<string> => {
-    const { data, error } = await supabase.storage
-      .from('interview-app')
-      .upload(`${path}/${file.name}`, file);
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    return data.path;
-  };
-
   const extractTextFromPDF = async (file: File): Promise<string> => {
-    let text = '';
-    try {
-      // Use PDF.js (or other library) to extract text
-      // For now, we'll just return a placeholder
-      text = `Text extracted from ${file.name}`;
-    } catch (error) {
-      console.error('Error extracting text from PDF:', error);
-    }
-    return text;
+    // We'll extract text on the server side through the edge function
+    return `Text from ${file.name}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -94,13 +75,8 @@ export const useCreateForm = () => {
     try {
       setIsLoading(true);
       
-      // Create storage bucket if it doesn't exist
-      const { data: bucketExists } = await supabase.storage.getBucket('interview-app');
-      if (!bucketExists) {
-        await supabase.storage.createBucket('interview-app', {
-          public: false
-        });
-      }
+      // Ensure bucket exists (this will be checked server-side via policies)
+      console.log("Creating job with user ID:", user.id);
       
       // Check if user has enough tokens for creating a job practice (5 tokens)
       const { data: tokenData, error: tokenError } = await supabase.rpc(
@@ -112,58 +88,94 @@ export const useCreateForm = () => {
       );
       
       if (tokenError) {
+        console.error("Token error:", tokenError);
         throw new Error(tokenError.message);
       }
       
+      console.log("Tokens deducted successfully:", tokenData);
+      
       const storylineId = uuidv4();
       
-      // Process files in parallel
-      const uploadPromises = [];
-      
       // Upload resume
+      let resumePath = '';
       if (resumeFile) {
-        const resumePath = `${user.id}/resumes/${resumeFile.name}`;
-        uploadPromises.push(supabase.storage
+        const folderPath = `${user.id}/resumes`;
+        const filePath = `${folderPath}/${resumeFile.name}`;
+        
+        console.log("Uploading resume to:", filePath);
+        
+        const { data: resumeData, error: resumeError } = await supabase.storage
           .from('interview-app')
-          .upload(resumePath, resumeFile)
-          .then(() => resumePath));
+          .upload(filePath, resumeFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (resumeError) {
+          console.error("Resume upload error:", resumeError);
+          throw resumeError;
+        }
+        
+        resumePath = resumeData.path;
+        console.log("Resume uploaded successfully:", resumePath);
       }
       
       // Upload cover letter if provided
       let coverLetterPath = null;
       if (coverLetterFile) {
-        coverLetterPath = `${user.id}/cover-letters/${coverLetterFile.name}`;
-        uploadPromises.push(supabase.storage
+        const folderPath = `${user.id}/cover-letters`;
+        const filePath = `${folderPath}/${coverLetterFile.name}`;
+        
+        console.log("Uploading cover letter to:", filePath);
+        
+        const { data: coverLetterData, error: coverLetterError } = await supabase.storage
           .from('interview-app')
-          .upload(coverLetterPath, coverLetterFile)
-          .then(() => coverLetterPath));
+          .upload(filePath, coverLetterFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (coverLetterError) {
+          console.error("Cover letter upload error:", coverLetterError);
+          throw coverLetterError;
+        }
+        
+        coverLetterPath = coverLetterData.path;
+        console.log("Cover letter uploaded successfully:", coverLetterPath);
       }
       
       // Upload additional documents if provided
       let additionalDocumentsPath = null;
       if (additionalDocumentsFile) {
-        additionalDocumentsPath = `${user.id}/additional-documents/${additionalDocumentsFile.name}`;
-        uploadPromises.push(supabase.storage
+        const folderPath = `${user.id}/additional-documents`;
+        const filePath = `${folderPath}/${additionalDocumentsFile.name}`;
+        
+        console.log("Uploading additional documents to:", filePath);
+        
+        const { data: additionalDocsData, error: additionalDocsError } = await supabase.storage
           .from('interview-app')
-          .upload(additionalDocumentsPath, additionalDocumentsFile)
-          .then(() => additionalDocumentsPath));
+          .upload(filePath, additionalDocumentsFile, {
+            cacheControl: '3600',
+            upsert: true
+          });
+        
+        if (additionalDocsError) {
+          console.error("Additional documents upload error:", additionalDocsError);
+          throw additionalDocsError;
+        }
+        
+        additionalDocumentsPath = additionalDocsData.path;
+        console.log("Additional documents uploaded successfully:", additionalDocumentsPath);
       }
       
-      // Wait for all uploads to complete
-      const uploadResults = await Promise.all(uploadPromises);
-      const resumeFilePath = uploadResults[0];
-      
       // Extract text from files for processing
-      let resumeText = '';
-      let coverLetterText = '';
-      let additionalDocumentsText = '';
-      
-      // For a real implementation, you'd extract text from PDFs here
-      if (resumeFile) resumeText = "Text from resume";
-      if (coverLetterFile) coverLetterText = "Text from cover letter";
-      if (additionalDocumentsFile) additionalDocumentsText = "Text from additional documents";
+      let resumeText = 'Text from resume';
+      let coverLetterText = coverLetterFile ? 'Text from cover letter' : '';
+      let additionalDocumentsText = additionalDocumentsFile ? 'Text from additional documents' : '';
       
       // Store job data in the database
+      console.log("Storing job data with storyline ID:", storylineId);
+      
       const { error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
@@ -172,19 +184,26 @@ export const useCreateForm = () => {
           job_description: formData.jobDescription,
           company_name: formData.companyName || null,
           company_description: formData.companyDescription || null,
-          resume_path: resumeFilePath,
+          resume_path: resumePath,
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
           user_id: user.id,
           status: 'processing'
         });
         
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Job data insert error:", insertError);
+        throw insertError;
+      }
+      
+      console.log("Job data stored successfully");
       
       // Show processing modal
       setProcessingModal(true);
       
       // Call OpenAI function to generate interview questions
+      console.log("Calling generate-interview-questions function");
+      
       const { error: functionError } = await supabase.functions.invoke('generate-interview-questions', {
         body: {
           jobTitle: formData.jobTitle,
@@ -194,7 +213,7 @@ export const useCreateForm = () => {
           resumeText,
           coverLetterText,
           additionalDocumentsText,
-          resumePath: resumeFilePath,
+          resumePath,
           coverLetterPath,
           additionalDocumentsPath,
           userId: user.id,
@@ -202,7 +221,12 @@ export const useCreateForm = () => {
         }
       });
       
-      if (functionError) throw functionError;
+      if (functionError) {
+        console.error("Function error:", functionError);
+        throw functionError;
+      }
+      
+      console.log("Questions generated successfully");
       
       // Redirect to the questions page
       setTimeout(() => {
