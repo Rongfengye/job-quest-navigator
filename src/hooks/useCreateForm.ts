@@ -94,10 +94,21 @@ export const useCreateForm = () => {
     try {
       setIsLoading(true);
       
+      // Create storage bucket if it doesn't exist
+      const { data: bucketExists } = await supabase.storage.getBucket('interview-app');
+      if (!bucketExists) {
+        await supabase.storage.createBucket('interview-app', {
+          public: false
+        });
+      }
+      
       // Check if user has enough tokens for creating a job practice (5 tokens)
       const { data: tokenData, error: tokenError } = await supabase.rpc(
         'deduct_user_tokens',
-        { user_id: user.id, amount: 5 }
+        { 
+          user_id: user.id, 
+          amount: 5 
+        }
       );
       
       if (tokenError) {

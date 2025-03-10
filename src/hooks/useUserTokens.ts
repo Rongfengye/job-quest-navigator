@@ -43,9 +43,13 @@ export const useUserTokens = () => {
     if (!user) return;
 
     try {
+      // Using Supabase RPC function to add tokens
       const { data, error } = await supabase.rpc(
         'add_user_tokens',
-        { user_id: user.id, amount }
+        { 
+          user_id: user.id, 
+          amount: amount 
+        }
       );
 
       if (error) throw error;
