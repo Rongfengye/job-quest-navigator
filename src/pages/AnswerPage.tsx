@@ -2,14 +2,15 @@
 import React, { useState } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, Save, Sparkles, Mic } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { ArrowLeft, Save, Sparkles, Mic, History, CheckCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
-import { Input } from '@/components/ui/input';
+import { format } from 'date-fns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -21,12 +22,14 @@ const AnswerPage = () => {
   
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('current');
   
   const { 
     isLoading, 
     isSaving, 
     question, 
-    answer, 
+    answer,
+    iterations,
     saveAnswer, 
     error 
   } = useAnswers(storylineId || '', questionIndex);
@@ -41,13 +44,13 @@ const AnswerPage = () => {
     e.preventDefault();
     if (storylineId) {
       await saveAnswer(inputAnswer);
-      // Navigate back to questions list
-      navigate(`/questions?id=${storylineId}`);
+      toast({
+        title: "Success",
+        description: "Your answer has been saved",
+      });
     }
   };
 
-  // TODO: eventually make the option to continously iterate on this response to become more complex
-  // Eventually add a TOKEN structure to prevent over prompting
   const handleGenerateAnswer = async () => {
     if (!question) return;
     
@@ -156,60 +159,117 @@ const AnswerPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-xl">Your Answer</CardTitle>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-500 text-sm">Submissions</span>
-              </div>
-            </div>
-            <CardDescription>
-              Practice your response to this question below.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="relative">
-                <Textarea 
-                  value={inputAnswer}
-                  onChange={(e) => setInputAnswer(e.target.value)}
-                  placeholder="Type your response here..."
-                  className="min-h-[200px] resize-y pr-10"
-                />
-                <Button 
-                  type="button" 
-                  size="icon" 
-                  variant="ghost" 
-                  className="absolute right-2 top-2 opacity-70 hover:opacity-100"
-                >
-                  <Mic className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between pt-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleGenerateAnswer}
-                  disabled={generatingAnswer}
-                  className="flex items-center gap-2"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  {generatingAnswer ? 'Generating...' : 'Generate Answer'}
-                </Button>
-                
-                <Button 
-                  type="submit" 
-                  disabled={isSaving || inputAnswer.trim() === ''}
-                  className="flex items-center gap-2"
-                >
-                  {isSaving ? 'Saving...' : 'Submit'}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="current" className="flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" />
+              Current Answer
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-1" disabled={iterations.length === 0}>
+              <History className="w-4 h-4" />
+              Previous Iterations {iterations.length > 0 && `(${iterations.length})`}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="current">
+            <Card>
+              <CardHeader className="border-b">
+                <div className="flex justify-between items-center">
+                  <CardTitle className="text-xl">Your Answer</CardTitle>
+                </div>
+                <CardDescription>
+                  Practice your response to this question below.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="relative">
+                    <Textarea 
+                      value={inputAnswer}
+                      onChange={(e) => setInputAnswer(e.target.value)}
+                      placeholder="Type your response here..."
+                      className="min-h-[200px] resize-y pr-10"
+                    />
+                    <Button 
+                      type="button" 
+                      size="icon" 
+                      variant="ghost" 
+                      className="absolute right-2 top-2 opacity-70 hover:opacity-100"
+                    >
+                      <Mic className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleGenerateAnswer}
+                      disabled={generatingAnswer}
+                      className="flex items-center gap-2"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      {generatingAnswer ? 'Generating...' : 'Generate Answer'}
+                    </Button>
+                    
+                    <Button 
+                      type="submit" 
+                      disabled={isSaving || inputAnswer.trim() === ''}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Saving...' : 'Save Answer'}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="history">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">Answer History</CardTitle>
+                <CardDescription>
+                  Review your previous iterations to see how your answer has evolved.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {iterations.length === 0 ? (
+                  <p className="text-gray-500 italic">No previous iterations found.</p>
+                ) : (
+                  <div className="space-y-6">
+                    {[...iterations].reverse().map((iteration, idx) => (
+                      <div key={idx} className="border rounded-md p-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-sm font-medium text-gray-500">
+                            Iteration {iterations.length - idx}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {format(new Date(iteration.timestamp), 'MMM d, yyyy h:mm a')}
+                          </p>
+                        </div>
+                        <p className="text-gray-700 whitespace-pre-wrap">{iteration.text}</p>
+                        <div className="mt-3 flex justify-end">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              setInputAnswer(iteration.text);
+                              setActiveTab('current');
+                            }}
+                          >
+                            Use this answer
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -140,11 +140,8 @@ export const useQuestionData = (storylineId: string | null) => {
           // Handle new format with a single questions array
           else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
             processedQuestions = parsedResponse.questions.map(q => ({
-              question: q.question,
-              explanation: q.modelAnswer,
-              modelAnswer: q.modelAnswer,
-              followUp: q.followUp,
-              type: categorizeQuestion(q.question)
+              ...q,
+              type: q.type || categorizeQuestion(q.question)
             }));
           }
           

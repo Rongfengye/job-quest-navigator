@@ -2,15 +2,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
-import { Question } from '@/components/questions/QuestionCard';
+import { Question } from '@/hooks/useQuestionData';
 
 interface AnswerData {
   id?: string;
   storyline_id: string;
   question_index: number;
-  answer_text: string;
-  created_at?: string;
-  updated_at?: string;
+  question: string;
+  answer: string | null;
+  iterations: Array<{
+    text: string;
+    timestamp: string;
+  }>;
+  type?: 'technical' | 'behavioral' | 'experience';
 }
 
 export const useAnswers = (storylineId: string, questionIndex: number) => {
@@ -19,6 +23,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const [isSaving, setIsSaving] = useState(false);
   const [answer, setAnswer] = useState<string>('');
   const [question, setQuestion] = useState<Question | null>(null);
+  const [answerRecord, setAnswerRecord] = useState<AnswerData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch the question and any existing answer
@@ -76,12 +81,21 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           }
         }
 
-        // Now look for an existing answer
-        // Note: In a real implementation, you would create an 'answers' table in your database
-        // For now, we'll just use local storage as a simple example
-        const savedAnswer = localStorage.getItem(`answer-${storylineId}-${questionIndex}`);
-        if (savedAnswer) {
-          setAnswer(savedAnswer);
+        // Look for an existing answer in the storyline_job_questions table
+        const { data: answerData, error: answerError } = await supabase
+          .from('storyline_job_questions')
+          .select('*')
+          .eq('storyline_id', storylineId)
+          .eq('question_index', questionIndex)
+          .single();
+
+        if (answerError && answerError.code !== 'PGRST116') { // Not found is ok
+          throw answerError;
+        }
+
+        if (answerData) {
+          setAnswerRecord(answerData);
+          setAnswer(answerData.answer || '');
         }
       } catch (error) {
         console.error('Error fetching question and answer:', error);
@@ -101,14 +115,54 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
 
   // Save the answer
   const saveAnswer = async (answerText: string) => {
-    if (!storylineId) return;
+    if (!storylineId || !question) return;
     
     setIsSaving(true);
     
     try {
-      // For now, we'll use local storage
-      // In a real implementation, you would save this to your database
-      localStorage.setItem(`answer-${storylineId}-${questionIndex}`, answerText);
+      const now = new Date().toISOString();
+      let iterations = answerRecord?.iterations || [];
+      
+      // Add the current answer as a new iteration if it's different from the last one
+      if (answerText !== answer && answerText.trim() !== '') {
+        iterations = [
+          ...iterations,
+          { text: answerText, timestamp: now }
+        ];
+      }
+      
+      // Check if we already have a record
+      if (answerRecord) {
+        // Update existing record
+        const { error } = await supabase
+          .from('storyline_job_questions')
+          .update({
+            answer: answerText,
+            iterations,
+            updated_at: now
+          })
+          .eq('id', answerRecord.id);
+          
+        if (error) throw error;
+      } else {
+        // Create new record
+        const { data, error } = await supabase
+          .from('storyline_job_questions')
+          .insert({
+            storyline_id: storylineId,
+            question_index: questionIndex,
+            question: question.question,
+            answer: answerText,
+            iterations: iterations.length ? iterations : [],
+            type: question.type
+          })
+          .select()
+          .single();
+          
+        if (error) throw error;
+        setAnswerRecord(data);
+      }
+      
       setAnswer(answerText);
       
       toast({
@@ -132,6 +186,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     isSaving, 
     question, 
     answer, 
+    answerRecord,
+    iterations: answerRecord?.iterations || [],
     setAnswer, 
     saveAnswer, 
     error 

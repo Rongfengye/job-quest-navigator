@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      storyline_job_questions: {
+        Row: {
+          answer: string | null
+          created_at: string | null
+          id: string
+          iterations: Json | null
+          question: string
+          question_index: number
+          storyline_id: string
+          type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string
+          iterations?: Json | null
+          question: string
+          question_index: number
+          storyline_id: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string | null
+          created_at?: string | null
+          id?: string
+          iterations?: Json | null
+          question?: string
+          question_index?: number
+          storyline_id?: string
+          type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "storyline_job_questions_storyline_id_fkey"
+            columns: ["storyline_id"]
+            isOneToOne: false
+            referencedRelation: "storyline_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       storyline_jobs: {
         Row: {
           additional_documents_path: string | null

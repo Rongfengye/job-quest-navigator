@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 export type Question = {
   question: string;
@@ -21,9 +22,33 @@ interface QuestionCardProps {
 
 const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineId }) => {
   const navigate = useNavigate();
+  const [hasAnswer, setHasAnswer] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkForAnswer = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('storyline_job_questions')
+          .select('id, answer')
+          .eq('storyline_id', storylineId)
+          .eq('question_index', index)
+          .single();
+          
+        if (!error && data && data.answer) {
+          setHasAnswer(true);
+        }
+      } catch (error) {
+        console.error('Error checking for answer:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkForAnswer();
+  }, [storylineId, index]);
 
   const handleQuestionClick = () => {
-    // Navigate to the answer page with the question details
     navigate(`/answer?id=${storylineId}&questionIndex=${index}`);
   };
 
@@ -46,6 +71,12 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
             </CardTitle>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {hasAnswer && !isLoading && (
+              <Badge variant="success" className="bg-green-100 text-green-800 border-green-300">
+                <CheckCircle className="w-3 h-3 mr-1" />
+                Answered
+              </Badge>
+            )}
             {question.type && (
               <Badge 
                 variant={
