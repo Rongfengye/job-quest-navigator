@@ -5,9 +5,11 @@ import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
 
-interface AnswerIteration {
+// Define the AnswerIteration interface to be compatible with Json type
+export interface AnswerIteration {
   text: string;
   timestamp: string;
+  [key: string]: string; // Add index signature to make it compatible with Json
 }
 
 interface AnswerData {
@@ -159,7 +161,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .from('storyline_job_questions')
           .update({
             answer: answerText,
-            iterations,
+            iterations: iterations as unknown as Json, // Convert to Json type
             updated_at: now
           })
           .eq('id', answerRecord.id);
@@ -174,7 +176,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
             question_index: questionIndex,
             question: question.question,
             answer: answerText,
-            iterations: iterations.length ? iterations : [],
+            iterations: iterations.length ? (iterations as unknown as Json) : [],
             type: question.type
           })
           .select()
