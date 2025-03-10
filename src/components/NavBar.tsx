@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
-import { LogOut, User, Loader2, LogIn } from 'lucide-react';
+import { LogOut, User, Loader2, LogIn, Coins } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
+  const { tokens, isLoading: tokensLoading } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -59,6 +61,13 @@ const NavBar = () => {
               <span>
                 Logged in as {user?.firstName || 'User'} {user?.lastName || ''}
               </span>
+              
+              {!tokensLoading && tokens !== null && (
+                <div className="ml-2 flex items-center gap-1 bg-gray-100 px-2 py-1 rounded-full">
+                  <Coins className="h-3 w-3 text-yellow-600" />
+                  <span className="text-xs font-medium">{tokens} tokens</span>
+                </div>
+              )}
             </div>
             
             <Button 

@@ -3,8 +3,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Sparkles, Mic } from 'lucide-react';
+import { Save, Sparkles } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
+import AudioRecorder from './AudioRecorder';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 interface AnswerFormProps {
   inputAnswer: string;
@@ -14,6 +16,7 @@ interface AnswerFormProps {
   isSaving: boolean;
   generatingAnswer: boolean;
   question: Question | null;
+  questionId?: string;
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -23,8 +26,15 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   handleGenerateAnswer,
   isSaving,
   generatingAnswer,
-  question
+  question,
+  questionId
 }) => {
+  const { tokens } = useUserTokens();
+  
+  const handleTranscriptionComplete = (text: string) => {
+    setInputAnswer(prev => prev ? `${prev}\n\n${text}` : text);
+  };
+
   return (
     <Card>
       <CardHeader className="border-b">
@@ -42,29 +52,29 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
               value={inputAnswer}
               onChange={(e) => setInputAnswer(e.target.value)}
               placeholder="Type your response here..."
-              className="min-h-[200px] resize-y pr-10"
+              className="min-h-[200px] resize-y"
             />
-            <Button 
-              type="button" 
-              size="icon" 
-              variant="ghost" 
-              className="absolute right-2 top-2 opacity-70 hover:opacity-100"
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
           </div>
           
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGenerateAnswer}
-              disabled={generatingAnswer}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              {generatingAnswer ? 'Generating...' : 'Generate Answer'}
-            </Button>
+          <div className="flex flex-wrap items-center justify-between pt-2 gap-2">
+            <div className="flex items-center gap-2">
+              <AudioRecorder 
+                onTranscriptionComplete={handleTranscriptionComplete} 
+                questionId={questionId}
+              />
+              
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateAnswer}
+                disabled={generatingAnswer || (tokens !== null && tokens < 1)}
+                className="flex items-center gap-2"
+                title={tokens !== null && tokens < 1 ? "Insufficient tokens" : "Generate a sample answer"}
+              >
+                <Sparkles className="w-4 h-4" />
+                {generatingAnswer ? 'Generating...' : 'Generate Answer'}
+              </Button>
+            </div>
             
             <Button 
               type="submit" 
