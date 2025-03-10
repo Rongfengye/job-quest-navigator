@@ -1,8 +1,14 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
+import { Json } from '@/integrations/supabase/types';
+
+interface AnswerIteration {
+  text: string;
+  timestamp: string;
+}
 
 interface AnswerData {
   id?: string;
@@ -10,10 +16,7 @@ interface AnswerData {
   question_index: number;
   question: string;
   answer: string | null;
-  iterations: Array<{
-    text: string;
-    timestamp: string;
-  }>;
+  iterations: AnswerIteration[];
   type?: 'technical' | 'behavioral' | 'experience';
 }
 
@@ -94,7 +97,25 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         }
 
         if (answerData) {
-          setAnswerRecord(answerData);
+          // Parse iterations properly
+          const parsedIterations: AnswerIteration[] = Array.isArray(answerData.iterations) 
+            ? answerData.iterations 
+            : typeof answerData.iterations === 'string' 
+              ? JSON.parse(answerData.iterations)
+              : (answerData.iterations as any)?.length 
+                ? (answerData.iterations as any)
+                : [];
+
+          setAnswerRecord({
+            id: answerData.id,
+            storyline_id: answerData.storyline_id,
+            question_index: answerData.question_index,
+            question: answerData.question,
+            answer: answerData.answer,
+            iterations: parsedIterations,
+            type: answerData.type as 'technical' | 'behavioral' | 'experience' | undefined
+          });
+          
           setAnswer(answerData.answer || '');
         }
       } catch (error) {
@@ -160,7 +181,27 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .single();
           
         if (error) throw error;
-        setAnswerRecord(data);
+        
+        if (data) {
+          // Parse iterations properly
+          const parsedIterations: AnswerIteration[] = Array.isArray(data.iterations) 
+            ? data.iterations 
+            : typeof data.iterations === 'string' 
+              ? JSON.parse(data.iterations)
+              : (data.iterations as any)?.length 
+                ? (data.iterations as any)
+                : [];
+                
+          setAnswerRecord({
+            id: data.id,
+            storyline_id: data.storyline_id,
+            question_index: data.question_index,
+            question: data.question,
+            answer: data.answer,
+            iterations: parsedIterations,
+            type: data.type as 'technical' | 'behavioral' | 'experience' | undefined
+          });
+        }
       }
       
       setAnswer(answerText);

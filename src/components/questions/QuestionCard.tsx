@@ -72,7 +72,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {hasAnswer && !isLoading && (
-              <Badge variant="success" className="bg-green-100 text-green-800 border-green-300">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
                 <CheckCircle className="w-3 h-3 mr-1" />
                 Answered
               </Badge>
