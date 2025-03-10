@@ -65,7 +65,7 @@ const DashboardSidebar = () => {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     onClick={() => navigate(item.url)} 
-                    active={isActive(item.url)}
+                    isActive={isActive(item.url)}
                   >
                     <item.icon className="h-4 w-4 mr-2" />
                     <span>{item.title}</span>
