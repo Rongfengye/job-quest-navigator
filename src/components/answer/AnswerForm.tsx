@@ -32,7 +32,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const { tokens } = useUserTokens();
   
   const handleTranscriptionComplete = (text: string) => {
-    setInputAnswer(prev => prev ? `${prev}\n\n${text}` : text);
+    setInputAnswer(prev => (prev ? `${prev}\n\n${text}` : text));
   };
 
   return (
