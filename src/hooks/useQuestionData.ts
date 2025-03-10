@@ -106,7 +106,7 @@ export const useQuestionData = (storylineId: string | null) => {
 
         setJobDetails({
           jobTitle: data.job_title || 'Untitled Position',
-          companyName: data.company_name || 'Unnamed Company',
+          companyName: data.company_name,
         });
 
         if (data.openai_response) {
