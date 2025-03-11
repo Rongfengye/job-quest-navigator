@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
 import { LogOut, User, Loader2, LogIn, Coins } from 'lucide-react';
@@ -7,10 +7,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isLoading: tokensLoading } = useUserTokens();
+  const { tokens, isLoading: tokensLoading, fetchTokens } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -24,9 +25,17 @@ const NavBar = () => {
         lastName: user.lastName
       } : null,
       isLoading,
-      userExists: !!user
+      userExists: !!user,
+      tokenCount: tokens
     });
-  }, [isAuthenticated, user, isLoading]);
+  }, [isAuthenticated, user, isLoading, tokens]);
+
+  // Refresh tokens when component mounts
+  useEffect(() => {
+    if (isAuthenticated && user?.id) {
+      fetchTokens();
+    }
+  }, [isAuthenticated, user?.id, fetchTokens]);
 
   const handleLogout = async () => {
     console.log('NavBar: Logout button clicked');

@@ -27,7 +27,7 @@ const AnswerPage = () => {
   const [activeTab, setActiveTab] = useState<string>('current');
   const [tokenCheckDone, setTokenCheckDone] = useState(false);
   
-  const { deductTokens } = useUserTokens();
+  const { deductTokens, fetchTokens } = useUserTokens();
   
   const { 
     isLoading, 
@@ -52,11 +52,13 @@ const AnswerPage = () => {
         return;
       }
       
+      // Make sure to refresh token display after deduction
+      fetchTokens();
       setTokenCheckDone(true);
     };
     
     checkTokensAndDeduct();
-  }, [question, isLoading, tokenCheckDone, deductTokens, navigate, storylineId]);
+  }, [question, isLoading, tokenCheckDone, deductTokens, navigate, storylineId, fetchTokens]);
 
   useEffect(() => {
     if (answer) {
@@ -84,6 +86,8 @@ const AnswerPage = () => {
       return; // The token hook will show an error toast for insufficient tokens
     }
     
+    // Refresh token display after deduction
+    fetchTokens();
     setGeneratingAnswer(true);
     
     try {
@@ -99,6 +103,7 @@ const AnswerPage = () => {
       console.error('Error generating answer:', error);
       // If there was an error, refund the token
       await deductTokens(-1); // Add back the token that was deducted
+      fetchTokens(); // Update token display after refund
     } finally {
       setGeneratingAnswer(false);
     }

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
@@ -10,7 +10,7 @@ export const useUserTokens = () => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
 
-  const fetchTokens = async () => {
+  const fetchTokens = useCallback(async () => {
     if (!user?.id) return;
     
     setIsLoading(true);
@@ -34,7 +34,7 @@ export const useUserTokens = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id, toast]);
 
   const addTokens = async (amount: number = 10) => {
     if (!user?.id) return;
@@ -80,6 +80,7 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
+      // Immediately update the local token state
       setTokens(data ?? 0);
       return { success: true, balance: data };
     } catch (error: any) {
@@ -100,13 +101,35 @@ export const useUserTokens = () => {
     }
   };
 
+  // Set up real-time subscription to token changes
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchTokens();
-    } else {
-      setTokens(null);
-    }
-  }, [isAuthenticated, user?.id]);
+    if (!isAuthenticated || !user?.id) return;
+    
+    // Initial fetch
+    fetchTokens();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('token-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'storyline_user_tokens',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          // Refresh tokens whenever there's a change
+          fetchTokens();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, user?.id, fetchTokens]);
 
   return {
     tokens,

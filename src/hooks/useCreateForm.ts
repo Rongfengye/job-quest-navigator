@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -21,7 +22,7 @@ export const useCreateForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuthContext();
-  const { deductTokens } = useUserTokens();
+  const { deductTokens, fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     jobTitle: '',
@@ -90,6 +91,8 @@ export const useCreateForm = () => {
       return; // The token hook will show an error toast for insufficient tokens
     }
     
+    // Refresh token display immediately after deduction
+    fetchTokens();
     setIsLoading(true);
     setProcessingModal(true);
     
@@ -189,10 +192,11 @@ export const useCreateForm = () => {
       });
       // If there was an error, refund the tokens
       await deductTokens(-5); // Add back the tokens that were deducted
+      fetchTokens(); // Update token display after refund
     } finally {
       setIsLoading(false);
     }
-  }, [formData, resumeFile, coverLetterFile, additionalDocumentsFile, navigate, toast, user?.id, deductTokens]);
+  }, [formData, resumeFile, coverLetterFile, additionalDocumentsFile, navigate, toast, user?.id, deductTokens, fetchTokens]);
 
   return {
     formData,
