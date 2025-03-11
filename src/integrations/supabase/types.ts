@@ -98,6 +98,30 @@ export type Database = {
         }
         Relationships: []
       }
+      storyline_user_tokens: {
+        Row: {
+          created_at: string | null
+          id: string
+          tokens_remaining: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          tokens_remaining?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          tokens_remaining?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       waitlist_contacts: {
         Row: {
           auth_provider: Database["public"]["Enums"]["auth_provider"]
@@ -142,7 +166,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      add_user_tokens: {
+        Args: {
+          user_id: string
+          amount: number
+        }
+        Returns: number
+      }
+      deduct_user_tokens: {
+        Args: {
+          user_id: string
+          amount: number
+        }
+        Returns: number
+      }
     }
     Enums: {
       auth_provider:

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Sparkles, Mic } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
+import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 
 interface AnswerFormProps {
   inputAnswer: string;
@@ -25,6 +26,18 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   generatingAnswer,
   question
 }) => {
+  const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
+    setInputAnswer(prev => prev + (prev ? ' ' : '') + text);
+  });
+
+  const handleMicClick = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="border-b">
@@ -47,10 +60,11 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
             <Button 
               type="button" 
               size="icon" 
-              variant="ghost" 
+              variant={isRecording ? "default" : "ghost"}
               className="absolute right-2 top-2 opacity-70 hover:opacity-100"
+              onClick={handleMicClick}
             >
-              <Mic className="h-4 w-4" />
+              <Mic className={`h-4 w-4 ${isRecording ? 'text-white animate-pulse' : ''}`} />
             </Button>
           </div>
           
