@@ -16,7 +16,6 @@ const Create = () => {
   // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      console.log("User not authenticated, redirecting to home");
       navigate('/');
     }
   }, [isAuthenticated, isLoading, navigate]);
@@ -132,9 +131,9 @@ const Create = () => {
           <Button 
             type="submit" 
             className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
-            disabled={formLoading}
+            disabled={isLoading}
           >
-            {formLoading ? 'Processing...' : 'Submit'}
+            {isLoading ? 'Processing...' : 'Submit'}
           </Button>
         </form>
       </div>

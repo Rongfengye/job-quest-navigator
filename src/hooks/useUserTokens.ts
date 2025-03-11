@@ -19,26 +19,14 @@ export const useUserTokens = () => {
 
     setIsLoading(true);
     try {
-      console.log("Fetching tokens for user:", user.id);
-      
       const { data, error } = await supabase
         .from('storyline_user_tokens')
         .select('tokens_remaining')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
-      if (error) {
-        console.error("Error fetching tokens:", error);
-        throw error;
-      }
-      
-      if (data) {
-        console.log("Tokens fetched successfully:", data.tokens_remaining);
-        setTokens(data.tokens_remaining);
-      } else {
-        console.log("No tokens found for user");
-        setTokens(0);
-      }
+      if (error) throw error;
+      setTokens(data.tokens_remaining);
     } catch (error) {
       console.error('Error fetching tokens:', error);
       toast({
@@ -52,26 +40,15 @@ export const useUserTokens = () => {
   };
 
   const addTokens = async (amount: number) => {
-    if (!user) return null;
+    if (!user) return;
 
     try {
-      console.log("Adding tokens for user:", user.id, "amount:", amount);
-      
-      // Using Supabase RPC function to add tokens
       const { data, error } = await supabase.rpc(
         'add_user_tokens',
-        { 
-          user_id: user.id, 
-          amount: amount 
-        }
+        { user_id: user.id, amount }
       );
 
-      if (error) {
-        console.error("Error adding tokens:", error);
-        throw error;
-      }
-      
-      console.log("Tokens added successfully, new balance:", data);
+      if (error) throw error;
       setTokens(data);
       
       toast({
