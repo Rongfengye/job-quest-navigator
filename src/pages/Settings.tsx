@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,16 +9,12 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Coins, Plus } from 'lucide-react';
-import { useUserTokens } from '@/hooks/useUserTokens';
 
 const Settings = () => {
   const { logout } = useAuthContext();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { tokens, isLoading: tokensLoading, addTokens } = useUserTokens();
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-  const [isAddingTokens, setIsAddingTokens] = useState(false);
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -35,15 +31,6 @@ const Settings = () => {
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPasswords(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddTokens = async () => {
-    setIsAddingTokens(true);
-    try {
-      await addTokens(10);
-    } finally {
-      setIsAddingTokens(false);
-    }
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -115,42 +102,6 @@ const Settings = () => {
       </div>
       
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Token Balance</CardTitle>
-            <CardDescription>
-              Manage your token balance to use premium features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-gray-100 px-4 py-2 rounded-lg">
-                <Coins className="h-5 w-5 text-yellow-600" />
-                <span className="text-lg font-medium">
-                  {tokensLoading ? "Loading..." : `${tokens} tokens`}
-                </span>
-              </div>
-              
-              <Button 
-                onClick={handleAddTokens} 
-                className="flex items-center gap-2"
-                disabled={isAddingTokens}
-              >
-                <Plus className="h-4 w-4" />
-                {isAddingTokens ? "Adding..." : "Add 10 Tokens"}
-              </Button>
-            </div>
-            <div className="mt-4 text-sm text-muted-foreground">
-              <p>Tokens are used for premium features:</p>
-              <ul className="list-disc ml-5 mt-1">
-                <li>5 tokens: Create a new job practice</li>
-                <li>1 token: Start practice on a question</li>
-                <li>1 token: Generate an answer or use voice transcription</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-        
         <Card>
           <CardHeader>
             <CardTitle>Password Settings</CardTitle>

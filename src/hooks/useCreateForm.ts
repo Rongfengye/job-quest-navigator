@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
 
 interface FormData {
@@ -13,199 +11,185 @@ interface FormData {
   companyDescription: string;
 }
 
+interface FileData {
+  file: File | null;
+  text: string;
+}
+
 export const useCreateForm = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuthContext();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     jobTitle: '',
     jobDescription: '',
     companyName: '',
     companyDescription: '',
   });
-  const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null);
-  const [additionalDocumentsFile, setAdditionalDocumentsFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [resumeFile, setResumeFile] = useState<FileData>({ file: null, text: '' });
+  const [coverLetterFile, setCoverLetterFile] = useState<FileData>({ file: null, text: '' });
+  const [additionalDocumentsFile, setAdditionalDocumentsFile] = useState<FileData>({ file: null, text: '' });
   const [processingModal, setProcessingModal] = useState(false);
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const { user } = useAuthContext();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleResumeChange = (file: File | null) => {
-    setResumeFile(file);
+  const handleResumeChange = (file: File | null, text: string) => {
+    console.log("Resume text extracted:", text.substring(0, 100) + "...");
+    setResumeFile({ file, text });
   };
 
-  const handleCoverLetterChange = (file: File | null) => {
-    setCoverLetterFile(file);
+  const handleCoverLetterChange = (file: File | null, text: string) => {
+    console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
+    setCoverLetterFile({ file, text });
   };
 
-  const handleAdditionalDocumentsChange = (file: File | null) => {
-    setAdditionalDocumentsFile(file);
+  const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
+    console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
+    setAdditionalDocumentsFile({ file, text });
   };
 
-  const uploadFile = async (file: File, path: string): Promise<string> => {
+  const uploadFile = async (file: File, path: string) => {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${path}/${Math.random().toString(36).substring(2)}.${fileExt}`;
+
     const { data, error } = await supabase.storage
-      .from('interview-app')
-      .upload(`${path}/${file.name}`, file);
+      .from('job_documents')
+      .upload(filePath, file);
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(`Error uploading file: ${error.message}`);
     }
 
-    return data.path;
-  };
-
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    let text = '';
-    try {
-      // Use PDF.js (or other library) to extract text
-      // For now, we'll just return a placeholder
-      text = `Text extracted from ${file.name}`;
-    } catch (error) {
-      console.error('Error extracting text from PDF:', error);
-    }
-    return text;
+    return filePath;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!formData.jobTitle || !formData.jobDescription || !resumeFile.file) {
       toast({
+        title: "Missing required fields",
+        description: "Please fill in all required fields and upload your resume.",
         variant: "destructive",
-        title: "Authentication Required",
-        description: "Please log in to create interview materials.",
       });
       return;
     }
 
-    if (!resumeFile) {
+    if (!user || !user.id) {
       toast({
+        title: "Authentication required",
+        description: "You must be logged in to submit an application.",
         variant: "destructive",
-        title: "Resume Required",
-        description: "Please upload your resume to continue.",
       });
+      navigate('/');
       return;
     }
 
+    setIsLoading(true);
+    
     try {
-      setIsLoading(true);
+      setProcessingModal(true);
+
+      const resumePath = await uploadFile(resumeFile.file, 'resumes');
       
-      // Check if user has enough tokens for creating a job practice (5 tokens)
-      const { data: tokenData, error: tokenError } = await supabase.rpc(
-        'deduct_user_tokens',
-        { user_id: user.id, amount: 5 }
-      );
-      
-      if (tokenError) {
-        throw new Error(tokenError.message);
-      }
-      
-      const storylineId = uuidv4();
-      
-      // Process files in parallel
-      const uploadPromises = [];
-      
-      // Upload resume
-      if (resumeFile) {
-        const resumePath = `${user.id}/resumes/${resumeFile.name}`;
-        uploadPromises.push(supabase.storage
-          .from('interview-app')
-          .upload(resumePath, resumeFile)
-          .then(() => resumePath));
-      }
-      
-      // Upload cover letter if provided
       let coverLetterPath = null;
-      if (coverLetterFile) {
-        coverLetterPath = `${user.id}/cover-letters/${coverLetterFile.name}`;
-        uploadPromises.push(supabase.storage
-          .from('interview-app')
-          .upload(coverLetterPath, coverLetterFile)
-          .then(() => coverLetterPath));
-      }
-      
-      // Upload additional documents if provided
       let additionalDocumentsPath = null;
-      if (additionalDocumentsFile) {
-        additionalDocumentsPath = `${user.id}/additional-documents/${additionalDocumentsFile.name}`;
-        uploadPromises.push(supabase.storage
-          .from('interview-app')
-          .upload(additionalDocumentsPath, additionalDocumentsFile)
-          .then(() => additionalDocumentsPath));
+      
+      if (coverLetterFile.file) {
+        coverLetterPath = await uploadFile(coverLetterFile.file, 'cover-letters');
       }
       
-      // Wait for all uploads to complete
-      const uploadResults = await Promise.all(uploadPromises);
-      const resumeFilePath = uploadResults[0];
-      
-      // Extract text from files for processing
-      let resumeText = '';
-      let coverLetterText = '';
-      let additionalDocumentsText = '';
-      
-      // For a real implementation, you'd extract text from PDFs here
-      if (resumeFile) resumeText = "Text from resume";
-      if (coverLetterFile) coverLetterText = "Text from cover letter";
-      if (additionalDocumentsFile) additionalDocumentsText = "Text from additional documents";
-      
-      // Store job data in the database
-      const { error: insertError } = await supabase
+      if (additionalDocumentsFile.file) {
+        additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
+      }
+
+      console.log("Inserting job with user_id:", user.id);
+      const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
-          id: storylineId,
           job_title: formData.jobTitle,
           job_description: formData.jobDescription,
-          company_name: formData.companyName || null,
-          company_description: formData.companyDescription || null,
-          resume_path: resumeFilePath,
+          company_name: formData.companyName,
+          company_description: formData.companyDescription,
+          resume_path: resumePath,
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
-          user_id: user.id,
-          status: 'processing'
-        });
-        
-      if (insertError) throw insertError;
-      
-      // Show processing modal
-      setProcessingModal(true);
-      
-      // Call OpenAI function to generate interview questions
-      const { error: functionError } = await supabase.functions.invoke('generate-interview-questions', {
-        body: {
-          jobTitle: formData.jobTitle,
-          jobDescription: formData.jobDescription,
-          companyName: formData.companyName || '',
-          companyDescription: formData.companyDescription || '',
-          resumeText,
-          coverLetterText,
-          additionalDocumentsText,
-          resumePath: resumeFilePath,
-          coverLetterPath,
-          additionalDocumentsPath,
-          userId: user.id,
-          storylineId
-        }
+          status: 'processing',
+          user_id: user.id
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error("Insert error details:", insertError);
+        throw new Error(`Error saving your application: ${insertError.message}`);
+      }
+
+      const storylineId = storylineData.id;
+
+      const requestBody = {
+        jobTitle: formData.jobTitle,
+        jobDescription: formData.jobDescription,
+        companyName: formData.companyName,
+        companyDescription: formData.companyDescription,
+        resumeText: resumeFile.text,
+        coverLetterText: coverLetterFile.text,
+        additionalDocumentsText: additionalDocumentsFile.text,
+        resumePath: resumePath,
+        coverLetterPath: coverLetterPath,
+        additionalDocumentsPath: additionalDocumentsPath,
+      };
+
+      console.log("Sending data to OpenAI function:");
+      console.log("Resume text length:", resumeFile.text?.length || 0);
+      console.log("Resume text preview:", resumeFile.text?.substring(0, 200) + "...");
+      console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
+      console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
+
+      const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
+        body: requestBody,
       });
-      
-      if (functionError) throw functionError;
-      
-      // Redirect to the questions page
-      setTimeout(() => {
-        navigate(`/questions?id=${storylineId}`);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Error creating interview materials:', error);
-      setProcessingModal(false);
-      
+
+      if (error) {
+        throw new Error(`Error processing your application: ${error.message}`);
+      }
+
+      console.log("Received response from OpenAI function:", data ? "Success" : "No data");
+
+      const { error: updateError } = await supabase
+        .from('storyline_jobs')
+        .update({
+          openai_response: data,
+          status: 'completed'
+        })
+        .eq('id', storylineId);
+
+      if (updateError) {
+        throw new Error(`Error updating your application: ${updateError.message}`);
+      }
+
       toast({
-        variant: "destructive",
+        title: "Success!",
+        description: "Your interview questions have been generated. Redirecting to results page.",
+      });
+
+      setProcessingModal(false);
+      navigate(`/questions?id=${storylineId}`);
+
+    } catch (error) {
+      setProcessingModal(false);
+      console.error("Form submission error:", error);
+      toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred while creating interview materials.",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -214,9 +198,9 @@ export const useCreateForm = () => {
 
   return {
     formData,
-    resumeFile,
-    coverLetterFile,
-    additionalDocumentsFile,
+    resumeFile: resumeFile.file,
+    coverLetterFile: coverLetterFile.file,
+    additionalDocumentsFile: additionalDocumentsFile.file,
     isLoading,
     processingModal,
     handleInputChange,
