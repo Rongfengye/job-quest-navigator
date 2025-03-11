@@ -9,6 +9,8 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useUserTokens } from '@/hooks/useUserTokens';
+import { Coins, Plus } from 'lucide-react';
 
 const Settings = () => {
   const { logout } = useAuthContext();
@@ -20,6 +22,9 @@ const Settings = () => {
     new: '',
     confirm: ''
   });
+  
+  const { tokens, isLoading: tokensLoading, addTokens } = useUserTokens();
+  const [isAddingTokens, setIsAddingTokens] = useState(false);
   
   const handleLogout = async () => {
     const { success } = await logout();
@@ -93,6 +98,15 @@ const Settings = () => {
       setIsUpdatingPassword(false);
     }
   };
+  
+  const handleAddTokens = async () => {
+    setIsAddingTokens(true);
+    try {
+      await addTokens(10);
+    } finally {
+      setIsAddingTokens(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -102,6 +116,52 @@ const Settings = () => {
       </div>
       
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Token Balance</CardTitle>
+            <CardDescription>
+              Manage your token balance for using interview practice features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center">
+                <Coins className="h-5 w-5 mr-2 text-yellow-500" />
+                <div>
+                  <p className="font-medium text-xl">{tokensLoading ? '—' : tokens} tokens</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use tokens for creating practice sessions and generating answers
+                  </p>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={handleAddTokens} 
+                disabled={isAddingTokens}
+                className="flex items-center gap-2"
+              >
+                {isAddingTokens ? (
+                  <>Adding...</>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4" />
+                    Add 10 tokens
+                  </>
+                )}
+              </Button>
+            </div>
+            
+            <div className="bg-muted p-3 rounded-md text-sm">
+              <p className="font-medium mb-1">Token usage:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Creating a new job practice: <span className="font-medium">5 tokens</span></li>
+                <li>Starting practice on a question: <span className="font-medium">1 token</span></li>
+                <li>Generating an answer: <span className="font-medium">1 token</span></li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardHeader>
             <CardTitle>Password Settings</CardTitle>

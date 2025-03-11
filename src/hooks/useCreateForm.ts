@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 interface FormData {
   jobTitle: string;
@@ -20,6 +21,7 @@ export const useCreateForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuthContext();
+  const { deductTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     jobTitle: '',
@@ -70,33 +72,28 @@ export const useCreateForm = () => {
     return filePath;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!formData.jobTitle || !formData.jobDescription || !resumeFile.file) {
+    if (!user?.id) {
       toast({
-        title: "Missing required fields",
-        description: "Please fill in all required fields and upload your resume.",
         variant: "destructive",
-      });
-      return;
-    }
-
-    if (!user || !user.id) {
-      toast({
         title: "Authentication required",
-        description: "You must be logged in to submit an application.",
-        variant: "destructive",
+        description: "Please sign in to create a job practice."
       });
-      navigate('/');
       return;
     }
-
+    
+    // Check if user has enough tokens (5 tokens required)
+    const tokenCheck = await deductTokens(5);
+    if (!tokenCheck?.success) {
+      return; // The token hook will show an error toast for insufficient tokens
+    }
+    
     setIsLoading(true);
+    setProcessingModal(true);
     
     try {
-      setProcessingModal(true);
-
       const resumePath = await uploadFile(resumeFile.file, 'resumes');
       
       let coverLetterPath = null;
@@ -184,17 +181,18 @@ export const useCreateForm = () => {
       navigate(`/questions?id=${storylineId}`);
 
     } catch (error) {
-      setProcessingModal(false);
-      console.error("Form submission error:", error);
+      console.error('Error creating storyline job:', error);
       toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
         variant: "destructive",
+        title: "Error",
+        description: "There was an error creating your job practice. Please try again."
       });
+      // If there was an error, refund the tokens
+      await deductTokens(-5); // Add back the tokens that were deducted
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [formData, resumeFile, coverLetterFile, additionalDocumentsFile, navigate, toast, user?.id, deductTokens]);
 
   return {
     formData,

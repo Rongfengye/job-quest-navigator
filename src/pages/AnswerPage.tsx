@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, History, CheckCircle } from 'lucide-react';
@@ -7,14 +7,16 @@ import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast, toast } from '@/components/ui/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import QuestionDisplay from '@/components/answer/QuestionDisplay';
 import AnswerForm from '@/components/answer/AnswerForm';
 import AnswerHistory from '@/components/answer/AnswerHistory';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 const AnswerPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
   const questionIndexStr = queryParams.get('questionIndex');
@@ -23,6 +25,9 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
+  const [tokenCheckDone, setTokenCheckDone] = useState(false);
+  
+  const { deductTokens } = useUserTokens();
   
   const { 
     isLoading, 
@@ -34,7 +39,26 @@ const AnswerPage = () => {
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
-  React.useEffect(() => {
+  // Track if we've charged the user for starting the practice
+  useEffect(() => {
+    const checkTokensAndDeduct = async () => {
+      if (tokenCheckDone || !question || isLoading) return;
+      
+      // Deduct 1 token for starting practice on this question
+      const result = await deductTokens(1);
+      if (!result?.success) {
+        // If token deduction failed, redirect back to questions list
+        navigate(`/questions?id=${storylineId}`);
+        return;
+      }
+      
+      setTokenCheckDone(true);
+    };
+    
+    checkTokensAndDeduct();
+  }, [question, isLoading, tokenCheckDone, deductTokens, navigate, storylineId]);
+
+  useEffect(() => {
     if (answer) {
       setInputAnswer(answer);
     }
@@ -54,6 +78,12 @@ const AnswerPage = () => {
   const handleGenerateAnswer = async () => {
     if (!question) return;
     
+    // Check if user has enough tokens (1 token required)
+    const tokenCheck = await deductTokens(1);
+    if (!tokenCheck?.success) {
+      return; // The token hook will show an error toast for insufficient tokens
+    }
+    
     setGeneratingAnswer(true);
     
     try {
@@ -67,6 +97,8 @@ const AnswerPage = () => {
       setInputAnswer(generatedText);
     } catch (error) {
       console.error('Error generating answer:', error);
+      // If there was an error, refund the token
+      await deductTokens(-1); // Add back the token that was deducted
     } finally {
       setGeneratingAnswer(false);
     }
