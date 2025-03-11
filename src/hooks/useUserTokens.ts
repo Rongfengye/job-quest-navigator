@@ -39,6 +39,7 @@ export const useUserTokens = () => {
   const addTokens = async (amount: number = 10) => {
     if (!user?.id) return;
     
+    console.log(`🪙 Adding ${amount} tokens`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('add_user_tokens', {
@@ -49,6 +50,7 @@ export const useUserTokens = () => {
       if (error) throw error;
       
       setTokens(data ?? 0);
+      console.log(`✅ Successfully added ${amount} tokens. New balance: ${data}`);
       toast({
         title: "Tokens added",
         description: `${amount} tokens have been added to your account.`
@@ -71,6 +73,7 @@ export const useUserTokens = () => {
   const deductTokens = async (amount: number) => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
     
+    console.log(`🪙 Deducting ${amount} tokens`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('deduct_user_tokens', {
@@ -82,6 +85,7 @@ export const useUserTokens = () => {
       
       // Immediately update the local token state
       setTokens(data ?? 0);
+      console.log(`✅ Successfully deducted ${amount} tokens. New balance: ${data}`);
       return { success: true, balance: data };
     } catch (error: any) {
       console.error('Error deducting tokens:', error);
