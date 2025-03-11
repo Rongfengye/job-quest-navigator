@@ -27,7 +27,8 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   question
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
-    setInputAnswer(prev => prev + (prev ? ' ' : '') + text);
+    // Fix: directly concat the strings instead of using a function with prev
+    setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
   });
 
   const handleMicClick = () => {
