@@ -73,7 +73,11 @@ export const useUserTokens = () => {
   const deductTokens = async (amount: number) => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
     
-    console.log(`🪙 Deducting ${amount} tokens`);
+    // If amount is negative, we're refunding tokens
+    const action = amount < 0 ? 'Refunding' : 'Deducting';
+    const absAmount = Math.abs(amount);
+    
+    console.log(`🪙 ${action} ${absAmount} tokens`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('deduct_user_tokens', {
@@ -85,10 +89,10 @@ export const useUserTokens = () => {
       
       // Immediately update the local token state
       setTokens(data ?? 0);
-      console.log(`✅ Successfully deducted ${amount} tokens. New balance: ${data}`);
+      console.log(`✅ Successfully ${action.toLowerCase()} ${absAmount} tokens. New balance: ${data}`);
       return { success: true, balance: data };
     } catch (error: any) {
-      console.error('Error deducting tokens:', error);
+      console.error(`Error ${action.toLowerCase()} tokens:`, error);
       
       // Only show toast for specific token deduction
       if (error.message?.includes('Insufficient tokens')) {

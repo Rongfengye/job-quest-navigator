@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 // Define the AnswerIteration interface to be compatible with Json type
 export interface AnswerIteration {
@@ -24,6 +25,7 @@ interface AnswerData {
 
 export const useAnswers = (storylineId: string, questionIndex: number) => {
   const { toast } = useToast();
+  const { deductTokens, fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [answer, setAnswer] = useState<string>('');
@@ -168,6 +170,19 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
         if (error) throw error;
       } else {
+        // New record being created - deduct 1 token here
+        console.log('🪙 Deducting 1 token for creating a new question record');
+        const tokenCheck = await deductTokens(1);
+        
+        if (!tokenCheck?.success) {
+          toast({
+            variant: "destructive",
+            title: "Insufficient tokens",
+            description: "You don't have enough tokens to save a new answer."
+          });
+          return;
+        }
+        
         // Create new record
         const { data, error } = await supabase
           .from('storyline_job_questions')
@@ -183,6 +198,9 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .single();
           
         if (error) throw error;
+        
+        // Update token display after successful deduction
+        fetchTokens();
         
         if (data) {
           // Parse iterations properly

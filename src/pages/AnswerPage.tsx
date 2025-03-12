@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,6 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
-  const [tokenCheckComplete, setTokenCheckComplete] = useState(false);
   
   const { deductTokens, fetchTokens } = useUserTokens();
   
@@ -34,30 +34,13 @@ const AnswerPage = () => {
     question, 
     answer,
     iterations,
-    saveAnswer, 
+    answerRecord,
+    saveAnswer,
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
-  useEffect(() => {
-    const checkTokensAndDeduct = async () => {
-      if (tokenCheckComplete || !question || isLoading) return;
-      
-      console.log('🔄 Checking tokens for question practice');
-      // Deduct 1 token for starting practice on this question
-      const result = await deductTokens(1);
-      if (!result?.success) {
-        // If token deduction failed, redirect back to questions list
-        navigate(`/questions?id=${storylineId}`);
-        return;
-      }
-      
-      // Make sure to refresh token display after deduction
-      fetchTokens();
-      setTokenCheckComplete(true);
-    };
-    
-    checkTokensAndDeduct();
-  }, [question, isLoading, tokenCheckComplete, deductTokens, navigate, storylineId, fetchTokens]);
+  // No token deduction on page load anymore
+  // We'll move token deduction to when a new record is created
 
   useEffect(() => {
     if (answer) {
