@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
-  const [tokenCheckDone, setTokenCheckDone] = useState(false);
+  const [tokenCheckComplete, setTokenCheckComplete] = useState(false);
   
   const { deductTokens, fetchTokens } = useUserTokens();
   
@@ -39,11 +38,11 @@ const AnswerPage = () => {
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
-  // Track if we've charged the user for starting the practice
   useEffect(() => {
     const checkTokensAndDeduct = async () => {
-      if (tokenCheckDone || !question || isLoading) return;
+      if (tokenCheckComplete || !question || isLoading) return;
       
+      console.log('🔄 Checking tokens for question practice');
       // Deduct 1 token for starting practice on this question
       const result = await deductTokens(1);
       if (!result?.success) {
@@ -54,11 +53,11 @@ const AnswerPage = () => {
       
       // Make sure to refresh token display after deduction
       fetchTokens();
-      setTokenCheckDone(true);
+      setTokenCheckComplete(true);
     };
     
     checkTokensAndDeduct();
-  }, [question, isLoading, tokenCheckDone, deductTokens, navigate, storylineId, fetchTokens]);
+  }, [question, isLoading, tokenCheckComplete, deductTokens, navigate, storylineId, fetchTokens]);
 
   useEffect(() => {
     if (answer) {
