@@ -28,14 +28,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
   useEffect(() => {
     const checkForAnswer = async () => {
       try {
-        const { data, error } = await supabase
+        // More efficient query - only count if answer exists rather than fetching full record
+        console.log(`🔍 Checking if answer exists for question ${index}`);
+        const { count, error } = await supabase
           .from('storyline_job_questions')
-          .select('id, answer')
+          .select('id', { count: 'exact', head: true })
           .eq('storyline_id', storylineId)
           .eq('question_index', index)
-          .single();
+          .not('answer', 'is', null);
           
-        if (!error && data && data.answer) {
+        if (!error && count && count > 0) {
           setHasAnswer(true);
         }
       } catch (error) {
