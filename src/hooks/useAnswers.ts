@@ -145,6 +145,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
 
   // Save the answer
   const saveAnswer = async (answerText: string) => {
+    console.log('in the save ANSWER', storylineId, question)
     if (!storylineId || !question) return;
     
     setIsSaving(true);
