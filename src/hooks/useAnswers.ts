@@ -91,6 +91,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         }
 
         // Look for an existing answer in the storyline_job_questions table
+        console.log('BEFORE MAKING THE sotryline job questions to grab initial question information', storylineId, questionIndex)
         const { data: answerData, error: answerError } = await supabase
           .from('storyline_job_questions')
           .select('*')

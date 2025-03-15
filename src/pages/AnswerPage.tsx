@@ -43,8 +43,8 @@ const AnswerPage = () => {
   // We'll move token deduction to when a new record is created
 
   useEffect(() => {
-    if (answer) {
-      setInputAnswer(answer);
+    if (answer && answer !== inputAnswer) {
+      setInputAnswer(answer); // this right here might be causing things to be called twice
     }
   }, [answer]);
 
