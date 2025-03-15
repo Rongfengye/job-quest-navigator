@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
@@ -40,8 +39,8 @@ serve(async (req) => {
     console.log('Job description length:', jobDescription?.length || 0);
     console.log('Resume text length:', resumeText?.length || 0);
 
-    // TODO: need to ensure this is formatted better with clear demarkations
-    // Provide more spcifics, perhaps we need to even better specify the system prompt
+    /* TODO: need to ensure this is formatted better with clear demarkations
+       Provide more specifics, perhaps we need to even better specify the system prompt */
 
     // Prepare the prompt
     const systemPrompt = `You are an AI interview coach. Your task is to generate 10 interview questions for a job candidate applying for a ${jobTitle} position.

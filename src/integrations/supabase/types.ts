@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          created_at: string | null
+          credits: number
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          linkedin_id: string | null
+          profile_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits?: number
+          email?: string | null
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          linkedin_id?: string | null
+          profile_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits?: number
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          linkedin_id?: string | null
+          profile_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       storyline_job_questions: {
         Row: {
           answer: string | null
@@ -121,6 +157,38 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_metrics: {
+        Row: {
+          analyze_clicks: number | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analyze_clicks?: number | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analyze_clicks?: number | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_metrics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waitlist_contacts: {
         Row: {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -44,7 +43,7 @@ const AnswerPage = () => {
 
   useEffect(() => {
     if (answer && answer !== inputAnswer) {
-      setInputAnswer(answer); // this right here might be causing things to be called twice
+      setInputAnswer(answer); // This right here might be causing things to be called twice
     }
   }, [answer]);
 

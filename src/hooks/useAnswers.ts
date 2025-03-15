@@ -65,7 +65,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
           if (parsedResponse.questions) {
             questions = parsedResponse.questions;
-          } else if ( // DO NOT ERASE: later on we would probably need to figure out this typing
+          } else if ( /* DO NOT ERASE: later on we would probably need to figure out this typing */
             parsedResponse.technicalQuestions && 
             parsedResponse.behavioralQuestions && 
             parsedResponse.experienceQuestions
@@ -91,7 +91,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         }
 
         // Look for an existing answer in the storyline_job_questions table
-        console.log('BEFORE MAKING THE sotryline job questions to grab initial question information', storylineId, questionIndex)
+        console.log('BEFORE MAKING THE storyline job questions to grab initial question information', storylineId, questionIndex)
         const { data: answerData, error: answerError } = await supabase
           .from('storyline_job_questions')
           .select('*')
@@ -99,7 +99,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .eq('question_index', questionIndex)
           .single();
 
-        console.log('THIS IS THE STORY QUESTIONS CALL REPSONSE', answerData, answerError)
+        console.log('THIS IS THE STORY QUESTIONS CALL RESPONSE', answerData, answerError)
         if (answerError && answerError.code !== 'PGRST116') { // Not found is ok
           throw answerError;
         }
