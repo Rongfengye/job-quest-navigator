@@ -29,6 +29,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
     const checkForAnswer = async () => {
       try {
         // More efficient query - only count if answer exists rather than fetching full record
+        // TODO: check if we will prioritize having this 'Answered' rendering given unneccesary database calls
         console.log(`🔍 Checking if answer exists for question ${index}`);
         const { count, error } = await supabase
           .from('storyline_job_questions')
