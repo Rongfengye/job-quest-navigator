@@ -49,6 +49,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .eq('id', storylineId)
           .single();
 
+        console.log('THIS IS THE STORYLINE_DATA', storylineData)
+
         if (storylineError) throw storylineError;
 
         if (storylineData?.openai_response) {
@@ -96,12 +98,14 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .eq('question_index', questionIndex)
           .single();
 
+        console.log('THIS IS THE STORY QUESTIONS CALL REPSONSE', answerData, answerError)
         if (answerError && answerError.code !== 'PGRST116') { // Not found is ok
           throw answerError;
         }
 
         if (answerData) {
           // Parse iterations properly
+          console.log('IN THE ANSWER DATA', answerData)
           const parsedIterations: AnswerIteration[] = Array.isArray(answerData.iterations) 
             ? answerData.iterations 
             : typeof answerData.iterations === 'string' 
@@ -170,7 +174,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
         if (error) throw error;
       } else {
-        // New record being created - deduct 1 token here
+        // New record being created - deduct 1 token here, it is deducting the token because answerRecord from the supabase call is null
+        // CHECK IF THIS IS BEING PROPERLY SET IN THE USE EFFECT
         console.log('🪙 Deducting 1 token for creating a new question record');
         const tokenCheck = await deductTokens(1);
         
