@@ -163,8 +163,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .from('storyline_job_questions')
           .update({
             answer: answerText,
-            iterations: iterations as unknown as Json, // Convert to Json type
-            updated_at: now
+            iterations: JSON.stringify(iterations), // Ensure it's stored as a JSON object
+            updated_at: new Date().toISOString() // Ensure proper timestamp format
           })
           .eq('id', answerRecord.id);
           
@@ -185,7 +185,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         
         // Create new record
         const { data, error } = await supabase
-          .from('storyline_job_questions')
+          .from('storyline_job_questions') // look at other queries that are hitting this 
           .insert({
             storyline_id: storylineId,
             question_index: questionIndex,
