@@ -63,7 +63,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
           if (parsedResponse.questions) {
             questions = parsedResponse.questions;
-          } else if (
+          } else if ( // DO NOT ERASE: later on we would probably need to figure out this typing
             parsedResponse.technicalQuestions && 
             parsedResponse.behavioralQuestions && 
             parsedResponse.experienceQuestions
