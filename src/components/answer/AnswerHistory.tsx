@@ -39,7 +39,7 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
         ) : (
           <div className="space-y-6">
             {[...iterations].reverse().map((iteration, idx) => (
-              <div key={idx} className="border rounded-md p-4">
+              <div key={`iteration-${idx}-${iteration.timestamp}`} className="border rounded-md p-4">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm font-medium text-gray-500">
                     Iteration {iterations.length - idx}

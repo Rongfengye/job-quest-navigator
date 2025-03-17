@@ -31,6 +31,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const [answer, setAnswer] = useState<string>('');
   const [question, setQuestion] = useState<Question | null>(null);
   const [answerRecord, setAnswerRecord] = useState<AnswerData | null>(null);
+  const [iterations, setIterations] = useState<AnswerIteration[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch the question and any existing answer
@@ -114,7 +115,9 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
               : (answerData.iterations as any)?.length 
                 ? (answerData.iterations as any)
                 : [];
-
+                
+          // Update both state values
+          setIterations(parsedIterations);
           setAnswerRecord({
             id: answerData.id,
             storyline_id: answerData.storyline_id,
@@ -152,18 +155,20 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     
     try {
       const now = new Date().toISOString();
-      let iterations = answerRecord?.iterations || [];
+      // Get the latest iterations directly from state
+      let currentIterations = [...iterations];
       
       // Add the current answer as a new iteration if it's different from the last one
-      console.log('This is the iterations object beforehand',iterations);
+      console.log('This is the iterations object beforehand', currentIterations);
       if (answerText !== answer && answerText.trim() !== '') {
         console.log('in the if statement');
-        iterations = [
-          ...iterations,
-          { text: answerText, timestamp: now }
-        ];
+        const newIteration = { text: answerText, timestamp: now };
+        currentIterations = [...currentIterations, newIteration];
+        
+        // Update state immediately to ensure UI reflects changes
+        setIterations(currentIterations);
+        console.log('Updated iterations with new entry:', currentIterations);
       }
-      console.log('This is the iterations object after',iterations)
       
       // Check if we already have a record
       if (answerRecord) {
@@ -172,15 +177,21 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           .from('storyline_job_questions')
           .update({
             answer: answerText,
-            iterations: JSON.stringify(iterations), // Ensure it's stored as a JSON object
-            updated_at: new Date().toISOString() // Ensure proper timestamp format
+            iterations: JSON.stringify(currentIterations),
+            updated_at: new Date().toISOString()
           })
           .eq('id', answerRecord.id);
           
         if (error) throw error;
+        
+        // Update local state with the new data
+        setAnswerRecord({
+          ...answerRecord,
+          answer: answerText,
+          iterations: currentIterations
+        });
       } else {
-        // New record being created - deduct 1 token here, it is deducting the token because answerRecord from the supabase call is null
-        // CHECK IF THIS IS BEING PROPERLY SET IN THE USE EFFECT
+        // New record being created
         console.log('🪙 Deducting 1 token for creating a new question record');
         const tokenCheck = await deductTokens(1);
         
@@ -195,13 +206,13 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         
         // Create new record
         const { data, error } = await supabase
-          .from('storyline_job_questions') // look at other queries that are hitting this 
+          .from('storyline_job_questions')
           .insert({
             storyline_id: storylineId,
             question_index: questionIndex,
             question: question.question,
             answer: answerText,
-            iterations: iterations.length ? (iterations as unknown as Json) : [],
+            iterations: currentIterations.length ? (currentIterations as unknown as Json) : [],
             type: question.type
           })
           .select()
@@ -221,7 +232,9 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
               : (data.iterations as any)?.length 
                 ? (data.iterations as any)
                 : [];
-                
+          
+          // Update both state variables
+          setIterations(parsedIterations);      
           setAnswerRecord({
             id: data.id,
             storyline_id: data.storyline_id,
@@ -258,7 +271,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     question, 
     answer, 
     answerRecord,
-    iterations: answerRecord?.iterations || [],
+    iterations, // Return iterations directly from state
     setAnswer, 
     saveAnswer, 
     error 

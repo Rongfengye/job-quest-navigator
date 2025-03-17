@@ -50,6 +50,15 @@ const AnswerPage = () => {
     }
   }, [answer]);
 
+  // If iterations change, consider switching to history tab if appropriate
+  useEffect(() => {
+    if (iterations.length > 0 && activeTab === 'current' && isSaving === false) {
+      // Optional: Switch to history tab when a new iteration is saved
+      // Uncomment if you want this behavior
+      // setActiveTab('history');
+    }
+  }, [iterations, isSaving, activeTab]);
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (storylineId) {
