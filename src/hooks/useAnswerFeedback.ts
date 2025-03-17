@@ -38,7 +38,7 @@ export const useAnswerFeedback = (
           .from('storyline_job_questions')
           .select('iterations')
           .eq('storyline_id', storylineId)
-          .eq('question_index', question.index || 0)
+          .eq('question_index', question?.question_index || 0)
           .single();
 
         if (fetchError) {
@@ -48,15 +48,30 @@ export const useAnswerFeedback = (
           return;
         }
 
-        if (data?.iterations && Array.isArray(data.iterations) && data.iterations.length > 0) {
-          // Get the last iteration that has feedback
-          const lastIterationWithFeedback = [...data.iterations]
-            .reverse()
-            .find(iteration => iteration.feedback);
+        if (data?.iterations) {
+          let iterations: AnswerIteration[] = [];
           
-          if (lastIterationWithFeedback?.feedback) {
-            console.log('Found existing feedback:', lastIterationWithFeedback.feedback);
-            setFeedback(lastIterationWithFeedback.feedback);
+          // Parse iterations properly if they're a string
+          if (typeof data.iterations === 'string') {
+            try {
+              iterations = JSON.parse(data.iterations);
+            } catch (e) {
+              console.error('Error parsing iterations JSON:', e);
+            }
+          } else if (Array.isArray(data.iterations)) {
+            iterations = data.iterations as AnswerIteration[];
+          }
+          
+          // Get the last iteration that has feedback
+          if (iterations.length > 0) {
+            const lastIterationWithFeedback = [...iterations]
+              .reverse()
+              .find(iteration => iteration.feedback);
+            
+            if (lastIterationWithFeedback?.feedback) {
+              console.log('Found existing feedback:', lastIterationWithFeedback.feedback);
+              setFeedback(lastIterationWithFeedback.feedback);
+            }
           }
         }
       } catch (err) {
