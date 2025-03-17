@@ -13,6 +13,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
+import { Separator } from '@/components/ui/separator';
+import { Linkedin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -25,6 +28,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [isOauthLoading, setIsOauthLoading] = useState(false);
   const { login, signup, isLoading } = useAuth();
   const navigate = useNavigate();
 
@@ -43,6 +47,25 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     if (result.success) {
       onClose();
       navigate('/dashboard');
+    }
+  };
+
+  const handleLinkedInSignIn = async () => {
+    setIsOauthLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'linkedin_oidc',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+      
+      if (error) throw error;
+      // The redirect will happen automatically, so we don't need to do anything here
+    } catch (error) {
+      console.error("LinkedIn sign in error:", error);
+    } finally {
+      setIsOauthLoading(false);
     }
   };
 
@@ -89,6 +112,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Logging in...' : 'Login'}
               </Button>
+              
+              <div className="flex items-center gap-2 my-4">
+                <Separator className="flex-1" />
+                <span className="text-sm text-muted-foreground">or continue with</span>
+                <Separator className="flex-1" />
+              </div>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full flex items-center gap-2"
+                onClick={handleLinkedInSignIn}
+                disabled={isOauthLoading}
+              >
+                <Linkedin className="h-4 w-4" />
+                {isOauthLoading ? 'Connecting...' : 'LinkedIn'}
+              </Button>
+              
               <div className="text-center text-sm text-interview-text-light">
                 Don't have an account?{' '}
                 <button
@@ -151,6 +192,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? 'Creating account...' : 'Create account'}
               </Button>
+              
+              <div className="flex items-center gap-2 my-4">
+                <Separator className="flex-1" />
+                <span className="text-sm text-muted-foreground">or continue with</span>
+                <Separator className="flex-1" />
+              </div>
+              
+              <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full flex items-center gap-2"
+                onClick={handleLinkedInSignIn}
+                disabled={isOauthLoading}
+              >
+                <Linkedin className="h-4 w-4" />
+                {isOauthLoading ? 'Connecting...' : 'LinkedIn'}
+              </Button>
+              
               <div className="text-center text-sm text-interview-text-light">
                 Already have an account?{' '}
                 <button
