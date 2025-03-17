@@ -18,6 +18,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to ensure user has tokens record
+  const ensureUserTokens = async (userId: string) => {
+    try {
+      console.log('Checking if user has tokens record...');
+      
+      // Check if user has a tokens record
+      const { data: tokensRecord, error: tokensError } = await supabase
+        .from('storyline_user_tokens')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+      
+      if (tokensError) {
+        console.error('Error checking tokens record:', tokensError);
+        return;
+      }
+      
+      // If no tokens record exists, create one
+      if (!tokensRecord) {
+        console.log('No tokens record found, creating new one...');
+        
+        const { data: newRecord, error: insertError } = await supabase
+          .from('storyline_user_tokens')
+          .insert([{ user_id: userId, tokens_remaining: 100 }])
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error creating tokens record:', insertError);
+        } else {
+          console.log('Created new tokens record:', newRecord);
+        }
+      } else {
+        console.log('Existing tokens record found:', tokensRecord);
+      }
+    } catch (error) {
+      console.error('Error in ensureUserTokens:', error);
+    }
+  };
+
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -70,6 +110,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firstName,
             lastName
           });
+          
+          // Ensure user has a tokens record
+          await ensureUserTokens(data.session.user.id);
         } else {
           console.log('No session found, user is not authenticated');
           auth.setUser(null);
@@ -134,6 +177,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             firstName,
             lastName
           });
+          
+          // Ensure user has a tokens record
+          await ensureUserTokens(session.user.id);
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('User signed out, clearing auth state');
