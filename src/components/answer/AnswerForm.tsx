@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import AnswerFeedback from './AnswerFeedback';
+import { Progress } from '@/components/ui/progress';
 
 interface AnswerFormProps {
   inputAnswer: string;
@@ -38,6 +39,42 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     // Fix: directly concat the strings instead of using a function with prev
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
   });
+
+  const [progressValue, setProgressValue] = useState(0);
+
+  // Simulate progress when feedback is loading
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (isFeedbackLoading) {
+      setProgressValue(0);
+      
+      interval = setInterval(() => {
+        setProgressValue(prev => {
+          // Increase progress but never reach 100% until feedback is loaded
+          // The final jump to 100% happens when isFeedbackLoading becomes false
+          if (prev < 90) {
+            return prev + (90 - prev) * 0.1;
+          }
+          return prev;
+        });
+      }, 300);
+    } else if (feedback) {
+      // When feedback is loaded, jump to 100%
+      setProgressValue(100);
+      
+      // Reset progress after a delay
+      const timeout = setTimeout(() => {
+        setProgressValue(0);
+      }, 1000);
+      
+      return () => clearTimeout(timeout);
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isFeedbackLoading, feedback]);
 
   const handleMicClick = () => {
     if (isRecording) {
@@ -101,6 +138,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
             </Button>
           </div>
         </form>
+        
+        {/* Loading Progress Bar */}
+        {(isFeedbackLoading || (progressValue > 0 && progressValue < 100)) && (
+          <div className="mt-6">
+            <p className="text-sm text-gray-500 mb-2">
+              {isFeedbackLoading ? 'Generating feedback...' : 'Completing...'}
+            </p>
+            <Progress value={progressValue} className="h-2" />
+          </div>
+        )}
         
         {/* Feedback Section */}
         {(isFeedbackLoading || feedback) && (
