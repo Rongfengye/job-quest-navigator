@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
-import { Linkedin } from 'lucide-react';
+import { Linkedin, Github } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -29,7 +29,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [isOauthLoading, setIsOauthLoading] = useState(false);
+  const [isLinkedinLoading, setIsLinkedinLoading] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
   const { login, signup, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleLinkedInSignIn = async () => {
-    setIsOauthLoading(true);
+    setIsLinkedinLoading(true);
     try {
       // Get the current URL without any trailing spaces
       const redirectUrl = window.location.origin.trim();
@@ -89,7 +90,46 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     } finally {
-      setIsOauthLoading(false);
+      setIsLinkedinLoading(false);
+    }
+  };
+
+  const handleGithubSignIn = async () => {
+    setIsGithubLoading(true);
+    try {
+      // Get the current URL without any trailing spaces
+      const redirectUrl = window.location.origin.trim();
+      
+      console.log('Github OAuth initiated with redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: redirectUrl,
+        }
+      });
+      
+      if (error) {
+        console.error("Github sign in error:", error);
+        toast({
+          variant: "destructive",
+          title: "Github sign in failed",
+          description: error.message,
+        });
+        throw error;
+      }
+      
+      console.log("Github OAuth response:", data);
+      // The redirect will happen automatically, so we don't need to do anything here
+    } catch (error) {
+      console.error("Github sign in error:", error);
+      toast({
+        variant: "destructive",
+        title: "Github sign in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    } finally {
+      setIsGithubLoading(false);
     }
   };
 
@@ -143,16 +183,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <Separator className="flex-1" />
               </div>
               
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full flex items-center gap-2"
-                onClick={handleLinkedInSignIn}
-                disabled={isOauthLoading}
-              >
-                <Linkedin className="h-4 w-4" />
-                {isOauthLoading ? 'Connecting...' : 'LinkedIn'}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleLinkedInSignIn}
+                  disabled={isLinkedinLoading}
+                >
+                  <Linkedin className="h-4 w-4" />
+                  {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleGithubSignIn}
+                  disabled={isGithubLoading}
+                >
+                  <Github className="h-4 w-4" />
+                  {isGithubLoading ? 'Connecting...' : 'GitHub'}
+                </Button>
+              </div>
               
               <div className="text-center text-sm text-interview-text-light">
                 Don't have an account?{' '}
@@ -223,16 +276,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                 <Separator className="flex-1" />
               </div>
               
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full flex items-center gap-2"
-                onClick={handleLinkedInSignIn}
-                disabled={isOauthLoading}
-              >
-                <Linkedin className="h-4 w-4" />
-                {isOauthLoading ? 'Connecting...' : 'LinkedIn'}
-              </Button>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleLinkedInSignIn}
+                  disabled={isLinkedinLoading}
+                >
+                  <Linkedin className="h-4 w-4" />
+                  {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
+                </Button>
+                
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleGithubSignIn}
+                  disabled={isGithubLoading}
+                >
+                  <Github className="h-4 w-4" />
+                  {isGithubLoading ? 'Connecting...' : 'GitHub'}
+                </Button>
+              </div>
               
               <div className="text-center text-sm text-interview-text-light">
                 Already have an account?{' '}
