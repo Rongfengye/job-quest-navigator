@@ -11,7 +11,7 @@ import { useState } from 'react';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isLoading: tokensLoading, fetchTokens } = useUserTokens();
+  const { tokens, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -30,12 +30,22 @@ const NavBar = () => {
     });
   }, [isAuthenticated, user, isLoading, tokens]);
 
-  // Refresh tokens when component mounts
+  // Refresh tokens when component mounts and subscribe to token updates
   useEffect(() => {
     if (isAuthenticated && user?.id) {
+      console.log('NavBar: Initial token fetch and subscribing to updates');
       fetchTokens();
+      
+      // Subscribe to token updates
+      const unsubscribe = subscribeToTokenUpdates();
+      
+      // Clean up subscription when component unmounts
+      return () => {
+        console.log('NavBar: Cleaning up token subscription');
+        unsubscribe();
+      };
     }
-  }, [isAuthenticated, user?.id, fetchTokens]);
+  }, [isAuthenticated, user?.id, fetchTokens, subscribeToTokenUpdates]);
 
   const handleLogout = async () => {
     console.log('NavBar: Logout button clicked');

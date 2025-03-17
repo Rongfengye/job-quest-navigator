@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,7 +25,7 @@ const AnswerPage = () => {
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
   
-  const { deductTokens, fetchTokens } = useUserTokens();
+  const { deductTokens } = useUserTokens();
   
   const { 
     isLoading, 
@@ -39,7 +38,6 @@ const AnswerPage = () => {
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
-  // Log iterations whenever they change to track updates
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);
   }, [iterations]);
@@ -50,12 +48,9 @@ const AnswerPage = () => {
     }
   }, [answer]);
 
-  // If iterations change, consider switching to history tab if appropriate
   useEffect(() => {
     if (iterations.length > 0 && activeTab === 'current' && isSaving === false) {
-      // Optional: Switch to history tab when a new iteration is saved
-      // Uncomment if you want this behavior
-      // setActiveTab('history');
+      setActiveTab('history');
     }
   }, [iterations, isSaving, activeTab]);
 
@@ -73,18 +68,14 @@ const AnswerPage = () => {
   const handleGenerateAnswer = async () => {
     if (!question) return;
     
-    // Check if user has enough tokens (1 token required)
     const tokenCheck = await deductTokens(1);
     if (!tokenCheck?.success) {
-      return; // The token hook will show an error toast for insufficient tokens
+      return;
     }
     
-    // Refresh token display after deduction
-    fetchTokens();
     setGeneratingAnswer(true);
     
     try {
-      // Generate a sample answer based on the model answer or explanation
       const generatedText = question.modelAnswer || 
         "Throughout my career, I've gained significant experience in this area. " +
         "I've worked with various tools and technologies to solve complex problems. " +
@@ -94,9 +85,7 @@ const AnswerPage = () => {
       setInputAnswer(generatedText);
     } catch (error) {
       console.error('Error generating answer:', error);
-      // If there was an error, refund the token
-      await deductTokens(-1); // Add back the token that was deducted
-      fetchTokens(); // Update token display after refund
+      await deductTokens(-1);
     } finally {
       setGeneratingAnswer(false);
     }

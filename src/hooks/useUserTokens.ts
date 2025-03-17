@@ -4,11 +4,27 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
 
+// Create a simple event emitter for token updates
+type TokenUpdateListener = (tokens: number | null) => void;
+const tokenListeners: Set<TokenUpdateListener> = new Set();
+
+const notifyTokenListeners = (tokens: number | null) => {
+  console.log('🔔 Notifying all token listeners of new token balance:', tokens);
+  tokenListeners.forEach(listener => listener(tokens));
+};
+
 export const useUserTokens = () => {
   const [tokens, setTokens] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
+
+  // Update local state and notify all listeners
+  const updateTokenState = useCallback((newTokens: number | null) => {
+    console.log('✅ Updating token state to:', newTokens);
+    setTokens(newTokens);
+    notifyTokenListeners(newTokens);
+  }, []);
 
   const fetchTokens = useCallback(async () => {
     if (!user?.id) return;
@@ -23,7 +39,8 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
-      setTokens(data?.tokens_remaining ?? null);
+      console.log('📊 Tokens fetched from database:', data?.tokens_remaining);
+      updateTokenState(data?.tokens_remaining ?? null);
     } catch (error) {
       console.error('Error fetching user tokens:', error);
       toast({
@@ -34,7 +51,7 @@ export const useUserTokens = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, toast]);
+  }, [user?.id, toast, updateTokenState]);
 
   const addTokens = async (amount: number = 10) => {
     if (!user?.id) return;
@@ -49,7 +66,7 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
-      setTokens(data ?? 0);
+      updateTokenState(data ?? 0);
       console.log(`✅ Successfully added ${amount} tokens. New balance: ${data}`);
       toast({
         title: "Tokens added",
@@ -87,8 +104,8 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
-      // Immediately update the local token state
-      setTokens(data ?? 0);
+      // Immediately update the local token state and notify listeners
+      updateTokenState(data ?? 0);
       console.log(`✅ Successfully ${action.toLowerCase()} ${absAmount} tokens. New balance: ${data}`);
       return { success: true, balance: data };
     } catch (error: any) {
@@ -109,7 +126,27 @@ export const useUserTokens = () => {
     }
   };
 
-  // Set up real-time subscription to token changes
+  // Subscribe to token updates
+  const subscribeToTokenUpdates = useCallback(() => {
+    console.log('🔔 Component subscribing to token updates');
+    
+    // Create a listener that will update this component's state
+    const listener = (newTokens: number | null) => {
+      console.log('🔄 Token listener called with new balance:', newTokens);
+      setTokens(newTokens);
+    };
+    
+    // Add the listener to our set
+    tokenListeners.add(listener);
+    
+    // Return an unsubscribe function
+    return () => {
+      console.log('🔔 Component unsubscribing from token updates');
+      tokenListeners.delete(listener);
+    };
+  }, []);
+
+  // Set up real-time subscription to token changes from database
   useEffect(() => {
     if (!isAuthenticated || !user?.id) return;
     
@@ -127,7 +164,8 @@ export const useUserTokens = () => {
           table: 'storyline_user_tokens',
           filter: `user_id=eq.${user.id}`
         },
-        () => {
+        (payload) => {
+          console.log('🔄 Realtime update received for tokens:', payload);
           // Refresh tokens whenever there's a change
           fetchTokens();
         }
@@ -144,6 +182,7 @@ export const useUserTokens = () => {
     isLoading,
     fetchTokens,
     addTokens,
-    deductTokens
+    deductTokens,
+    subscribeToTokenUpdates
   };
 };

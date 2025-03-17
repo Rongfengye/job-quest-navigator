@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +22,7 @@ const Settings = () => {
     confirm: ''
   });
   
+  // We don't need to call fetchTokens anymore as it's handled by the pub/sub system
   const { tokens, isLoading: tokensLoading, addTokens } = useUserTokens();
   const [isAddingTokens, setIsAddingTokens] = useState(false);
   
@@ -103,6 +103,7 @@ const Settings = () => {
     setIsAddingTokens(true);
     try {
       await addTokens(10);
+      // No need to manually call fetchTokens() as the token state is updated by the pub/sub system
     } finally {
       setIsAddingTokens(false);
     }
