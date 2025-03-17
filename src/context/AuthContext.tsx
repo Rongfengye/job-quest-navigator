@@ -28,14 +28,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.session) {
           // We have a session, so the user is authenticated
           console.log('User is authenticated via session, userId:', data.session.user.id);
+          console.log('User metadata:', data.session.user.user_metadata);
+          console.log('App metadata:', data.session.user.app_metadata);
+          
+          // Extract name data, handling GitHub provider specifically
+          const metadata = data.session.user.user_metadata || {};
+          let firstName = metadata.first_name || '';
+          let lastName = metadata.last_name || '';
+          
+          // For GitHub, we may need to extract from the full_name or name field
+          if ((!firstName || !lastName) && metadata.full_name) {
+            const nameParts = metadata.full_name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          } else if ((!firstName || !lastName) && metadata.name) {
+            const nameParts = metadata.name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          }
+          
+          // If provider is github and we still don't have names, try to use the name field directly
+          if ((!firstName && !lastName) && data.session.user.app_metadata?.provider === 'github') {
+            // For GitHub users, if no name is available, use the username/nickname as the first name
+            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+          }
+          
+          console.log('Extracted name data:', { firstName, lastName });
           
           // Set user directly from session data
           console.log('Setting user data from session');
           auth.setUser({
             id: data.session.user.id,
             email: data.session.user.email || '',
-            firstName: data.session.user.user_metadata?.first_name || '',
-            lastName: data.session.user.user_metadata?.last_name || ''
+            firstName,
+            lastName
           });
         } else {
           console.log('No session found, user is not authenticated');
@@ -59,14 +85,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session) {
           console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
+          console.log('User metadata:', session.user.user_metadata);
+          console.log('App metadata:', session.user.app_metadata);
+          
+          // Extract name data, handling GitHub provider specifically
+          const metadata = session.user.user_metadata || {};
+          let firstName = metadata.first_name || '';
+          let lastName = metadata.last_name || '';
+          
+          // For GitHub, we may need to extract from the full_name or name field
+          if ((!firstName || !lastName) && metadata.full_name) {
+            const nameParts = metadata.full_name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          } else if ((!firstName || !lastName) && metadata.name) {
+            const nameParts = metadata.name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          }
+          
+          // If provider is github and we still don't have names, try to use the name field directly
+          if ((!firstName && !lastName) && session.user.app_metadata?.provider === 'github') {
+            // For GitHub users, if no name is available, use the username/nickname as the first name
+            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+          }
+          
+          console.log('Extracted name data:', { firstName, lastName });
           
           // Set user directly from session data
           console.log('Setting user data from session');
           auth.setUser({
             id: session.user.id,
             email: session.user.email || '',
-            firstName: session.user.user_metadata?.first_name || '',
-            lastName: session.user.user_metadata?.last_name || ''
+            firstName,
+            lastName
           });
         }
       } else if (event === 'SIGNED_OUT') {

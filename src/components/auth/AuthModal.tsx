@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -106,6 +105,8 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         provider: 'github',
         options: {
           redirectTo: redirectUrl,
+          // Request user profile data including name
+          scopes: 'read:user user:email',
         }
       });
       

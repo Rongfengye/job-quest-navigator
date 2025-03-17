@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -33,6 +32,33 @@ export const useAuth = () => {
     setUser(userData);
   }, []);
 
+  // Helper to extract name data from user metadata
+  const extractUserNames = useCallback((userInfo: any) => {
+    // First try to get from user_metadata
+    const metadata = userInfo.user_metadata || {};
+    let firstName = metadata.first_name || '';
+    let lastName = metadata.last_name || '';
+    
+    // For GitHub, we may need to extract from the full_name or name field
+    if ((!firstName || !lastName) && metadata.full_name) {
+      const nameParts = metadata.full_name.split(' ');
+      firstName = firstName || nameParts[0] || '';
+      lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+    } else if ((!firstName || !lastName) && metadata.name) {
+      const nameParts = metadata.name.split(' ');
+      firstName = firstName || nameParts[0] || '';
+      lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+    }
+    
+    // If provider is github and we still don't have names, try to use the name field directly
+    if (metadata.provider === 'github' && (!firstName && !lastName) && userInfo.app_metadata?.provider === 'github') {
+      // For GitHub users, if no name is available, use the username/nickname as the first name
+      firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+    }
+    
+    return { firstName, lastName };
+  }, []);
+
   // Function to manually sync user data from Supabase auth
   const syncUserData = useCallback(async () => {
     console.log('Manually syncing user data from Supabase');
@@ -49,13 +75,18 @@ export const useAuth = () => {
       
       const userId = sessionData.session.user.id;
       console.log('Found active session for user ID:', userId);
+      console.log('User metadata:', sessionData.session.user.user_metadata);
+      console.log('App metadata:', sessionData.session.user.app_metadata);
       
-      // Get user directly from session data
+      // Get name data using the helper
+      const { firstName, lastName } = extractUserNames(sessionData.session.user);
+      
+      // Set user directly from session data
       setUserSafely({
         id: userId,
         email: sessionData.session.user.email || '',
-        firstName: sessionData.session.user.user_metadata?.first_name || '',
-        lastName: sessionData.session.user.user_metadata?.last_name || ''
+        firstName,
+        lastName
       });
       
       return { success: true, user: sessionData.session.user };
@@ -65,7 +96,7 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [setUserSafely]);
+  }, [setUserSafely, extractUserNames]);
 
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
     console.log('Signup function called with:', { email, firstName, lastName });
@@ -144,13 +175,16 @@ export const useAuth = () => {
 
       if (error) throw error;
       
+      // Get name data using the helper
+      const { firstName, lastName } = extractUserNames(data.user);
+      
       // Set user directly from session data
       console.log('Setting user with session data');
       setUserSafely({
         id: data.user.id,
         email: data.user.email || email,
-        firstName: data.user.user_metadata?.first_name || '',
-        lastName: data.user.user_metadata?.last_name || ''
+        firstName,
+        lastName
       });
 
       console.log('Showing success toast');
