@@ -17,7 +17,7 @@ export const useAuth = () => {
 
   // Log current auth state whenever it changes
   useEffect(() => {
-    console.log('v22: useAuth hook state updated:', { 
+    console.log('v20: useAuth hook state updated:', { 
       user: user ? {
         id: user.id,
         email: user.email,
