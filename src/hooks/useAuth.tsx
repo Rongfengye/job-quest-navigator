@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -39,7 +40,7 @@ export const useAuth = () => {
     let firstName = metadata.first_name || '';
     let lastName = metadata.last_name || '';
     
-    // For GitHub, we may need to extract from the full_name or name field
+    // For GitHub and Google, we may need to extract from the full_name or name field
     if ((!firstName || !lastName) && metadata.full_name) {
       const nameParts = metadata.full_name.split(' ');
       firstName = firstName || nameParts[0] || '';
@@ -50,10 +51,18 @@ export const useAuth = () => {
       lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
     }
     
-    // If provider is github and we still don't have names, try to use the name field directly
-    if (metadata.provider === 'github' && (!firstName && !lastName) && userInfo.app_metadata?.provider === 'github') {
-      // For GitHub users, if no name is available, use the username/nickname as the first name
-      firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+    // Handle provider-specific metadata formats
+    if ((!firstName && !lastName)) {
+      const provider = metadata.provider || userInfo.app_metadata?.provider;
+      
+      if (provider === 'github') {
+        // For GitHub users, if no name is available, use the username/nickname as the first name
+        firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+      } else if (provider === 'google') {
+        // Google stores given_name and family_name 
+        firstName = metadata.given_name || firstName;
+        lastName = metadata.family_name || lastName;
+      }
     }
     
     return { firstName, lastName };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
-import { Linkedin, Github } from 'lucide-react';
+import { Linkedin, Github, Mail } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -30,6 +31,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [lastName, setLastName] = useState('');
   const [isLinkedinLoading, setIsLinkedinLoading] = useState(false);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { login, signup, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -133,6 +135,47 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setIsGithubLoading(false);
     }
   };
+  
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    try {
+      // Get the current URL without any trailing spaces
+      const redirectUrl = window.location.origin.trim();
+      
+      console.log('Google OAuth initiated with redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          // Request user profile data including name and email
+          scopes: 'profile email',
+        }
+      });
+      
+      if (error) {
+        console.error("Google sign in error:", error);
+        toast({
+          variant: "destructive",
+          title: "Google sign in failed",
+          description: error.message,
+        });
+        throw error;
+      }
+      
+      console.log("Google OAuth response:", data);
+      // The redirect will happen automatically, so we don't need to do anything here
+    } catch (error) {
+      console.error("Google sign in error:", error);
+      toast({
+        variant: "destructive",
+        title: "Google sign in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -185,6 +228,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
               
               <div className="flex flex-col gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                >
+                  <Mail className="h-4 w-4" />
+                  {isGoogleLoading ? 'Connecting...' : 'Google'}
+                </Button>
+                
                 <Button 
                   type="button" 
                   variant="outline" 
@@ -278,6 +332,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               </div>
               
               <div className="flex flex-col gap-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="w-full flex items-center gap-2"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                >
+                  <Mail className="h-4 w-4" />
+                  {isGoogleLoading ? 'Connecting...' : 'Google'}
+                </Button>
+                
                 <Button 
                   type="button" 
                   variant="outline" 

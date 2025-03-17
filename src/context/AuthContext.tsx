@@ -31,12 +31,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('User metadata:', data.session.user.user_metadata);
           console.log('App metadata:', data.session.user.app_metadata);
           
-          // Extract name data, handling GitHub provider specifically
+          // Extract name data, handling various providers specifically
           const metadata = data.session.user.user_metadata || {};
           let firstName = metadata.first_name || '';
           let lastName = metadata.last_name || '';
           
-          // For GitHub, we may need to extract from the full_name or name field
+          // For providers like GitHub and Google, we may need to extract from the full_name or name field
           if ((!firstName || !lastName) && metadata.full_name) {
             const nameParts = metadata.full_name.split(' ');
             firstName = firstName || nameParts[0] || '';
@@ -47,10 +47,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
           }
           
-          // If provider is github and we still don't have names, try to use the name field directly
-          if ((!firstName && !lastName) && data.session.user.app_metadata?.provider === 'github') {
-            // For GitHub users, if no name is available, use the username/nickname as the first name
-            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+          // Handle provider-specific metadata formats
+          const provider = data.session.user.app_metadata?.provider;
+          if ((!firstName || !lastName)) {
+            if (provider === 'github') {
+              // For GitHub users, if no name is available, use the username/nickname as the first name
+              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+            } else if (provider === 'google') {
+              // Google stores given_name and family_name
+              firstName = metadata.given_name || firstName;
+              lastName = metadata.family_name || lastName;
+            }
           }
           
           console.log('Extracted name data:', { firstName, lastName });
@@ -88,12 +95,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('User metadata:', session.user.user_metadata);
           console.log('App metadata:', session.user.app_metadata);
           
-          // Extract name data, handling GitHub provider specifically
+          // Extract name data, handling various providers specifically
           const metadata = session.user.user_metadata || {};
           let firstName = metadata.first_name || '';
           let lastName = metadata.last_name || '';
           
-          // For GitHub, we may need to extract from the full_name or name field
+          // For providers like GitHub and Google, we may need to extract from the full_name or name field
           if ((!firstName || !lastName) && metadata.full_name) {
             const nameParts = metadata.full_name.split(' ');
             firstName = firstName || nameParts[0] || '';
@@ -104,10 +111,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
           }
           
-          // If provider is github and we still don't have names, try to use the name field directly
-          if ((!firstName && !lastName) && session.user.app_metadata?.provider === 'github') {
-            // For GitHub users, if no name is available, use the username/nickname as the first name
-            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+          // Handle provider-specific metadata formats
+          const provider = session.user.app_metadata?.provider;
+          if ((!firstName || !lastName)) {
+            if (provider === 'github') {
+              // For GitHub users, if no name is available, use the username/nickname as the first name
+              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+            } else if (provider === 'google') {
+              // Google stores given_name and family_name
+              firstName = metadata.given_name || firstName;
+              lastName = metadata.family_name || lastName;
+            }
           }
           
           console.log('Extracted name data:', { firstName, lastName });
