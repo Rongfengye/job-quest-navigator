@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, History, CheckCircle, MessageSquare } from 'lucide-react';
+import { ArrowLeft, History, CheckCircle } from 'lucide-react';
 import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
@@ -11,9 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import QuestionDisplay from '@/components/answer/QuestionDisplay';
 import AnswerForm from '@/components/answer/AnswerForm';
 import AnswerHistory from '@/components/answer/AnswerHistory';
-import AnswerFeedback from '@/components/answer/AnswerFeedback';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { useAnswerFeedback, FeedbackData } from '@/hooks/useAnswerFeedback';
+import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -27,7 +26,6 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
-  const [showFeedback, setShowFeedback] = useState(false);
   
   const { deductTokens } = useUserTokens();
   
@@ -61,8 +59,8 @@ const AnswerPage = () => {
   }, [answer]);
 
   useEffect(() => {
-    if (showFeedback) {
-      setShowFeedback(false);
+    // Clear feedback when switching tabs or when the answer changes
+    if (activeTab !== 'current') {
       clearFeedback();
     }
   }, [activeTab, clearFeedback]);
@@ -86,9 +84,6 @@ const AnswerPage = () => {
       if (feedbackData) {
         // Save answer with the feedback data
         await saveAnswer(inputAnswer, feedbackData);
-        
-        setShowFeedback(true);
-        setActiveTab('feedback');
         
         toast({
           title: "Success",
@@ -180,10 +175,6 @@ const AnswerPage = () => {
               <History className="w-4 h-4" />
               Previous Iterations {iterations.length > 0 && `(${iterations.length})`}
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="flex items-center gap-1" disabled={!showFeedback}>
-              <MessageSquare className="w-4 h-4" />
-              Feedback
-            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="current">
@@ -195,6 +186,9 @@ const AnswerPage = () => {
               isSaving={isSaving}
               generatingAnswer={generatingAnswer}
               question={question}
+              feedback={feedback}
+              isFeedbackLoading={isFeedbackLoading}
+              feedbackError={feedbackError}
             />
           </TabsContent>
           
@@ -203,14 +197,6 @@ const AnswerPage = () => {
               iterations={iterations}
               setInputAnswer={setInputAnswer}
               setActiveTab={setActiveTab}
-            />
-          </TabsContent>
-          
-          <TabsContent value="feedback">
-            <AnswerFeedback 
-              feedback={feedback} 
-              isLoading={isFeedbackLoading} 
-              error={feedbackError} 
             />
           </TabsContent>
         </Tabs>

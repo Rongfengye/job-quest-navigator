@@ -6,6 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Save, Sparkles, Mic } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import AnswerFeedback from './AnswerFeedback';
 
 interface AnswerFormProps {
   inputAnswer: string;
@@ -15,6 +17,9 @@ interface AnswerFormProps {
   isSaving: boolean;
   generatingAnswer: boolean;
   question: Question | null;
+  feedback: FeedbackData | null;
+  isFeedbackLoading: boolean;
+  feedbackError: string | null;
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -24,7 +29,10 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   handleGenerateAnswer,
   isSaving,
   generatingAnswer,
-  question
+  question,
+  feedback,
+  isFeedbackLoading,
+  feedbackError
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     // Fix: directly concat the strings instead of using a function with prev
@@ -93,6 +101,25 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
             </Button>
           </div>
         </form>
+        
+        {/* Feedback Section */}
+        {isFeedbackLoading && (
+          <div className="mt-8 flex flex-col items-center justify-center py-8 border-t">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-interview-primary mb-4"></div>
+            <p className="text-gray-600">Generating feedback for your answer...</p>
+          </div>
+        )}
+        
+        {feedback && !isFeedbackLoading && (
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4">Answer Feedback</h3>
+            <AnswerFeedback 
+              feedback={feedback}
+              isLoading={false}
+              error={feedbackError} 
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   );
