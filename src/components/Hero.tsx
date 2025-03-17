@@ -13,7 +13,7 @@ const Hero = () => {
   const handleGetStarted = () => {
     if (isAuthenticated) {
       // If user is already logged in, navigate directly to Create page
-      navigate('/create');
+      navigate('/dashboard');
     } else {
       // Otherwise show auth modal for login/signup
       setShowAuthModal(true);

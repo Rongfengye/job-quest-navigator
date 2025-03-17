@@ -33,7 +33,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const result = await login(email, password);
     if (result.success) {
       onClose();
-      navigate('/create');
+      navigate('/dashboard');
     }
   };
 
@@ -42,7 +42,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const result = await signup(email, password, firstName, lastName);
     if (result.success) {
       onClose();
-      navigate('/create');
+      navigate('/dashboard');
     }
   };
 
