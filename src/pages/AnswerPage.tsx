@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -46,7 +45,7 @@ const AnswerPage = () => {
     error: feedbackError,
     generateFeedback,
     clearFeedback
-  } = useAnswerFeedback(storylineId || '', question);
+  } = useAnswerFeedback(storylineId || '', question, questionIndex);
 
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);

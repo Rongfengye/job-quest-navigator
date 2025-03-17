@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +16,7 @@ export interface FeedbackData {
 export const useAnswerFeedback = (
   storylineId: string,
   question: Question | null,
+  questionIndex: number = 0,
   jobTitle: string = '',
   companyName: string = ''
 ) => {
@@ -38,7 +38,7 @@ export const useAnswerFeedback = (
           .from('storyline_job_questions')
           .select('iterations')
           .eq('storyline_id', storylineId)
-          .eq('question_index', question?.question_index || 0)
+          .eq('question_index', questionIndex)
           .single();
 
         if (fetchError) {
@@ -80,7 +80,7 @@ export const useAnswerFeedback = (
     };
 
     loadExistingFeedback();
-  }, [storylineId, question]);
+  }, [storylineId, question, questionIndex]);
 
   const generateFeedback = async (answerText: string) => {
     if (!answerText.trim() || !question) {
@@ -170,3 +170,4 @@ export const useAnswerFeedback = (
     clearFeedback
   };
 };
+
