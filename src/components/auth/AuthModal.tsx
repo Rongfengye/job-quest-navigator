@@ -16,6 +16,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
 import { Linkedin } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -30,6 +31,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [lastName, setLastName] = useState('');
   const [isOauthLoading, setIsOauthLoading] = useState(false);
   const { login, signup, isLoading } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -53,17 +55,39 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleLinkedInSignIn = async () => {
     setIsOauthLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      // Get the current URL without any trailing spaces
+      const redirectUrl = window.location.origin.trim();
+      
+      console.log('LinkedIn OAuth initiated with redirect URL:', redirectUrl);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: redirectUrl,
+          // Specify scopes needed for LinkedIn
+          scopes: 'openid profile email',
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("LinkedIn sign in error:", error);
+        toast({
+          variant: "destructive",
+          title: "LinkedIn sign in failed",
+          description: error.message,
+        });
+        throw error;
+      }
+      
+      console.log("LinkedIn OAuth response:", data);
       // The redirect will happen automatically, so we don't need to do anything here
     } catch (error) {
       console.error("LinkedIn sign in error:", error);
+      toast({
+        variant: "destructive",
+        title: "LinkedIn sign in failed",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
     } finally {
       setIsOauthLoading(false);
     }
