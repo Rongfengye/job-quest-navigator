@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -38,12 +39,14 @@ const AnswerPage = () => {
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
-  // No token deduction on page load anymore
-  // We'll move token deduction to when a new record is created
+  // Log iterations whenever they change to track updates
+  useEffect(() => {
+    console.log('AnswerPage: iterations updated from useAnswers', iterations);
+  }, [iterations]);
 
   useEffect(() => {
     if (answer && answer !== inputAnswer) {
-      setInputAnswer(answer); // This right here might be causing things to be called twice
+      setInputAnswer(answer);
     }
   }, [answer]);
 

@@ -14,6 +14,7 @@ export type Database = {
           created_at: string | null
           credits: number
           email: string | null
+          email_sent: boolean | null
           first_name: string | null
           id: string
           last_name: string | null
@@ -25,6 +26,7 @@ export type Database = {
           created_at?: string | null
           credits?: number
           email?: string | null
+          email_sent?: boolean | null
           first_name?: string | null
           id: string
           last_name?: string | null
@@ -36,12 +38,43 @@ export type Database = {
           created_at?: string | null
           credits?: number
           email?: string | null
+          email_sent?: boolean | null
           first_name?: string | null
           id?: string
           last_name?: string | null
           linkedin_id?: string | null
           profile_url?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      resume_analyses: {
+        Row: {
+          created_at: string
+          current_version: Json
+          id: string
+          improved_version: Json
+          resume_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_version: Json
+          id?: string
+          improved_version: Json
+          resume_path: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_version?: Json
+          id?: string
+          improved_version?: Json
+          resume_path?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

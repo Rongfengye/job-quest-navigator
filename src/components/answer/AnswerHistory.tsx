@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,11 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
   setInputAnswer,
   setActiveTab
 }) => {
+  // Log iterations when they change to track updates
+  useEffect(() => {
+    console.log('AnswerHistory: iterations updated', iterations);
+  }, [iterations]);
+
   return (
     <Card>
       <CardHeader>
