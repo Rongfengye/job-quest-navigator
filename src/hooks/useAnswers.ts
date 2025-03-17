@@ -5,12 +5,20 @@ import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { FeedbackData } from '@/hooks/useAnswerFeedback';
 
 // Define the AnswerIteration interface to be compatible with Json type
 export interface AnswerIteration {
-  text: string;
+  answerText: string; // Changed from 'text' to 'answerText'
   timestamp: string;
-  [key: string]: string; // Add index signature to make it compatible with Json
+  feedback?: {
+    pros: string[];
+    cons: string[];
+    guidelines: string;
+    improvementSuggestions: string;
+    score: number;
+  };
+  [key: string]: any; // Add index signature to make it compatible with Json
 }
 
 interface AnswerData {
@@ -115,16 +123,29 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
               : (answerData.iterations as any)?.length 
                 ? (answerData.iterations as any)
                 : [];
+          
+          // Transform old format iterations to new format if needed
+          const transformedIterations = parsedIterations.map((iteration: any) => {
+            if (iteration.text && !iteration.answerText) {
+              // Convert old format to new format
+              return {
+                answerText: iteration.text,
+                timestamp: iteration.timestamp,
+                ...(iteration.feedback ? { feedback: iteration.feedback } : {})
+              };
+            }
+            return iteration;
+          });
                 
           // Update both state values
-          setIterations(parsedIterations);
+          setIterations(transformedIterations);
           setAnswerRecord({
             id: answerData.id,
             storyline_id: answerData.storyline_id,
             question_index: answerData.question_index,
             question: answerData.question,
             answer: answerData.answer,
-            iterations: parsedIterations,
+            iterations: transformedIterations,
             type: answerData.type as 'technical' | 'behavioral' | 'experience' | undefined
           });
           
@@ -146,8 +167,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     fetchQuestionAndAnswer();
   }, [storylineId, questionIndex, toast]);
 
-  // Save the answer
-  const saveAnswer = async (answerText: string) => {
+  // Save the answer with optional feedback
+  const saveAnswer = async (answerText: string, feedback?: FeedbackData | null) => {
     console.log('in the save ANSWER', storylineId, question)
     if (!storylineId || !question) return;
     
@@ -158,11 +179,19 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       // Get the latest iterations directly from state
       let currentIterations = [...iterations];
       
-      // Add the current answer as a new iteration if it's different from the last one
-      console.log('This is the iterations object beforehand', currentIterations);
-      if (answerText !== answer && answerText.trim() !== '') {
-        console.log('in the if statement');
-        const newIteration = { text: answerText, timestamp: now };
+      // Add the current answer as a new iteration with the new structure
+      if (answerText.trim() !== '') {
+        console.log('Creating new iteration with feedback:', feedback);
+        const newIteration: AnswerIteration = { 
+          answerText: answerText, 
+          timestamp: now,
+        };
+        
+        // Add feedback if available
+        if (feedback) {
+          newIteration.feedback = feedback;
+        }
+        
         currentIterations = [...currentIterations, newIteration];
         
         // Update state immediately to ensure UI reflects changes

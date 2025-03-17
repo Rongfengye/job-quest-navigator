@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import AnswerForm from '@/components/answer/AnswerForm';
 import AnswerHistory from '@/components/answer/AnswerHistory';
 import AnswerFeedback from '@/components/answer/AnswerFeedback';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
+import { useAnswerFeedback, FeedbackData } from '@/hooks/useAnswerFeedback';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -79,17 +80,24 @@ const AnswerPage = () => {
     }
     
     if (storylineId) {
-      await saveAnswer(inputAnswer);
+      // Generate feedback before saving
+      const feedbackData = await generateFeedback(inputAnswer);
       
-      setShowFeedback(true);
-      await generateFeedback(inputAnswer);
-      
-      setActiveTab('feedback');
-      
-      toast({
-        title: "Success",
-        description: "Your answer has been saved and feedback generated.",
-      });
+      if (feedbackData) {
+        // Save answer with the feedback data
+        await saveAnswer(inputAnswer, feedbackData);
+        
+        setShowFeedback(true);
+        setActiveTab('feedback');
+        
+        toast({
+          title: "Success",
+          description: "Your answer has been saved and feedback generated.",
+        });
+      } else {
+        // If feedback generation failed, still save the answer without feedback
+        await saveAnswer(inputAnswer);
+      }
     }
   };
 

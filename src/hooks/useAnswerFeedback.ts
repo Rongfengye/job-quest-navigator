@@ -87,8 +87,9 @@ export const useAnswerFeedback = (
         return null;
       }
 
-      setFeedback(data as FeedbackData);
-      return data as FeedbackData;
+      const feedbackData: FeedbackData = data as FeedbackData;
+      setFeedback(feedbackData);
+      return feedbackData;
     } catch (err) {
       console.error('Error in feedback generation:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
