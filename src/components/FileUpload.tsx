@@ -61,9 +61,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
         }
       }
       
-      // Limit to 3000 characters to prevent token overusage
-      const truncatedText = fullText.substring(0, 3000);
-      console.log(`Text extraction complete. Total characters: ${fullText.length}, truncated to 3000 characters.`);
+      // Limit to 5000 characters to prevent token overusage
+      const truncatedText = fullText.substring(0, 5000);
+      console.log(`Text extraction complete. Total characters: ${fullText.length}, truncated to 5000 characters.`);
       console.log("Text preview:", truncatedText.substring(0, 100) + "...");
       
       return truncatedText;
