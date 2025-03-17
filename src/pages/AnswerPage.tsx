@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,6 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
-  const [showFeedback, setShowFeedback] = useState(false);
   
   const { deductTokens } = useUserTokens();
   
@@ -59,13 +59,6 @@ const AnswerPage = () => {
     }
   }, [answer]);
 
-  useEffect(() => {
-    if (showFeedback) {
-      setShowFeedback(false);
-      clearFeedback();
-    }
-  }, [activeTab, clearFeedback]);
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
@@ -79,17 +72,25 @@ const AnswerPage = () => {
     }
     
     if (storylineId) {
-      await saveAnswer(inputAnswer);
+      clearFeedback();
       
-      setShowFeedback(true);
-      await generateFeedback(inputAnswer);
+      // Generate feedback
+      const feedbackData = await generateFeedback(inputAnswer);
       
-      setActiveTab('feedback');
-      
-      toast({
-        title: "Success",
-        description: "Your answer has been saved and feedback generated.",
-      });
+      if (feedbackData) {
+        // Save answer with feedback
+        const saveSuccess = await saveAnswer(inputAnswer, feedbackData);
+        
+        if (saveSuccess) {
+          // Switch to feedback tab
+          setActiveTab('feedback');
+          
+          toast({
+            title: "Success",
+            description: "Your answer has been saved and feedback generated.",
+          });
+        }
+      }
     }
   };
 
@@ -172,7 +173,7 @@ const AnswerPage = () => {
               <History className="w-4 h-4" />
               Previous Iterations {iterations.length > 0 && `(${iterations.length})`}
             </TabsTrigger>
-            <TabsTrigger value="feedback" className="flex items-center gap-1" disabled={!showFeedback}>
+            <TabsTrigger value="feedback" className="flex items-center gap-1" disabled={!feedback}>
               <MessageSquare className="w-4 h-4" />
               Feedback
             </TabsTrigger>
@@ -184,7 +185,7 @@ const AnswerPage = () => {
               setInputAnswer={setInputAnswer}
               handleSubmit={handleSubmit}
               handleGenerateAnswer={handleGenerateAnswer}
-              isSaving={isSaving}
+              isSaving={isSaving || isFeedbackLoading}
               generatingAnswer={generatingAnswer}
               question={question}
             />

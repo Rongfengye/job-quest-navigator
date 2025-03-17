@@ -5,12 +5,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { FeedbackData } from '@/hooks/useAnswerFeedback';
 
 // Define the AnswerIteration interface to be compatible with Json type
 export interface AnswerIteration {
   text: string;
   timestamp: string;
-  [key: string]: string; // Add index signature to make it compatible with Json
+  feedback?: FeedbackData;
+  [key: string]: string | FeedbackData | undefined; // Add index signature to make it compatible with Json
 }
 
 interface AnswerData {
@@ -146,9 +148,9 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     fetchQuestionAndAnswer();
   }, [storylineId, questionIndex, toast]);
 
-  // Save the answer
-  const saveAnswer = async (answerText: string) => {
-    console.log('in the save ANSWER', storylineId, question)
+  // Save the answer with optional feedback
+  const saveAnswer = async (answerText: string, feedback?: FeedbackData) => {
+    console.log('in the save ANSWER', storylineId, question);
     if (!storylineId || !question) return;
     
     setIsSaving(true);
@@ -162,12 +164,33 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       console.log('This is the iterations object beforehand', currentIterations);
       if (answerText !== answer && answerText.trim() !== '') {
         console.log('in the if statement');
-        const newIteration = { text: answerText, timestamp: now };
+        // Include feedback in the iteration if available
+        const newIteration: AnswerIteration = { 
+          text: answerText, 
+          timestamp: now 
+        };
+        
+        // Add feedback if available
+        if (feedback) {
+          newIteration.feedback = feedback;
+        }
+        
         currentIterations = [...currentIterations, newIteration];
         
         // Update state immediately to ensure UI reflects changes
         setIterations(currentIterations);
         console.log('Updated iterations with new entry:', currentIterations);
+      } else if (feedback && currentIterations.length > 0) {
+        // If the answer hasn't changed but we have new feedback, add it to the most recent iteration
+        const lastIndex = currentIterations.length - 1;
+        currentIterations[lastIndex] = {
+          ...currentIterations[lastIndex],
+          feedback
+        };
+        
+        // Update state
+        setIterations(currentIterations);
+        console.log('Updated last iteration with feedback:', currentIterations);
       }
       
       // Check if we already have a record
@@ -253,6 +276,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         title: "Success",
         description: "Your answer has been saved",
       });
+      
+      return true; // Return success indicator
     } catch (error) {
       console.error('Error saving answer:', error);
       toast({
@@ -260,6 +285,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         title: "Error",
         description: "Failed to save your answer",
       });
+      return false;
     } finally {
       setIsSaving(false);
     }

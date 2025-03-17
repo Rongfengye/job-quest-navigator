@@ -3,10 +3,13 @@ import React, { useEffect } from 'react';
 import { format } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { MessageSquare } from 'lucide-react';
+import { FeedbackData } from '@/hooks/useAnswerFeedback';
 
 interface AnswerIteration {
   text: string;
   timestamp: string;
+  feedback?: FeedbackData;
 }
 
 interface AnswerHistoryProps {
@@ -49,7 +52,32 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
                   </p>
                 </div>
                 <p className="text-gray-700 whitespace-pre-wrap">{iteration.text}</p>
-                <div className="mt-3 flex justify-end">
+                
+                {iteration.feedback && (
+                  <div className="mt-3 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <MessageSquare className="h-4 w-4 text-blue-500 mr-1" />
+                      <span className="text-sm text-blue-600">
+                        Feedback score: {iteration.feedback.score}/10
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-3 flex justify-end gap-2">
+                  {iteration.feedback && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setInputAnswer(iteration.text);
+                        setActiveTab('feedback');
+                      }}
+                    >
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      View feedback
+                    </Button>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm"
