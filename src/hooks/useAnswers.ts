@@ -155,12 +155,15 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       let iterations = answerRecord?.iterations || [];
       
       // Add the current answer as a new iteration if it's different from the last one
+      console.log('This is the iterations object beforehand',iterations);
       if (answerText !== answer && answerText.trim() !== '') {
+        console.log('in the if statement');
         iterations = [
           ...iterations,
           { text: answerText, timestamp: now }
         ];
       }
+      console.log('This is the iterations object after',iterations)
       
       // Check if we already have a record
       if (answerRecord) {
