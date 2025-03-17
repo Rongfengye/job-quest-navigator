@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -60,7 +59,6 @@ const AnswerPage = () => {
     }
   }, [answer]);
 
-  // Clear feedback when changing tabs or input
   useEffect(() => {
     if (showFeedback) {
       setShowFeedback(false);
@@ -68,18 +66,29 @@ const AnswerPage = () => {
     }
   }, [activeTab, clearFeedback]);
 
-  // Remove the automatic tab switching when new iterations are available
-  // This was causing the UI to stay on the history tab
-  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
+    if (inputAnswer.trim().length < 30) {
+      toast({
+        variant: "destructive",
+        title: "Answer too short",
+        description: "Please provide a more complete answer (minimum 30 characters).",
+      });
+      return;
+    }
+    
     if (storylineId) {
       await saveAnswer(inputAnswer);
-      // Always switch back to the current answer tab after saving
-      setActiveTab('current');
+      
+      setShowFeedback(true);
+      await generateFeedback(inputAnswer);
+      
+      setActiveTab('feedback');
+      
       toast({
         title: "Success",
-        description: "Your answer has been saved",
+        description: "Your answer has been saved and feedback generated.",
       });
     }
   };
@@ -108,20 +117,6 @@ const AnswerPage = () => {
     } finally {
       setGeneratingAnswer(false);
     }
-  };
-
-  const handleGetFeedback = async () => {
-    if (inputAnswer.trim().length < 30) {
-      toast({
-        variant: "destructive",
-        title: "Answer too short",
-        description: "Please provide a more complete answer to get meaningful feedback.",
-      });
-      return;
-    }
-
-    setShowFeedback(true);
-    await generateFeedback(inputAnswer);
   };
 
   if (isLoading) {
@@ -192,17 +187,7 @@ const AnswerPage = () => {
               isSaving={isSaving}
               generatingAnswer={generatingAnswer}
               question={question}
-              onGetFeedback={handleGetFeedback}
-              showFeedbackButton={true}
             />
-            
-            {showFeedback && activeTab === 'current' && (
-              <AnswerFeedback 
-                feedback={feedback} 
-                isLoading={isFeedbackLoading} 
-                error={feedbackError} 
-              />
-            )}
           </TabsContent>
           
           <TabsContent value="history">

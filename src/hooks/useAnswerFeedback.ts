@@ -36,6 +36,15 @@ export const useAnswerFeedback = (
       return null;
     }
 
+    if (answerText.trim().length < 30) {
+      toast({
+        variant: "destructive",
+        title: "Answer too short",
+        description: "Please provide a more complete answer to get meaningful feedback (minimum 30 characters).",
+      });
+      return null;
+    }
+
     // Check if user has enough tokens
     const tokenCheck = await deductTokens(2); // Deduct 2 tokens for feedback
     if (!tokenCheck?.success) {
