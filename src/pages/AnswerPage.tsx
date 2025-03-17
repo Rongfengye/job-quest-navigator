@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -48,16 +49,15 @@ const AnswerPage = () => {
     }
   }, [answer]);
 
-  useEffect(() => {
-    if (iterations.length > 0 && activeTab === 'current' && isSaving === false) {
-      setActiveTab('history');
-    }
-  }, [iterations, isSaving, activeTab]);
-
+  // Remove the automatic tab switching when new iterations are available
+  // This was causing the UI to stay on the history tab
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (storylineId) {
       await saveAnswer(inputAnswer);
+      // Always switch back to the current answer tab after saving
+      setActiveTab('current');
       toast({
         title: "Success",
         description: "Your answer has been saved",
