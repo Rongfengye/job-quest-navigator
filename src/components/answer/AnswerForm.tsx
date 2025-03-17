@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Sparkles, Mic } from 'lucide-react';
+import { Save, Sparkles, Mic, MessageSquare } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 
@@ -15,6 +15,8 @@ interface AnswerFormProps {
   isSaving: boolean;
   generatingAnswer: boolean;
   question: Question | null;
+  onGetFeedback?: () => void;
+  showFeedbackButton?: boolean;
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -24,7 +26,9 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   handleGenerateAnswer,
   isSaving,
   generatingAnswer,
-  question
+  question,
+  onGetFeedback,
+  showFeedbackButton = false
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     // Fix: directly concat the strings instead of using a function with prev
@@ -38,6 +42,10 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
       startRecording();
     }
   };
+
+  const answerLength = inputAnswer.trim().length;
+  const isAnswerValid = answerLength > 0;
+  const isAnswerLongEnough = answerLength >= 30;
 
   return (
     <Card>
@@ -69,27 +77,46 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
             </Button>
           </div>
           
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleGenerateAnswer}
-              disabled={generatingAnswer}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              {generatingAnswer ? 'Generating...' : 'Generate Answer'}
-            </Button>
+          <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGenerateAnswer}
+                disabled={generatingAnswer}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {generatingAnswer ? 'Generating...' : 'Generate Answer'}
+              </Button>
+              
+              {showFeedbackButton && onGetFeedback && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={onGetFeedback}
+                  disabled={!isAnswerLongEnough || isSaving}
+                  className="flex items-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Get Feedback
+                </Button>
+              )}
+            </div>
             
             <Button 
               type="submit" 
-              disabled={isSaving || inputAnswer.trim() === ''}
+              disabled={isSaving || !isAnswerValid}
               className="flex items-center gap-2"
             >
               <Save className="w-4 h-4" />
               {isSaving ? 'Saving...' : 'Save Answer'}
             </Button>
           </div>
+          
+          {!isAnswerLongEnough && answerLength > 0 && (
+            <p className="text-amber-600 text-sm">Your answer is too short for meaningful feedback. Please elaborate (minimum 30 characters).</p>
+          )}
         </form>
       </CardContent>
     </Card>

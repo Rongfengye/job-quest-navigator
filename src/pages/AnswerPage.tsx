@@ -2,16 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, History, CheckCircle } from 'lucide-react';
+import { ArrowLeft, History, CheckCircle, MessageSquare } from 'lucide-react';
 import { useAnswers } from '@/hooks/useAnswers';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import QuestionDisplay from '@/components/answer/QuestionDisplay';
 import AnswerForm from '@/components/answer/AnswerForm';
 import AnswerHistory from '@/components/answer/AnswerHistory';
+import AnswerFeedback from '@/components/answer/AnswerFeedback';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -25,6 +27,7 @@ const AnswerPage = () => {
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
+  const [showFeedback, setShowFeedback] = useState(false);
   
   const { deductTokens } = useUserTokens();
   
@@ -39,6 +42,14 @@ const AnswerPage = () => {
     error 
   } = useAnswers(storylineId || '', questionIndex);
 
+  const {
+    feedback,
+    isLoading: isFeedbackLoading,
+    error: feedbackError,
+    generateFeedback,
+    clearFeedback
+  } = useAnswerFeedback(storylineId || '', question);
+
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);
   }, [iterations]);
@@ -48,6 +59,14 @@ const AnswerPage = () => {
       setInputAnswer(answer);
     }
   }, [answer]);
+
+  // Clear feedback when changing tabs or input
+  useEffect(() => {
+    if (showFeedback) {
+      setShowFeedback(false);
+      clearFeedback();
+    }
+  }, [activeTab, clearFeedback]);
 
   // Remove the automatic tab switching when new iterations are available
   // This was causing the UI to stay on the history tab
@@ -89,6 +108,20 @@ const AnswerPage = () => {
     } finally {
       setGeneratingAnswer(false);
     }
+  };
+
+  const handleGetFeedback = async () => {
+    if (inputAnswer.trim().length < 30) {
+      toast({
+        variant: "destructive",
+        title: "Answer too short",
+        description: "Please provide a more complete answer to get meaningful feedback.",
+      });
+      return;
+    }
+
+    setShowFeedback(true);
+    await generateFeedback(inputAnswer);
   };
 
   if (isLoading) {
@@ -144,6 +177,10 @@ const AnswerPage = () => {
               <History className="w-4 h-4" />
               Previous Iterations {iterations.length > 0 && `(${iterations.length})`}
             </TabsTrigger>
+            <TabsTrigger value="feedback" className="flex items-center gap-1" disabled={!showFeedback}>
+              <MessageSquare className="w-4 h-4" />
+              Feedback
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="current">
@@ -155,7 +192,17 @@ const AnswerPage = () => {
               isSaving={isSaving}
               generatingAnswer={generatingAnswer}
               question={question}
+              onGetFeedback={handleGetFeedback}
+              showFeedbackButton={true}
             />
+            
+            {showFeedback && activeTab === 'current' && (
+              <AnswerFeedback 
+                feedback={feedback} 
+                isLoading={isFeedbackLoading} 
+                error={feedbackError} 
+              />
+            )}
           </TabsContent>
           
           <TabsContent value="history">
@@ -163,6 +210,14 @@ const AnswerPage = () => {
               iterations={iterations}
               setInputAnswer={setInputAnswer}
               setActiveTab={setActiveTab}
+            />
+          </TabsContent>
+          
+          <TabsContent value="feedback">
+            <AnswerFeedback 
+              feedback={feedback} 
+              isLoading={isFeedbackLoading} 
+              error={feedbackError} 
             />
           </TabsContent>
         </Tabs>
