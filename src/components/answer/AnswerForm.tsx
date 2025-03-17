@@ -103,19 +103,12 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         </form>
         
         {/* Feedback Section */}
-        {isFeedbackLoading && (
-          <div className="mt-8 flex flex-col items-center justify-center py-8 border-t">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-interview-primary mb-4"></div>
-            <p className="text-gray-600">Generating feedback for your answer...</p>
-          </div>
-        )}
-        
-        {feedback && !isFeedbackLoading && (
+        {(isFeedbackLoading || feedback) && (
           <div className="mt-8 border-t pt-6">
             <h3 className="text-lg font-semibold mb-4">Answer Feedback</h3>
             <AnswerFeedback 
               feedback={feedback}
-              isLoading={false}
+              isLoading={isFeedbackLoading}
               error={feedbackError} 
             />
           </div>
