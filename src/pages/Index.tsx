@@ -2,6 +2,7 @@
 import React from 'react';
 import Hero from '@/components/Hero';
 import Features from '@/components/Features';
+import WebScraper from '@/components/WebScraper';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -21,6 +22,8 @@ const Index = () => {
         <Hero />
         <Separator className="max-w-5xl mx-auto" />
         <Features />
+        <Separator className="max-w-5xl mx-auto my-8" />
+        <WebScraper />
       </main>
       
       <footer className="py-8 px-6 bg-gray-50">
