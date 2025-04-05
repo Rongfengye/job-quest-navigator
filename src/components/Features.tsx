@@ -29,11 +29,7 @@ const Features = () => {
           }
         />
         
-        {/* Second row - left column empty, right column has Generate Answers with AI */}
-        <div className="hidden md:block">
-          {/* Deliberately empty column for layout purposes */}
-        </div>
-        
+        {/* Second row - Generate Answers with AI on the left */}
         <FeatureCard 
           icon={<Sparkles className="w-10 h-10" />}
           title="Generate Answers With AI"
@@ -50,6 +46,10 @@ const Features = () => {
             </div>
           }
         />
+        
+        <div className="hidden md:block">
+          {/* Deliberately empty column for layout purposes */}
+        </div>
       </div>
     </section>
   );
