@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Target, Sparkles } from 'lucide-react';
+import { Target, Sparkles, Code, Linkedin, FileText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
 
 const Features = () => {
   return (
@@ -55,6 +56,64 @@ const Features = () => {
             Receive immediate, personalized feedback on your interview responses to help you improve your delivery, content, and overall interview performance before the real thing.
           </p>
         </div>
+      </div>
+      
+      {/* Horizontal separator between sections */}
+      <div className="my-16">
+        <Separator className="bg-gray-200" />
+      </div>
+      
+      {/* New section - "If you're facing any of these, we can help you" */}
+      <div className="text-center mb-12">
+        <h2 className="text-2xl md:text-3xl font-bold text-interview-text-primary mb-8">
+          If you're facing any of these, we can help you:
+        </h2>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {/* Coding Prep Card */}
+          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-300">
+            <CardContent className="p-6 flex flex-col items-center">
+              <div className="bg-interview-light rounded-full p-4 mb-4">
+                <Code className="w-8 h-8 text-interview-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Coding Prep</h3>
+              <p className="text-interview-text-secondary text-sm text-center">
+                Practice technical interviews with customized coding challenges and real-time feedback.
+              </p>
+            </CardContent>
+          </Card>
+          
+          {/* LinkedIn Card */}
+          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-500">
+            <CardContent className="p-6 flex flex-col items-center">
+              <div className="bg-interview-light rounded-full p-4 mb-4">
+                <Linkedin className="w-8 h-8 text-interview-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">LinkedIn</h3>
+              <p className="text-interview-text-secondary text-sm text-center">
+                Optimize your LinkedIn profile to attract recruiters and stand out from the competition.
+              </p>
+            </CardContent>
+          </Card>
+          
+          {/* Resume Card */}
+          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-700">
+            <CardContent className="p-6 flex flex-col items-center">
+              <div className="bg-interview-light rounded-full p-4 mb-4">
+                <FileText className="w-8 h-8 text-interview-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Resume</h3>
+              <p className="text-interview-text-secondary text-sm text-center">
+                Get professional feedback on your resume to highlight your strengths and experiences.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {/* Horizontal separator before Web Scraper */}
+      <div className="my-16">
+        <Separator className="bg-gray-200" />
       </div>
     </section>
   );
