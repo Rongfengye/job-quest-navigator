@@ -2,6 +2,7 @@
 import React from 'react';
 import FeatureCard from './FeatureCard';
 import { Target, Sparkles } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const Features = () => {
   return (
@@ -28,6 +29,11 @@ const Features = () => {
             </div>
           }
         />
+        
+        {/* Horizontal separator between rows */}
+        <div className="col-span-1 md:col-span-2 my-8">
+          <Separator className="bg-gray-200" />
+        </div>
         
         {/* Second row - Generate Answers with AI on the left */}
         <FeatureCard 
