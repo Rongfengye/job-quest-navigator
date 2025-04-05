@@ -35,11 +35,11 @@ const Features = () => {
           <Separator className="bg-gray-200" />
         </div>
         
-        {/* Second row - Generate Answers with AI on the left */}
+        {/* Second row - Get Real-time Feedback on the left */}
         <FeatureCard 
           icon={<Sparkles className="w-10 h-10" />}
-          title="Generate Answers With AI"
-          description="Generate answers to interview questions based off of your previous work history to help you craft compelling responses that highlight your skills and experience."
+          title="Get Real-time Feedback"
+          description="Receive immediate, personalized feedback on your interview responses to help you improve your delivery, content, and overall interview performance before the real thing."
           delay="animation-delay-600"
           image={
             <div className="bg-gray-100 p-4 rounded-lg">
