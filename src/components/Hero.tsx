@@ -28,7 +28,7 @@ const Hero = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header - Centered above the grid */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-primary opacity-0 animate-fade-up">
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-interview-primary opacity-0 animate-fade-up">
             Storyline
           </h1>
         </div>
@@ -56,7 +56,7 @@ const Hero = () => {
               Prepare for success with our comprehensive interview tools designed to help you stand out and land your dream job.
             </p>
             
-            <p className="text-interview-text-secondary mb-8 text-lg opacity-0 animate-fade-up animation-delay-300">
+            <p className="text-interview-text-secondary mb-8 opacity-0 animate-fade-up animation-delay-300">
               From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
             </p>
             
