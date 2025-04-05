@@ -48,6 +48,14 @@ const Hero = () => {
           
           {/* Right Column - Content */}
           <div className="text-left order-1 md:order-2">
+            {/* Added text from Features section */}
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-interview-text-primary opacity-0 animate-fade-up">
+              Everything You Need To Crush Your Next Job Interview
+            </h2>
+            <p className="text-interview-text-secondary mb-6 opacity-0 animate-fade-up animation-delay-200">
+              Prepare for success with our comprehensive interview tools designed to help you stand out and land your dream job.
+            </p>
+            
             <p className="text-interview-text-secondary mb-8 text-lg opacity-0 animate-fade-up animation-delay-300">
               From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
             </p>

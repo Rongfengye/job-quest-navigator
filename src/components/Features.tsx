@@ -6,15 +6,6 @@ import { Target, Sparkles, Clock, CheckCircle } from 'lucide-react';
 const Features = () => {
   return (
     <section className="py-20 px-6 max-w-7xl mx-auto" id="features">
-      <div className="text-center mb-16 opacity-0 animate-fade-up">
-        <h2 className="text-3xl md:text-4xl font-bold mb-6 text-interview-text-primary">
-          Everything You Need To Crush Your Next Job Interview
-        </h2>
-        <p className="text-interview-text-secondary max-w-3xl mx-auto">
-          Prepare for success with our comprehensive interview tools designed to help you stand out and land your dream job.
-        </p>
-      </div>
-      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <FeatureCard 
           icon={<Target className="w-10 h-10" />}
