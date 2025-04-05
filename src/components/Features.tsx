@@ -8,11 +8,7 @@ const Features = () => {
   return (
     <section className="py-20 px-6 max-w-7xl mx-auto" id="features">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* First row - left column empty, right column has Discover Interview Questions */}
-        <div className="hidden md:block">
-          {/* Deliberately empty column for layout purposes */}
-        </div>
-        
+        {/* First row - Discover Interview Questions on the left */}
         <FeatureCard 
           icon={<Target className="w-10 h-10" />}
           title="Discover Interview Questions"
@@ -30,12 +26,20 @@ const Features = () => {
           }
         />
         
+        <div className="hidden md:block">
+          {/* Deliberately empty column for layout purposes */}
+        </div>
+        
         {/* Horizontal separator between rows */}
         <div className="col-span-1 md:col-span-2 my-8">
           <Separator className="bg-gray-200" />
         </div>
         
-        {/* Second row - Get Real-time Feedback on the left */}
+        {/* Second row - empty column on the left, Get Real-time Feedback on the right */}
+        <div className="hidden md:block">
+          {/* Deliberately empty column for layout purposes */}
+        </div>
+        
         <FeatureCard 
           icon={<Sparkles className="w-10 h-10" />}
           title="Get Real-time Feedback"
@@ -52,10 +56,6 @@ const Features = () => {
             </div>
           }
         />
-        
-        <div className="hidden md:block">
-          {/* Deliberately empty column for layout purposes */}
-        </div>
       </div>
     </section>
   );
