@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -25,6 +26,13 @@ const Hero = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-interview-light/30 to-transparent -z-10" />
       
       <div className="max-w-7xl mx-auto">
+        {/* Header - Centered above the grid */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-primary opacity-0 animate-fade-up">
+            Storyline
+          </h1>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Column - Video Placeholder */}
           <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-white aspect-video flex items-center justify-center order-2 md:order-1 opacity-0 animate-fade-up">
@@ -40,10 +48,6 @@ const Hero = () => {
           
           {/* Right Column - Content */}
           <div className="text-left order-1 md:order-2">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-primary mb-6 leading-tight opacity-0 animate-fade-up">
-              Storyline
-            </h1>
-            
             <p className="text-interview-text-secondary mb-8 text-lg opacity-0 animate-fade-up animation-delay-300">
               From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
             </p>
