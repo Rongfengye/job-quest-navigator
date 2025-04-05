@@ -3,6 +3,7 @@ import React from 'react';
 import { Target, Sparkles, Code, Linkedin, FileText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const Features = () => {
   return (
@@ -70,44 +71,65 @@ const Features = () => {
         </h2>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {/* Coding Prep Card */}
-          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-300">
-            <CardContent className="p-6 flex flex-col items-center">
-              <div className="bg-interview-light rounded-full p-4 mb-4">
-                <Code className="w-8 h-8 text-interview-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Coding Prep</h3>
-              <p className="text-interview-text-secondary text-sm text-center">
-                Practice technical interviews with customized coding challenges and real-time feedback.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Coding Prep Card - Now a clickable button */}
+          <a 
+            href="https://coderpad.io/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block"
+          >
+            <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 opacity-0 animate-fade-up animation-delay-300 hover:bg-gray-50 hover:-translate-y-1 cursor-pointer h-full">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="bg-interview-light rounded-full p-4 mb-4">
+                  <Code className="w-8 h-8 text-interview-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Coding Prep</h3>
+                <p className="text-interview-text-secondary text-sm text-center">
+                  Practice technical interviews with customized coding challenges and real-time feedback.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
           
-          {/* LinkedIn Card */}
-          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-500">
-            <CardContent className="p-6 flex flex-col items-center">
-              <div className="bg-interview-light rounded-full p-4 mb-4">
-                <Linkedin className="w-8 h-8 text-interview-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">LinkedIn</h3>
-              <p className="text-interview-text-secondary text-sm text-center">
-                Optimize your LinkedIn profile to attract recruiters and stand out from the competition.
-              </p>
-            </CardContent>
-          </Card>
+          {/* LinkedIn Card - Now a clickable button */}
+          <a 
+            href="https://www.linkedup.tryhireme.com/" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block"
+          >
+            <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 opacity-0 animate-fade-up animation-delay-500 hover:bg-gray-50 hover:-translate-y-1 cursor-pointer h-full">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="bg-interview-light rounded-full p-4 mb-4">
+                  <Linkedin className="w-8 h-8 text-interview-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">LinkedIn</h3>
+                <p className="text-interview-text-secondary text-sm text-center">
+                  Optimize your LinkedIn profile to attract recruiters and stand out from the competition.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
           
-          {/* Resume Card */}
-          <Card className="bg-white shadow-md hover:shadow-lg transition-shadow duration-300 opacity-0 animate-fade-up animation-delay-700">
-            <CardContent className="p-6 flex flex-col items-center">
-              <div className="bg-interview-light rounded-full p-4 mb-4">
-                <FileText className="w-8 h-8 text-interview-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Resume</h3>
-              <p className="text-interview-text-secondary text-sm text-center">
-                Get professional feedback on your resume to highlight your strengths and experiences.
-              </p>
-            </CardContent>
-          </Card>
+          {/* Resume Card - Now a clickable button */}
+          <a 
+            href="https://www.nts.live/shows/daria-kolosova/episodes/daria-kolosova-4th-june-2024" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="block"
+          >
+            <Card className="bg-white shadow-md hover:shadow-lg transition-all duration-300 opacity-0 animate-fade-up animation-delay-700 hover:bg-gray-50 hover:-translate-y-1 cursor-pointer h-full">
+              <CardContent className="p-6 flex flex-col items-center">
+                <div className="bg-interview-light rounded-full p-4 mb-4">
+                  <FileText className="w-8 h-8 text-interview-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-interview-text-primary">Resume</h3>
+                <p className="text-interview-text-secondary text-sm text-center">
+                  Get professional feedback on your resume to highlight your strengths and experiences.
+                </p>
+              </CardContent>
+            </Card>
+          </a>
         </div>
       </div>
       
