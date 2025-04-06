@@ -4,3 +4,5 @@ project_id = "qrpppkxwvmngepzznorf"
 verify_jwt = false
 [functions.generate-answer]
 verify_jwt = false
+[functions.guided-response-generator]
+verify_jwt = false

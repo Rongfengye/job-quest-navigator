@@ -125,7 +125,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
               className="flex items-center gap-2"
             >
               <Sparkles className="w-4 h-4" />
-              {generatingAnswer ? 'Generating...' : 'Generate Answer'}
+              {generatingAnswer ? 'Generating...' : 'Guided Response Tool'}
             </Button>
             
             <Button 
