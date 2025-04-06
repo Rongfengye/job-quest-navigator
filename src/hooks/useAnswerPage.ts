@@ -92,12 +92,16 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     setGeneratingAnswer(true);
     
     try {
-      // Call our new edge function instead of using the model answer directly
+      // Call our edge function with the proper headers and content type
       const { data, error } = await supabase.functions.invoke('generate-answer', {
         body: {
           questionIndex,
           questionType: question.type,
           questionText: question.question
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
         }
       });
       
