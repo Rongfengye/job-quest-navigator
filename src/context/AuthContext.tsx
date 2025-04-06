@@ -1,7 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: UserData | null;
@@ -19,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
+  const { toast } = useToast();
 
   // Helper function to ensure user has tokens record
   const ensureUserTokens = async (userId: string) => {
@@ -60,6 +62,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Initial auth check function
+  const checkSession = async () => {
+    try {
+      console.log('Starting initial session check...');
+      // Log auth debug info
+      const authDebugInfo = await debugSupabaseAuth();
+      console.log('Auth debug info:', authDebugInfo);
+      
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
+      
+      if (data.session) {
+        // We have a session, so the user is authenticated
+        console.log('User is authenticated via session, userId:', data.session.user.id);
+        
+        // Extract name data from user metadata
+        const metadata = data.session.user.user_metadata || {};
+        let firstName = metadata.first_name || '';
+        let lastName = metadata.last_name || '';
+        
+        // Handle various metadata formats
+        if ((!firstName || !lastName) && metadata.full_name) {
+          const nameParts = metadata.full_name.split(' ');
+          firstName = firstName || nameParts[0] || '';
+          lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+        } else if ((!firstName || !lastName) && metadata.name) {
+          const nameParts = metadata.name.split(' ');
+          firstName = firstName || nameParts[0] || '';
+          lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+        }
+        
+        // Handle provider-specific metadata formats
+        const provider = data.session.user.app_metadata?.provider;
+        if ((!firstName || !lastName)) {
+          if (provider === 'github') {
+            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+          } else if (provider === 'google') {
+            firstName = metadata.given_name || firstName;
+            lastName = metadata.family_name || lastName;
+          }
+        }
+        
+        // Set user data
+        auth.setUser({
+          id: data.session.user.id,
+          email: data.session.user.email || '',
+          firstName,
+          lastName
+        });
+        
+        // Ensure user has a tokens record (outside the main flow)
+        setTimeout(() => {
+          ensureUserTokens(data.session.user.id);
+        }, 0);
+      } else {
+        console.log('No session found, user is not authenticated');
+        auth.setUser(null);
+      }
+    } catch (error) {
+      console.error("Error checking session:", error);
+      setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
+      auth.setUser(null);
+      
+      toast({
+        variant: "destructive",
+        title: "Authentication error",
+        description: "There was a problem checking your login status. You might need to clear your browser cache.",
+      });
+    } finally {
+      console.log('Finished initial session check, setting isLoading to false');
+      setIsLoading(false);
+      setInitialCheckComplete(true);
+    }
+  };
+
   useEffect(() => {
     // Set maximum initialization time
     const maxInitTime = setTimeout(() => {
@@ -69,6 +151,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setInitializationError(new Error('Authentication initialization timed out'));
         // Set user to null to ensure we have a non-loading state
         auth.setUser(null);
+        
+        toast({
+          variant: "destructive",
+          title: "Authentication timeout",
+          description: "Authentication initialization timed out. Using fallback.",
+        });
       }
     }, 8000);
 
@@ -76,7 +164,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let subscription: { unsubscribe: () => void } | null = null;
     
     try {
-      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // Set up auth state listener FIRST, before checking for session
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -130,83 +219,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       subscription = data.subscription;
+      
+      // THEN check for existing session 
+      checkSession();
     } catch (error) {
       console.error("Error setting up auth listener:", error);
       setInitializationError(error instanceof Error ? error : new Error('Unknown auth listener error'));
+      setIsLoading(false);
+      setInitialCheckComplete(true);
+      auth.setUser(null);
     }
-    
-    // Then check for existing session
-    const checkSession = async () => {
-      try {
-        console.log('Starting initial session check...');
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          throw error;
-        }
-        
-        console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
-        
-        if (data.session) {
-          // We have a session, so the user is authenticated
-          console.log('User is authenticated via session, userId:', data.session.user.id);
-          
-          // Extract name data from user metadata
-          const metadata = data.session.user.user_metadata || {};
-          let firstName = metadata.first_name || '';
-          let lastName = metadata.last_name || '';
-          
-          // Handle various metadata formats
-          if ((!firstName || !lastName) && metadata.full_name) {
-            const nameParts = metadata.full_name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          } else if ((!firstName || !lastName) && metadata.name) {
-            const nameParts = metadata.name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          }
-          
-          // Handle provider-specific metadata formats
-          const provider = data.session.user.app_metadata?.provider;
-          if ((!firstName || !lastName)) {
-            if (provider === 'github') {
-              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-            } else if (provider === 'google') {
-              firstName = metadata.given_name || firstName;
-              lastName = metadata.family_name || lastName;
-            }
-          }
-          
-          // Set user data
-          auth.setUser({
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            firstName,
-            lastName
-          });
-          
-          // Ensure user has a tokens record (outside the main flow)
-          setTimeout(() => {
-            ensureUserTokens(data.session.user.id);
-          }, 0);
-        } else {
-          console.log('No session found, user is not authenticated');
-          auth.setUser(null);
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
-        auth.setUser(null);
-      } finally {
-        console.log('Finished initial session check, setting isLoading to false');
-        setIsLoading(false);
-        setInitialCheckComplete(true);
-        clearTimeout(maxInitTime);
-      }
-    };
-    
-    checkSession();
     
     return () => {
       clearTimeout(maxInitTime);
