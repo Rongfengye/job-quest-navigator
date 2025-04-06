@@ -121,8 +121,46 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
             description: "Guiding questions have been provided to help you craft your answer.",
           });
           
-          // You might want to display the guiding questions in a more prominent way
-          // in the UI, not just as a toast message
+          // Parse guiding questions
+          if (typeof data.guidance.guidingQuestions === 'string') {
+            try {
+              // Try to extract questions from a text format
+              const questionsText = data.guidance.guidingQuestions;
+              const questionsArray = questionsText
+                .split(/\d+\.|\n/)
+                .map(q => q.trim())
+                .filter(q => q && q.endsWith('?'));
+              
+              if (questionsArray.length > 0) {
+                // Dispatch custom event with guiding questions
+                const guidanceEvent = new CustomEvent('guidanceReceived', {
+                  detail: { guidingQuestions: questionsArray }
+                });
+                window.dispatchEvent(guidanceEvent);
+              } else {
+                // Fallback if no questions with question marks were found
+                const lines = questionsText
+                  .split('\n')
+                  .map(line => line.trim())
+                  .filter(line => line.length > 10);
+                
+                if (lines.length > 0) {
+                  const guidanceEvent = new CustomEvent('guidanceReceived', {
+                    detail: { guidingQuestions: lines.slice(0, 5) }
+                  });
+                  window.dispatchEvent(guidanceEvent);
+                }
+              }
+            } catch (parseError) {
+              console.error('Error parsing guiding questions:', parseError);
+            }
+          } else if (Array.isArray(data.guidance.guidingQuestions)) {
+            // If we already have an array, use it directly
+            const guidanceEvent = new CustomEvent('guidanceReceived', {
+              detail: { guidingQuestions: data.guidance.guidingQuestions }
+            });
+            window.dispatchEvent(guidanceEvent);
+          }
         }
       } else {
         throw new Error('Failed to generate guided response');

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Sparkles, Mic } from 'lucide-react';
+import { Save, Sparkles, Mic, HelpCircle } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
@@ -41,26 +41,26 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   });
 
   const [progressValue, setProgressValue] = useState(0);
+  const [guidingQuestions, setGuidingQuestions] = useState<string[] | null>(null);
 
-  // Simulate progress when feedback is loading
+  // Simulate progress when feedback is loading or when generating answer
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isFeedbackLoading) {
+    if (isFeedbackLoading || generatingAnswer) {
       setProgressValue(0);
       
       interval = setInterval(() => {
         setProgressValue(prev => {
-          // Increase progress but never reach 100% until feedback is loaded
-          // The final jump to 100% happens when isFeedbackLoading becomes false
+          // Increase progress but never reach 100% until loading is complete
           if (prev < 90) {
             return prev + (90 - prev) * 0.1;
           }
           return prev;
         });
       }, 300);
-    } else if (feedback) {
-      // When feedback is loaded, jump to 100%
+    } else if (feedback || guidingQuestions) {
+      // When loading is complete, jump to 100%
       setProgressValue(100);
       
       // Reset progress after a delay
@@ -74,7 +74,20 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isFeedbackLoading, feedback]);
+  }, [isFeedbackLoading, feedback, generatingAnswer, guidingQuestions]);
+
+  // Update guidingQuestions based on a custom event
+  useEffect(() => {
+    const handleGuidanceReceived = (event: CustomEvent) => {
+      setGuidingQuestions(event.detail.guidingQuestions);
+    };
+
+    window.addEventListener('guidanceReceived' as any, handleGuidanceReceived);
+    
+    return () => {
+      window.removeEventListener('guidanceReceived' as any, handleGuidanceReceived);
+    };
+  }, []);
 
   const handleMicClick = () => {
     if (isRecording) {
@@ -140,12 +153,33 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         </form>
         
         {/* Loading Progress Bar */}
-        {(isFeedbackLoading || (progressValue > 0 && progressValue < 100)) && (
+        {(isFeedbackLoading || generatingAnswer || (progressValue > 0 && progressValue < 100)) && (
           <div className="mt-6">
             <p className="text-sm text-gray-500 mb-2">
-              {isFeedbackLoading ? 'Generating feedback...' : 'Completing...'}
+              {generatingAnswer ? 'Generating guiding questions...' : isFeedbackLoading ? 'Generating feedback...' : 'Completing...'}
             </p>
             <Progress value={progressValue} className="h-2" />
+          </div>
+        )}
+        
+        {/* Guiding Questions Section */}
+        {guidingQuestions && guidingQuestions.length > 0 && (
+          <div className="mt-8 border-t pt-6">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <HelpCircle className="w-5 h-5 text-blue-500" />
+              Guiding Questions
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Consider these questions to help structure and improve your answer:
+            </p>
+            <ul className="space-y-3 pl-2">
+              {guidingQuestions.map((question, index) => (
+                <li key={`question-${index}`} className="flex gap-2">
+                  <span className="font-medium text-blue-600">{index + 1}.</span>
+                  <span className="text-gray-800">{question}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         

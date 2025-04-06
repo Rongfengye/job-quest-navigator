@@ -48,7 +48,8 @@ serve(async (req) => {
         model: 'gpt-4o-mini',
         messages: messages,
         temperature: 0.7,
-        max_tokens: 1000
+        max_tokens: 1000,
+        response_format: { type: "json_object" }
       })
     });
     
@@ -62,18 +63,32 @@ serve(async (req) => {
     console.log('OpenAI response:', JSON.stringify(openAIData));
     
     // Extract the response content
-    const guidingQuestions = openAIData.choices[0].message.content;
+    const responseContent = openAIData.choices[0].message.content;
+    let parsedResponse;
     
-    // Parse the guiding questions to a structured format if needed
-    // For now, we'll just return them as a string, but we can parse them into an array
-    // if needed in a future enhancement
+    try {
+      // Parse the JSON response
+      parsedResponse = JSON.parse(responseContent);
+    } catch (error) {
+      console.error('Error parsing OpenAI response as JSON:', error);
+      // Fallback in case parsing fails
+      parsedResponse = {
+        guidingQuestions: [
+          "What specific experience can you highlight that's relevant to this question?",
+          "How can you structure your answer using the STAR method?",
+          "What key skills or qualities should you emphasize in your response?",
+          "How can you quantify your achievements in this context?",
+          "What makes your approach or perspective unique in this situation?"
+        ]
+      };
+    }
     
     // Return a structured response with guidance
     const response = {
       success: true,
       answer: "",  // No answer generated, just questions
       guidance: {
-        guidingQuestions: guidingQuestions,
+        guidingQuestions: parsedResponse.guidingQuestions || responseContent,
         questionType: questionType,
         structure: getStructureByQuestionType(questionType)
       }
