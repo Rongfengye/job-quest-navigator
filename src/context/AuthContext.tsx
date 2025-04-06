@@ -18,6 +18,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
+  const [initializationError, setInitializationError] = useState<Error | null>(null);
 
   // Helper function to ensure user has tokens record
   const ensureUserTokens = async (userId: string) => {
@@ -60,65 +61,90 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // First set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
-      
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session) {
-          console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
-          
-          // Extract name data from user metadata
-          const metadata = session.user.user_metadata || {};
-          let firstName = metadata.first_name || '';
-          let lastName = metadata.last_name || '';
-          
-          // Handle various metadata formats
-          if ((!firstName || !lastName) && metadata.full_name) {
-            const nameParts = metadata.full_name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          } else if ((!firstName || !lastName) && metadata.name) {
-            const nameParts = metadata.name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          }
-          
-          // Handle provider-specific metadata formats
-          const provider = session.user.app_metadata?.provider;
-          if ((!firstName || !lastName)) {
-            if (provider === 'github') {
-              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-            } else if (provider === 'google') {
-              firstName = metadata.given_name || firstName;
-              lastName = metadata.family_name || lastName;
-            }
-          }
-          
-          // Set user data only once to prevent continuous updates
-          auth.setUser({
-            id: session.user.id,
-            email: session.user.email || '',
-            firstName,
-            lastName
-          });
-          
-          // Run this outside the auth state change callback to prevent deadlock
-          setTimeout(() => {
-            ensureUserTokens(session.user.id);
-          }, 0);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        console.log('User signed out, clearing auth state');
+    // Set maximum initialization time
+    const maxInitTime = setTimeout(() => {
+      if (isLoading) {
+        console.error('Auth initialization timed out after 8 seconds');
+        setIsLoading(false);
+        setInitializationError(new Error('Authentication initialization timed out'));
+        // Set user to null to ensure we have a non-loading state
         auth.setUser(null);
       }
-    });
+    }, 8000);
+
+    // First set up auth state listener
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    try {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
+        
+        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session) {
+            console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
+            
+            // Extract name data from user metadata
+            const metadata = session.user.user_metadata || {};
+            let firstName = metadata.first_name || '';
+            let lastName = metadata.last_name || '';
+            
+            // Handle various metadata formats
+            if ((!firstName || !lastName) && metadata.full_name) {
+              const nameParts = metadata.full_name.split(' ');
+              firstName = firstName || nameParts[0] || '';
+              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+            } else if ((!firstName || !lastName) && metadata.name) {
+              const nameParts = metadata.name.split(' ');
+              firstName = firstName || nameParts[0] || '';
+              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+            }
+            
+            // Handle provider-specific metadata formats
+            const provider = session.user.app_metadata?.provider;
+            if ((!firstName || !lastName)) {
+              if (provider === 'github') {
+                firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+              } else if (provider === 'google') {
+                firstName = metadata.given_name || firstName;
+                lastName = metadata.family_name || lastName;
+              }
+            }
+            
+            // Set user data only once to prevent continuous updates
+            auth.setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              firstName,
+              lastName
+            });
+            
+            // Run this outside the auth state change callback to prevent deadlock
+            setTimeout(() => {
+              ensureUserTokens(session.user.id);
+            }, 0);
+          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out, clearing auth state');
+          auth.setUser(null);
+        }
+      });
+      
+      subscription = data.subscription;
+    } catch (error) {
+      console.error("Error setting up auth listener:", error);
+      setInitializationError(error instanceof Error ? error : new Error('Unknown auth listener error'));
+    }
     
     // Then check for existing session
     const checkSession = async () => {
       try {
         console.log('Starting initial session check...');
-        const { data } = await supabase.auth.getSession();
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          throw error;
+        }
+        
         console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
         
         if (data.session) {
@@ -170,18 +196,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error("Error checking session:", error);
+        setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
         auth.setUser(null);
       } finally {
         console.log('Finished initial session check, setting isLoading to false');
         setIsLoading(false);
         setInitialCheckComplete(true);
+        clearTimeout(maxInitTime);
       }
     };
     
     checkSession();
     
     return () => {
-      subscription.unsubscribe();
+      clearTimeout(maxInitTime);
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, []);
 

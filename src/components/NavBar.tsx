@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
 import { LogOut, User, Loader2, LogIn, Coins } from 'lucide-react';
@@ -7,13 +7,33 @@ import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Separator } from '@/components/ui/separator';
-import { useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
   const { tokens, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authLoadingTimeout, setAuthLoadingTimeout] = useState(false);
+  const { toast } = useToast();
+
+  // Add timeout to prevent infinite loading state
+  useEffect(() => {
+    if (isLoading) {
+      // If loading takes more than 5 seconds, assume there's an issue
+      const timeoutId = setTimeout(() => {
+        setAuthLoadingTimeout(true);
+        console.error('Auth loading timeout reached - displaying fallback UI');
+        toast({
+          variant: "destructive",
+          title: "Authentication issue",
+          description: "There was a problem connecting to the authentication service. Using fallback mode.",
+        });
+      }, 5000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isLoading, toast]);
 
   // Add enhanced debugging to see the current auth state, but limit logging to prevent infinite loops
   useEffect(() => {
@@ -26,9 +46,10 @@ const NavBar = () => {
       } : null,
       isLoading,
       userExists: !!user,
-      tokenCount: tokens
+      tokenCount: tokens,
+      authLoadingTimeout
     });
-  }, [isAuthenticated, user, isLoading, tokens]);
+  }, [isAuthenticated, user, isLoading, tokens, authLoadingTimeout]);
 
   // Refresh tokens when component mounts and subscribe to token updates
   // Only do this if authentication is complete and user exists
@@ -63,6 +84,10 @@ const NavBar = () => {
     setShowAuthModal(true);
   };
 
+  // If loading has timed out, display as not authenticated
+  const displayAsAuthenticated = isAuthenticated && !authLoadingTimeout;
+  const displayLoading = isLoading && !authLoadingTimeout;
+
   return (
     <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-200">
       <Link to="/" className="text-xl font-bold text-interview-primary hover:opacity-90 transition-opacity">
@@ -70,12 +95,12 @@ const NavBar = () => {
       </Link>
       
       <div className="flex items-center gap-4">
-        {isLoading ? (
+        {displayLoading ? (
           <div className="flex items-center text-sm text-interview-text-secondary">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             <span>Loading auth state...</span>
           </div>
-        ) : isAuthenticated ? (
+        ) : displayAsAuthenticated ? (
           <>
             <div className="flex items-center text-sm text-interview-text-secondary">
               <User className="h-4 w-4 mr-2" />

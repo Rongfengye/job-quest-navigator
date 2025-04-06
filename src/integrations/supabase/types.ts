@@ -54,6 +54,7 @@ export type Database = {
           created_at: string
           file_type: string | null
           filename: string | null
+          guiding_questions: Json | null
           id: string
           ocr_content: string
           resume_text: string
@@ -65,6 +66,7 @@ export type Database = {
           created_at?: string
           file_type?: string | null
           filename?: string | null
+          guiding_questions?: Json | null
           id?: string
           ocr_content: string
           resume_text: string
@@ -76,6 +78,7 @@ export type Database = {
           created_at?: string
           file_type?: string | null
           filename?: string | null
+          guiding_questions?: Json | null
           id?: string
           ocr_content?: string
           resume_text?: string
