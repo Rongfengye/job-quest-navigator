@@ -92,12 +92,13 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     setGeneratingAnswer(true);
     
     try {
-      // Call our new guided response generator edge function
+      // Call our guided response generator edge function
       const { data, error } = await supabase.functions.invoke('guided-response-generator', {
         body: {
           questionIndex,
           questionType: question.type,
-          questionText: question.question
+          questionText: question.question,
+          userInput: inputAnswer // Pass the current user input
         },
         headers: {
           'Content-Type': 'application/json',
@@ -110,20 +111,24 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
       }
       
       if (data && data.success) {
-        setInputAnswer(data.answer);
+        // We're not replacing the user's input with a generated answer anymore,
+        // just showing the guidance
         
-        // If we have guidance information, display it in a toast or elsewhere
+        // Display the guidance information in a toast
         if (data.guidance) {
           toast({
             title: "Response Guide",
-            description: "Key points have been provided to help you craft your answer.",
+            description: "Guiding questions have been provided to help you craft your answer.",
           });
+          
+          // You might want to display the guiding questions in a more prominent way
+          // in the UI, not just as a toast message
         }
       } else {
         throw new Error('Failed to generate guided response');
       }
     } catch (error) {
-      console.error('Error generating answer:', error);
+      console.error('Error generating guided response:', error);
       toast({
         variant: "destructive",
         title: "Error",
