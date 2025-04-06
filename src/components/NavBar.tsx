@@ -16,6 +16,8 @@ const NavBar = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [authProblemDetected, setAuthProblemDetected] = useState(false);
+  const [authLoadingTime, setAuthLoadingTime] = useState(0);
   const { toast } = useToast();
 
   // Check browser storage access
@@ -33,6 +35,7 @@ const NavBar = () => {
     } catch (error) {
       console.error('Browser storage not accessible:', error);
       setStorageError('Browser storage is not accessible. This may prevent login from working.');
+      setAuthProblemDetected(true);
       toast({
         variant: "destructive",
         title: "Browser storage issue detected",
@@ -53,8 +56,13 @@ const NavBar = () => {
           cookiesEnabled: navigator.cookieEnabled,
           isPrivateMode: !window.localStorage
         });
+        
+        if (error) {
+          setAuthProblemDetected(true);
+        }
       } catch (e) {
         console.error('Error checking session:', e);
+        setAuthProblemDetected(true);
       }
     };
     
@@ -73,9 +81,42 @@ const NavBar = () => {
       isLoading,
       userExists: !!user,
       tokenCount: tokens,
-      storageError
+      storageError,
+      authProblemDetected
     });
-  }, [isAuthenticated, user, isLoading, tokens, storageError]);
+  }, [isAuthenticated, user, isLoading, tokens, storageError, authProblemDetected]);
+
+  // Track how long loading state has been active
+  useEffect(() => {
+    let interval: number | undefined;
+    
+    if (isLoading) {
+      // Start a timer to track loading time
+      const startTime = Date.now();
+      interval = window.setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        setAuthLoadingTime(elapsed);
+        
+        // If loading takes more than 5 seconds, consider it a potential issue
+        if (elapsed > 5) {
+          setAuthProblemDetected(true);
+        }
+      }, 1000);
+    } else {
+      // Reset timer when loading completes
+      setAuthLoadingTime(0);
+      
+      // Only reset the problem flag if we successfully loaded and authenticated
+      // or we've clearly determined user is not authenticated
+      if (isAuthenticated || (!isLoading && !isAuthenticated)) {
+        setAuthProblemDetected(false);
+      }
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isLoading, isAuthenticated]);
 
   // Refresh tokens when component mounts and subscribe to token updates
   // Only do this if authentication is complete and user exists
@@ -111,6 +152,7 @@ const NavBar = () => {
       });
     } else {
       console.error('NavBar: Logout failed');
+      setAuthProblemDetected(true);
     }
   };
 
@@ -143,29 +185,33 @@ const NavBar = () => {
           <div className="flex items-center text-sm text-red-500 bg-red-50 p-2 rounded-md">
             <AlertTriangle className="h-4 w-4 mr-2" />
             <span>{storageError}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleResetAuth}
-              className="ml-2 text-xs"
-            >
-              Reset
-            </Button>
+            {authProblemDetected && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleResetAuth}
+                className="ml-2 text-xs"
+              >
+                Reset
+              </Button>
+            )}
           </div>
         )}
         
         {isLoading ? (
           <div className="flex items-center text-sm text-interview-text-secondary">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            <span>Loading auth state...</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleResetAuth}
-              className="ml-2 text-xs"
-            >
-              Reset Auth
-            </Button>
+            <span>Loading auth state{authLoadingTime > 0 ? ` (${authLoadingTime}s)` : ''}...</span>
+            {authProblemDetected && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleResetAuth}
+                className="ml-2 text-xs"
+              >
+                Reset Auth
+              </Button>
+            )}
           </div>
         ) : isAuthenticated ? (
           <>
@@ -208,14 +254,16 @@ const NavBar = () => {
               Sign up / Log in
             </Button>
             
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleResetAuth}
-              className="text-xs"
-            >
-              Reset Auth
-            </Button>
+            {authProblemDetected && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleResetAuth}
+                className="text-xs"
+              >
+                Reset Auth
+              </Button>
+            )}
           </>
         )}
       </div>
