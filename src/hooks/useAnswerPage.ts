@@ -102,7 +102,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
       
       console.log('Guided response generator request payload:', JSON.stringify(requestPayload));
       
-      // Call our guided response generator edge function - FIXED: stringified body
+      // Make sure the payload is properly stringified and content-type is set
       const { data, error } = await supabase.functions.invoke('guided-response-generator', {
         body: JSON.stringify(requestPayload), // Explicitly stringify the request payload
         headers: {

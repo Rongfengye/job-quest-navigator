@@ -13,9 +13,19 @@ serve(async (req) => {
   }
 
   try {
+    // Log the request method and headers for debugging
+    console.log('Request method:', req.method);
+    console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+    
     // Get the raw request body as text first for debugging
-    const rawRequestBody = await req.text();
-    console.log('Raw request body received:', rawRequestBody);
+    let rawRequestBody = "";
+    try {
+      rawRequestBody = await req.text();
+      console.log('Raw request body received:', rawRequestBody);
+    } catch (bodyError) {
+      console.error('Error reading request body:', bodyError);
+      throw new Error(`Error reading request body: ${bodyError.message}`);
+    }
     
     // Check if the request body is empty
     if (!rawRequestBody || rawRequestBody.trim() === '') {
