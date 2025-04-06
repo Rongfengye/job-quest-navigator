@@ -16,6 +16,7 @@ serve(async (req) => {
     // Log the request method and headers for debugging
     console.log('Request method:', req.method);
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+    console.log('look at the whole req object, keys', Object.keys(req), 'object is', req)
     
     // Get the raw request body as text first for debugging
     let rawRequestBody = "";
