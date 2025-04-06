@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import AnswerForm from '@/components/answer/AnswerForm';
 import AnswerHistory from '@/components/answer/AnswerHistory';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
+import { supabase } from '@/integrations/supabase/client';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -106,15 +108,33 @@ const AnswerPage = () => {
     setGeneratingAnswer(true);
     
     try {
-      const generatedText = question.modelAnswer || 
-        "Throughout my career, I've gained significant experience in this area. " +
-        "I've worked with various tools and technologies to solve complex problems. " +
-        "In my previous role, I implemented a system that improved efficiency by 30%. " +
-        "I ensure quality by following best practices and conducting thorough testing.";
+      // Call our new edge function instead of using the model answer directly
+      const { data, error } = await supabase.functions.invoke('generate-answer', {
+        body: {
+          questionIndex,
+          questionType: question.type,
+          questionText: question.question
+        }
+      });
       
-      setInputAnswer(generatedText);
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      if (data && data.success) {
+        setInputAnswer(data.answer);
+      } else {
+        throw new Error('Failed to generate answer');
+      }
     } catch (error) {
       console.error('Error generating answer:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to generate answer: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+      
+      // Refund token on error
       await deductTokens(-1);
     } finally {
       setGeneratingAnswer(false);
