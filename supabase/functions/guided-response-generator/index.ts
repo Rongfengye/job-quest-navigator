@@ -14,7 +14,19 @@ serve(async (req) => {
 
   try {
     // Parse the request body
-    const { questionIndex, questionType, questionText, userInput = "" } = await req.json();
+    // const { questionIndex, questionType, questionText, userInput = "" } = await req.json();
+    let jsonBody;
+    try {
+      jsonBody = await req.json();
+    } catch (parseError) {
+      console.error("Failed to parse request body as JSON:", parseError);
+      return new Response(
+        JSON.stringify({ error: "Invalid or empty JSON body", success: false }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { questionIndex, questionType, questionText, userInput = "" } = jsonBody;
     
     console.log(`Generating guided response for question #${questionIndex} (${questionType}): ${questionText}`);
     console.log(`User's current input: ${userInput || "No input provided"}`);
