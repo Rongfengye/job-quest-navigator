@@ -63,29 +63,17 @@ serve(async (req) => {
     });
     
     if (!openAIResponse.ok) {
-      const errorText = await openAIResponse.text();
-      console.error('OpenAI API error response:', errorText);
-      try {
-        const errorData = JSON.parse(errorText);
-        console.error('OpenAI API error (parsed):', errorData);
-        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-      } catch (parseError) {
-        console.error('Failed to parse OpenAI error response:', parseError);
-        throw new Error(`OpenAI API error (status ${openAIResponse.status}): ${errorText}`);
-      }
+      const errorData = await openAIResponse.json().catch(e => {
+        console.error('Failed to parse error as JSON:', e);
+        return { error: { message: `Status code: ${openAIResponse.status}` } };
+      });
+      console.error('OpenAI API error:', errorData);
+      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
     }
     
-    const responseText = await openAIResponse.text();
-    console.log('OpenAI raw response text:', responseText);
-    
-    let openAIData;
-    try {
-      openAIData = JSON.parse(responseText);
-      console.log('OpenAI parsed response:', JSON.stringify(openAIData));
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError, 'Raw response:', responseText);
-      throw new Error(`Failed to parse OpenAI response: ${parseError.message}`);
-    }
+    // Directly use .json() to parse the response
+    const openAIData = await openAIResponse.json();
+    console.log('OpenAI API response received:', JSON.stringify(openAIData));
     
     // Extract the response content
     const responseContent = openAIData.choices[0].message.content;
