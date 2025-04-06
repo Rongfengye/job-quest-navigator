@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: UserData | null;
@@ -20,7 +20,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
+  const [hadPreviousSession, setHadPreviousSession] = useState(false);
   const { toast } = useToast();
+
+  // Helper function to check if there was a previous session
+  const checkForPreviousSession = () => {
+    try {
+      // Check for session-related items in storage
+      const hasLocalStorageSession = !!localStorage.getItem('storyline-auth-token');
+      const hasSessionStorageSession = !!sessionStorage.getItem('storyline-auth-token');
+      const hasSbAuthToken = !!localStorage.getItem('supabase.auth.token');
+      
+      const hasPreviousSession = hasLocalStorageSession || hasSessionStorageSession || hasSbAuthToken;
+      console.log('Previous session detection:', { 
+        hasLocalStorageSession, 
+        hasSessionStorageSession, 
+        hasSbAuthToken,
+        hasPreviousSession 
+      });
+      
+      setHadPreviousSession(hasPreviousSession);
+      return hasPreviousSession;
+    } catch (error) {
+      console.error('Error checking for previous session:', error);
+      return false;
+    }
+  };
 
   // Helper function to ensure user has tokens record
   const ensureUserTokens = async (userId: string) => {
@@ -130,11 +155,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
       auth.setUser(null);
       
-      toast({
-        variant: "destructive",
-        title: "Authentication error",
-        description: "There was a problem checking your login status. You might need to clear your browser cache.",
-      });
+      // Only show toast if there was a previous session
+      if (hadPreviousSession) {
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "There was a problem checking your login status. You might need to clear your browser cache.",
+        });
+      }
     } finally {
       console.log('Finished initial session check, setting isLoading to false');
       setIsLoading(false);
@@ -143,6 +171,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Check for previous session immediately
+    const hasPreviousSession = checkForPreviousSession();
+    
     // Set maximum initialization time
     const maxInitTime = setTimeout(() => {
       if (isLoading) {
@@ -152,11 +183,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Set user to null to ensure we have a non-loading state
         auth.setUser(null);
         
-        toast({
-          variant: "destructive",
-          title: "Authentication timeout",
-          description: "Authentication initialization timed out. Using fallback.",
-        });
+        // Only show toast if there was a previous session
+        if (hasPreviousSession) {
+          toast({
+            variant: "destructive",
+            title: "Authentication timeout",
+            description: "Authentication initialization timed out. Using fallback.",
+          });
+        } else {
+          console.log('Auth timeout occurred, but no previous session detected - suppressing toast');
+        }
       }
     }, 8000);
 
@@ -257,7 +293,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   console.log('AuthContext value updated:', { 
     isAuthenticated: value.isAuthenticated, 
     userExists: !!value.user,
-    isLoading: value.isLoading
+    isLoading: value.isLoading,
+    hadPreviousSession
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

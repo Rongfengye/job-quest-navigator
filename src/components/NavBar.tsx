@@ -7,7 +7,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const NavBar = () => {
@@ -17,7 +17,30 @@ const NavBar = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authLoadingTimeout, setAuthLoadingTimeout] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [hadPreviousSession, setHadPreviousSession] = useState(false);
   const { toast } = useToast();
+
+  // Check for previous session
+  useEffect(() => {
+    try {
+      // Check for session-related items in storage
+      const hasLocalStorageSession = !!localStorage.getItem('storyline-auth-token');
+      const hasSessionStorageSession = !!sessionStorage.getItem('storyline-auth-token');
+      const hasSbAuthToken = !!localStorage.getItem('supabase.auth.token');
+      
+      const hasPreviousSession = hasLocalStorageSession || hasSessionStorageSession || hasSbAuthToken;
+      console.log('NavBar: Previous session detection:', { 
+        hasLocalStorageSession, 
+        hasSessionStorageSession, 
+        hasSbAuthToken,
+        hasPreviousSession 
+      });
+      
+      setHadPreviousSession(hasPreviousSession);
+    } catch (error) {
+      console.error('Error checking for previous session in NavBar:', error);
+    }
+  }, []);
 
   // Check browser storage access
   useEffect(() => {
@@ -68,17 +91,23 @@ const NavBar = () => {
       // If loading takes more than 5 seconds, assume there's an issue
       const timeoutId = setTimeout(() => {
         setAuthLoadingTimeout(true);
-        console.error('Auth loading timeout reached - displaying fallback UI');
-        toast({
-          variant: "destructive",
-          title: "Authentication issue",
-          description: "There was a problem connecting to the authentication service. Using fallback mode.",
-        });
+        console.error('Auth loading timeout reached in NavBar - displaying fallback UI');
+        
+        // Only show toast if had previous session
+        if (hadPreviousSession) {
+          toast({
+            variant: "destructive",
+            title: "Authentication issue",
+            description: "There was a problem connecting to the authentication service. Using fallback mode.",
+          });
+        } else {
+          console.log('Auth timeout in NavBar, but no previous session detected - suppressing toast');
+        }
       }, 5000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [isLoading, toast]);
+  }, [isLoading, toast, hadPreviousSession]);
 
   // Add enhanced debugging to see the current auth state, but limit logging to prevent infinite loops
   useEffect(() => {
@@ -93,9 +122,10 @@ const NavBar = () => {
       userExists: !!user,
       tokenCount: tokens,
       authLoadingTimeout,
-      storageError
+      storageError,
+      hadPreviousSession
     });
-  }, [isAuthenticated, user, isLoading, tokens, authLoadingTimeout, storageError]);
+  }, [isAuthenticated, user, isLoading, tokens, authLoadingTimeout, storageError, hadPreviousSession]);
 
   // Refresh tokens when component mounts and subscribe to token updates
   // Only do this if authentication is complete and user exists
@@ -232,7 +262,7 @@ const NavBar = () => {
               Sign up / Log in
             </Button>
             
-            {authLoadingTimeout && (
+            {authLoadingTimeout && hadPreviousSession && (
               <Button 
                 variant="ghost" 
                 size="sm" 
