@@ -1,145 +1,37 @@
 
-import React, { useState, useEffect } from 'react';
-import { useLocation, Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft, History, CheckCircle } from 'lucide-react';
-import { useAnswers } from '@/hooks/useAnswers';
-import Loading from '@/components/ui/loading';
+import React from 'react';
+import { useLocation } from 'react-router-dom';
 import ErrorDisplay from '@/components/ui/error-display';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
+import Loading from '@/components/ui/loading';
 import QuestionDisplay from '@/components/answer/QuestionDisplay';
-import AnswerForm from '@/components/answer/AnswerForm';
-import AnswerHistory from '@/components/answer/AnswerHistory';
-import { useUserTokens } from '@/hooks/useUserTokens';
-import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
-import { supabase } from '@/integrations/supabase/client';
+import AnswerPageHeader from '@/components/answer/AnswerPageHeader';
+import AnswerTabs from '@/components/answer/AnswerTabs';
+import { useAnswerPage } from '@/hooks/useAnswerPage';
 
 const AnswerPage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
   const questionIndexStr = queryParams.get('questionIndex');
   const questionIndex = questionIndexStr ? parseInt(questionIndexStr, 10) : 0;
   
-  const [inputAnswer, setInputAnswer] = useState<string>('');
-  const [generatingAnswer, setGeneratingAnswer] = useState(false);
-  const [activeTab, setActiveTab] = useState<string>('current');
-  
-  const { deductTokens } = useUserTokens();
-  
-  const { 
-    isLoading, 
-    isSaving, 
-    question, 
-    answer,
-    iterations,
-    answerRecord,
-    saveAnswer,
-    error 
-  } = useAnswers(storylineId || '', questionIndex);
-
   const {
+    inputAnswer,
+    setInputAnswer,
+    generatingAnswer,
+    activeTab,
+    setActiveTab,
+    isLoading,
+    isSaving,
+    question,
+    iterations,
+    error,
     feedback,
-    isLoading: isFeedbackLoading,
-    error: feedbackError,
-    generateFeedback,
-    clearFeedback
-  } = useAnswerFeedback(storylineId || '', question, questionIndex);
-
-  useEffect(() => {
-    console.log('AnswerPage: iterations updated from useAnswers', iterations);
-  }, [iterations]);
-
-  useEffect(() => {
-    if (answer && answer !== inputAnswer) {
-      setInputAnswer(answer);
-    }
-  }, [answer]);
-
-  useEffect(() => {
-    // Clear feedback when switching tabs or when the answer changes
-    if (activeTab !== 'current') {
-      clearFeedback();
-    }
-  }, [activeTab, clearFeedback]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    if (inputAnswer.trim().length < 30) {
-      toast({
-        variant: "destructive",
-        title: "Answer too short",
-        description: "Please provide a more complete answer (minimum 30 characters).",
-      });
-      return;
-    }
-    
-    if (storylineId) {
-      // Generate feedback before saving
-      const feedbackData = await generateFeedback(inputAnswer);
-      
-      if (feedbackData) {
-        // Save answer with the feedback data
-        await saveAnswer(inputAnswer, feedbackData);
-        
-        toast({
-          title: "Success",
-          description: "Your answer has been saved and feedback generated.",
-        });
-      } else {
-        // If feedback generation failed, still save the answer without feedback
-        await saveAnswer(inputAnswer);
-      }
-    }
-  };
-
-  const handleGenerateAnswer = async () => {
-    if (!question) return;
-    
-    const tokenCheck = await deductTokens(1);
-    if (!tokenCheck?.success) {
-      return;
-    }
-    
-    setGeneratingAnswer(true);
-    
-    try {
-      // Call our new edge function instead of using the model answer directly
-      const { data, error } = await supabase.functions.invoke('generate-answer', {
-        body: {
-          questionIndex,
-          questionType: question.type,
-          questionText: question.question
-        }
-      });
-      
-      if (error) {
-        throw new Error(error.message);
-      }
-      
-      if (data && data.success) {
-        setInputAnswer(data.answer);
-      } else {
-        throw new Error('Failed to generate answer');
-      }
-    } catch (error) {
-      console.error('Error generating answer:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to generate answer: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      });
-      
-      // Refund token on error
-      await deductTokens(-1);
-    } finally {
-      setGeneratingAnswer(false);
-    }
-  };
+    isFeedbackLoading,
+    feedbackError,
+    handleSubmit,
+    handleGenerateAnswer
+  } = useAnswerPage(storylineId, questionIndex);
 
   if (isLoading) {
     return <Loading message="Loading question..." />;
@@ -149,14 +41,7 @@ const AnswerPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="container max-w-4xl mx-auto px-4">
-          <div className="mb-6">
-            <Link to={`/questions?id=${storylineId}`}>
-              <Button variant="outline" className="flex items-center gap-2">
-                <ArrowLeft className="w-4 h-4" />
-                Back to Questions
-              </Button>
-            </Link>
-          </div>
+          <AnswerPageHeader storylineId={storylineId} />
           <div className="p-6 bg-white rounded-lg shadow">
             <p>Question not found. Please go back and try again.</p>
           </div>
@@ -168,57 +53,27 @@ const AnswerPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-4xl mx-auto px-4">
-        <div className="mb-6">
-          <Link to={`/questions?id=${storylineId}`}>
-            <Button variant="outline" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Questions
-            </Button>
-          </Link>
-        </div>
-
+        <AnswerPageHeader storylineId={storylineId} />
         <ErrorDisplay message={error} />
-
         <QuestionDisplay 
           question={question} 
           questionIndex={questionIndex} 
         />
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="current" className="flex items-center gap-1">
-              <CheckCircle className="w-4 h-4" />
-              Current Answer
-            </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-1" disabled={iterations.length === 0}>
-              <History className="w-4 h-4" />
-              Previous Iterations {iterations.length > 0 && `(${iterations.length})`}
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="current">
-            <AnswerForm
-              inputAnswer={inputAnswer}
-              setInputAnswer={setInputAnswer}
-              handleSubmit={handleSubmit}
-              handleGenerateAnswer={handleGenerateAnswer}
-              isSaving={isSaving}
-              generatingAnswer={generatingAnswer}
-              question={question}
-              feedback={feedback}
-              isFeedbackLoading={isFeedbackLoading}
-              feedbackError={feedbackError}
-            />
-          </TabsContent>
-          
-          <TabsContent value="history">
-            <AnswerHistory
-              iterations={iterations}
-              setInputAnswer={setInputAnswer}
-              setActiveTab={setActiveTab}
-            />
-          </TabsContent>
-        </Tabs>
+        <AnswerTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          inputAnswer={inputAnswer}
+          setInputAnswer={setInputAnswer}
+          handleSubmit={handleSubmit}
+          handleGenerateAnswer={handleGenerateAnswer}
+          isSaving={isSaving}
+          generatingAnswer={generatingAnswer}
+          iterations={iterations}
+          question={question}
+          feedback={feedback}
+          isFeedbackLoading={isFeedbackLoading}
+          feedbackError={feedbackError}
+        />
       </div>
     </div>
   );
