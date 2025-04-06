@@ -16,6 +16,9 @@ serve(async (req) => {
     // Log the request method and headers for debugging
     console.log('Request method:', req.method);
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
+    console.log('look at the req keys', Object.keys(req));
+    console.log('look at the whole req object', req);
+    console.log('bruh');
     
     // Check if Content-Type header is set properly
     const contentType = req.headers.get('content-type');
