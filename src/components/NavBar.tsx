@@ -15,7 +15,7 @@ const NavBar = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // Add enhanced debugging to see the current auth state
+  // Add enhanced debugging to see the current auth state, but limit logging to prevent infinite loops
   useEffect(() => {
     console.log('NavBar rendering with auth state:', { 
       isAuthenticated, 
@@ -31,8 +31,9 @@ const NavBar = () => {
   }, [isAuthenticated, user, isLoading, tokens]);
 
   // Refresh tokens when component mounts and subscribe to token updates
+  // Only do this if authentication is complete and user exists
   useEffect(() => {
-    if (isAuthenticated && user?.id) {
+    if (isAuthenticated && user?.id && !isLoading) {
       console.log('NavBar: Initial token fetch and subscribing to updates');
       fetchTokens();
       
@@ -45,7 +46,7 @@ const NavBar = () => {
         unsubscribe();
       };
     }
-  }, [isAuthenticated, user?.id, fetchTokens, subscribeToTokenUpdates]);
+  }, [isAuthenticated, user?.id, fetchTokens, subscribeToTokenUpdates, isLoading]);
 
   const handleLogout = async () => {
     console.log('NavBar: Logout button clicked');

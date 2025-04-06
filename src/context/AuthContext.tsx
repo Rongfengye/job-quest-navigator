@@ -17,6 +17,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [initialCheckComplete, setInitialCheckComplete] = useState(false);
 
   // Helper function to ensure user has tokens record
   const ensureUserTokens = async (userId: string) => {
@@ -59,91 +60,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const checkSession = async () => {
-      try {
-        console.log('Starting initial session check...');
-        const { data } = await supabase.auth.getSession();
-        console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
-        
-        if (data.session) {
-          // We have a session, so the user is authenticated
-          console.log('User is authenticated via session, userId:', data.session.user.id);
-          console.log('User metadata:', data.session.user.user_metadata);
-          console.log('App metadata:', data.session.user.app_metadata);
-          
-          // Extract name data, handling various providers specifically
-          const metadata = data.session.user.user_metadata || {};
-          let firstName = metadata.first_name || '';
-          let lastName = metadata.last_name || '';
-          
-          // For providers like GitHub and Google, we may need to extract from the full_name or name field
-          if ((!firstName || !lastName) && metadata.full_name) {
-            const nameParts = metadata.full_name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          } else if ((!firstName || !lastName) && metadata.name) {
-            const nameParts = metadata.name.split(' ');
-            firstName = firstName || nameParts[0] || '';
-            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-          }
-          
-          // Handle provider-specific metadata formats
-          const provider = data.session.user.app_metadata?.provider;
-          if ((!firstName || !lastName)) {
-            if (provider === 'github') {
-              // For GitHub users, if no name is available, use the username/nickname as the first name
-              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-            } else if (provider === 'google') {
-              // Google stores given_name and family_name
-              firstName = metadata.given_name || firstName;
-              lastName = metadata.family_name || lastName;
-            }
-          }
-          
-          console.log('Extracted name data:', { firstName, lastName });
-          
-          // Set user directly from session data
-          console.log('Setting user data from session');
-          auth.setUser({
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            firstName,
-            lastName
-          });
-          
-          // Ensure user has a tokens record
-          await ensureUserTokens(data.session.user.id);
-        } else {
-          console.log('No session found, user is not authenticated');
-          auth.setUser(null);
-        }
-      } catch (error) {
-        console.error("Error checking session:", error);
-        auth.setUser(null);
-      } finally {
-        console.log('Finished initial session check, setting isLoading to false');
-        setIsLoading(false);
-      }
-    };
-    
-    checkSession();
-    
-    // Set up auth state listener
+    // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
       
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session) {
           console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
-          console.log('User metadata:', session.user.user_metadata);
-          console.log('App metadata:', session.user.app_metadata);
           
-          // Extract name data, handling various providers specifically
+          // Extract name data from user metadata
           const metadata = session.user.user_metadata || {};
           let firstName = metadata.first_name || '';
           let lastName = metadata.last_name || '';
           
-          // For providers like GitHub and Google, we may need to extract from the full_name or name field
+          // Handle various metadata formats
           if ((!firstName || !lastName) && metadata.full_name) {
             const nameParts = metadata.full_name.split(' ');
             firstName = firstName || nameParts[0] || '';
@@ -158,19 +88,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const provider = session.user.app_metadata?.provider;
           if ((!firstName || !lastName)) {
             if (provider === 'github') {
-              // For GitHub users, if no name is available, use the username/nickname as the first name
               firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
             } else if (provider === 'google') {
-              // Google stores given_name and family_name
               firstName = metadata.given_name || firstName;
               lastName = metadata.family_name || lastName;
             }
           }
           
-          console.log('Extracted name data:', { firstName, lastName });
-          
-          // Set user directly from session data
-          console.log('Setting user data from session');
+          // Set user data only once to prevent continuous updates
           auth.setUser({
             id: session.user.id,
             email: session.user.email || '',
@@ -178,8 +103,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             lastName
           });
           
-          // Ensure user has a tokens record
-          await ensureUserTokens(session.user.id);
+          // Run this outside the auth state change callback to prevent deadlock
+          setTimeout(() => {
+            ensureUserTokens(session.user.id);
+          }, 0);
         }
       } else if (event === 'SIGNED_OUT') {
         console.log('User signed out, clearing auth state');
@@ -187,14 +114,87 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
     
+    // Then check for existing session
+    const checkSession = async () => {
+      try {
+        console.log('Starting initial session check...');
+        const { data } = await supabase.auth.getSession();
+        console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
+        
+        if (data.session) {
+          // We have a session, so the user is authenticated
+          console.log('User is authenticated via session, userId:', data.session.user.id);
+          
+          // Extract name data from user metadata
+          const metadata = data.session.user.user_metadata || {};
+          let firstName = metadata.first_name || '';
+          let lastName = metadata.last_name || '';
+          
+          // Handle various metadata formats
+          if ((!firstName || !lastName) && metadata.full_name) {
+            const nameParts = metadata.full_name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          } else if ((!firstName || !lastName) && metadata.name) {
+            const nameParts = metadata.name.split(' ');
+            firstName = firstName || nameParts[0] || '';
+            lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+          }
+          
+          // Handle provider-specific metadata formats
+          const provider = data.session.user.app_metadata?.provider;
+          if ((!firstName || !lastName)) {
+            if (provider === 'github') {
+              firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+            } else if (provider === 'google') {
+              firstName = metadata.given_name || firstName;
+              lastName = metadata.family_name || lastName;
+            }
+          }
+          
+          // Set user data
+          auth.setUser({
+            id: data.session.user.id,
+            email: data.session.user.email || '',
+            firstName,
+            lastName
+          });
+          
+          // Ensure user has a tokens record (outside the main flow)
+          setTimeout(() => {
+            ensureUserTokens(data.session.user.id);
+          }, 0);
+        } else {
+          console.log('No session found, user is not authenticated');
+          auth.setUser(null);
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        auth.setUser(null);
+      } finally {
+        console.log('Finished initial session check, setting isLoading to false');
+        setIsLoading(false);
+        setInitialCheckComplete(true);
+      }
+    };
+    
+    checkSession();
+    
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
+  // Only update isLoading when auth.isLoading changes after initial check is complete
+  useEffect(() => {
+    if (initialCheckComplete) {
+      setIsLoading(auth.isLoading);
+    }
+  }, [auth.isLoading, initialCheckComplete]);
+
   const value = {
     user: auth.user,
-    isLoading: isLoading || auth.isLoading,
+    isLoading: isLoading,
     isAuthenticated: !!auth.user,
     login: auth.login,
     signup: auth.signup,
