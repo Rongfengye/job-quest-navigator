@@ -37,6 +37,15 @@ serve(async (req) => {
       }
     ];
     
+    // Log the entire OpenAI request payload for debugging
+    console.log('OpenAI API request payload:', JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: messages,
+      temperature: 0.7,
+      max_tokens: 1000,
+      response_format: { type: "json_object" }
+    }));
+    
     // Call OpenAI API
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -54,13 +63,29 @@ serve(async (req) => {
     });
     
     if (!openAIResponse.ok) {
-      const errorData = await openAIResponse.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      const errorText = await openAIResponse.text();
+      console.error('OpenAI API error response:', errorText);
+      try {
+        const errorData = JSON.parse(errorText);
+        console.error('OpenAI API error (parsed):', errorData);
+        throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
+      } catch (parseError) {
+        console.error('Failed to parse OpenAI error response:', parseError);
+        throw new Error(`OpenAI API error (status ${openAIResponse.status}): ${errorText}`);
+      }
     }
     
-    const openAIData = await openAIResponse.json();
-    console.log('OpenAI response:', JSON.stringify(openAIData));
+    const responseText = await openAIResponse.text();
+    console.log('OpenAI raw response text:', responseText);
+    
+    let openAIData;
+    try {
+      openAIData = JSON.parse(responseText);
+      console.log('OpenAI parsed response:', JSON.stringify(openAIData));
+    } catch (parseError) {
+      console.error('Error parsing OpenAI response:', parseError, 'Raw response:', responseText);
+      throw new Error(`Failed to parse OpenAI response: ${parseError.message}`);
+    }
     
     // Extract the response content
     const responseContent = openAIData.choices[0].message.content;
@@ -69,8 +94,10 @@ serve(async (req) => {
     try {
       // Parse the JSON response
       parsedResponse = JSON.parse(responseContent);
+      console.log('Successfully parsed content as JSON:', JSON.stringify(parsedResponse));
     } catch (error) {
-      console.error('Error parsing OpenAI response as JSON:', error);
+      console.error('Error parsing OpenAI response content as JSON:', error);
+      console.log('Response content that failed to parse:', responseContent);
       // Fallback in case parsing fails
       parsedResponse = {
         guidingQuestions: [
