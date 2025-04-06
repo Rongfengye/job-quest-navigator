@@ -48,6 +48,45 @@ export type Database = {
         }
         Relationships: []
       }
+      resubump_analysis: {
+        Row: {
+          analysis_results: Json
+          created_at: string
+          file_type: string | null
+          filename: string | null
+          guiding_questions: Json | null
+          id: string
+          ocr_content: string
+          resume_text: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          analysis_results: Json
+          created_at?: string
+          file_type?: string | null
+          filename?: string | null
+          guiding_questions?: Json | null
+          id?: string
+          ocr_content: string
+          resume_text: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          analysis_results?: Json
+          created_at?: string
+          file_type?: string | null
+          filename?: string | null
+          guiding_questions?: Json | null
+          id?: string
+          ocr_content?: string
+          resume_text?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       resume_analyses: {
         Row: {
           created_at: string
