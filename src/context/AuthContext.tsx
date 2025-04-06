@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
@@ -143,23 +142,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Set maximum initialization time
-    const maxInitTime = setTimeout(() => {
-      if (isLoading) {
-        console.error('Auth initialization timed out after 8 seconds');
-        setIsLoading(false);
-        setInitializationError(new Error('Authentication initialization timed out'));
-        // Set user to null to ensure we have a non-loading state
-        auth.setUser(null);
-        
-        toast({
-          variant: "destructive",
-          title: "Authentication timeout",
-          description: "Authentication initialization timed out. Using fallback.",
-        });
-      }
-    }, 8000);
-
     // First set up auth state listener
     let subscription: { unsubscribe: () => void } | null = null;
     
@@ -231,7 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     return () => {
-      clearTimeout(maxInitTime);
       if (subscription) {
         subscription.unsubscribe();
       }

@@ -15,7 +15,6 @@ const NavBar = () => {
   const { tokens, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authLoadingTimeout, setAuthLoadingTimeout] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const { toast } = useToast();
 
@@ -62,24 +61,6 @@ const NavBar = () => {
     checkSessionDebug();
   }, []);
 
-  // Add timeout to prevent infinite loading state
-  useEffect(() => {
-    if (isLoading) {
-      // If loading takes more than 5 seconds, assume there's an issue
-      const timeoutId = setTimeout(() => {
-        setAuthLoadingTimeout(true);
-        console.error('Auth loading timeout reached - displaying fallback UI');
-        toast({
-          variant: "destructive",
-          title: "Authentication issue",
-          description: "There was a problem connecting to the authentication service. Using fallback mode.",
-        });
-      }, 5000);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isLoading, toast]);
-
   // Add enhanced debugging to see the current auth state, but limit logging to prevent infinite loops
   useEffect(() => {
     console.log('NavBar rendering with auth state:', { 
@@ -92,10 +73,9 @@ const NavBar = () => {
       isLoading,
       userExists: !!user,
       tokenCount: tokens,
-      authLoadingTimeout,
       storageError
     });
-  }, [isAuthenticated, user, isLoading, tokens, authLoadingTimeout, storageError]);
+  }, [isAuthenticated, user, isLoading, tokens, storageError]);
 
   // Refresh tokens when component mounts and subscribe to token updates
   // Only do this if authentication is complete and user exists
@@ -152,10 +132,6 @@ const NavBar = () => {
     });
   };
 
-  // If loading has timed out, display as not authenticated
-  const displayAsAuthenticated = isAuthenticated && !authLoadingTimeout;
-  const displayLoading = isLoading && !authLoadingTimeout;
-
   return (
     <div className="w-full flex items-center justify-between py-4 px-6 border-b border-gray-200">
       <Link to="/" className="text-xl font-bold text-interview-primary hover:opacity-90 transition-opacity">
@@ -178,7 +154,7 @@ const NavBar = () => {
           </div>
         )}
         
-        {displayLoading ? (
+        {isLoading ? (
           <div className="flex items-center text-sm text-interview-text-secondary">
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             <span>Loading auth state...</span>
@@ -191,7 +167,7 @@ const NavBar = () => {
               Reset Auth
             </Button>
           </div>
-        ) : displayAsAuthenticated ? (
+        ) : isAuthenticated ? (
           <>
             <div className="flex items-center text-sm text-interview-text-secondary">
               <User className="h-4 w-4 mr-2" />
@@ -232,16 +208,14 @@ const NavBar = () => {
               Sign up / Log in
             </Button>
             
-            {authLoadingTimeout && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleResetAuth}
-                className="text-xs"
-              >
-                Reset Auth
-              </Button>
-            )}
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleResetAuth}
+              className="text-xs"
+            >
+              Reset Auth
+            </Button>
           </>
         )}
       </div>
