@@ -16,15 +16,41 @@ serve(async (req) => {
     // Log the request method and headers for debugging
     console.log('Request method:', req.method);
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
-    console.log('look at the whole req object, keys', Object.keys(req), 'object is', req);
     
-    // Get the raw request body as text first for debugging
+    // Check if Content-Type header is set properly
+    const contentType = req.headers.get('content-type');
+    console.log('Content-Type header:', contentType);
+    
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('Warning: Content-Type is not application/json:', contentType);
+    }
+    
+    // Get the request body as a stream
+    const bodyStream = req.body;
+    if (!bodyStream) {
+      console.error('Request body stream is null or undefined');
+      throw new Error('Empty request body');
+    }
+    
+    // Convert the stream to text
     let rawRequestBody = "";
     try {
-      rawRequestBody = await req.text();
+      // Create a reader from the stream
+      const reader = bodyStream.getReader();
+      const decoder = new TextDecoder();
+      
+      let done = false;
+      while (!done) {
+        const { value, done: doneReading } = await reader.read();
+        done = doneReading;
+        if (value) {
+          rawRequestBody += decoder.decode(value, { stream: !done });
+        }
+      }
+      
       console.log('Raw request body received:', rawRequestBody);
     } catch (bodyError) {
-      console.error('Error reading request body:', bodyError);
+      console.error('Error reading request body stream:', bodyError);
       throw new Error(`Error reading request body: ${bodyError.message}`);
     }
     
