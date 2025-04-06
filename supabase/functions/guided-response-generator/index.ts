@@ -7,20 +7,26 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('====== FUNCTION INVOKED ======');
+  console.log('REQUEST METHOD:', req.method);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling OPTIONS request (CORS preflight)');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Log the request method and headers for debugging
-    console.log('Request method:', req.method);
+    // Enhanced logging for debugging
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
-    console.log('look at the req keys', Object.keys(req));
-    console.log('look at the whole req object', req);
-    console.log('bruh');
+    console.log('Request method:', req.method);
+    console.log('Request URL:', req.url);
+    console.log('Request keys:', Object.keys(req));
     
-    // Check if Content-Type header is set properly
+    // Force log flush
+    Deno.stderr.writeSync(new TextEncoder().encode('DEBUG: Beginning request processing\n'));
+    
+    // Check Content-Type header
     const contentType = req.headers.get('content-type');
     console.log('Content-Type header:', contentType);
     
@@ -28,53 +34,38 @@ serve(async (req) => {
       console.warn('Warning: Content-Type is not application/json:', contentType);
     }
     
-    // Get the request body as a stream
-    const bodyStream = req.body;
-    if (!bodyStream) {
-      console.error('Request body stream is null or undefined');
-      throw new Error('Empty request body');
-    }
+    // Get request body
+    let requestData;
     
-    // Convert the stream to text
-    let rawRequestBody = "";
     try {
-      // Create a reader from the stream
-      const reader = bodyStream.getReader();
-      const decoder = new TextDecoder();
+      // Clone the request to avoid consuming the body stream
+      const clonedReq = req.clone();
       
-      let done = false;
-      while (!done) {
-        const { value, done: doneReading } = await reader.read();
-        done = doneReading;
-        if (value) {
-          rawRequestBody += decoder.decode(value, { stream: !done });
-        }
+      // Try to parse body as text first
+      const textBody = await clonedReq.text();
+      console.log('Raw request body:', textBody.substring(0, 1000)); // Log first 1000 chars
+      
+      if (!textBody || textBody.trim() === '') {
+        throw new Error('Empty request body received');
       }
       
-      console.log('Raw request body received:', rawRequestBody);
+      // Then parse as JSON
+      try {
+        requestData = JSON.parse(textBody);
+        console.log('Parsed JSON data:', JSON.stringify(requestData).substring(0, 500));
+      } catch (jsonError) {
+        console.error('Failed to parse request body as JSON:', jsonError.message);
+        console.error('Raw body that failed to parse:', textBody);
+        throw new Error(`Invalid JSON in request body: ${jsonError.message}`);
+      }
     } catch (bodyError) {
-      console.error('Error reading request body stream:', bodyError);
-      throw new Error(`Error reading request body: ${bodyError.message}`);
-    }
-    
-    // Check if the request body is empty
-    if (!rawRequestBody || rawRequestBody.trim() === '') {
-      console.error('Empty request body received');
-      throw new Error('Empty request body received');
-    }
-    
-    // Try to parse the JSON
-    let requestData;
-    try {
-      requestData = JSON.parse(rawRequestBody);
-      console.log('Request data parsed successfully:', JSON.stringify(requestData));
-    } catch (parseError) {
-      console.error('Error parsing request body:', parseError);
-      console.error('Raw request body that failed to parse:', rawRequestBody);
+      console.error('Error reading or parsing request body:', bodyError.message);
+      Deno.stderr.writeSync(new TextEncoder().encode(`ERROR: ${bodyError.message}\n`));
+      
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Invalid request format: ${parseError.message}` 
+          error: `Request body error: ${bodyError.message}` 
         }),
         { 
           status: 400, 
@@ -94,12 +85,13 @@ serve(async (req) => {
       throw new Error('Missing required fields in request');
     }
     
-    console.log(`Generating guided response for question #${questionIndex} (${questionType}): ${questionText}`);
-    console.log(`User's current input: ${userInput || "No input provided"}`);
+    console.log(`Processing question #${questionIndex} (${questionType}): ${questionText.substring(0, 100)}`);
+    console.log(`User's current input: ${userInput ? userInput.substring(0, 100) + (userInput.length > 100 ? '...' : '') : "No input provided"}`);
     
     // Get the OpenAI API key from environment variables
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
+      console.error('OpenAI API key not configured in environment variables');
       throw new Error('OpenAI API key not configured');
     }
     
@@ -125,7 +117,7 @@ serve(async (req) => {
     };
     
     // Log the entire OpenAI request payload for debugging
-    console.log('OpenAI API request payload:', JSON.stringify(openAIRequestPayload));
+    console.log('OpenAI API request payload:', JSON.stringify(openAIRequestPayload).substring(0, 500) + '...');
     
     // Call OpenAI API
     console.log('Sending request to OpenAI API...');
@@ -139,7 +131,6 @@ serve(async (req) => {
     });
     
     console.log('OpenAI API response status:', openAIResponse.status);
-    console.log('OpenAI API response headers:', JSON.stringify(Object.fromEntries(openAIResponse.headers.entries())));
     
     if (!openAIResponse.ok) {
       console.error('OpenAI API error response status:', openAIResponse.status);
@@ -153,49 +144,48 @@ serve(async (req) => {
         // If JSON parsing fails, try to get error as text
         console.error('Failed to parse error response as JSON, trying text...');
         const errorText = await openAIResponse.text().catch(() => 'Could not read response as text');
-        console.error('OpenAI API error text:', errorText);
+        console.error('OpenAI API error text:', errorText.substring(0, 200));
         throw new Error(`OpenAI API error (${openAIResponse.status}): ${errorText.substring(0, 200)}`);
       }
     }
     
-    // Parse response directly from OpenAI
+    // Parse response from OpenAI
     let openAIData;
     try {
       openAIData = await openAIResponse.json();
-      console.log('OpenAI API parsed response:', JSON.stringify(openAIData));
+      console.log('OpenAI API response received');
     } catch (jsonError) {
       console.error('Error parsing OpenAI response as JSON:', jsonError);
       
       // Try to get response as text if JSON parsing failed
       const responseText = await openAIResponse.clone().text().catch(() => 'Could not read response as text');
-      console.error('Response text that failed to parse:', responseText);
+      console.error('Response text that failed to parse:', responseText.substring(0, 200));
       throw new Error(`Failed to parse OpenAI response: ${jsonError.message}`);
     }
     
     // Validate response structure
     if (!openAIData.choices || !openAIData.choices[0] || !openAIData.choices[0].message) {
-      console.error('Unexpected OpenAI response structure:', JSON.stringify(openAIData));
+      console.error('Unexpected OpenAI response structure:', JSON.stringify(openAIData).substring(0, 500));
       throw new Error('OpenAI response missing expected data structure');
     }
     
     // Extract the response content
     const responseContent = openAIData.choices[0].message.content;
-    console.log('Response content extracted:', responseContent);
+    console.log('Response content received, length:', responseContent.length);
     
     let parsedResponse;
     try {
       // Parse the JSON response
       parsedResponse = JSON.parse(responseContent);
-      console.log('Successfully parsed content as JSON:', JSON.stringify(parsedResponse));
+      console.log('Successfully parsed content as JSON');
       
       // Validate expected structure
       if (!parsedResponse.guidingQuestions || !Array.isArray(parsedResponse.guidingQuestions)) {
-        console.warn('Parsed response missing expected guidingQuestions array:', JSON.stringify(parsedResponse));
+        console.warn('Parsed response missing expected guidingQuestions array');
         throw new Error('Invalid response format: missing guidingQuestions array');
       }
     } catch (error) {
       console.error('Error parsing OpenAI response content as JSON:', error);
-      console.log('Response content that failed to parse:', responseContent);
       
       // Attempt to extract questions from text format as fallback
       try {
@@ -249,7 +239,8 @@ serve(async (req) => {
       }
     };
 
-    console.log('Returning final response:', JSON.stringify(response));
+    console.log('Returning final response with guiding questions:', parsedResponse.guidingQuestions?.length || 0);
+    console.log('====== FUNCTION COMPLETED SUCCESSFULLY ======');
 
     return new Response(
       JSON.stringify(response),
@@ -261,7 +252,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("Error generating guided response:", error);
+    console.error("Error generating guided response:", error.message);
+    console.error("Error stack:", error.stack);
+    Deno.stderr.writeSync(new TextEncoder().encode(`FATAL ERROR: ${error.message}\n`));
     
     return new Response(
       JSON.stringify({ 
