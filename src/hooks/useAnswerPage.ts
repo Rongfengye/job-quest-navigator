@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -92,19 +91,26 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     setGeneratingAnswer(true);
     
     try {
+      // Create the request payload
+      const requestPayload = {
+        questionIndex,
+        questionType: question.type,
+        questionText: question.question,
+        userInput: inputAnswer // Pass the current user input
+      };
+      
+      console.log('Guided response generator request payload:', JSON.stringify(requestPayload));
+      
       // Call our guided response generator edge function
       const { data, error } = await supabase.functions.invoke('guided-response-generator', {
-        body: {
-          questionIndex,
-          questionType: question.type,
-          questionText: question.question,
-          userInput: inputAnswer // Pass the current user input
-        },
+        body: requestPayload,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       });
+      
+      console.log('Guided response generator response:', data, error);
       
       if (error) {
         throw new Error(error.message);

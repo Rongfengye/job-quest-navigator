@@ -13,20 +13,46 @@ serve(async (req) => {
   }
 
   try {
-    // Parse the request body
-    const requestBody = await req.text();
-    console.log('Request body received:', requestBody);
+    // Get the raw request body as text first for debugging
+    const rawRequestBody = await req.text();
+    console.log('Raw request body received:', rawRequestBody);
     
+    // Check if the request body is empty
+    if (!rawRequestBody || rawRequestBody.trim() === '') {
+      console.error('Empty request body received');
+      throw new Error('Empty request body received');
+    }
+    
+    // Try to parse the JSON
     let requestData;
     try {
-      requestData = JSON.parse(requestBody);
+      requestData = JSON.parse(rawRequestBody);
       console.log('Request data parsed successfully:', JSON.stringify(requestData));
     } catch (parseError) {
       console.error('Error parsing request body:', parseError);
-      throw new Error(`Invalid request format: ${parseError.message}`);
+      console.error('Raw request body that failed to parse:', rawRequestBody);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Invalid request format: ${parseError.message}` 
+        }),
+        { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders,
+            'Content-Type': 'application/json' 
+          } 
+        }
+      );
     }
     
+    // Check if required fields are present
     const { questionIndex, questionType, questionText, userInput = "" } = requestData;
+    
+    if (questionIndex === undefined || !questionType || !questionText) {
+      console.error('Missing required fields in request:', JSON.stringify(requestData));
+      throw new Error('Missing required fields in request');
+    }
     
     console.log(`Generating guided response for question #${questionIndex} (${questionType}): ${questionText}`);
     console.log(`User's current input: ${userInput || "No input provided"}`);
@@ -92,19 +118,18 @@ serve(async (req) => {
       }
     }
     
-    // Read the response body as text first for logging
-    const responseText = await openAIResponse.clone().text();
-    console.log('OpenAI API raw response text:', responseText);
-    
-    // Then properly parse the JSON
+    // Parse response directly from OpenAI
     let openAIData;
     try {
       openAIData = await openAIResponse.json();
       console.log('OpenAI API parsed response:', JSON.stringify(openAIData));
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response as JSON:', parseError);
-      console.log('Response text that failed to parse:', responseText);
-      throw new Error(`Failed to parse OpenAI response: ${parseError.message}`);
+    } catch (jsonError) {
+      console.error('Error parsing OpenAI response as JSON:', jsonError);
+      
+      // Try to get response as text if JSON parsing failed
+      const responseText = await openAIResponse.clone().text().catch(() => 'Could not read response as text');
+      console.error('Response text that failed to parse:', responseText);
+      throw new Error(`Failed to parse OpenAI response: ${jsonError.message}`);
     }
     
     // Validate response structure
