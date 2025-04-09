@@ -90,11 +90,11 @@ serve(async (req) => {
     const messages = [
       {
         role: "system",
-        content: "You're an interview coach that helps candidates come up with their responses. It is important to note that you ask 5 followup questions to guide them to formulate their response, rather than giving them the perfect finished response. You'll be given their resume, and their current progress on the question can be anywhere from blank, some basic sentences, or MVP equivalent. Return your response as a JSON object with a 'guidingQuestions' array containing the 5 questions."
+        content: "You're an interview coach that helps candidates come up with their responses. Ask 5 follow-up questions to help them structure their answer. Respond strictly in valid JSON format with a 'guidingQuestions' array."
       },
       {
         role: "user",
-        content: `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions to help me formulate a strong answer. Return the result as a JSON object with a 'guidingQuestions' array.`
+        content: `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions in JSON format like: { "guidingQuestions": ["Q1", "Q2", ...] }`
       }
     ];
     
