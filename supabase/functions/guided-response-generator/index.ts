@@ -27,12 +27,12 @@ serve(async (req) => {
     Deno.stderr.writeSync(new TextEncoder().encode('DEBUG: Beginning request processing\n'));
     
     // Check Content-Type header
-    const contentType = req.headers.get('content-type');
-    console.log('Content-Type header:', contentType);
+    // const contentType = req.headers.get('content-type');
+    // console.log('Content-Type header:', contentType);
     
-    if (!contentType || !contentType.includes('application/json')) {
-      console.warn('Warning: Content-Type is not application/json:', contentType);
-    }
+    // if (!contentType || !contentType.includes('application/json')) {
+    //   console.warn('Warning: Content-Type is not application/json:', contentType);
+    // }
     
     // Get request body
     let requestData;

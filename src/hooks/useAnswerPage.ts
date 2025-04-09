@@ -105,10 +105,10 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
       // Make the API request with proper headers and body
       const { data, error } = await supabase.functions.invoke('guided-response-generator', {
         body: requestPayload,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+        // headers: {
+        //   'Content-Type': 'application/json',
+        //   'Accept': 'application/json'
+        // }
       });
       
       console.log('Guided response generator response:', data, error);
