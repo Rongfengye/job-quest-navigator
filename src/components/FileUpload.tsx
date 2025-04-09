@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
@@ -53,15 +54,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
         fullText += pageText + '\n';
         
         // Limit text extraction if it's getting too large
-        if (fullText.length > 10000) {
-          console.log("Text extraction reached 10000 characters, stopping...");
+        if (fullText.length > 100000) {
+          console.log("Text extraction reached 100000 characters, stopping...");
           break;
         }
       }
       
+      // Clean the extracted text - remove PDF artifacts and normalize whitespace
+      let cleanedText = fullText
+        .replace(/(\r\n|\n|\r)/gm, " ")  // Replace line breaks with spaces
+        .replace(/\s+/g, " ")            // Replace multiple spaces with single space
+        .trim();                          // Trim whitespace
+      
       // Limit to 5000 characters to prevent token overusage
-      const truncatedText = fullText.substring(0, 5000);
-      console.log(`Text extraction complete. Total characters: ${fullText.length}, truncated to 5000 characters.`);
+      const truncatedText = cleanedText.substring(0, 5000);
+      console.log(`Text extraction complete. Total characters: ${cleanedText.length}, truncated to 5000 characters.`);
       console.log("Text preview:", truncatedText.substring(0, 100) + "...");
       
       return truncatedText;
