@@ -21,18 +21,9 @@ serve(async (req) => {
     console.log('Request headers:', JSON.stringify(Object.fromEntries(req.headers.entries())));
     console.log('Request method:', req.method);
     console.log('Request URL:', req.url);
-    console.log('Request keys:', Object.keys(req));
     
     // Force log flush
     Deno.stderr.writeSync(new TextEncoder().encode('DEBUG: Beginning request processing\n'));
-    
-    // Check Content-Type header
-    // const contentType = req.headers.get('content-type');
-    // console.log('Content-Type header:', contentType);
-    
-    // if (!contentType || !contentType.includes('application/json')) {
-    //   console.warn('Warning: Content-Type is not application/json:', contentType);
-    // }
     
     // Get request body
     let requestData;
@@ -95,15 +86,15 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
     
-    // Prepare the prompt for OpenAI
+    // Prepare the prompt for OpenAI - ADDED JSON KEYWORD TO THE PROMPT
     const messages = [
       {
         role: "system",
-        content: "You're an interview coach that helps candidates come up with their responses. It is important to note that you ask 5 followup questions to guide them to formulate their response, rather than giving them the perfect finished response. You'll be given their resume, and their current progress on the question can be anywhere from blank, some basic sentences, or MVP equivalent."
+        content: "You're an interview coach that helps candidates come up with their responses. It is important to note that you ask 5 followup questions to guide them to formulate their response, rather than giving them the perfect finished response. You'll be given their resume, and their current progress on the question can be anywhere from blank, some basic sentences, or MVP equivalent. Return your response as a JSON object with a 'guidingQuestions' array containing the 5 questions."
       },
       {
         role: "user",
-        content: `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions to help me formulate a strong answer.`
+        content: `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions to help me formulate a strong answer. Return the result as a JSON object with a 'guidingQuestions' array.`
       }
     ];
     
