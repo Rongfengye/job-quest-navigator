@@ -79,6 +79,7 @@ serve(async (req) => {
     console.log(`Processing question #${questionIndex} (${questionType}): ${questionText.substring(0, 100)}`);
     console.log(`User's current input: ${userInput ? userInput.substring(0, 100) + (userInput.length > 100 ? '...' : '') : "No input provided"}`);
     console.log(`Resume text length: ${resumeText ? resumeText.length : 0} characters`);
+    console.log(`Resume text: ${resumeText}`);
     
     // Get the OpenAI API key from environment variables
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
