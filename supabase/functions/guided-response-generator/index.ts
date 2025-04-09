@@ -86,22 +86,19 @@ serve(async (req) => {
       throw new Error('OpenAI API key not configured');
     }
     
-    // Prepare the prompt for OpenAI - ADDED JSON KEYWORD TO THE PROMPT
-    const messages = [
-      {
-        role: "system",
-        content: "You're an interview coach that helps candidates come up with their responses. Ask 5 follow-up questions to help them structure their answer. Respond strictly in valid JSON format with a 'guidingQuestions' array."
-      },
-      {
-        role: "user",
-        content: `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions in JSON format like: { "guidingQuestions": ["Q1", "Q2", ...] }`
-      }
-    ];
+    // Prepare the system prompt for OpenAI - ENSURING WE INCLUDE THE WORD "JSON" IN THE PROMPT
+    const systemPrompt = "You're an interview coach that helps candidates come up with their responses. Ask 5 follow-up questions to help them structure their answer. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
     
-    // Prepare API request
+    // Prepare the user prompt - ALSO MAKING SURE TO INCLUDE "JSON" 
+    const userPrompt = `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions in JSON format like: { "guidingQuestions": ["Q1", "Q2", ...] }`;
+    
+    // Prepare API request - FOLLOWING THE PATTERN FROM generate-interview-questions
     const openAIRequestPayload = {
       model: 'gpt-4o-mini',
-      messages: messages,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
       temperature: 0.7,
       max_tokens: 1000,
       response_format: { type: "json_object" }
