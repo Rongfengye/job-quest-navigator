@@ -11,6 +11,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('current');
+  const [resumeText, setResumeText] = useState<string>('');
   
   const { deductTokens } = useUserTokens();
   
@@ -32,6 +33,44 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     generateFeedback,
     clearFeedback
   } = useAnswerFeedback(storylineId || '', question, questionIndex);
+
+  // Fetch resume text when the component loads
+  useEffect(() => {
+    const fetchResumeText = async () => {
+      if (!storylineId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('storyline_jobs')
+          .select('resume_path')
+          .eq('id', storylineId)
+          .single();
+          
+        if (error) throw error;
+        
+        if (data?.resume_path) {
+          // Try to download the resume file or get its text from wherever it's stored
+          const { data: fileData, error: fileError } = await supabase
+            .storage
+            .from('job_documents')
+            .download(data.resume_path);
+            
+          if (fileError) throw fileError;
+          
+          if (fileData) {
+            // Convert blob to text
+            const text = await fileData.text();
+            setResumeText(text.substring(0, 5000)); // Limit size to avoid token issues
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching resume text:', error);
+        // Non-blocking error - we'll just proceed without resume text
+      }
+    };
+    
+    fetchResumeText();
+  }, [storylineId]);
 
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);
@@ -97,7 +136,8 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
         questionIndex,
         questionType: question.type,
         questionText: question.question,
-        userInput: inputAnswer // Pass the current user input
+        userInput: inputAnswer, // Pass the current user input
+        resumeText: resumeText // Pass the resume text
       };
       
       console.log('Guided response generator request payload:', JSON.stringify(requestPayload));

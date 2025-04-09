@@ -69,7 +69,7 @@ serve(async (req) => {
     }
     
     // Check if required fields are present
-    const { questionIndex, questionType, questionText, userInput = "" } = requestData;
+    const { questionIndex, questionType, questionText, userInput = "", resumeText = "" } = requestData;
     
     if (questionIndex === undefined || !questionType || !questionText) {
       console.error('Missing required fields in request:', JSON.stringify(requestData));
@@ -78,6 +78,7 @@ serve(async (req) => {
     
     console.log(`Processing question #${questionIndex} (${questionType}): ${questionText.substring(0, 100)}`);
     console.log(`User's current input: ${userInput ? userInput.substring(0, 100) + (userInput.length > 100 ? '...' : '') : "No input provided"}`);
+    console.log(`Resume text length: ${resumeText ? resumeText.length : 0} characters`);
     
     // Get the OpenAI API key from environment variables
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -87,10 +88,17 @@ serve(async (req) => {
     }
     
     // Prepare the system prompt for OpenAI - ENSURING WE INCLUDE THE WORD "JSON" IN THE PROMPT
-    const systemPrompt = "You're an interview coach that helps candidates come up with their responses. Ask 5 follow-up questions to help them structure their answer. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
+    const systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience. Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
     
     // Prepare the user prompt - ALSO MAKING SURE TO INCLUDE "JSON" 
-    const userPrompt = `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\nPlease provide 5 guiding questions in JSON format like: { "guidingQuestions": ["Q1", "Q2", ...] }`;
+    let userPrompt = `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\n`;
+    
+    // Add resume info if available
+    if (resumeText && resumeText.length > 0) {
+      userPrompt += `Here is relevant information from the user's resume to help personalize your guidance:\n${resumeText.substring(0, 2000)}\n\n`;
+    }
+    
+    userPrompt += "Please provide 5 guiding questions in JSON format like: { \"guidingQuestions\": [\"Q1\", \"Q2\", ...] }. Make these questions specific to the user's background when possible.";
     
     // Prepare API request - FOLLOWING THE PATTERN FROM generate-interview-questions
     const openAIRequestPayload = {
