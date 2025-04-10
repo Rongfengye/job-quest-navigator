@@ -18,8 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'storyline-auth-token',
-    flowType: 'pkce',
-    redirectTo: SITE_URL
+    flowType: 'pkce'
   }
 });
 
@@ -45,4 +44,3 @@ export const debugSupabaseAuth = async () => {
     return { error: e };
   }
 };
-
