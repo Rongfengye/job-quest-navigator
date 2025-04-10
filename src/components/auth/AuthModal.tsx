@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -57,8 +56,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleLinkedInSignIn = async () => {
     setIsLinkedinLoading(true);
     try {
-      // Get the current URL without any trailing spaces
-      const redirectUrl = window.location.origin.trim();
+      const redirectUrl = 'https://storyline.tryhireme.com';
       
       console.log('LinkedIn OAuth initiated with redirect URL:', redirectUrl);
       
@@ -66,7 +64,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         provider: 'linkedin_oidc',
         options: {
           redirectTo: redirectUrl,
-          // Specify scopes needed for LinkedIn
           scopes: 'openid profile email',
         }
       });
@@ -82,7 +79,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
       
       console.log("LinkedIn OAuth response:", data);
-      // The redirect will happen automatically, so we don't need to do anything here
     } catch (error) {
       console.error("LinkedIn sign in error:", error);
       toast({
@@ -98,8 +94,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleGithubSignIn = async () => {
     setIsGithubLoading(true);
     try {
-      // Get the current URL without any trailing spaces
-      const redirectUrl = window.location.origin.trim();
+      const redirectUrl = 'https://storyline.tryhireme.com';
       
       console.log('Github OAuth initiated with redirect URL:', redirectUrl);
       
@@ -107,7 +102,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         provider: 'github',
         options: {
           redirectTo: redirectUrl,
-          // Request user profile data including name
           scopes: 'read:user user:email',
         }
       });
@@ -123,7 +117,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
       
       console.log("Github OAuth response:", data);
-      // The redirect will happen automatically, so we don't need to do anything here
     } catch (error) {
       console.error("Github sign in error:", error);
       toast({
@@ -139,8 +132,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      // Get the current URL without any trailing spaces
-      const redirectUrl = window.location.origin.trim();
+      const redirectUrl = 'https://storyline.tryhireme.com';
       
       console.log('Google OAuth initiated with redirect URL:', redirectUrl);
       
@@ -148,7 +140,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         provider: 'google',
         options: {
           redirectTo: redirectUrl,
-          // Request user profile data including name and email
           scopes: 'profile email',
         }
       });
@@ -164,7 +155,6 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
       
       console.log("Google OAuth response:", data);
-      // The redirect will happen automatically, so we don't need to do anything here
     } catch (error) {
       console.error("Google sign in error:", error);
       toast({
