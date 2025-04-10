@@ -1,7 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
+import { filterValue } from '@/utils/supabaseTypes';
 
 interface AuthContextType {
   user: UserData | null;
@@ -30,7 +32,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data: tokensRecord, error: tokensError } = await supabase
         .from('storyline_user_tokens')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', filterValue(userId))
         .maybeSingle();
       
       if (tokensError) {
@@ -44,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         const { data: newRecord, error: insertError } = await supabase
           .from('storyline_user_tokens')
-          .insert([{ user_id: userId, tokens_remaining: 100 }])
+          .insert({ user_id: userId, tokens_remaining: 100 })
           .select()
           .single();
         
