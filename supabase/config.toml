@@ -6,7 +6,3 @@ verify_jwt = false
 verify_jwt = false
 [functions.guided-response-generator]
 verify_jwt = false
-
-# Site configuration
-site_url = "https://storyline.tryhireme.com"
-additional_redirect_urls = ["https://storyline.tryhireme.com/*"]

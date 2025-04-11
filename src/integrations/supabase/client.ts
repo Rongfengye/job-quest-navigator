@@ -18,9 +18,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'storyline-auth-token',
-    flowType: 'pkce',
-    // Set the redirect URL for the OAuth flow
-    redirectTo: SITE_URL
+    flowType: 'pkce'
   }
 });
 
