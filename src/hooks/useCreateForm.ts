@@ -1,10 +1,10 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 interface FormData {
   jobTitle: string;
@@ -132,8 +132,7 @@ export const useCreateForm = () => {
         throw new Error(`Error saving your application: ${insertError.message}`);
       }
 
-      const safeStorylineData = safeDatabaseData(storylineData);
-      const storylineId = safeStorylineData.id;
+      const storylineId = storylineData.id;
 
       const requestBody = {
         jobTitle: formData.jobTitle,
@@ -170,7 +169,7 @@ export const useCreateForm = () => {
           openai_response: data,
           status: 'completed'
         })
-        .eq('id', filterValue(storylineId));
+        .eq('id', storylineId);
 
       if (updateError) {
         throw new Error(`Error updating your application: ${updateError.message}`);

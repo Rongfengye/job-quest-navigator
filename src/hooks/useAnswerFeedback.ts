@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { AnswerIteration } from '@/hooks/useAnswers';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 export interface FeedbackData {
   pros: string[];
@@ -39,8 +37,8 @@ export const useAnswerFeedback = (
         const { data, error: fetchError } = await supabase
           .from('storyline_job_questions')
           .select('iterations')
-          .eq('storyline_id', filterValue(storylineId))
-          .eq('question_index', filterValue(questionIndex))
+          .eq('storyline_id', storylineId)
+          .eq('question_index', questionIndex)
           .single();
 
         if (fetchError) {
@@ -50,34 +48,29 @@ export const useAnswerFeedback = (
           return;
         }
 
-        if (data) {
-          // Safely access data using our utility function
-          const safeData = safeDatabaseData(data);
+        if (data?.iterations) {
+          let iterations: AnswerIteration[] = [];
           
-          if (safeData.iterations) {
-            let iterations: AnswerIteration[] = [];
-            
-            // Parse iterations properly if they're a string
-            if (typeof safeData.iterations === 'string') {
-              try {
-                iterations = JSON.parse(safeData.iterations);
-              } catch (e) {
-                console.error('Error parsing iterations JSON:', e);
-              }
-            } else if (Array.isArray(safeData.iterations)) {
-              iterations = safeData.iterations as AnswerIteration[];
+          // Parse iterations properly if they're a string
+          if (typeof data.iterations === 'string') {
+            try {
+              iterations = JSON.parse(data.iterations);
+            } catch (e) {
+              console.error('Error parsing iterations JSON:', e);
             }
+          } else if (Array.isArray(data.iterations)) {
+            iterations = data.iterations as AnswerIteration[];
+          }
+          
+          // Get the last iteration that has feedback
+          if (iterations.length > 0) {
+            const lastIterationWithFeedback = [...iterations]
+              .reverse()
+              .find(iteration => iteration.feedback);
             
-            // Get the last iteration that has feedback
-            if (iterations.length > 0) {
-              const lastIterationWithFeedback = [...iterations]
-                .reverse()
-                .find(iteration => iteration.feedback);
-              
-              if (lastIterationWithFeedback?.feedback) {
-                console.log('Found existing feedback:', lastIterationWithFeedback.feedback);
-                setFeedback(lastIterationWithFeedback.feedback);
-              }
+            if (lastIterationWithFeedback?.feedback) {
+              console.log('Found existing feedback:', lastIterationWithFeedback.feedback);
+              setFeedback(lastIterationWithFeedback.feedback);
             }
           }
         }
@@ -177,3 +170,4 @@ export const useAnswerFeedback = (
     clearFeedback
   };
 };
+

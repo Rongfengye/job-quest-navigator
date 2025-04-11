@@ -6,7 +6,6 @@ import { useAnswers } from '@/hooks/useAnswers';
 import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 import { supabase } from '@/integrations/supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Set up the worker for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -98,20 +97,17 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
         const { data, error } = await supabase
           .from('storyline_jobs')
           .select('resume_path')
-          .eq('id', filterValue(storylineId))
+          .eq('id', storylineId)
           .single();
           
         if (error) throw error;
         
-        // Safely access data using our utility function
-        const safeData = safeDatabaseData(data);
-        
-        if (safeData.resume_path) {
+        if (data?.resume_path) {
           // Download the resume file from storage
           const { data: fileData, error: fileError } = await supabase
             .storage
             .from('job_documents')
-            .download(safeData.resume_path);
+            .download(data.resume_path);
             
           if (fileError) throw fileError;
           

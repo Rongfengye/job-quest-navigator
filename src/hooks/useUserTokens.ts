@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Create a simple event emitter for token updates
 type TokenUpdateListener = (tokens: number | null) => void;
@@ -35,16 +34,13 @@ export const useUserTokens = () => {
       const { data, error } = await supabase
         .from('storyline_user_tokens')
         .select('tokens_remaining')
-        .eq('user_id', filterValue(user.id))
+        .eq('user_id', user.id)
         .maybeSingle();
       
       if (error) throw error;
       
       console.log('📊 Tokens fetched from database:', data?.tokens_remaining);
-      
-      // Safely access data using our utility function
-      const tokensRemaining = data?.tokens_remaining ?? null;
-      updateTokenState(tokensRemaining);
+      updateTokenState(data?.tokens_remaining ?? null);
     } catch (error) {
       console.error('Error fetching user tokens:', error);
       toast({
@@ -70,16 +66,14 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
-      // Safely cast RPC return value to number
-      const newBalance = data !== null ? Number(data) : 0;
-      updateTokenState(newBalance);
-      console.log(`✅ Successfully added ${amount} tokens. New balance: ${newBalance}`);
+      updateTokenState(data ?? 0);
+      console.log(`✅ Successfully added ${amount} tokens. New balance: ${data}`);
       toast({
         title: "Tokens added",
         description: `${amount} tokens have been added to your account.`
       });
       
-      return { success: true, balance: newBalance };
+      return { success: true, balance: data };
     } catch (error) {
       console.error('Error adding tokens:', error);
       toast({
@@ -110,13 +104,10 @@ export const useUserTokens = () => {
       
       if (error) throw error;
       
-      // Safely cast RPC return value to number
-      const newBalance = data !== null ? Number(data) : 0;
-      
       // Immediately update the local token state and notify listeners
-      updateTokenState(newBalance);
-      console.log(`✅ Successfully ${action.toLowerCase()} ${absAmount} tokens. New balance: ${newBalance}`);
-      return { success: true, balance: newBalance };
+      updateTokenState(data ?? 0);
+      console.log(`✅ Successfully ${action.toLowerCase()} ${absAmount} tokens. New balance: ${data}`);
+      return { success: true, balance: data };
     } catch (error: any) {
       console.error(`Error ${action.toLowerCase()} tokens:`, error);
       

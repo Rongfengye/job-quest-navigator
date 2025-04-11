@@ -19,8 +19,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     storageKey: 'storyline-auth-token',
     flowType: 'pkce',
-    // The redirectTo property is properly used in auth method calls
-    // but shouldn't be set here in the client config
+    // Set the redirect URL for the OAuth flow
+    redirectTo: SITE_URL
   }
 });
 
