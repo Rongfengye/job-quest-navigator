@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -107,21 +106,36 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
+  // Updated to ensure drag events work with both empty and populated states
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
+    
+    // Check if the dragged item is a file
+    if (e.dataTransfer?.types.includes('Files')) {
+      setIsDragging(true);
+    }
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
+    
+    // Only set dragging to false if the mouse has actually left the drop zone
+    const relatedTarget = e.relatedTarget as Element | null;
+    if (!relatedTarget || !e.currentTarget.contains(relatedTarget)) {
+      setIsDragging(false);
+    }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Ensure dragging state is true when files are over the drop zone
+    if (e.dataTransfer?.types.includes('Files')) {
+      setIsDragging(true);
+    }
   }, []);
 
   const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
