@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { HelpCircle } from 'lucide-react';
 import GuidedResponseChat from './GuidedResponseChat';
 
@@ -14,7 +14,29 @@ const GuidingQuestions: React.FC<GuidingQuestionsProps> = ({
   onResponseGenerated,
   isLoading 
 }) => {
-  if (!questions || questions.length === 0) {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    // Reset visibility when new questions are provided
+    if (questions && questions.length > 0) {
+      setVisible(true);
+    }
+  }, [questions]);
+
+  // Listen for response received event to hide the section
+  useEffect(() => {
+    const handleResponseReceived = () => {
+      setVisible(false);
+    };
+
+    window.addEventListener('responseReceived' as any, handleResponseReceived);
+    
+    return () => {
+      window.removeEventListener('responseReceived' as any, handleResponseReceived);
+    };
+  }, []);
+
+  if (!questions || questions.length === 0 || !visible) {
     return null;
   }
 
