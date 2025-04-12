@@ -46,21 +46,24 @@ serve(async (req) => {
     
     Based on the job description and candidate's resume, generate interview questions that are specifically relevant to:
     1. The technical skills required for this role
-    2. Past experiences that match the job requirements
+    2. Past experiences that match the job requirements and are asked at the entry level (Practical coding experience, teamwork, and project-based learning)
     3. Problem-solving abilities specific to the challenges in this role
+    4. Topics students are expected to be familiar with from coursework, internships, or personal projects
     
     For each question, also include:
     - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company's culture and values to demonstrate a strong fit for the role
     - A "followUp" array that contains 2 follow-up questions for deeper discussion
     
     Format your response as a JSON object with these fields:
-    - 'technicalQuestions': An array of question objects related to technical skills (5 questions)
-    - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills (5 questions)
+    - 'technicalQuestions': An array of question objects related to technical skills, specifically related to foundational concepts (e.g., debugging, database choice, programming languages, learning new tools) (5 questions)
+    - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills. Focused on teamwork, learning from failure, project experience, communication, or decision-making (5 questions)
+
+    Do not include overly advanced topics like AWS, distributed systems, or enterprise-level architecture unless they are explicitly mentioned in the resume or job description.
     
     Each question object should have:
     - 'question': The main interview question (string)
-    - 'explanation': A brief explanation of why this question matters (string)
-    - 'modelAnswer': A sample answer (string)
+    - 'explanation': A brief explanation of why this question us relevant for early-career candidates (string)
+    - 'modelAnswer': A strong sample response using Situation, Task, Action, Result (string)
     - 'followUp': An array of follow-up questions (array of strings)
     
     Ensure the questions are tailored to reflect the intersection of the candidate's experience and the job requirements.`;
