@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   currentFile,
 }) => {
   const { toast } = useToast();
+  const [isDragging, setIsDragging] = useState(false);
 
   // Function to extract text from PDF
   const extractTextFromPDF = async (file: File): Promise<string> => {
@@ -83,40 +84,79 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      console.log(`File selected: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
-      
-      if (file.type !== 'application/pdf') {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a PDF file.",
-          variant: "destructive",
-        });
-        return;
-      }
+  const processFile = async (file: File) => {
+    console.log(`File selected: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
+    
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload a PDF file.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      try {
-        const extractedText = await extractTextFromPDF(file);
-        onFileChange(file, extractedText);
-      } catch (e) {
-        console.error("Error in file processing:", e);
-        toast({
-          title: "File processing error",
-          description: "There was an error processing your file.",
-          variant: "destructive",
-        });
-      }
+    try {
+      const extractedText = await extractTextFromPDF(file);
+      onFileChange(file, extractedText);
+    } catch (e) {
+      console.error("Error in file processing:", e);
+      toast({
+        title: "File processing error",
+        description: "There was an error processing your file.",
+        variant: "destructive",
+      });
     }
   };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      await processFile(e.target.files[0]);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      await processFile(e.dataTransfer.files[0]);
+    }
+  }, []);
 
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-interview-primary font-medium">
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
-      <div className="border border-dashed border-gray-300 rounded-md p-4">
+      <div 
+        className={`border ${isDragging ? 'border-interview-primary bg-blue-50' : 'border-gray-300'} 
+                  border-dashed rounded-md p-6 transition-colors duration-200 ease-in-out
+                  ${isDragging ? 'ring-2 ring-interview-primary' : ''}`}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         <div className="flex items-center justify-center flex-col">
           <input
             id={id}
@@ -125,15 +165,45 @@ const FileUpload: React.FC<FileUploadProps> = ({
             onChange={handleFileChange}
             className="hidden"
           />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => document.getElementById(id)?.click()}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            {currentFile ? currentFile.name : 'Upload Document'}
-          </Button>
+          {currentFile ? (
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <div className="bg-green-100 text-green-800 p-2 rounded-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <p className="font-medium text-sm mb-1">{currentFile.name}</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById(id)?.click()}
+                className="text-xs"
+              >
+                Change File
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 p-2 rounded-full bg-gray-100">
+                <Upload className="h-6 w-6 text-gray-500" />
+              </div>
+              <p className="text-sm text-center mb-2">
+                <span className="font-medium">Drag & drop your file here</span> or click to browse
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById(id)?.click()}
+                className="w-full sm:w-auto flex items-center justify-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                Upload PDF
+              </Button>
+            </>
+          )}
           <p className="text-xs text-gray-500 mt-2">Only PDF files are supported</p>
         </div>
       </div>
