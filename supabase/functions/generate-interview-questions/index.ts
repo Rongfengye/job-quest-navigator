@@ -44,6 +44,8 @@ serve(async (req) => {
 
     // Prepare the prompt
     // NOTE right now we are preparing for new grad/college students
+    // TODO eventually add the webscraper for the job link
+    // Also eventually going to need to summarize the imput from cover letter and stuff
     const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 9 interview questions for a job candidate applying for a ${jobTitle} position.
     ${companyName ? `The company name is ${companyName}.` : ''}
     ${companyDescription ? `About the company: ${companyDescription}` : ''}
