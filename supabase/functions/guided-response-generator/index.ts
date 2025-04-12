@@ -69,7 +69,16 @@ serve(async (req) => {
     }
     
     // Check if required fields are present
-    const { questionIndex, questionType, questionText, action = "generateQuestions", userInput = "", userThoughts = "", resumeText = "" } = requestData;
+    const { 
+      questionIndex, 
+      questionType, 
+      questionText, 
+      action = "generateQuestions", 
+      userInput = "", 
+      userThoughts = "", 
+      resumeText = "",
+      previousFeedback = null
+    } = requestData;
     
     if (questionIndex === undefined || !questionType || !questionText) {
       console.error('Missing required fields in request:', JSON.stringify(requestData));
@@ -87,7 +96,7 @@ serve(async (req) => {
     }
     
     if (action === "generateQuestions") {
-      return await handleGenerateQuestions(openAIApiKey, questionIndex, questionType, questionText, userInput, resumeText, corsHeaders);
+      return await handleGenerateQuestions(openAIApiKey, questionIndex, questionType, questionText, userInput, resumeText, previousFeedback, corsHeaders);
     } else if (action === "processThoughts") {
       return await handleProcessThoughts(openAIApiKey, questionIndex, questionType, questionText, userThoughts, corsHeaders);
     } else {
@@ -115,9 +124,10 @@ serve(async (req) => {
 });
 
 // Handler for generating guiding questions
-async function handleGenerateQuestions(openAIApiKey: string, questionIndex: number, questionType: string, questionText: string, userInput: string, resumeText: string, corsHeaders: Record<string, string>) {
+async function handleGenerateQuestions(openAIApiKey: string, questionIndex: number, questionType: string, questionText: string, userInput: string, resumeText: string, previousFeedback: any, corsHeaders: Record<string, string>) {
   console.log(`User's current input: ${userInput ? userInput.substring(0, 100) + (userInput.length > 100 ? '...' : '') : "No input provided"}`);
   console.log(`Resume text length: ${resumeText ? resumeText.length : 0} characters`);
+  console.log(`Previous feedback available: ${previousFeedback ? 'Yes' : 'No'}`);
   
   // Prepare the system prompt for OpenAI - ENSURING WE INCLUDE THE WORD "JSON" IN THE PROMPT
   const systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience. Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
@@ -128,6 +138,25 @@ async function handleGenerateQuestions(openAIApiKey: string, questionIndex: numb
   // Add resume info if available
   if (resumeText && resumeText.length > 0) {
     userPrompt += `Here is relevant information from the user's resume to help personalize your guidance:\n${resumeText.substring(0, 2000)}\n\n`;
+  }
+  
+  // Add previous feedback if available
+  if (previousFeedback) {
+    userPrompt += `This is the feedback provided on the user's previous answer that should guide your questions:\n`;
+    
+    if (previousFeedback.pros && previousFeedback.pros.length > 0) {
+      userPrompt += `STRENGTHS:\n${previousFeedback.pros.map((pro: string) => `- ${pro}`).join('\n')}\n\n`;
+    }
+    
+    if (previousFeedback.cons && previousFeedback.cons.length > 0) {
+      userPrompt += `AREAS FOR IMPROVEMENT:\n${previousFeedback.cons.map((con: string) => `- ${con}`).join('\n')}\n\n`;
+    }
+    
+    if (previousFeedback.improvementSuggestions) {
+      userPrompt += `IMPROVEMENT SUGGESTIONS:\n${previousFeedback.improvementSuggestions}\n\n`;
+    }
+    
+    userPrompt += `Based on this feedback, tailor your guiding questions to help the user address their weaknesses and build on their strengths.\n\n`;
   }
   
   userPrompt += "Please provide 5 guiding questions in JSON format like: { \"guidingQuestions\": [\"Q1\", \"Q2\", ...] }. Make these questions specific to the user's background when possible.";
@@ -281,7 +310,7 @@ async function handleGenerateQuestions(openAIApiKey: string, questionIndex: numb
   );
 }
 
-// New handler for processing thoughts into a structured response
+// Handler for processing thoughts into a structured response
 async function handleProcessThoughts(openAIApiKey: string, questionIndex: number, questionType: string, questionText: string, userThoughts: string, corsHeaders: Record<string, string>) {
   console.log(`Processing thoughts for question #${questionIndex}`);
   console.log(`User's thoughts: ${userThoughts.substring(0, 200)}${userThoughts.length > 200 ? '...' : ''}`);

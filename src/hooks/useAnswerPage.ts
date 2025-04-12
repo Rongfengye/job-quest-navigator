@@ -33,7 +33,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     clearFeedback
   } = useAnswerFeedback(storylineId || '', question, questionIndex);
 
-  const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(questionIndex, question);
+  const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(questionIndex, question, feedback);
 
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);

@@ -4,8 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Question } from '@/hooks/useQuestionData';
 import { supabase } from '@/integrations/supabase/client';
+import { FeedbackData } from '@/hooks/useAnswerFeedback';
 
-export const useGuidedResponse = (questionIndex: number, question: Question | null) => {
+export const useGuidedResponse = (questionIndex: number, question: Question | null, previousFeedback?: FeedbackData | null) => {
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [processingThoughts, setProcessingThoughts] = useState(false);
@@ -136,14 +137,15 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
     setGeneratingAnswer(true);
     
     try {
-      // Create the request payload
+      // Create the request payload with previous feedback if available
       const requestPayload = {
         questionIndex,
         questionType: question.type,
         questionText: question.question,
         userInput: inputAnswer, // Pass the current user input
         resumeText: resumeText, // Pass the cleaned resume text
-        action: 'generateQuestions'
+        action: 'generateQuestions',
+        previousFeedback: previousFeedback || null // Pass previous feedback if available
       };
       
       console.log('Guided response generator request payload:', JSON.stringify(requestPayload).substring(0, 500) + '...');
