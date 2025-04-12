@@ -14,6 +14,7 @@ interface FormFieldProps {
   required?: boolean;
   isTextarea?: boolean;
   className?: string;
+  additionalComponent?: React.ReactNode; // New prop for additional components
 }
 
 const FormField: React.FC<FormFieldProps> = ({
@@ -26,12 +27,21 @@ const FormField: React.FC<FormFieldProps> = ({
   required = false,
   isTextarea = false,
   className = 'border-gray-300',
+  additionalComponent, // New prop
 }) => {
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-interview-primary font-medium">
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
+      
+      {/* Render additional component if provided */}
+      {additionalComponent && (
+        <div className="mb-2">
+          {additionalComponent}
+        </div>
+      )}
+
       {isTextarea ? (
         <Textarea
           id={id}
