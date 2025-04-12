@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
@@ -143,9 +144,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
       <div 
-        className={`border ${isDragging ? 'border-interview-primary bg-blue-50' : 'border-gray-300'} 
-                  border-dashed rounded-md p-6 transition-colors duration-200 ease-in-out cursor-pointer
-                  ${isDragging ? 'ring-2 ring-interview-primary' : ''}`}
+        className={`border 
+          ${isDragging ? 'border-interview-primary bg-blue-100 bg-opacity-50' : 'border-gray-300'} 
+          border-dashed rounded-md p-6 transition-all duration-300 ease-in-out cursor-pointer
+          ${isDragging ? 'ring-2 ring-interview-primary shadow-lg' : 'hover:bg-gray-50 hover:border-interview-primary/50'}
+        `}
         onClick={handleClick}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
