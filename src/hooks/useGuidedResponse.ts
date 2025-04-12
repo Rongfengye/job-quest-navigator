@@ -55,10 +55,18 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
         }
         
         if (data && data.success && data.generatedResponse) {
-          toast({
-            title: "Response Generated",
-            description: "Your thoughts have been transformed into a structured answer.",
-          });
+          // Show feedback as toast if present
+          if (data.feedback) {
+            toast({
+              title: "AI Coach",
+              description: data.feedback,
+            });
+          } else {
+            toast({
+              title: "Response Generated",
+              description: "Your thoughts have been transformed into a structured answer.",
+            });
+          }
           
           // Dispatch custom event with generated response
           const responseEvent = new CustomEvent('responseGenerated', {

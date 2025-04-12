@@ -287,7 +287,7 @@ async function handleProcessThoughts(openAIApiKey: string, questionIndex: number
   console.log(`User's thoughts: ${userThoughts.substring(0, 200)}${userThoughts.length > 200 ? '...' : ''}`);
   
   // Prepare the system prompt for OpenAI
-  const systemPrompt = "You're an expert interview coach. Your task is to take the user's thoughts and format them into a professional, structured interview answer. Focus on clarity, relevance, and using the STAR method where appropriate. Add specific details and quantifiable achievements if mentioned in their thoughts. Format the answer to sound natural and conversational but polished.";
+  const systemPrompt = "You're an expert interview coach. Your task is to transform the user's thoughts into a professional, structured interview answer that follows the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections. Create a natural, flowing response that incorporates these elements subtly. Focus on clarity, relevance, and conversational tone. Add specific details and quantifiable achievements if mentioned in their thoughts. The response should sound natural and professional.";
   
   // Prepare the user prompt
   const userPrompt = `
@@ -299,8 +299,8 @@ USER'S THOUGHTS:
 ${userThoughts}
 
 Please create a polished, interview-ready response based on these thoughts. The response should:
-1. Be structured with a clear introduction, body, and conclusion
-2. Use the STAR method (Situation, Task, Action, Result) if applicable
+1. Be structured following the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections
+2. Flow naturally as a cohesive narrative
 3. Be conversational yet professional 
 4. Be between 150-300 words
 5. Focus on highlighting skills, experience, and achievements
@@ -372,13 +372,41 @@ Please create a polished, interview-ready response based on these thoughts. The 
   }
   
   // Extract the response content
-  const generatedResponse = openAIData.choices[0].message.content;
-  console.log('Generated response received, length:', generatedResponse.length);
+  const generatedContent = openAIData.choices[0].message.content;
+  console.log('Generated response received, length:', generatedContent.length);
   
-  // Return a structured response with the generated answer
+  // Process the generated content to extract just the response without any surrounding text
+  let generatedResponse = generatedContent;
+  
+  // Check if the content contains markdown separators (---)
+  const markdownSeparatorPattern = /^---\r?\n([\s\S]*?)\r?\n---/m;
+  const match = generatedContent.match(markdownSeparatorPattern);
+  
+  if (match && match[1]) {
+    // Extract only the content between the markdown separators
+    generatedResponse = match[1].trim();
+  } else {
+    // If no separators, try to clean up any prefixes like "Here's a response:"
+    const cleanupPattern = /^(Here'?s\s+a\s+(polished|structured|professional|formatted)\s+response.*?:?\s*)/i;
+    generatedResponse = generatedContent.replace(cleanupPattern, '').trim();
+  }
+  
+  // Extract any feedback or instructions from outside the response content
+  let feedback = "";
+  
+  // Look for text after the last markdown separator
+  if (match) {
+    const afterSeparator = generatedContent.substring(generatedContent.lastIndexOf('---') + 3).trim();
+    if (afterSeparator) {
+      feedback = afterSeparator;
+    }
+  }
+  
+  // Return a structured response with the generated answer and any feedback
   const response = {
     success: true,
-    generatedResponse: generatedResponse
+    generatedResponse: generatedResponse,
+    feedback: feedback || "Response has been transformed based on your thoughts."
   };
 
   console.log('Returning final response with generated answer');
