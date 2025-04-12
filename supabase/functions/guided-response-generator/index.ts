@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -128,6 +127,13 @@ async function handleGenerateQuestions(openAIApiKey: string, questionIndex: numb
   console.log(`User's current input: ${userInput ? userInput.substring(0, 100) + (userInput.length > 100 ? '...' : '') : "No input provided"}`);
   console.log(`Resume text length: ${resumeText ? resumeText.length : 0} characters`);
   console.log(`Previous feedback available: ${previousFeedback ? 'Yes' : 'No'}`);
+  
+  if (previousFeedback) {
+    console.log('Previous feedback details:');
+    console.log(`- Score: ${previousFeedback.score || 'N/A'}`);
+    console.log(`- Pros: ${previousFeedback.pros ? previousFeedback.pros.length : 0} items`);
+    console.log(`- Cons: ${previousFeedback.cons ? previousFeedback.cons.length : 0} items`);
+  }
   
   // Prepare the system prompt for OpenAI - ENSURING WE INCLUDE THE WORD "JSON" IN THE PROMPT
   const systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience. Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant. Respond strictly in valid JSON format with a 'guidingQuestions' array.";

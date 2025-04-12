@@ -33,7 +33,25 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     clearFeedback
   } = useAnswerFeedback(storylineId || '', question, questionIndex);
 
-  const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(questionIndex, question, feedback);
+  // Get the most recent feedback from iterations if available
+  const getPreviousFeedback = () => {
+    if (iterations.length === 0) return null;
+    
+    // Look for the most recent iteration with feedback
+    const iterationWithFeedback = [...iterations]
+      .reverse()
+      .find(iteration => iteration.feedback);
+    
+    return iterationWithFeedback?.feedback || null;
+  };
+
+  const previousFeedback = getPreviousFeedback();
+  
+  const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(
+    questionIndex, 
+    question, 
+    previousFeedback
+  );
 
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);
