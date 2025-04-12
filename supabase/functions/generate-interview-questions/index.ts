@@ -46,7 +46,8 @@ serve(async (req) => {
     // NOTE right now we are preparing for new grad/college students
     // TODO eventually add the webscraper for the job link
     // Also eventually going to need to summarize the imput from cover letter and stuff
-    const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 9 interview questions for a job candidate applying for a ${jobTitle} position.
+    // Need to cut it down to just 5 behavioral and 5 technical
+    const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 10 interview questions for a job candidate applying for a ${jobTitle} position.
     ${companyName ? `The company name is ${companyName}.` : ''}
     ${companyDescription ? `About the company: ${companyDescription}` : ''}
     
@@ -61,8 +62,7 @@ serve(async (req) => {
     
     Format your response as a JSON object with these fields:
     - 'technicalQuestions': An array of question objects related to technical skills
-    - 'behavioralQuestions': An array of question objects related to behaviors and soft skills
-    - 'experienceQuestions': An array of question objects related to past experiences
+    - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills
     
     Each question object should have:
     - 'question': The main interview question (string)
