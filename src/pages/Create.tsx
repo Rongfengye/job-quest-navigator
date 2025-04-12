@@ -8,6 +8,7 @@ import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
 import { useCreateForm } from '@/hooks/useCreateForm';
 import { useAuthContext } from '@/context/AuthContext';
+import JobScraper from '@/components/JobScraper';
 
 const Create = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
@@ -31,6 +32,7 @@ const Create = () => {
     handleResumeChange,
     handleCoverLetterChange,
     handleAdditionalDocumentsChange,
+    handleScrapedJobDescription,
     handleSubmit,
   } = useCreateForm();
 
@@ -69,13 +71,16 @@ const Create = () => {
             required
           />
 
+          {/* Add Job Scraper */}
+          <JobScraper onScrapedContent={handleScrapedJobDescription} />
+
           <FormField
             id="jobDescription"
             name="jobDescription"
             label="Job Description"
             value={formData.jobDescription}
             onChange={handleInputChange}
-            placeholder="Paste the job description here"
+            placeholder="Paste the job description here or use the scraper above"
             required
             isTextarea
           />
@@ -131,9 +136,9 @@ const Create = () => {
           <Button 
             type="submit" 
             className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
-            disabled={isLoading}
+            disabled={formLoading}
           >
-            {isLoading ? 'Processing...' : 'Submit'}
+            {formLoading ? 'Processing...' : 'Submit'}
           </Button>
         </form>
       </div>

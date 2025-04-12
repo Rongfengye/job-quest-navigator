@@ -62,6 +62,13 @@ export const useCreateForm = () => {
     setAdditionalDocumentsFile({ file, text });
   };
 
+  const handleScrapedJobDescription = (scrapedContent: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      jobDescription: scrapedContent,
+    }));
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await submitJobPractice();
@@ -78,6 +85,7 @@ export const useCreateForm = () => {
     handleResumeChange,
     handleCoverLetterChange,
     handleAdditionalDocumentsChange,
+    handleScrapedJobDescription,
     handleSubmit,
   };
 };
