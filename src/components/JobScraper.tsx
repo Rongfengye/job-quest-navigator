@@ -1,18 +1,18 @@
 
 import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Globe } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
 
 interface JobScraperProps {
   onScrapedContent: (content: string) => void;
+  className?: string;
 }
 
-const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent }) => {
+const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, className }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
@@ -20,13 +20,16 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent }) => {
 
   const handleScrape = async () => {
     if (!url || !url.trim()) {
-      setError('Please enter a valid URL');
+      toast({
+        title: "URL Required",
+        description: "Please enter a valid job posting URL",
+        variant: "destructive",
+      });
       return;
     }
 
     try {
       setIsLoading(true);
-      setError(null);
 
       // Use a CORS proxy to bypass CORS restrictions
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
@@ -66,56 +69,47 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent }) => {
         
         // Pass the scraped content to the parent component
         onScrapedContent(jobDescription);
+        
+        toast({
+          title: "Job Description Scraped",
+          description: "Successfully extracted job description from URL",
+        });
       } else {
         throw new Error('Could not extract job description from the page');
       }
     } catch (err) {
       console.error('Error scraping website:', err);
-      setError(err instanceof Error ? err.message : 'Error scraping website');
+      toast({
+        title: "Scraping Failed",
+        description: err instanceof Error ? err.message : 'Error scraping website',
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="bg-white shadow-sm border mb-6">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-xl font-semibold text-interview-primary flex items-center gap-2">
-          <Globe className="h-5 w-5" />
-          Job Description Scraper
-        </CardTitle>
-        <CardDescription>
-          Enter a job posting URL to automatically extract the job description
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Input
-              type="url"
-              value={url}
-              onChange={handleUrlChange}
-              placeholder="https://example.com/jobs/software-engineer"
-              className="flex-grow"
-            />
-            <Button 
-              onClick={handleScrape} 
-              disabled={isLoading}
-              className="bg-interview-primary hover:bg-interview-dark gap-2"
-            >
-              <Search className="h-4 w-4" /> 
-              {isLoading ? 'Scraping...' : 'Scrape Job'}
-            </Button>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <div className={`flex flex-col sm:flex-row gap-3 ${className}`}>
+      <div className="relative flex-grow">
+        <Input
+          type="url"
+          value={url}
+          onChange={handleUrlChange}
+          placeholder="https://example.com/jobs/software-engineer"
+          className="pr-10"
+        />
+        <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+      </div>
+      <Button 
+        onClick={handleScrape} 
+        disabled={isLoading}
+        className="bg-interview-primary hover:bg-interview-dark gap-2 whitespace-nowrap"
+      >
+        <Search className="h-4 w-4" /> 
+        {isLoading ? 'Scraping...' : 'Scrape Job'}
+      </Button>
+    </div>
   );
 };
 

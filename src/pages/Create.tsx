@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Globe } from 'lucide-react';
 import FormField from '@/components/FormField';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
@@ -71,8 +71,16 @@ const Create = () => {
             required
           />
 
-          {/* Add Job Scraper */}
-          <JobScraper onScrapedContent={handleScrapedJobDescription} />
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Globe className="h-5 w-5 text-interview-primary" />
+              <h3 className="text-interview-primary font-medium">Job Description Scraper</h3>
+            </div>
+            <p className="text-sm text-gray-500 mb-2">
+              Enter a job posting URL to automatically extract the job description
+            </p>
+            <JobScraper onScrapedContent={handleScrapedJobDescription} className="mb-4" />
+          </div>
 
           <FormField
             id="jobDescription"
