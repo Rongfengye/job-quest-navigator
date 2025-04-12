@@ -19,6 +19,7 @@ const AnswerPage = () => {
     inputAnswer,
     setInputAnswer,
     generatingAnswer,
+    processingThoughts,
     activeTab,
     setActiveTab,
     isLoading,
@@ -68,6 +69,7 @@ const AnswerPage = () => {
           handleGenerateAnswer={handleGenerateAnswer}
           isSaving={isSaving}
           generatingAnswer={generatingAnswer}
+          processingThoughts={processingThoughts}
           iterations={iterations}
           question={question}
           feedback={feedback}

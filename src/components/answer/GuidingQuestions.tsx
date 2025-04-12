@@ -1,12 +1,19 @@
 
 import React from 'react';
 import { HelpCircle } from 'lucide-react';
+import GuidedResponseChat from './GuidedResponseChat';
 
 interface GuidingQuestionsProps {
   questions: string[] | null;
+  onResponseGenerated: (response: string) => void;
+  isLoading: boolean;
 }
 
-const GuidingQuestions: React.FC<GuidingQuestionsProps> = ({ questions }) => {
+const GuidingQuestions: React.FC<GuidingQuestionsProps> = ({ 
+  questions, 
+  onResponseGenerated,
+  isLoading 
+}) => {
   if (!questions || questions.length === 0) {
     return null;
   }
@@ -28,6 +35,12 @@ const GuidingQuestions: React.FC<GuidingQuestionsProps> = ({ questions }) => {
           </li>
         ))}
       </ul>
+      
+      <GuidedResponseChat 
+        questions={questions} 
+        onResponseGenerated={onResponseGenerated}
+        isLoading={isLoading}
+      />
     </div>
   );
 };

@@ -22,6 +22,7 @@ interface AnswerFormProps {
   feedback: FeedbackData | null;
   isFeedbackLoading: boolean;
   feedbackError: string | null;
+  processingThoughts: boolean;
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -34,7 +35,8 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   question,
   feedback,
   isFeedbackLoading,
-  feedbackError
+  feedbackError,
+  processingThoughts
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
@@ -47,7 +49,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
-    if (isFeedbackLoading || generatingAnswer) {
+    if (isFeedbackLoading || generatingAnswer || processingThoughts) {
       setProgressValue(0);
       
       interval = setInterval(() => {
@@ -74,7 +76,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isFeedbackLoading, feedback, generatingAnswer, guidingQuestions]);
+  }, [isFeedbackLoading, feedback, generatingAnswer, guidingQuestions, processingThoughts]);
 
   // Update guidingQuestions based on a custom event
   useEffect(() => {
@@ -98,11 +100,13 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   };
 
   const isAnswerValid = inputAnswer.trim().length > 0;
-  const loadingText = generatingAnswer 
-    ? 'Generating guiding questions...' 
-    : isFeedbackLoading 
-      ? 'Generating feedback...' 
-      : 'Completing...';
+  const loadingText = processingThoughts 
+    ? 'Transforming your thoughts into a response...'
+    : generatingAnswer 
+      ? 'Generating guiding questions...' 
+      : isFeedbackLoading 
+        ? 'Generating feedback...' 
+        : 'Completing...';
 
   return (
     <Card>
@@ -158,12 +162,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         </form>
         
         <ProgressIndicator 
-          isLoading={isFeedbackLoading || generatingAnswer} 
+          isLoading={isFeedbackLoading || generatingAnswer || processingThoughts} 
           progressValue={progressValue}
           loadingText={loadingText}
         />
         
-        <GuidingQuestions questions={guidingQuestions} />
+        <GuidingQuestions 
+          questions={guidingQuestions} 
+          onResponseGenerated={setInputAnswer}
+          isLoading={processingThoughts || generatingAnswer}
+        />
         
         {/* Feedback Section */}
         {(isFeedbackLoading || feedback) && (

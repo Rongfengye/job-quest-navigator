@@ -33,7 +33,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     clearFeedback
   } = useAnswerFeedback(storylineId || '', question, questionIndex);
 
-  const { generatingAnswer, generateGuidedResponse } = useGuidedResponse(questionIndex, question);
+  const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(questionIndex, question);
 
   useEffect(() => {
     console.log('AnswerPage: iterations updated from useAnswers', iterations);
@@ -51,6 +51,27 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
       clearFeedback();
     }
   }, [activeTab, clearFeedback]);
+
+  // Listen for response received event
+  useEffect(() => {
+    const handleResponseReceived = (event: CustomEvent) => {
+      const { generatedResponse } = event.detail;
+      if (generatedResponse) {
+        setInputAnswer(generatedResponse);
+        
+        toast({
+          title: "Response Added",
+          description: "The generated response has been added to your answer.",
+        });
+      }
+    };
+
+    window.addEventListener('responseReceived' as any, handleResponseReceived);
+    
+    return () => {
+      window.removeEventListener('responseReceived' as any, handleResponseReceived);
+    };
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -92,6 +113,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     inputAnswer,
     setInputAnswer,
     generatingAnswer,
+    processingThoughts,
     activeTab,
     setActiveTab,
     isLoading,

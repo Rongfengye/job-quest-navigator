@@ -17,6 +17,7 @@ interface AnswerTabsProps {
   handleGenerateAnswer: () => void;
   isSaving: boolean;
   generatingAnswer: boolean;
+  processingThoughts: boolean;
   iterations: AnswerIteration[];
   question: Question | null;
   feedback: FeedbackData | null;
@@ -33,6 +34,7 @@ const AnswerTabs: React.FC<AnswerTabsProps> = ({
   handleGenerateAnswer,
   isSaving,
   generatingAnswer,
+  processingThoughts,
   iterations,
   question,
   feedback,
@@ -60,6 +62,7 @@ const AnswerTabs: React.FC<AnswerTabsProps> = ({
           handleGenerateAnswer={handleGenerateAnswer}
           isSaving={isSaving}
           generatingAnswer={generatingAnswer}
+          processingThoughts={processingThoughts}
           question={question}
           feedback={feedback}
           isFeedbackLoading={isFeedbackLoading}
