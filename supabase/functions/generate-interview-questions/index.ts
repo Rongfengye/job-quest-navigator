@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
@@ -39,14 +40,6 @@ serve(async (req) => {
     console.log('Job description length:', jobDescription?.length || 0);
     console.log('Resume text length:', resumeText?.length || 0);
 
-    /* TODO: need to ensure this is formatted better with clear demarkations
-       Provide more specifics, perhaps we need to even better specify the system prompt */
-
-    // Prepare the prompt
-    // NOTE right now we are preparing for new grad/college students
-    // TODO eventually add the webscraper for the job link
-    // Also eventually going to need to summarize the imput from cover letter and stuff
-    // Need to cut it down to just 5 behavioral and 5 technical
     const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 10 interview questions for a job candidate applying for a ${jobTitle} position.
     ${companyName ? `The company name is ${companyName}.` : ''}
     ${companyDescription ? `About the company: ${companyDescription}` : ''}
@@ -57,12 +50,12 @@ serve(async (req) => {
     3. Problem-solving abilities specific to the challenges in this role
     
     For each question, also include:
-    - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company’s culture and values to demonstrate a strong fit for the role
+    - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company's culture and values to demonstrate a strong fit for the role
     - A "followUp" array that contains 2 follow-up questions for deeper discussion
     
     Format your response as a JSON object with these fields:
-    - 'technicalQuestions': An array of question objects related to technical skills
-    - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills
+    - 'technicalQuestions': An array of question objects related to technical skills (5 questions)
+    - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills (5 questions)
     
     Each question object should have:
     - 'question': The main interview question (string)
@@ -137,8 +130,7 @@ serve(async (req) => {
       if (parsedContent.questions && !parsedContent.technicalQuestions) {
         const transformedContent = {
           technicalQuestions: [],
-          behavioralQuestions: [],
-          experienceQuestions: []
+          behavioralQuestions: []
         };
         
         // Simple classification based on content
@@ -150,11 +142,6 @@ serve(async (req) => {
               questionLower.includes('skill') ||
               questionLower.includes('technology')) {
             transformedContent.technicalQuestions.push(q);
-          } else if (questionLower.includes('experience') || 
-                    questionLower.includes('previous') || 
-                    questionLower.includes('past') ||
-                    questionLower.includes('worked')) {
-            transformedContent.experienceQuestions.push(q);
           } else {
             transformedContent.behavioralQuestions.push(q);
           }
@@ -164,11 +151,8 @@ serve(async (req) => {
         if (transformedContent.technicalQuestions.length === 0 && parsedContent.questions.length > 0) {
           transformedContent.technicalQuestions.push(parsedContent.questions[0]);
         }
-        if (transformedContent.experienceQuestions.length === 0 && parsedContent.questions.length > 1) {
-          transformedContent.experienceQuestions.push(parsedContent.questions[1]);
-        }
-        if (transformedContent.behavioralQuestions.length === 0 && parsedContent.questions.length > 2) {
-          transformedContent.behavioralQuestions.push(parsedContent.questions[2]);
+        if (transformedContent.behavioralQuestions.length === 0 && parsedContent.questions.length > 1) {
+          transformedContent.behavioralQuestions.push(parsedContent.questions[1]);
         }
         
         parsedContent = transformedContent;

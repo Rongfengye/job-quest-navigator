@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -6,6 +5,7 @@ import { useAnswers } from '@/hooks/useAnswers';
 import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 import { supabase } from '@/integrations/supabase/client';
 import * as pdfjsLib from 'pdfjs-dist';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Set up the worker for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
@@ -97,7 +97,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
         const { data, error } = await supabase
           .from('storyline_jobs')
           .select('resume_path')
-          .eq('id', storylineId)
+          .eq('id', filterValue(storylineId))
           .single();
           
         if (error) throw error;

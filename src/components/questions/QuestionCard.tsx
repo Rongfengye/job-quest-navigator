@@ -5,13 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { filterValue } from '@/utils/supabaseTypes';
 
 export type Question = {
   question: string;
   explanation?: string;
   modelAnswer?: string;
   followUp?: string[];
-  type?: 'technical' | 'behavioral' | 'experience';
+  type?: 'technical' | 'behavioral';
 };
 
 interface QuestionCardProps {
@@ -33,8 +34,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         const { count, error } = await supabase
           .from('storyline_job_questions')
           .select('id', { count: 'exact', head: true })
-          .eq('storyline_id', storylineId as string)
-          .eq('question_index', index as number)
+          .eq('storyline_id', filterValue(storylineId))
+          .eq('question_index', filterValue(index))
           .not('answer', 'is', null);
           
         if (!error && count && count > 0) {
@@ -82,8 +83,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
             {question.type && (
               <Badge 
                 variant={
-                  question.type === 'technical' ? 'secondary' : 
-                  question.type === 'experience' ? 'outline' : 'default'
+                  question.type === 'technical' ? 'secondary' : 'default'
                 }
               >
                 {question.type}

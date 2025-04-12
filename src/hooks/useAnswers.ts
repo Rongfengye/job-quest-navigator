@@ -6,6 +6,7 @@ import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Define the AnswerIteration interface to be compatible with Json type
 export interface AnswerIteration {
@@ -28,7 +29,7 @@ interface AnswerData {
   question: string;
   answer: string | null;
   iterations: AnswerIteration[];
-  type?: 'technical' | 'behavioral' | 'experience';
+  type?: 'technical' | 'behavioral';
 }
 
 export const useAnswers = (storylineId: string, questionIndex: number) => {
@@ -55,7 +56,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         const { data: storylineData, error: storylineError } = await supabase
           .from('storyline_jobs')
           .select('openai_response')
-          .eq('id', storylineId)
+          .eq('id', filterValue(storylineId))
           .single();
 
         console.log('THIS IS THE STORYLINE_DATA', storylineData)
@@ -63,21 +64,21 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         if (storylineError) throw storylineError;
 
         if (storylineData?.openai_response) {
+          const safeData = safeDatabaseData(storylineData);
           let parsedResponse;
-          if (typeof storylineData.openai_response === 'string') {
-            parsedResponse = JSON.parse(storylineData.openai_response);
+          if (typeof safeData.openai_response === 'string') {
+            parsedResponse = JSON.parse(safeData.openai_response);
           } else {
-            parsedResponse = storylineData.openai_response;
+            parsedResponse = safeData.openai_response;
           }
 
           let questions: Question[] = [];
           
           if (parsedResponse.questions) {
             questions = parsedResponse.questions;
-          } else if ( /* DO NOT ERASE: later on we would probably need to figure out this typing */
+          } else if (
             parsedResponse.technicalQuestions && 
-            parsedResponse.behavioralQuestions && 
-            parsedResponse.experienceQuestions
+            parsedResponse.behavioralQuestions
           ) {
             const technical = parsedResponse.technicalQuestions.map((q: any) => ({
               ...q, type: 'technical' as const
@@ -87,11 +88,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
               ...q, type: 'behavioral' as const
             }));
             
-            const experience = parsedResponse.experienceQuestions.map((q: any) => ({
-              ...q, type: 'experience' as const
-            }));
-            
-            questions = [...technical, ...behavioral, ...experience];
+            questions = [...technical, ...behavioral];
           }
 
           if (questions && questions.length > questionIndex) {
@@ -104,8 +101,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         const { data: answerData, error: answerError } = await supabase
           .from('storyline_job_questions')
           .select('*')
-          .eq('storyline_id', storylineId)
-          .eq('question_index', questionIndex)
+          .eq('storyline_id', filterValue(storylineId))
+          .eq('question_index', filterValue(questionIndex))
           .single();
 
         console.log('THIS IS THE STORY QUESTIONS CALL RESPONSE', answerData, answerError)
@@ -114,14 +111,15 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         }
 
         if (answerData) {
+          const safeAnswerData = safeDatabaseData(answerData);
           // Parse iterations properly
-          console.log('IN THE ANSWER DATA', answerData)
-          const parsedIterations: AnswerIteration[] = Array.isArray(answerData.iterations) 
-            ? answerData.iterations 
-            : typeof answerData.iterations === 'string' 
-              ? JSON.parse(answerData.iterations)
-              : (answerData.iterations as any)?.length 
-                ? (answerData.iterations as any)
+          console.log('IN THE ANSWER DATA', safeAnswerData)
+          const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
+            ? safeAnswerData.iterations 
+            : typeof safeAnswerData.iterations === 'string' 
+              ? JSON.parse(safeAnswerData.iterations)
+              : (safeAnswerData.iterations as any)?.length 
+                ? (safeAnswerData.iterations as any)
                 : [];
           
           // Transform old format iterations to new format if needed
@@ -140,16 +138,16 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           // Update both state values
           setIterations(transformedIterations);
           setAnswerRecord({
-            id: answerData.id,
-            storyline_id: answerData.storyline_id,
-            question_index: answerData.question_index,
-            question: answerData.question,
-            answer: answerData.answer,
+            id: safeAnswerData.id,
+            storyline_id: safeAnswerData.storyline_id,
+            question_index: safeAnswerData.question_index,
+            question: safeAnswerData.question,
+            answer: safeAnswerData.answer,
             iterations: transformedIterations,
-            type: answerData.type as 'technical' | 'behavioral' | 'experience' | undefined
+            type: safeAnswerData.type as 'technical' | 'behavioral' | undefined
           });
           
-          setAnswer(answerData.answer || '');
+          setAnswer(safeAnswerData.answer || '');
         }
       } catch (error) {
         console.error('Error fetching question and answer:', error);
@@ -200,7 +198,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       }
       
       // Check if we already have a record
-      if (answerRecord) {
+      if (answerRecord?.id) {
         // Update existing record
         const { error } = await supabase
           .from('storyline_job_questions')
@@ -209,7 +207,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
             iterations: JSON.stringify(currentIterations),
             updated_at: new Date().toISOString()
           })
-          .eq('id', answerRecord.id);
+          .eq('id', filterValue(answerRecord.id));
           
         if (error) throw error;
         
@@ -253,25 +251,26 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         fetchTokens();
         
         if (data) {
+          const safeData = safeDatabaseData(data);
           // Parse iterations properly
-          const parsedIterations: AnswerIteration[] = Array.isArray(data.iterations) 
-            ? data.iterations 
-            : typeof data.iterations === 'string' 
-              ? JSON.parse(data.iterations)
-              : (data.iterations as any)?.length 
-                ? (data.iterations as any)
+          const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
+            ? safeData.iterations 
+            : typeof safeData.iterations === 'string' 
+              ? JSON.parse(safeData.iterations)
+              : (safeData.iterations as any)?.length 
+                ? (safeData.iterations as any)
                 : [];
           
           // Update both state variables
           setIterations(parsedIterations);      
           setAnswerRecord({
-            id: data.id,
-            storyline_id: data.storyline_id,
-            question_index: data.question_index,
-            question: data.question,
-            answer: data.answer,
+            id: safeData.id,
+            storyline_id: safeData.storyline_id,
+            question_index: safeData.question_index,
+            question: safeData.question,
+            answer: safeData.answer,
             iterations: parsedIterations,
-            type: data.type as 'technical' | 'behavioral' | 'experience' | undefined
+            type: safeData.type as 'technical' | 'behavioral' | undefined
           });
         }
       }

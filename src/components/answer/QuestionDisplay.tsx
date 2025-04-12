@@ -24,10 +24,7 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
           </div>
           {question.type && (
             <Badge 
-              variant={
-                question.type === 'technical' ? 'secondary' : 
-                question.type === 'experience' ? 'outline' : 'default'
-              }
+              variant={question.type === 'technical' ? 'secondary' : 'default'}
             >
               {question.type}
             </Badge>

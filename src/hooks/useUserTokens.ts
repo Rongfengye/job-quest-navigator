@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Create a simple event emitter for token updates
 type TokenUpdateListener = (tokens: number | null) => void;
@@ -34,7 +34,7 @@ export const useUserTokens = () => {
       const { data, error } = await supabase
         .from('storyline_user_tokens')
         .select('tokens_remaining')
-        .eq('user_id', user.id)
+        .eq('user_id', filterValue(user.id))
         .maybeSingle();
       
       if (error) throw error;

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { filterValue } from '@/utils/supabaseTypes';
 
 interface AuthContextType {
   user: UserData | null;
@@ -21,16 +22,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initializationError, setInitializationError] = useState<Error | null>(null);
   const { toast } = useToast();
 
-  // Helper function to ensure user has tokens record
   const ensureUserTokens = async (userId: string) => {
     try {
       console.log('Checking if user has tokens record...');
       
-      // Check if user has a tokens record
       const { data: tokensRecord, error: tokensError } = await supabase
         .from('storyline_user_tokens')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', filterValue(userId))
         .maybeSingle();
       
       if (tokensError) {
@@ -38,13 +37,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       
-      // If no tokens record exists, create one
       if (!tokensRecord) {
         console.log('No tokens record found, creating new one...');
         
         const { data: newRecord, error: insertError } = await supabase
           .from('storyline_user_tokens')
-          .insert([{ user_id: userId, tokens_remaining: 100 }])
+          .insert([{ user_id: filterValue(userId), tokens_remaining: 100 }])
           .select()
           .single();
         
@@ -61,11 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Initial auth check function
   const checkSession = async () => {
     try {
       console.log('Starting initial session check...');
-      // Log auth debug info
       const authDebugInfo = await debugSupabaseAuth();
       console.log('Auth debug info:', authDebugInfo);
       
@@ -78,15 +74,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
       
       if (data.session) {
-        // We have a session, so the user is authenticated
         console.log('User is authenticated via session, userId:', data.session.user.id);
         
-        // Extract name data from user metadata
         const metadata = data.session.user.user_metadata || {};
         let firstName = metadata.first_name || '';
         let lastName = metadata.last_name || '';
         
-        // Handle various metadata formats
         if ((!firstName || !lastName) && metadata.full_name) {
           const nameParts = metadata.full_name.split(' ');
           firstName = firstName || nameParts[0] || '';
@@ -97,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
         }
         
-        // Handle provider-specific metadata formats
         const provider = data.session.user.app_metadata?.provider;
         if ((!firstName || !lastName)) {
           if (provider === 'github') {
@@ -108,7 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
         
-        // Set user data
         auth.setUser({
           id: data.session.user.id,
           email: data.session.user.email || '',
@@ -116,7 +107,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastName
         });
         
-        // Ensure user has a tokens record (outside the main flow)
         setTimeout(() => {
           ensureUserTokens(data.session.user.id);
         }, 0);
@@ -142,11 +132,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // First set up auth state listener
     let subscription: { unsubscribe: () => void } | null = null;
     
     try {
-      // Set up auth state listener FIRST, before checking for session
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
         console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
         
@@ -154,12 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (session) {
             console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
             
-            // Extract name data from user metadata
             const metadata = session.user.user_metadata || {};
             let firstName = metadata.first_name || '';
             let lastName = metadata.last_name || '';
             
-            // Handle various metadata formats
             if ((!firstName || !lastName) && metadata.full_name) {
               const nameParts = metadata.full_name.split(' ');
               firstName = firstName || nameParts[0] || '';
@@ -170,7 +156,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
             }
             
-            // Handle provider-specific metadata formats
             const provider = session.user.app_metadata?.provider;
             if ((!firstName || !lastName)) {
               if (provider === 'github') {
@@ -181,7 +166,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }
             }
             
-            // Set user data only once to prevent continuous updates
             auth.setUser({
               id: session.user.id,
               email: session.user.email || '',
@@ -189,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastName
             });
             
-            // Run this outside the auth state change callback to prevent deadlock
             setTimeout(() => {
               ensureUserTokens(session.user.id);
             }, 0);
@@ -202,7 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       subscription = data.subscription;
       
-      // THEN check for existing session 
       checkSession();
     } catch (error) {
       console.error("Error setting up auth listener:", error);
@@ -219,7 +201,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Only update isLoading when auth.isLoading changes after initial check is complete
   useEffect(() => {
     if (initialCheckComplete) {
       setIsLoading(auth.isLoading);

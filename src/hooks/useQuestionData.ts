@@ -3,19 +3,19 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 export type Question = {
   question: string;
   explanation?: string;
   modelAnswer?: string;
   followUp?: string[];
-  type?: 'technical' | 'behavioral' | 'experience';
+  type?: 'technical' | 'behavioral';
 };
 
 export type ParsedResponse = {
   technicalQuestions?: Question[];
   behavioralQuestions?: Question[];
-  experienceQuestions?: Question[];
   questions?: Question[];
 };
 
@@ -25,7 +25,7 @@ export type JobDetails = {
 };
 
 // Function to categorize a question by keywords in the text
-export const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' | 'experience' => {
+export const categorizeQuestion = (questionText: string): 'technical' | 'behavioral' => {
   const lowerQuestion = questionText.toLowerCase();
   
   if (lowerQuestion.includes('technical') || 
@@ -33,13 +33,9 @@ export const categorizeQuestion = (questionText: string): 'technical' | 'behavio
       lowerQuestion.includes('technology') || 
       lowerQuestion.includes('gcp') ||
       lowerQuestion.includes('design') ||
+      lowerQuestion.includes('implement') ||
       lowerQuestion.includes('skill')) {
     return 'technical';
-  } else if (lowerQuestion.includes('experience') || 
-            lowerQuestion.includes('previous') || 
-            lowerQuestion.includes('worked') ||
-            lowerQuestion.includes('implement')) {
-    return 'experience';
   } else {
     return 'behavioral';
   }
@@ -87,7 +83,7 @@ export const useQuestionData = (storylineId: string | null) => {
         const { data, error } = await supabase
           .from('storyline_jobs')
           .select('*')
-          .eq('id', storylineId)
+          .eq('id', filterValue(storylineId))
           .single();
 
         if (error) throw error;
@@ -103,22 +99,22 @@ export const useQuestionData = (storylineId: string | null) => {
         }
 
         console.log("Storyline data retrieved:", data);
+        const safeData = safeDatabaseData(data);
 
         setJobDetails({
-          jobTitle: data.job_title || 'Untitled Position',
-          companyName: data.company_name,
+          jobTitle: safeData.job_title || 'Untitled Position',
+          companyName: safeData.company_name,
         });
 
-        if (data.openai_response) {
-          console.log("OpenAI response from database:", data.openai_response);
+        if (safeData.openai_response) {
+          console.log("OpenAI response from database:", safeData.openai_response);
           
           let processedQuestions: Question[] = [];
-          const parsedResponse = safeJsonParse(data.openai_response);
+          const parsedResponse = safeJsonParse(safeData.openai_response);
           
-          // Handle old format with separate question categories
+          // Handle format with separate question categories
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
-              parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions) && 
-              parsedResponse.experienceQuestions && Array.isArray(parsedResponse.experienceQuestions)) {
+              parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions)) {
             
             const technical = parsedResponse.technicalQuestions.map(q => ({
               ...q, 
@@ -129,15 +125,10 @@ export const useQuestionData = (storylineId: string | null) => {
               ...q, 
               type: 'behavioral' as const
             }));
-              
-            const experience = parsedResponse.experienceQuestions.map(q => ({
-              ...q, 
-              type: 'experience' as const
-            }));
             
-            processedQuestions = [...technical, ...behavioral, ...experience];
+            processedQuestions = [...technical, ...behavioral];
           } 
-          // Handle new format with a single questions array
+          // Handle format with a single questions array
           else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
             processedQuestions = parsedResponse.questions.map(q => ({
               ...q,

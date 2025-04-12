@@ -4,6 +4,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { AnswerIteration } from '@/hooks/useAnswers';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 export interface FeedbackData {
   pros: string[];
@@ -27,22 +28,20 @@ export const useAnswerFeedback = (
   const { toast } = useToast();
   const { deductTokens } = useUserTokens();
 
-  // Load feedback from the most recent iteration when the component mounts
   useEffect(() => {
     const loadExistingFeedback = async () => {
       if (!storylineId || !question) return;
 
       try {
-        // Look for an existing answer with feedback in the storyline_job_questions table
         const { data, error: fetchError } = await supabase
           .from('storyline_job_questions')
           .select('iterations')
-          .eq('storyline_id', storylineId)
-          .eq('question_index', questionIndex)
+          .eq('storyline_id', filterValue(storylineId))
+          .eq('question_index', filterValue(questionIndex))
           .single();
 
         if (fetchError) {
-          if (fetchError.code !== 'PGRST116') { // Not found is ok
+          if (fetchError.code !== 'PGRST116') {
             console.error('Error fetching existing feedback:', fetchError);
           }
           return;
@@ -51,7 +50,6 @@ export const useAnswerFeedback = (
         if (data?.iterations) {
           let iterations: AnswerIteration[] = [];
           
-          // Parse iterations properly if they're a string
           if (typeof data.iterations === 'string') {
             try {
               iterations = JSON.parse(data.iterations);
@@ -62,7 +60,6 @@ export const useAnswerFeedback = (
             iterations = data.iterations as AnswerIteration[];
           }
           
-          // Get the last iteration that has feedback
           if (iterations.length > 0) {
             const lastIterationWithFeedback = [...iterations]
               .reverse()
@@ -101,8 +98,7 @@ export const useAnswerFeedback = (
       return null;
     }
 
-    // Check if user has enough tokens
-    const tokenCheck = await deductTokens(2); // Deduct 2 tokens for feedback
+    const tokenCheck = await deductTokens(2);
     if (!tokenCheck?.success) {
       toast({
         variant: "destructive",
@@ -116,7 +112,6 @@ export const useAnswerFeedback = (
     setError(null);
 
     try {
-      // Call the Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('generate-answer-feedback', {
         body: {
           answerText,
@@ -124,21 +119,19 @@ export const useAnswerFeedback = (
           questionType: question.type,
           jobTitle,
           companyName,
-          jobDescription: '', // We could add job description if available
+          jobDescription: '',
         },
       });
 
       if (error) {
         console.error('Error generating feedback:', error);
         setError(error.message || 'Failed to generate feedback');
-        // Refund tokens on error
         await deductTokens(-2);
         return null;
       }
 
       if (!data || !data.pros || !data.cons) {
         setError('Invalid feedback data received');
-        // Refund tokens on error
         await deductTokens(-2);
         return null;
       }
@@ -149,7 +142,6 @@ export const useAnswerFeedback = (
     } catch (err) {
       console.error('Error in feedback generation:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      // Refund tokens on error
       await deductTokens(-2);
       return null;
     } finally {
@@ -170,4 +162,3 @@ export const useAnswerFeedback = (
     clearFeedback
   };
 };
-
