@@ -7,6 +7,7 @@ import { Json } from '@/integrations/supabase/types';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
+import { transformIterations, parseOpenAIResponse } from '@/utils/answerUtils';
 
 export interface AnswerIteration {
   answerText: string;
@@ -42,6 +43,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const [iterations, setIterations] = useState<AnswerIteration[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // Fetch question and answer data on initial load
   useEffect(() => {
     const fetchQuestionAndAnswer = async () => {
       if (!storylineId) {
@@ -50,92 +52,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       }
 
       try {
-        const { data: storylineData, error: storylineError } = await supabase
-          .from('storyline_jobs')
-          .select('openai_response')
-          .eq('id', filterValue(storylineId))
-          .single();
-
-        if (storylineError) throw storylineError;
-
-        if (storylineData?.openai_response) {
-          const safeStorylineData = safeDatabaseData(storylineData);
-          let parsedResponse;
-          if (typeof safeStorylineData.openai_response === 'string') {
-            parsedResponse = JSON.parse(safeStorylineData.openai_response);
-          } else {
-            parsedResponse = safeStorylineData.openai_response;
-          }
-
-          let questions: Question[] = [];
-          
-          if (parsedResponse.questions) {
-            questions = parsedResponse.questions;
-          } else if (
-            parsedResponse.technicalQuestions && 
-            parsedResponse.behavioralQuestions
-          ) {
-            const technical = parsedResponse.technicalQuestions.map((q: any) => ({
-              ...q, type: 'technical' as const
-            }));
-            
-            const behavioral = parsedResponse.behavioralQuestions.map((q: any) => ({
-              ...q, type: 'behavioral' as const
-            }));
-            
-            questions = [...technical, ...behavioral];
-          }
-
-          if (questions && questions.length > questionIndex) {
-            setQuestion(questions[questionIndex]);
-          }
-        }
-
-        const { data: answerData, error: answerError } = await supabase
-          .from('storyline_job_questions')
-          .select('*')
-          .eq('storyline_id', filterValue(storylineId))
-          .eq('question_index', questionIndex)
-          .single();
-
-        if (answerError && answerError.code !== 'PGRST116') {
-          throw answerError;
-        }
-
-        if (answerData) {
-          const safeAnswerData = safeDatabaseData(answerData);
-          const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
-            ? safeAnswerData.iterations 
-            : typeof safeAnswerData.iterations === 'string' 
-              ? JSON.parse(safeAnswerData.iterations)
-              : (safeAnswerData.iterations as any)?.length 
-                ? (safeAnswerData.iterations as any)
-                : [];
-          
-          const transformedIterations = parsedIterations.map((iteration: any) => {
-            if (iteration.text && !iteration.answerText) {
-              return {
-                answerText: iteration.text,
-                timestamp: iteration.timestamp,
-                ...(iteration.feedback ? { feedback: iteration.feedback } : {})
-              };
-            }
-            return iteration;
-          });
-                
-          setIterations(transformedIterations);
-          setAnswerRecord({
-            id: safeAnswerData.id,
-            storyline_id: safeAnswerData.storyline_id,
-            question_index: safeAnswerData.question_index,
-            question: safeAnswerData.question,
-            answer: safeAnswerData.answer,
-            iterations: transformedIterations,
-            type: safeAnswerData.type as 'technical' | 'behavioral' | undefined
-          });
-          
-          setAnswer(safeAnswerData.answer || '');
-        }
+        await fetchQuestionData();
+        await fetchAnswerData();
       } catch (error) {
         console.error('Error fetching question and answer:', error);
         setError(error instanceof Error ? error.message : "Failed to load question");
@@ -152,6 +70,74 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     fetchQuestionAndAnswer();
   }, [storylineId, questionIndex, toast]);
 
+  // Fetch question data from storyline_jobs
+  const fetchQuestionData = async () => {
+    const { data: storylineData, error: storylineError } = await supabase
+      .from('storyline_jobs')
+      .select('openai_response')
+      .eq('id', filterValue(storylineId))
+      .single();
+
+    if (storylineError) throw storylineError;
+
+    if (storylineData?.openai_response) {
+      const safeStorylineData = safeDatabaseData(storylineData);
+      let parsedResponse;
+      if (typeof safeStorylineData.openai_response === 'string') {
+        parsedResponse = JSON.parse(safeStorylineData.openai_response);
+      } else {
+        parsedResponse = safeStorylineData.openai_response;
+      }
+
+      const questions = parseOpenAIResponse(parsedResponse);
+
+      if (questions && questions.length > questionIndex) {
+        setQuestion(questions[questionIndex]);
+      }
+    }
+  };
+
+  // Fetch answer data from storyline_job_questions
+  const fetchAnswerData = async () => {
+    const { data: answerData, error: answerError } = await supabase
+      .from('storyline_job_questions')
+      .select('*')
+      .eq('storyline_id', filterValue(storylineId))
+      .eq('question_index', questionIndex)
+      .single();
+
+    if (answerError && answerError.code !== 'PGRST116') {
+      throw answerError;
+    }
+
+    if (answerData) {
+      const safeAnswerData = safeDatabaseData(answerData);
+      const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
+        ? safeAnswerData.iterations 
+        : typeof safeAnswerData.iterations === 'string' 
+          ? JSON.parse(safeAnswerData.iterations)
+          : (safeAnswerData.iterations as any)?.length 
+            ? (safeAnswerData.iterations as any)
+            : [];
+      
+      const transformedIterations = transformIterations(parsedIterations);
+            
+      setIterations(transformedIterations);
+      setAnswerRecord({
+        id: safeAnswerData.id,
+        storyline_id: safeAnswerData.storyline_id,
+        question_index: safeAnswerData.question_index,
+        question: safeAnswerData.question,
+        answer: safeAnswerData.answer,
+        iterations: transformedIterations,
+        type: safeAnswerData.type as 'technical' | 'behavioral' | undefined
+      });
+      
+      setAnswer(safeAnswerData.answer || '');
+    }
+  };
+
+  // Save answer to database
   const saveAnswer = async (answerText: string, feedback?: FeedbackData | null) => {
     if (!storylineId || !question) return;
     
@@ -178,74 +164,12 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         console.log('Updated iterations with new entry:', currentIterations);
       }
       
+      // Update existing record
       if (answerRecord?.id) {
-        const { error } = await supabase
-          .from('storyline_job_questions')
-          .update({
-            answer: answerText,
-            iterations: JSON.stringify(currentIterations),
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', filterValue(answerRecord.id));
-          
-        if (error) throw error;
-        
-        setAnswerRecord({
-          ...answerRecord,
-          answer: answerText,
-          iterations: currentIterations
-        });
+        await updateExistingAnswer(answerRecord.id, answerText, currentIterations);
       } else {
-        console.log('🪙 Deducting 1 token for creating a new question record');
-        const tokenCheck = await deductTokens(1);
-        
-        if (!tokenCheck?.success) {
-          toast({
-            variant: "destructive",
-            title: "Insufficient tokens",
-            description: "You don't have enough tokens to save a new answer."
-          });
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('storyline_job_questions')
-          .insert({
-            storyline_id: storylineId,
-            question_index: questionIndex,
-            question: question.question,
-            answer: answerText,
-            iterations: currentIterations.length ? (currentIterations as unknown as Json) : [],
-            type: question.type
-          })
-          .select()
-          .single();
-          
-        if (error) throw error;
-        
-        fetchTokens();
-        
-        if (data) {
-          const safeData = safeDatabaseData(data);
-          const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
-            ? safeData.iterations 
-            : typeof safeData.iterations === 'string' 
-              ? JSON.parse(safeData.iterations)
-              : (safeData.iterations as any)?.length 
-                ? (safeData.iterations as any)
-                : [];
-          
-          setIterations(parsedIterations);      
-          setAnswerRecord({
-            id: safeData.id,
-            storyline_id: safeData.storyline_id,
-            question_index: safeData.question_index,
-            question: safeData.question,
-            answer: safeData.answer,
-            iterations: parsedIterations,
-            type: safeData.type as 'technical' | 'behavioral' | undefined
-          });
-        }
+        // Create a new record
+        await createNewAnswer(answerText, currentIterations);
       }
       
       setAnswer(answerText);
@@ -263,6 +187,80 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Update an existing answer record
+  const updateExistingAnswer = async (id: string, answerText: string, currentIterations: AnswerIteration[]) => {
+    const { error } = await supabase
+      .from('storyline_job_questions')
+      .update({
+        answer: answerText,
+        iterations: JSON.stringify(currentIterations),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', filterValue(id));
+      
+    if (error) throw error;
+    
+    setAnswerRecord({
+      ...answerRecord!,
+      answer: answerText,
+      iterations: currentIterations
+    });
+  };
+
+  // Create a new answer record
+  const createNewAnswer = async (answerText: string, currentIterations: AnswerIteration[]) => {
+    console.log('🪙 Deducting 1 token for creating a new question record');
+    const tokenCheck = await deductTokens(1);
+    
+    if (!tokenCheck?.success) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient tokens",
+        description: "You don't have enough tokens to save a new answer."
+      });
+      return;
+    }
+    
+    const { data, error } = await supabase
+      .from('storyline_job_questions')
+      .insert({
+        storyline_id: storylineId,
+        question_index: questionIndex,
+        question: question!.question,
+        answer: answerText,
+        iterations: currentIterations.length ? (currentIterations as unknown as Json) : [],
+        type: question!.type
+      })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    fetchTokens();
+    
+    if (data) {
+      const safeData = safeDatabaseData(data);
+      const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
+        ? safeData.iterations 
+        : typeof safeData.iterations === 'string' 
+          ? JSON.parse(safeData.iterations)
+          : (safeData.iterations as any)?.length 
+            ? (safeData.iterations as any)
+            : [];
+      
+      setIterations(parsedIterations);      
+      setAnswerRecord({
+        id: safeData.id,
+        storyline_id: safeData.storyline_id,
+        question_index: safeData.question_index,
+        question: safeData.question,
+        answer: safeData.answer,
+        iterations: parsedIterations,
+        type: safeData.type as 'technical' | 'behavioral' | undefined
+      });
     }
   };
 

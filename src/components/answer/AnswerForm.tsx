@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Sparkles, Mic, HelpCircle } from 'lucide-react';
+import { Save, Sparkles, Mic } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import AnswerFeedback from './AnswerFeedback';
-import { Progress } from '@/components/ui/progress';
+import ProgressIndicator from './ProgressIndicator';
+import GuidingQuestions from './GuidingQuestions';
 
 interface AnswerFormProps {
   inputAnswer: string;
@@ -36,7 +37,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   feedbackError
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
-    // Fix: directly concat the strings instead of using a function with prev
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
   });
 
@@ -98,6 +98,11 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   };
 
   const isAnswerValid = inputAnswer.trim().length > 0;
+  const loadingText = generatingAnswer 
+    ? 'Generating guiding questions...' 
+    : isFeedbackLoading 
+      ? 'Generating feedback...' 
+      : 'Completing...';
 
   return (
     <Card>
@@ -152,36 +157,13 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
           </div>
         </form>
         
-        {/* Loading Progress Bar */}
-        {(isFeedbackLoading || generatingAnswer || (progressValue > 0 && progressValue < 100)) && (
-          <div className="mt-6">
-            <p className="text-sm text-gray-500 mb-2">
-              {generatingAnswer ? 'Generating guiding questions...' : isFeedbackLoading ? 'Generating feedback...' : 'Completing...'}
-            </p>
-            <Progress value={progressValue} className="h-2" />
-          </div>
-        )}
+        <ProgressIndicator 
+          isLoading={isFeedbackLoading || generatingAnswer} 
+          progressValue={progressValue}
+          loadingText={loadingText}
+        />
         
-        {/* Guiding Questions Section */}
-        {guidingQuestions && guidingQuestions.length > 0 && (
-          <div className="mt-8 border-t pt-6">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-blue-500" />
-              Guiding Questions
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Consider these questions to help structure and improve your answer:
-            </p>
-            <ul className="space-y-3 pl-2">
-              {guidingQuestions.map((question, index) => (
-                <li key={`question-${index}`} className="flex gap-2">
-                  <span className="font-medium text-blue-600">{index + 1}.</span>
-                  <span className="text-gray-800">{question}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <GuidingQuestions questions={guidingQuestions} />
         
         {/* Feedback Section */}
         {(isFeedbackLoading || feedback) && (
