@@ -43,7 +43,8 @@ serve(async (req) => {
        Provide more specifics, perhaps we need to even better specify the system prompt */
 
     // Prepare the prompt
-    const systemPrompt = `You are an AI interview coach. Your task is to generate 10 interview questions for a job candidate applying for a ${jobTitle} position.
+    // NOTE right now we are preparing for new grad/college students
+    const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 9 interview questions for a job candidate applying for a ${jobTitle} position.
     ${companyName ? `The company name is ${companyName}.` : ''}
     ${companyDescription ? `About the company: ${companyDescription}` : ''}
     
