@@ -12,10 +12,11 @@ export type PostgresFilter = string | number | boolean | null;
  * Use this when TypeScript complains about filter parameters in Supabase queries.
  * 
  * @example
- * .eq('column_name', filterValue as PostgresFilter)
+ * .eq('column_name', filterValue(value))
  */
-export function filterValue<T>(value: T): PostgresFilter {
-  return value as PostgresFilter;
+export function filterValue<T>(value: T): string {
+  // Convert the value to string to ensure compatibility with Supabase queries
+  return String(value);
 }
 
 /**

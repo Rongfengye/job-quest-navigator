@@ -37,7 +37,7 @@ export const useAnswerFeedback = (
           .from('storyline_job_questions')
           .select('iterations')
           .eq('storyline_id', filterValue(storylineId))
-          .eq('question_index', filterValue(questionIndex))
+          .eq('question_index', questionIndex)
           .single();
 
         if (fetchError) {

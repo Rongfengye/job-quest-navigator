@@ -42,7 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         const { data: newRecord, error: insertError } = await supabase
           .from('storyline_user_tokens')
-          .insert([{ user_id: filterValue(userId), tokens_remaining: 100 }])
+          .insert({ 
+            user_id: userId, 
+            tokens_remaining: 100 
+          })
           .select()
           .single();
         

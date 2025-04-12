@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,9 +7,8 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
-// Define the AnswerIteration interface to be compatible with Json type
 export interface AnswerIteration {
-  answerText: string; // Changed from 'text' to 'answerText'
+  answerText: string;
   timestamp: string;
   feedback?: {
     pros: string[];
@@ -19,7 +17,7 @@ export interface AnswerIteration {
     improvementSuggestions: string;
     score: number;
   };
-  [key: string]: any; // Add index signature to make it compatible with Json
+  [key: string]: any;
 }
 
 interface AnswerData {
@@ -43,7 +41,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const [iterations, setIterations] = useState<AnswerIteration[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch the question and any existing answer
   useEffect(() => {
     const fetchQuestionAndAnswer = async () => {
       if (!storylineId) {
@@ -52,14 +49,11 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       }
 
       try {
-        // First get the storyline to fetch the question
         const { data: storylineData, error: storylineError } = await supabase
           .from('storyline_jobs')
           .select('openai_response')
           .eq('id', filterValue(storylineId))
           .single();
-
-        console.log('THIS IS THE STORYLINE_DATA', storylineData)
 
         if (storylineError) throw storylineError;
 
@@ -96,24 +90,19 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           }
         }
 
-        // Look for an existing answer in the storyline_job_questions table
-        console.log('BEFORE MAKING THE storyline job questions to grab initial question information', storylineId, questionIndex)
         const { data: answerData, error: answerError } = await supabase
           .from('storyline_job_questions')
           .select('*')
           .eq('storyline_id', filterValue(storylineId))
-          .eq('question_index', filterValue(questionIndex))
+          .eq('question_index', questionIndex)
           .single();
 
-        console.log('THIS IS THE STORY QUESTIONS CALL RESPONSE', answerData, answerError)
-        if (answerError && answerError.code !== 'PGRST116') { // Not found is ok
+        if (answerError && answerError.code !== 'PGRST116') {
           throw answerError;
         }
 
         if (answerData) {
           const safeAnswerData = safeDatabaseData(answerData);
-          // Parse iterations properly
-          console.log('IN THE ANSWER DATA', safeAnswerData)
           const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
             ? safeAnswerData.iterations 
             : typeof safeAnswerData.iterations === 'string' 
@@ -122,10 +111,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
                 ? (safeAnswerData.iterations as any)
                 : [];
           
-          // Transform old format iterations to new format if needed
           const transformedIterations = parsedIterations.map((iteration: any) => {
             if (iteration.text && !iteration.answerText) {
-              // Convert old format to new format
               return {
                 answerText: iteration.text,
                 timestamp: iteration.timestamp,
@@ -135,11 +122,10 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
             return iteration;
           });
                 
-          // Update both state values
           setIterations(transformedIterations);
           setAnswerRecord({
             id: safeAnswerData.id,
-            storyline_id: safeAnswerData.storyline_id,
+            storyline_id: safeData.storyline_id,
             question_index: safeAnswerData.question_index,
             question: safeAnswerData.question,
             answer: safeAnswerData.answer,
@@ -165,19 +151,15 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     fetchQuestionAndAnswer();
   }, [storylineId, questionIndex, toast]);
 
-  // Save the answer with optional feedback
   const saveAnswer = async (answerText: string, feedback?: FeedbackData | null) => {
-    console.log('in the save ANSWER', storylineId, question)
     if (!storylineId || !question) return;
     
     setIsSaving(true);
     
     try {
       const now = new Date().toISOString();
-      // Get the latest iterations directly from state
       let currentIterations = [...iterations];
       
-      // Add the current answer as a new iteration with the new structure
       if (answerText.trim() !== '') {
         console.log('Creating new iteration with feedback:', feedback);
         const newIteration: AnswerIteration = { 
@@ -185,21 +167,17 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           timestamp: now,
         };
         
-        // Add feedback if available
         if (feedback) {
           newIteration.feedback = feedback;
         }
         
         currentIterations = [...currentIterations, newIteration];
         
-        // Update state immediately to ensure UI reflects changes
         setIterations(currentIterations);
         console.log('Updated iterations with new entry:', currentIterations);
       }
       
-      // Check if we already have a record
       if (answerRecord?.id) {
-        // Update existing record
         const { error } = await supabase
           .from('storyline_job_questions')
           .update({
@@ -211,14 +189,12 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
         if (error) throw error;
         
-        // Update local state with the new data
         setAnswerRecord({
           ...answerRecord,
           answer: answerText,
           iterations: currentIterations
         });
       } else {
-        // New record being created
         console.log('🪙 Deducting 1 token for creating a new question record');
         const tokenCheck = await deductTokens(1);
         
@@ -231,7 +207,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           return;
         }
         
-        // Create new record
         const { data, error } = await supabase
           .from('storyline_job_questions')
           .insert({
@@ -247,12 +222,10 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           
         if (error) throw error;
         
-        // Update token display after successful deduction
         fetchTokens();
         
         if (data) {
           const safeData = safeDatabaseData(data);
-          // Parse iterations properly
           const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
             ? safeData.iterations 
             : typeof safeData.iterations === 'string' 
@@ -261,7 +234,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
                 ? (safeData.iterations as any)
                 : [];
           
-          // Update both state variables
           setIterations(parsedIterations);      
           setAnswerRecord({
             id: safeData.id,
@@ -299,7 +271,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     question, 
     answer, 
     answerRecord,
-    iterations, // Return iterations directly from state
+    iterations,
     setAnswer, 
     saveAnswer, 
     error 

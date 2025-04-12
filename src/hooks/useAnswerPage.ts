@@ -88,7 +88,6 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     }
   };
 
-  // Fetch resume text when the component loads
   useEffect(() => {
     const fetchResumeText = async () => {
       if (!storylineId) return;

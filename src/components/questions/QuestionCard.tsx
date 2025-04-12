@@ -35,7 +35,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
           .from('storyline_job_questions')
           .select('id', { count: 'exact', head: true })
           .eq('storyline_id', filterValue(storylineId))
-          .eq('question_index', filterValue(index))
+          .eq('question_index', index)
           .not('answer', 'is', null);
           
         if (!error && count && count > 0) {
