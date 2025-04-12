@@ -1,12 +1,9 @@
-
 import React, { useState, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Set up the worker properly
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface FileUploadProps {
@@ -27,20 +24,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
 
-  // Function to extract text from PDF
   const extractTextFromPDF = async (file: File): Promise<string> => {
     try {
       console.log(`Starting text extraction from ${file.name}...`);
       const arrayBuffer = await file.arrayBuffer();
       const typedArray = new Uint8Array(arrayBuffer);
       
-      // Load the PDF document
       const loadingTask = pdfjsLib.getDocument({ data: typedArray });
       const pdfDocument = await loadingTask.promise;
       
       console.log(`PDF loaded successfully. Total pages: ${pdfDocument.numPages}`);
       
-      // Extract text from all pages
       let fullText = "";
       const maxPages = pdfDocument.numPages;
       
@@ -54,20 +48,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
         
         fullText += pageText + '\n';
         
-        // Limit text extraction if it's getting too large
         if (fullText.length > 100000) {
           console.log("Text extraction reached 100000 characters, stopping...");
           break;
         }
       }
       
-      // Clean the extracted text - remove PDF artifacts and normalize whitespace
       let cleanedText = fullText
-        .replace(/(\r\n|\n|\r)/gm, " ")  // Replace line breaks with spaces
-        .replace(/\s+/g, " ")            // Replace multiple spaces with single space
-        .trim();                          // Trim whitespace
+        .replace(/(\r\n|\n|\r)/gm, " ")  
+        .replace(/\s+/g, " ")            
+        .trim();
       
-      // Limit to 5000 characters to prevent token overusage
       const truncatedText = cleanedText.substring(0, 5000);
       console.log(`Text extraction complete. Total characters: ${cleanedText.length}, truncated to 5000 characters.`);
       console.log("Text preview:", truncatedText.substring(0, 100) + "...");
@@ -115,7 +106,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -143,6 +133,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   }, []);
 
+  const handleClick = () => {
+    document.getElementById(id)?.click();
+  };
+
   return (
     <div className="space-y-2">
       <Label htmlFor={id} className="text-interview-primary font-medium">
@@ -150,8 +144,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
       </Label>
       <div 
         className={`border ${isDragging ? 'border-interview-primary bg-blue-50' : 'border-gray-300'} 
-                  border-dashed rounded-md p-6 transition-colors duration-200 ease-in-out
+                  border-dashed rounded-md p-6 transition-colors duration-200 ease-in-out cursor-pointer
                   ${isDragging ? 'ring-2 ring-interview-primary' : ''}`}
+        onClick={handleClick}
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
@@ -175,15 +170,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 </div>
               </div>
               <p className="font-medium text-sm mb-1">{currentFile.name}</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => document.getElementById(id)?.click()}
-                className="text-xs"
-              >
-                Change File
-              </Button>
             </div>
           ) : (
             <>
@@ -193,15 +179,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <p className="text-sm text-center mb-2">
                 <span className="font-medium">Drag & drop your file here</span> or click to browse
               </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById(id)?.click()}
-                className="w-full sm:w-auto flex items-center justify-center gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                Upload PDF
-              </Button>
             </>
           )}
           <p className="text-xs text-gray-500 mt-2">Only PDF files are supported</p>
