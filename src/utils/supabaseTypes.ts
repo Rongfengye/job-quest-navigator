@@ -25,7 +25,7 @@ export function filterValue<T>(value: T): string {
  * 
  * @example
  * const { data, error } = await supabase.from('table').select('*').single();
- * if (error) return handleError(error);
+ * if (error) throw error;
  * const safeData = safeDatabaseData(data);
  * // Now you can safely access properties on safeData
  */

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -58,12 +59,12 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         if (storylineError) throw storylineError;
 
         if (storylineData?.openai_response) {
-          const safeData = safeDatabaseData(storylineData);
+          const safeStorylineData = safeDatabaseData(storylineData);
           let parsedResponse;
-          if (typeof safeData.openai_response === 'string') {
-            parsedResponse = JSON.parse(safeData.openai_response);
+          if (typeof safeStorylineData.openai_response === 'string') {
+            parsedResponse = JSON.parse(safeStorylineData.openai_response);
           } else {
-            parsedResponse = safeData.openai_response;
+            parsedResponse = safeStorylineData.openai_response;
           }
 
           let questions: Question[] = [];
@@ -125,7 +126,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
           setIterations(transformedIterations);
           setAnswerRecord({
             id: safeAnswerData.id,
-            storyline_id: safeData.storyline_id,
+            storyline_id: safeAnswerData.storyline_id,
             question_index: safeAnswerData.question_index,
             question: safeAnswerData.question,
             answer: safeAnswerData.answer,
