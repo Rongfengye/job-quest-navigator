@@ -9,7 +9,6 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Coins, Plus } from 'lucide-react';
 
 const Settings = () => {
   const { logout } = useAuthContext();
@@ -22,7 +21,6 @@ const Settings = () => {
     confirm: ''
   });
   
-  // We don't need to call fetchTokens anymore as it's handled by the pub/sub system
   const { tokens, isLoading: tokensLoading, addTokens } = useUserTokens();
   const [isAddingTokens, setIsAddingTokens] = useState(false);
   
@@ -41,7 +39,6 @@ const Settings = () => {
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simple validation
     if (passwords.new !== passwords.confirm) {
       toast({
         variant: "destructive",
@@ -63,7 +60,6 @@ const Settings = () => {
     try {
       setIsUpdatingPassword(true);
       
-      // First verify the current password by attempting to sign in
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: (await supabase.auth.getUser()).data.user?.email || '',
         password: passwords.current,
@@ -73,7 +69,6 @@ const Settings = () => {
         throw new Error('Current password is incorrect');
       }
       
-      // Update to the new password
       const { error: updateError } = await supabase.auth.updateUser({
         password: passwords.new
       });
@@ -85,7 +80,6 @@ const Settings = () => {
         description: "Your password has been updated successfully."
       });
       
-      // Clear the form
       setPasswords({ current: '', new: '', confirm: '' });
       
     } catch (error) {
@@ -103,7 +97,6 @@ const Settings = () => {
     setIsAddingTokens(true);
     try {
       await addTokens(10);
-      // No need to manually call fetchTokens() as the token state is updated by the pub/sub system
     } finally {
       setIsAddingTokens(false);
     }
@@ -117,52 +110,6 @@ const Settings = () => {
       </div>
       
       <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Token Balance</CardTitle>
-            <CardDescription>
-              Manage your token balance for using interview practice features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center">
-                <Coins className="h-5 w-5 mr-2 text-yellow-500" />
-                <div>
-                  <p className="font-medium text-xl">{tokensLoading ? '—' : tokens} tokens</p>
-                  <p className="text-sm text-muted-foreground">
-                    Use tokens for creating practice sessions and generating answers
-                  </p>
-                </div>
-              </div>
-              
-              <Button 
-                onClick={handleAddTokens} 
-                disabled={isAddingTokens}
-                className="flex items-center gap-2"
-              >
-                {isAddingTokens ? (
-                  <>Adding...</>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4" />
-                    Add 10 tokens
-                  </>
-                )}
-              </Button>
-            </div>
-            
-            <div className="bg-muted p-3 rounded-md text-sm">
-              <p className="font-medium mb-1">Token usage:</p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Creating a new job practice: <span className="font-medium">5 tokens</span></li>
-                <li>Starting practice on a question: <span className="font-medium">1 token</span></li>
-                <li>Generating an answer: <span className="font-medium">1 token</span></li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-        
         <Card>
           <CardHeader>
             <CardTitle>Password Settings</CardTitle>
