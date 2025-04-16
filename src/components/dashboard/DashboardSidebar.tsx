@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -10,10 +9,10 @@ import {
   SidebarHeader, 
   SidebarMenu, 
   SidebarMenuItem,
-  SidebarMenuButton, // Added the missing import
+  SidebarMenuButton,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { Vault, GraduationCap, User, Settings } from 'lucide-react';
+import { Vault, User, Settings } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 
 const DashboardSidebar = () => {
@@ -26,11 +25,6 @@ const DashboardSidebar = () => {
       title: "Question Vault",
       url: "/dashboard",
       icon: Vault,
-    },
-    {
-      title: "Behavioral Interview Prep",
-      url: "/behavioral",
-      icon: GraduationCap,
     },
     {
       title: "Profile",
