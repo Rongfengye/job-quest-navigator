@@ -9,11 +9,10 @@ import {
   SidebarGroupLabel, 
   SidebarHeader, 
   SidebarMenu, 
-  SidebarMenuButton, 
   SidebarMenuItem,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, User, Settings } from 'lucide-react';
+import { Vault, GraduationCap, User, Settings } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 
 const DashboardSidebar = () => {
@@ -23,9 +22,14 @@ const DashboardSidebar = () => {
   
   const menuItems = [
     {
-      title: "Job Dashboard",
+      title: "Question Vault",
       url: "/dashboard",
-      icon: LayoutDashboard,
+      icon: Vault,
+    },
+    {
+      title: "Behavioral Interview Prep",
+      url: "/behavioral",
+      icon: GraduationCap,
     },
     {
       title: "Profile",

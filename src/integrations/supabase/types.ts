@@ -51,37 +51,52 @@ export type Database = {
       resubump_analysis: {
         Row: {
           analysis_results: Json
+          crawled_content: Json | null
           created_at: string
           file_type: string | null
           filename: string | null
           guiding_questions: Json | null
           id: string
-          ocr_content: string
+          job_descriptions: Json | null
+          question_answers: Json | null
           resume_text: string
+          tailored_content: string | null
+          tailoring_timestamp: string | null
+          title: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           analysis_results: Json
+          crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
           filename?: string | null
           guiding_questions?: Json | null
           id?: string
-          ocr_content: string
+          job_descriptions?: Json | null
+          question_answers?: Json | null
           resume_text: string
+          tailored_content?: string | null
+          tailoring_timestamp?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           analysis_results?: Json
+          crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
           filename?: string | null
           guiding_questions?: Json | null
           id?: string
-          ocr_content?: string
+          job_descriptions?: Json | null
+          question_answers?: Json | null
           resume_text?: string
+          tailored_content?: string | null
+          tailoring_timestamp?: string | null
+          title?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -112,33 +127,6 @@ export type Database = {
           id?: string
           improved_version?: Json
           resume_path?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      resume_builder_info: {
-        Row: {
-          created_at: string
-          data: Json
-          id: string
-          title: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          data?: Json
-          id?: string
-          title?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          data?: Json
-          id?: string
-          title?: string
           updated_at?: string
           user_id?: string
         }

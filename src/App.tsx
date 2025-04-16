@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,8 +13,8 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import Behavioral from "./pages/Behavioral";
 
-// Set up query client with explicit TypeScript configuration
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -38,9 +37,9 @@ const App = () => (
             <Route path="/questions" element={<><NavBar /><Questions /></>} />
             <Route path="/answer" element={<><NavBar /><AnswerPage /></>} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/behavioral" element={<Behavioral />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
