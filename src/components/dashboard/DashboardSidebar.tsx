@@ -10,6 +10,7 @@ import {
   SidebarHeader, 
   SidebarMenu, 
   SidebarMenuItem,
+  SidebarMenuButton, // Added the missing import
   SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Vault, GraduationCap, User, Settings } from 'lucide-react';
