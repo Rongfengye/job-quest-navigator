@@ -13,7 +13,6 @@ const Create = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
   const navigate = useNavigate();
 
-  // Redirect to home if not authenticated
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       navigate('/');
@@ -34,6 +33,19 @@ const Create = () => {
     handleScrapedJobDescription,
     handleSubmit,
   } = useCreateForm();
+
+  const handleScrapedCompanyInfo = (companyName: string, companyDescription: string) => {
+    if (companyName) {
+      handleInputChange({
+        target: { name: 'companyName', value: companyName }
+      } as React.ChangeEvent<HTMLInputElement>);
+    }
+    if (companyDescription) {
+      handleInputChange({
+        target: { name: 'companyDescription', value: companyDescription }
+      } as React.ChangeEvent<HTMLTextAreaElement>);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -82,6 +94,7 @@ const Create = () => {
             additionalComponent={
               <JobScraper 
                 onScrapedContent={handleScrapedJobDescription} 
+                onCompanyInfoFound={handleScrapedCompanyInfo}
                 className="mb-2" 
               />
             }

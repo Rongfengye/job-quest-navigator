@@ -7,15 +7,62 @@ import { toast } from '@/components/ui/use-toast';
 
 interface JobScraperProps {
   onScrapedContent: (content: string) => void;
+  onCompanyInfoFound?: (companyName: string, companyDescription: string) => void;
   className?: string;
 }
 
-const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, className }) => {
+const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfoFound, className }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
+  };
+
+  const findCompanyInfo = (doc: Document) => {
+    // Common selectors for company information
+    const companyNameSelectors = [
+      '[data-testid="company-name"]',
+      '.company-name',
+      '[itemprop="hiringOrganization"]',
+      '.organization',
+      'meta[property="og:site_name"]',
+    ];
+
+    const companyDescriptionSelectors = [
+      '[data-testid="company-description"]',
+      '.company-description',
+      '[itemprop="description"]',
+      '.organization-description',
+      'meta[name="description"]',
+    ];
+
+    let companyName = '';
+    let companyDescription = '';
+
+    // Try to find company name
+    for (const selector of companyNameSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        companyName = element instanceof HTMLMetaElement ? element.content : element.textContent || '';
+        if (companyName.trim()) break;
+      }
+    }
+
+    // Try to find company description
+    for (const selector of companyDescriptionSelectors) {
+      const element = doc.querySelector(selector);
+      if (element) {
+        companyDescription = element instanceof HTMLMetaElement ? element.content : element.textContent || '';
+        if (companyDescription.trim()) break;
+      }
+    }
+
+    // Clean up the text
+    companyName = companyName.trim();
+    companyDescription = companyDescription.trim();
+
+    return { companyName, companyDescription };
   };
 
   const handleScrape = async () => {
@@ -45,8 +92,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, className }) 
       const parser = new DOMParser();
       const doc = parser.parseFromString(data, 'text/html');
       
-      // Try to find the job description content (this is simplified and may need refinement)
-      // Looking for common job description containers
+      // Try to find the job description content
       const possibleContainers = [
         doc.querySelector('.job-description'),
         doc.querySelector('[data-automation="jobDescription"]'),
@@ -57,11 +103,9 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, className }) 
         doc.querySelector('body')
       ];
       
-      // Use the first non-null container
       const contentContainer = possibleContainers.find(container => container !== null);
       
       if (contentContainer) {
-        // Clean up the text content
         let jobDescription = contentContainer.textContent || '';
         jobDescription = jobDescription
           .replace(/\s+/g, ' ')
@@ -69,6 +113,18 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, className }) 
         
         // Pass the scraped content to the parent component
         onScrapedContent(jobDescription);
+
+        // Find and pass company information if the callback exists
+        if (onCompanyInfoFound) {
+          const { companyName, companyDescription } = findCompanyInfo(doc);
+          if (companyName || companyDescription) {
+            onCompanyInfoFound(companyName, companyDescription);
+            toast({
+              title: "Company Information Found",
+              description: "Successfully extracted company details",
+            });
+          }
+        }
         
         toast({
           title: "Job Description Scraped",
