@@ -38,7 +38,10 @@ const BehavioralInterview = () => {
     generateQuestion,
     submitAnswer,
     resetInterview,
-    setInitialQuestions
+    setInitialQuestions,
+    generateFeedback,
+    questions,
+    answers
   } = useBehavioralInterview();
 
   const handleTranscription = (text: string) => {
@@ -144,7 +147,13 @@ const BehavioralInterview = () => {
       } else {
         setTimeout(() => {
           setIsSubmitting(false);
-          navigate('/behavioral', { state: { interviewComplete: true } });
+          navigate('/behavioral/feedback', { 
+            state: { 
+              feedback: answers,
+              questions: questions,
+              answers: answers
+            } 
+          });
         }, 15000);
       }
     } catch (error) {
