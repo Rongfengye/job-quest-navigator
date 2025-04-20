@@ -19,10 +19,22 @@ const BehavioralFeedback = () => {
   const [feedback, setFeedback] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the interview ID from URL query parameter
-  const interviewId = searchParams.get('id');
+  // Get the interview ID from URL query parameter or location state
+  const interviewId = searchParams.get('id') || location.state?.behavioralId;
+  
+  // Check if we already have feedback in the location state
+  const hasFeedbackInState = !!location.state?.feedback;
+  const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
 
   useEffect(() => {
+    // If we already have the feedback in location state, use that instead of fetching
+    if (hasFeedbackInState && hasQuestionsInState) {
+      setFeedback(location.state.feedback);
+      setQuestions(location.state.questions.map(String));
+      setIsLoading(false);
+      return;
+    }
+    
     const fetchInterviewData = async () => {
       if (!interviewId) {
         setError('No interview ID provided');
@@ -69,7 +81,7 @@ const BehavioralFeedback = () => {
     };
 
     fetchInterviewData();
-  }, [interviewId, toast]);
+  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state]);
 
   if (isLoading) {
     return <Loading message="Loading feedback data..." />;

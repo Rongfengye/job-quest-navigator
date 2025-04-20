@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -58,6 +57,8 @@ const BehavioralInterview = () => {
   } = useVoiceRecording(handleTranscription);
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackGenerated, setFeedbackGenerated] = useState(false);
+  const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
   useEffect(() => {
@@ -105,7 +106,6 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
 
-  // Listen for when all answers are ready (5 answers collected)
   useEffect(() => {
     if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {
       const generateFeedbackWithAnswers = async () => {
@@ -114,11 +114,15 @@ const BehavioralInterview = () => {
           const feedback = await generateFeedback();
           
           if (feedback) {
-            navigate('/behavioral/feedback', { 
+            setFeedbackData(feedback);
+            setFeedbackGenerated(true);
+            
+            navigate(`/behavioral/feedback?id=${behavioralId}`, { 
               state: { 
                 questions,
                 answers,
-                behavioralId
+                behavioralId,
+                feedback
               } 
             });
           } else {
@@ -153,10 +157,6 @@ const BehavioralInterview = () => {
     setIsSubmitting(true);
     
     try {
-      if (currentQuestionIndex === 4) {
-        console.log('Final question submitted, saving answer before generating feedback...');
-      }
-      
       await submitAnswer(answer);
       setAnswer('');
       
@@ -186,12 +186,12 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
-        // For the final question, show loading modal and set flag that all answers are submitted
         setShowFeedbackModal(true);
-        // Use setTimeout to ensure the answer array is updated before we try to generate feedback
+        
         setTimeout(() => {
           setAllAnswersSubmitted(true);
         }, 1000);
+        
         setIsSubmitting(false);
       }
     } catch (error) {
@@ -287,7 +287,10 @@ const BehavioralInterview = () => {
         </div>
       </div>
       
-      <ProcessingModal isOpen={showFeedbackModal} />
+      <ProcessingModal 
+        isOpen={showFeedbackModal} 
+        processingMessage="Generating Interview Feedback" 
+      />
     </div>
   );
 };
