@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -21,7 +20,6 @@ const BehavioralInterview = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const { resumeText } = useResumeText(null);
   
-  // Get form data from location state or use defaults
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
     jobDescription: 'A position requiring strong technical and interpersonal skills.',
@@ -29,7 +27,6 @@ const BehavioralInterview = () => {
     companyDescription: 'A leading technology company.'
   };
 
-  // Check if we have pre-generated questions from the form submission
   const generatedQuestions = location.state?.generatedQuestions;
 
   const {
@@ -43,7 +40,6 @@ const BehavioralInterview = () => {
     setInitialQuestions
   } = useBehavioralInterview();
 
-  // Create a callback function for the voice recording hook
   const handleTranscription = (text: string) => {
     setAnswer(prev => prev ? `${prev}\n\n${text}` : text);
   };
@@ -54,13 +50,11 @@ const BehavioralInterview = () => {
     stopRecording
   } = useVoiceRecording(handleTranscription);
 
-  // Initialize the interview when the page loads
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
         setPageLoaded(true);
         
-        // Deduct a token for starting the interview
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           toast({
@@ -72,14 +66,10 @@ const BehavioralInterview = () => {
           return;
         }
         
-        // Check if we already have questions from the form submission
         if (generatedQuestions) {
-          // Use the pre-generated questions
           setInitialQuestions(generatedQuestions);
         } else {
-          // Make sure we have resume text
-          const stateResumeText = location.state?.resumeText;
-          if (!stateResumeText && !resumeText) {
+          if (!location.state?.resumeText && !resumeText) {
             toast({
               variant: "destructive",
               title: "Resume text missing",
@@ -89,13 +79,12 @@ const BehavioralInterview = () => {
             return;
           }
           
-          // Generate the first question
           const coverLetterText = location.state?.coverLetterText || '';
           const additionalDocumentsText = location.state?.additionalDocumentsText || '';
           
           await generateQuestion(
             formData, 
-            stateResumeText || resumeText, 
+            location.state?.resumeText || resumeText, 
             coverLetterText, 
             additionalDocumentsText
           );
@@ -106,7 +95,6 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions]);
 
-  // Handle question submission
   const handleSubmit = async () => {
     if (!answer.trim()) {
       toast({
@@ -120,15 +108,11 @@ const BehavioralInterview = () => {
     setIsSubmitting(true);
     
     try {
-      // Submit the current answer
       submitAnswer(answer);
-      setAnswer(''); // Clear the answer field
+      setAnswer('');
       
-      // If not the last question, generate the next one
       if (currentQuestionIndex < 4) {
-        // Use a small delay to allow state updates to complete
         setTimeout(async () => {
-          // Deduct a token for each new question
           const tokenCheck = await deductTokens(1);
           if (!tokenCheck?.success) {
             toast({
@@ -153,7 +137,6 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
-        // Interview is complete
         setIsSubmitting(false);
         navigate('/behavioral', { state: { interviewComplete: true } });
       }
@@ -168,7 +151,6 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Toggle voice recording
   const toggleRecording = async () => {
     if (isRecording) {
       await stopRecording();
@@ -203,17 +185,6 @@ const BehavioralInterview = () => {
           <h2 className="text-xl md:text-2xl font-semibold mb-2 text-interview-primary">
             {currentQuestion?.question || 'Loading question...'}
           </h2>
-          
-          {currentQuestion?.keyPoints && (
-            <div className="mt-4 p-4 bg-blue-50 rounded-md">
-              <p className="font-medium text-sm text-blue-700 mb-2">Key points to address:</p>
-              <ul className="list-disc pl-5 text-sm text-blue-800">
-                {currentQuestion.keyPoints.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            </div>
-          )}
           
           <div className="mt-6">
             <div className="flex justify-between items-center mb-2">

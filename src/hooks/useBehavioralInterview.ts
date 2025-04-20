@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -7,7 +6,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface BehavioralQuestionData {
   question: string;
   explanation: string;
-  keyPoints: string[];
   questionIndex: number;
 }
 
@@ -21,12 +19,10 @@ export const useBehavioralInterview = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Set initial questions from pre-generated data
   const setInitialQuestions = (generatedData: any) => {
     if (!generatedData) return;
     
     try {
-      // Extract questions from the generated data
       const technicalQuestions = generatedData.technicalQuestions || [];
       const behavioralQuestions = generatedData.behavioralQuestions || [];
       const allQuestions = [...technicalQuestions, ...behavioralQuestions].slice(0, 5);
@@ -35,18 +31,13 @@ export const useBehavioralInterview = () => {
         throw new Error('No questions found in the generated data');
       }
       
-      // Format the first question
       const firstQuestion = allQuestions[0];
       const formattedQuestion: BehavioralQuestionData = {
         question: firstQuestion.question,
         explanation: firstQuestion.explanation || '',
-        keyPoints: firstQuestion.modelAnswer 
-          ? [`Recommended approach: ${firstQuestion.modelAnswer}`] 
-          : [],
         questionIndex: 0
       };
       
-      // Store the questions for later use
       const questionTexts = allQuestions.map((q: any) => q.question);
       setQuestions(questionTexts);
       setCurrentQuestion(formattedQuestion);
@@ -63,7 +54,6 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  // Generate the first or next question
   const generateQuestion = async (
     formData: {
       jobTitle: string;
@@ -122,11 +112,9 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  // Submit an answer to the current question
   const submitAnswer = (answer: string) => {
     if (!currentQuestion) return;
     
-    // Save the question and answer
     const updatedQuestions = [...questions];
     const updatedAnswers = [...answers];
     
@@ -136,20 +124,17 @@ export const useBehavioralInterview = () => {
     setQuestions(updatedQuestions);
     setAnswers(updatedAnswers);
     
-    // Move to the next question or complete the interview
     if (currentQuestionIndex >= 4) {
       setInterviewComplete(true);
       toast({
         title: "Interview Complete",
         description: "You have completed all 5 behavioral interview questions!",
       });
-      // Here you would typically persist the results or navigate to a summary page
     } else {
       setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
-  // Reset the interview state
   const resetInterview = () => {
     setCurrentQuestionIndex(0);
     setQuestions([]);
