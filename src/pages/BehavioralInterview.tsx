@@ -147,7 +147,7 @@ const BehavioralInterview = () => {
         setTimeout(() => {
           setIsSubmitting(false);
           navigate('/behavioral', { state: { interviewComplete: true } });
-        }, 1500); // A bit longer delay for the final navigation to ensure feedback completion
+        }, 15000); // A bit longer delay for the final navigation to ensure feedback completion
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
