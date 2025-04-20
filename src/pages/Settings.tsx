@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { Coins } from 'lucide-react';
 
 const Settings = () => {
   const { logout } = useAuthContext();
@@ -110,6 +112,30 @@ const Settings = () => {
       </div>
       
       <div className="grid gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Token Balance</CardTitle>
+            <CardDescription>
+              Manage your interview practice tokens
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Coins className="h-6 w-6 text-yellow-500" />
+              <span className="text-xl font-semibold">
+                {tokensLoading ? '—' : tokens ?? 0} tokens
+              </span>
+            </div>
+            <Button 
+              onClick={handleAddTokens}
+              disabled={isAddingTokens}
+              className="ml-4"
+            >
+              {isAddingTokens ? 'Adding...' : 'Add 10 Tokens'}
+            </Button>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <CardTitle>Password Settings</CardTitle>
