@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import { useAuthContext } from '@/context/AuthContext';
+import NavBar from '@/components/NavBar';
 
 const BehavioralFeedback = () => {
   const location = useLocation();
@@ -21,16 +21,11 @@ const BehavioralFeedback = () => {
   const [error, setError] = useState<string | null>(null);
   const { isAuthenticated, isLoading: authLoading } = useAuthContext();
 
-  // Get the interview ID from URL query parameter or location state
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
-  
-  // Check if we already have feedback in the location state
   const hasFeedbackInState = !!location.state?.feedback;
   const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
 
-  // Handle authentication check
   useEffect(() => {
-    // Only proceed with the redirect if authentication check is complete and user is not authenticated
     if (!authLoading && !isAuthenticated) {
       toast({
         variant: "destructive",
@@ -42,12 +37,10 @@ const BehavioralFeedback = () => {
   }, [authLoading, isAuthenticated, navigate, toast]);
 
   useEffect(() => {
-    // Don't fetch data if still checking authentication or if not authenticated
     if (authLoading || !isAuthenticated) {
       return;
     }
     
-    // If we already have the feedback in location state, use that instead of fetching
     if (hasFeedbackInState && hasQuestionsInState) {
       setFeedback(location.state.feedback);
       setQuestions(location.state.questions.map(String));
@@ -77,9 +70,7 @@ const BehavioralFeedback = () => {
           return;
         }
 
-        // Process the data - convert Json[] to string[] for questions
         const questionsData = data.questions as any[];
-        // Ensure we're setting an array of strings
         const processedQuestions = Array.isArray(questionsData) 
           ? questionsData.map(q => String(q)) 
           : [];
@@ -103,12 +94,10 @@ const BehavioralFeedback = () => {
     fetchInterviewData();
   }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state, authLoading, isAuthenticated]);
 
-  // If we're still checking authentication, show loading state
   if (authLoading) {
     return <Loading message="Checking authentication..." />;
   }
 
-  // If not authenticated, don't render anything (the useEffect will handle redirect)
   if (!isAuthenticated) {
     return null;
   }
@@ -135,32 +124,35 @@ const BehavioralFeedback = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6">
-      <div className="w-full max-w-4xl mx-auto">
-        <div className="mb-8">
-          <Button
-            variant="outline"
-            className="flex items-center gap-2"
-            onClick={() => navigate('/behavioral')}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Interview
-          </Button>
-        </div>
+    <>
+      <NavBar />
+      <div className="min-h-screen bg-white p-6">
+        <div className="w-full max-w-4xl mx-auto">
+          <div className="mb-8">
+            <Button
+              variant="outline"
+              className="flex items-center gap-2"
+              onClick={() => navigate('/behavioral')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Interview
+            </Button>
+          </div>
 
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="text-2xl text-center">Interview Feedback</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FeedbackOverview 
-              feedback={feedback} 
-              questions={questions} 
-            />
-          </CardContent>
-        </Card>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">Interview Feedback</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <FeedbackOverview 
+                feedback={feedback} 
+                questions={questions} 
+              />
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
