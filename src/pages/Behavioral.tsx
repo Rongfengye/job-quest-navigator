@@ -21,19 +21,12 @@ const Behavioral = () => {
           <CardContent className="flex flex-col items-center">
             <Button 
               className="w-full max-w-xs" 
-              onClick={() => navigate('/behavioral/test')}
+              onClick={() => navigate('/behavioral/create')}
             >
               Start
             </Button>
           </CardContent>
         </Card>
-        <Button 
-          variant="link" 
-          className="mt-4 text-primary hover:text-primary/80"
-          onClick={() => navigate('/behavioral/all')}
-        >
-          See all the questions
-        </Button>
       </div>
     </DashboardLayout>
   );

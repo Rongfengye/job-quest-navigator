@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Behavioral from "./pages/Behavioral";
 import BehavioralTest from "./pages/BehavioralTest";
+import CreateBehavioral from "./pages/CreateBehavioral";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/answer" element={<><NavBar /><AnswerPage /></>} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/behavioral" element={<Behavioral />} />
+            <Route path="/behavioral/create" element={<CreateBehavioral />} />
             <Route path="/behavioral/test" element={<BehavioralTest />} />
             <Route path="/behavioral/all" element={<Behavioral />} />
             <Route path="/profile" element={<Profile />} />
