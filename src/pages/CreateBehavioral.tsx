@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import FormField from '@/components/FormField';
 import { ArrowLeft } from 'lucide-react';
 import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
+import FileUpload from '@/components/FileUpload';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -16,6 +16,9 @@ const CreateBehavioral = () => {
     companyName: '',
     companyDescription: '',
   });
+  const [resumeFile, setResumeFile] = React.useState<File | null>(null);
+  const [coverLetterFile, setCoverLetterFile] = React.useState<File | null>(null);
+  const [additionalDocumentsFile, setAdditionalDocumentsFile] = React.useState<File | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -38,6 +41,21 @@ const CreateBehavioral = () => {
       companyName,
       companyDescription
     }));
+  };
+
+  const handleResumeChange = (file: File | null, text: string) => {
+    setResumeFile(file);
+    console.log("Resume text extracted:", text ? text.substring(0, 100) + "..." : "No text");
+  };
+
+  const handleCoverLetterChange = (file: File | null, text: string) => {
+    setCoverLetterFile(file);
+    console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
+  };
+
+  const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
+    setAdditionalDocumentsFile(file);
+    console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -69,7 +87,7 @@ const CreateBehavioral = () => {
         </div>
 
         <h1 className="text-3xl md:text-4xl font-bold mb-6 text-interview-primary text-center">
-          Create Interview Prep Material
+          Create Behavioral Interview Prep
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
@@ -119,6 +137,34 @@ const CreateBehavioral = () => {
             placeholder="Enter company description"
             isTextarea
           />
+
+          <div className="pt-4">
+            <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p>
+            
+            <div className="space-y-4">
+              <FileUpload
+                id="resume"
+                label="Resume"
+                required
+                onFileChange={handleResumeChange}
+                currentFile={resumeFile}
+              />
+
+              <FileUpload
+                id="coverLetter"
+                label="Cover Letter (Optional)"
+                onFileChange={handleCoverLetterChange}
+                currentFile={coverLetterFile}
+              />
+
+              <FileUpload
+                id="additionalDocuments"
+                label="Additional Documents (Optional)"
+                onFileChange={handleAdditionalDocumentsChange}
+                currentFile={additionalDocumentsFile}
+              />
+            </div>
+          </div>
 
           <Button 
             type="submit" 
