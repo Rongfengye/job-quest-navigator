@@ -110,7 +110,6 @@ const BehavioralInterview = () => {
     
     try {
       if (currentQuestionIndex === 4) {
-        // This is the last question, we need to make sure the answer is properly saved
         console.log('Final question submitted, saving answer before generating feedback...');
       }
       
@@ -143,11 +142,10 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
-        // We need to wait for the feedback to be generated before navigating
         setTimeout(() => {
           setIsSubmitting(false);
           navigate('/behavioral', { state: { interviewComplete: true } });
-        }, 15000); // A bit longer delay for the final navigation to ensure feedback completion
+        }, 15000);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);

@@ -97,7 +97,7 @@ serve(async (req) => {
         4. Professional communication
         5. Alignment with job requirements
         
-        Provide feedback in this format:
+        Provide feedback in JSON format with the following structure:
         {
           "pros": ["strength 1", "strength 2", ...],
           "cons": ["area for improvement 1", "area for improvement 2", ...],
