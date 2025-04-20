@@ -334,6 +334,7 @@ export const useBehavioralInterview = () => {
     submitAnswer,
     resetInterview,
     setInitialQuestions,
-    generateFeedback
+    generateFeedback,
+    behavioralId
   };
 };
