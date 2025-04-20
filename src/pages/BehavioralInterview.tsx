@@ -117,7 +117,7 @@ const BehavioralInterview = () => {
             setFeedbackData(feedback);
             setFeedbackGenerated(true);
             
-            navigate(`/behavioral/feedback?id=${behavioralId}`, { 
+            navigate(`/behavioralFeedback?id=${behavioralId}`, { 
               state: { 
                 questions,
                 answers,

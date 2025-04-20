@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -90,7 +89,7 @@ const Behavioral = () => {
                       <TableCell className="text-right">
                         <Button
                           variant="outline"
-                          onClick={() => navigate(`/behavioral/feedback?id=${interview.id}`)}
+                          onClick={() => navigate(`/behavioralFeedback?id=${interview.id}`)}
                         >
                           View Feedback
                         </Button>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -47,7 +48,7 @@ const App = () => (
             <Route path="/behavioral/all" element={<Behavioral />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/behavioral/feedback" element={<BehavioralFeedback />} />
+            <Route path="/behavioralFeedback" element={<BehavioralFeedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
