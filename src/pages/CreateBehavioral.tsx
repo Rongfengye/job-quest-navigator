@@ -26,6 +26,7 @@ const CreateBehavioral = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
+    console.log(`Updating form field ${name} with value: ${value.substring(0, 30)}...`);
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -33,6 +34,7 @@ const CreateBehavioral = () => {
   };
 
   const handleScrapedContent = (content: string) => {
+    console.log("Received scraped job description:", content.substring(0, 100) + "...");
     setFormData(prev => ({
       ...prev,
       jobDescription: content
@@ -40,10 +42,11 @@ const CreateBehavioral = () => {
   };
 
   const handleScrapedCompanyInfo = (companyName: string, companyDescription: string) => {
+    console.log("Received company info:", { companyName, companyDescription });
     setFormData(prev => ({
       ...prev,
-      companyName,
-      companyDescription
+      companyName: companyName || prev.companyName,
+      companyDescription: companyDescription || prev.companyDescription
     }));
   };
 
@@ -105,6 +108,11 @@ const CreateBehavioral = () => {
       }
     });
   };
+
+  // For debugging
+  React.useEffect(() => {
+    console.log("CreateBehavioral Form Data:", formData);
+  }, [formData]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">

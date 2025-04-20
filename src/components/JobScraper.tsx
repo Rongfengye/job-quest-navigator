@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Globe } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface JobScraperProps {
   onScrapedContent: (content: string) => void;
@@ -14,6 +14,7 @@ interface JobScraperProps {
 const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfoFound, className }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
@@ -62,6 +63,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
     companyName = companyName.trim();
     companyDescription = companyDescription.trim();
 
+    console.log("Found company info:", { companyName, companyDescription });
     return { companyName, companyDescription };
   };
 
@@ -80,6 +82,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
       // Use a CORS proxy to bypass CORS restrictions
       const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+      console.log("Fetching URL:", proxyUrl);
       const response = await fetch(proxyUrl);
       
       if (!response.ok) {
@@ -87,6 +90,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       }
 
       const data = await response.text();
+      console.log("Fetched data length:", data.length);
       
       // Extract the main content by removing HTML tags and normalizing whitespace
       const parser = new DOMParser();
@@ -111,8 +115,12 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           .replace(/\s+/g, ' ')
           .trim();
         
+        console.log("Extracted job description:", jobDescription.substring(0, 100) + "...");
+        
         // Pass the scraped content to the parent component
-        onScrapedContent(jobDescription);
+        if (jobDescription) {
+          onScrapedContent(jobDescription);
+        }
 
         // Find and pass company information if the callback exists
         if (onCompanyInfoFound) {
@@ -131,6 +139,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           description: "Successfully extracted job description from URL",
         });
       } else {
+        console.error("No content container found");
         throw new Error('Could not extract job description from the page');
       }
     } catch (err) {

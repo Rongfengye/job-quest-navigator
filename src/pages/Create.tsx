@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useNavigate } from 'react-router-dom';
@@ -35,6 +36,7 @@ const Create = () => {
   } = useCreateForm();
 
   const handleScrapedCompanyInfo = (companyName: string, companyDescription: string) => {
+    console.log("Received company info in Create.tsx:", { companyName, companyDescription });
     if (companyName) {
       handleInputChange({
         target: { name: 'companyName', value: companyName }
@@ -46,6 +48,11 @@ const Create = () => {
       } as React.ChangeEvent<HTMLTextAreaElement>);
     }
   };
+
+  // For debugging
+  React.useEffect(() => {
+    console.log("Create page Form Data:", formData);
+  }, [formData]);
 
   if (isLoading) {
     return (
