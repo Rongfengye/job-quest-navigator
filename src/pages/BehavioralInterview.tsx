@@ -9,6 +9,7 @@ import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
 import Loading from '@/components/ui/loading';
+import ProcessingModal from '@/components/ProcessingModal';
 import QuestionCard from '@/components/behavioral/QuestionCard';
 
 const BehavioralInterview = () => {
@@ -54,6 +55,8 @@ const BehavioralInterview = () => {
     startRecording,
     stopRecording
   } = useVoiceRecording(handleTranscription);
+
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   useEffect(() => {
     const initializeInterview = async () => {
@@ -146,27 +149,31 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
-        toast({
-          title: "Generating Feedback",
-          description: "Please wait while we analyze your responses...",
-        });
+        setShowFeedbackModal(true);
         
-        console.log('Navigating to feedback with:', {
-          questions,
-          answers,
-          behavioralId
-        });
-        
-        setTimeout(() => {
-          setIsSubmitting(false);
-          navigate('/behavioral/feedback', { 
-            state: { 
-              questions: questions,
-              answers: answers,
-              behavioralId: behavioralId
-            } 
+        try {
+          const feedback = await generateFeedback();
+          if (feedback) {
+            navigate('/behavioral/feedback', { 
+              state: { 
+                questions,
+                answers,
+                behavioralId
+              } 
+            });
+          } else {
+            throw new Error('Failed to generate feedback');
+          }
+        } catch (error) {
+          console.error('Error generating feedback:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to generate feedback. Please try again.",
           });
-        }, 1000);
+          setShowFeedbackModal(false);
+        }
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -260,6 +267,8 @@ const BehavioralInterview = () => {
           </Button>
         </div>
       </div>
+      
+      <ProcessingModal isOpen={showFeedbackModal} />
     </div>
   );
 };
