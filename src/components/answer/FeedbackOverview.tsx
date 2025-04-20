@@ -18,9 +18,21 @@ interface FeedbackOverviewProps {
 }
 
 const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions }) => {
-  const averageScore = Math.round(
-    feedback.reduce((sum, item) => sum + item.score, 0) / feedback.length
-  );
+  // Handle case when feedback is not properly formatted
+  if (!Array.isArray(feedback) || !Array.isArray(questions)) {
+    return (
+      <div className="p-4">
+        <h3 className="text-lg font-semibold text-red-600">
+          No feedback data available
+        </h3>
+        <p>Please complete the interview to receive feedback.</p>
+      </div>
+    );
+  }
+
+  const averageScore = feedback.length > 0 
+    ? Math.round(feedback.reduce((sum, item) => sum + (item.score || 0), 0) / feedback.length)
+    : 0;
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
@@ -41,9 +53,9 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
         <Card key={index} className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Question {index + 1}</CardTitle>
-            <p className="text-sm text-gray-600 mt-1">{questions[index]}</p>
-            <Badge className={`${getScoreColor(item.score)} text-white mt-2`}>
-              Score: {item.score}/100
+            <p className="text-sm text-gray-600 mt-1">{questions[index] || 'Question not available'}</p>
+            <Badge className={`${getScoreColor(item.score || 0)} text-white mt-2`}>
+              Score: {item.score || 0}/100
             </Badge>
           </CardHeader>
           <CardContent>
@@ -53,9 +65,11 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                   <CheckCircle className="h-4 w-4" /> Strengths
                 </h4>
                 <ul className="list-disc pl-5 mt-2 space-y-1">
-                  {item.pros.map((pro, idx) => (
+                  {Array.isArray(item.pros) ? item.pros.map((pro, idx) => (
                     <li key={idx} className="text-green-800">{pro}</li>
-                  ))}
+                  )) : (
+                    <li className="text-green-800">No strengths data available</li>
+                  )}
                 </ul>
               </div>
 
@@ -64,25 +78,33 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                   <XCircle className="h-4 w-4" /> Areas for Improvement
                 </h4>
                 <ul className="list-disc pl-5 mt-2 space-y-1">
-                  {item.cons.map((con, idx) => (
+                  {Array.isArray(item.cons) ? item.cons.map((con, idx) => (
                     <li key={idx} className="text-red-800">{con}</li>
-                  ))}
+                  )) : (
+                    <li className="text-red-800">No improvement data available</li>
+                  )}
                 </ul>
               </div>
 
               <div>
                 <h4 className="font-semibold">Suggestions</h4>
-                <p className="mt-1 text-gray-700">{item.suggestions}</p>
+                <p className="mt-1 text-gray-700">{item.suggestions || 'No suggestions available'}</p>
               </div>
 
               <div>
                 <h4 className="font-semibold">Overall Assessment</h4>
-                <p className="mt-1 text-gray-700">{item.overall}</p>
+                <p className="mt-1 text-gray-700">{item.overall || 'No overall assessment available'}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       ))}
+
+      {feedback.length === 0 && (
+        <div className="p-4 text-center">
+          <p className="text-gray-500">No feedback data available.</p>
+        </div>
+      )}
     </div>
   );
 };

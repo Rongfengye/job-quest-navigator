@@ -145,6 +145,11 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
+        toast({
+          title: "Generating Feedback",
+          description: "Please wait while we analyze your responses...",
+        });
+        
         setTimeout(() => {
           setIsSubmitting(false);
           navigate('/behavioral/feedback', { 
@@ -154,7 +159,7 @@ const BehavioralInterview = () => {
               answers: answers
             } 
           });
-        }, 15000);
+        }, 3000);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
