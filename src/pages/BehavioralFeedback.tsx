@@ -45,8 +45,14 @@ const BehavioralFeedback = () => {
           return;
         }
 
-        // Process the data
-        setQuestions(Array.isArray(data.questions) ? data.questions : []);
+        // Process the data - convert Json[] to string[] for questions
+        const questionsData = data.questions as any[];
+        // Ensure we're setting an array of strings
+        const processedQuestions = Array.isArray(questionsData) 
+          ? questionsData.map(q => String(q)) 
+          : [];
+          
+        setQuestions(processedQuestions);
         setFeedback(data.feedback);
         setIsLoading(false);
       } catch (err) {
