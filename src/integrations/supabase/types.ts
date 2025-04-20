@@ -132,6 +132,57 @@ export type Database = {
         }
         Relationships: []
       }
+      storyline_behaviorals: {
+        Row: {
+          additional_documents_path: string | null
+          company_description: string | null
+          company_name: string | null
+          cover_letter_path: string | null
+          created_at: string | null
+          feedback: Json | null
+          id: string
+          job_description: string
+          job_title: string
+          questions: Json | null
+          responses: Json | null
+          resume_path: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          additional_documents_path?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          cover_letter_path?: string | null
+          created_at?: string | null
+          feedback?: Json | null
+          id?: string
+          job_description: string
+          job_title: string
+          questions?: Json | null
+          responses?: Json | null
+          resume_path: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          additional_documents_path?: string | null
+          company_description?: string | null
+          company_name?: string | null
+          cover_letter_path?: string | null
+          created_at?: string | null
+          feedback?: Json | null
+          id?: string
+          job_description?: string
+          job_title?: string
+          questions?: Json | null
+          responses?: Json | null
+          resume_path?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       storyline_job_questions: {
         Row: {
           answer: string | null

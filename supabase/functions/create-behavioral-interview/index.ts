@@ -33,9 +33,6 @@ serve(async (req) => {
     } = await req.json();
 
     console.log('Generating question at index:', questionIndex);
-    console.log('Job title:', jobTitle);
-    console.log('Resume text length:', resumeText?.length || 0);
-    console.log('Previous questions count:', previousQuestions?.length || 0);
 
     let systemPrompt = '';
     
@@ -50,11 +47,8 @@ serve(async (req) => {
       3. Follows the format of "Tell me about a time when..." or similar open-ended behavioral question
       4. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
       
-      Also include a brief explanation of why this question is relevant for this role (not shown to the candidate).
-      
       Format your response as a JSON object with:
-      - 'question': The main interview question (string)
-      - 'explanation': Why this question is important for this role (string)`;
+      - 'question': The main interview question (string)`;
     } else {
       systemPrompt = `You are an experienced interviewer for a ${jobTitle} position conducting a behavioral interview.
       ${companyName ? `The company name is ${companyName}.` : ''}
@@ -73,11 +67,8 @@ serve(async (req) => {
       
       Make your question feel like a natural follow-up to the previous conversation, as if this were a real interview flow.
       
-      Also include a brief explanation of why this question is relevant at this point in the interview (not shown to the candidate).
-      
       Format your response as a JSON object with:
-      - 'question': The main interview question (string)
-      - 'explanation': Why this question is appropriate now (string)`;
+      - 'question': The main interview question (string)`;
     }
 
     const userPrompt = `
@@ -142,7 +133,6 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       question: parsedContent.question,
-      explanation: parsedContent.explanation || '',
       questionIndex: questionIndex
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

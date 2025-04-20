@@ -19,7 +19,7 @@ export const useBehavioralInterview = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const setInitialQuestions = (generatedData: any) => {
+  const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
     
     try {
@@ -43,7 +43,7 @@ export const useBehavioralInterview = () => {
       setCurrentQuestion(formattedQuestion);
       setIsLoading(false);
       
-      console.log('Set initial questions from pre-generated data:', questionTexts);
+      console.log('Set initial questions:', questionTexts);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
@@ -98,6 +98,14 @@ export const useBehavioralInterview = () => {
       console.log('Question generated:', data.question);
       setCurrentQuestion(data);
       
+      await supabase
+        .from('storyline_behaviorals')
+        .update({
+          questions: questions.concat(data.question),
+        })
+        .eq('job_title', formData.jobTitle)
+        .eq('job_description', formData.jobDescription);
+      
       return data;
     } catch (error) {
       console.error('Error in generateQuestion:', error);
@@ -112,26 +120,42 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  const submitAnswer = (answer: string) => {
+  const submitAnswer = async (answer: string) => {
     if (!currentQuestion) return;
     
-    const updatedQuestions = [...questions];
-    const updatedAnswers = [...answers];
-    
-    updatedQuestions[currentQuestionIndex] = currentQuestion.question;
-    updatedAnswers[currentQuestionIndex] = answer;
-    
-    setQuestions(updatedQuestions);
-    setAnswers(updatedAnswers);
-    
-    if (currentQuestionIndex >= 4) {
-      setInterviewComplete(true);
+    try {
+      const updatedQuestions = [...questions];
+      const updatedAnswers = [...answers];
+      
+      updatedQuestions[currentQuestionIndex] = currentQuestion.question;
+      updatedAnswers[currentQuestionIndex] = answer;
+      
+      setQuestions(updatedQuestions);
+      setAnswers(updatedAnswers);
+      
+      await supabase
+        .from('storyline_behaviorals')
+        .update({
+          responses: updatedAnswers,
+        })
+        .eq('id', currentQuestion.storylineId);
+      
+      if (currentQuestionIndex >= 4) {
+        setInterviewComplete(true);
+        toast({
+          title: "Interview Complete",
+          description: "You have completed all 5 behavioral interview questions!",
+        });
+      } else {
+        setCurrentQuestionIndex(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error submitting answer:', error);
       toast({
-        title: "Interview Complete",
-        description: "You have completed all 5 behavioral interview questions!",
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save your answer. Please try again.",
       });
-    } else {
-      setCurrentQuestionIndex(prev => prev + 1);
     }
   };
 
