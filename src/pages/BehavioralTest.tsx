@@ -18,7 +18,7 @@ const BehavioralTest = () => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const { extractedText: resumeText } = useResumeText();
+  const { resumeText } = useResumeText(null);
   
   // Get form data from location state or use defaults
   const formData = location.state?.formData || {
@@ -38,21 +38,16 @@ const BehavioralTest = () => {
     resetInterview
   } = useBehavioralInterview();
 
+  // Create a callback function for the voice recording hook
+  const handleTranscription = (text: string) => {
+    setAnswer(prev => prev ? `${prev}\n\n${text}` : text);
+  };
+
   const {
     isRecording,
-    recordingTime,
     startRecording,
-    stopRecording,
-    isProcessing,
-    transcribedText
-  } = useVoiceRecording();
-
-  // Add transcribed text to the answer when it becomes available
-  useEffect(() => {
-    if (transcribedText) {
-      setAnswer(prev => prev ? `${prev}\n\n${transcribedText}` : transcribedText);
-    }
-  }, [transcribedText]);
+    stopRecording
+  } = useVoiceRecording(handleTranscription);
 
   // Generate the first question when the page loads
   useEffect(() => {
@@ -73,7 +68,8 @@ const BehavioralTest = () => {
         }
         
         // Make sure we have resume text
-        if (!resumeText) {
+        const stateResumeText = location.state?.resumeText;
+        if (!stateResumeText && !resumeText) {
           toast({
             variant: "destructive",
             title: "Resume text missing",
@@ -87,7 +83,12 @@ const BehavioralTest = () => {
         const coverLetterText = location.state?.coverLetterText || '';
         const additionalDocumentsText = location.state?.additionalDocumentsText || '';
         
-        await generateQuestion(formData, resumeText, coverLetterText, additionalDocumentsText);
+        await generateQuestion(
+          formData, 
+          stateResumeText || resumeText, 
+          coverLetterText, 
+          additionalDocumentsText
+        );
       }
     };
     
@@ -130,8 +131,14 @@ const BehavioralTest = () => {
           
           const coverLetterText = location.state?.coverLetterText || '';
           const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+          const stateResumeText = location.state?.resumeText;
           
-          await generateQuestion(formData, resumeText, coverLetterText, additionalDocumentsText);
+          await generateQuestion(
+            formData, 
+            stateResumeText || resumeText, 
+            coverLetterText, 
+            additionalDocumentsText
+          );
           setIsSubmitting(false);
         }, 500);
       } else {
@@ -211,17 +218,11 @@ const BehavioralTest = () => {
               </label>
               
               <div className="flex items-center space-x-2">
-                {isRecording && (
-                  <span className="text-xs text-red-500">
-                    Recording: {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
-                  </span>
-                )}
                 <Button
                   type="button"
                   size="sm"
                   variant={isRecording ? "destructive" : "outline"}
                   onClick={toggleRecording}
-                  disabled={isProcessing}
                   className="flex items-center gap-1"
                 >
                   <Mic className="h-4 w-4" />
@@ -236,21 +237,14 @@ const BehavioralTest = () => {
               onChange={(e) => setAnswer(e.target.value)}
               className="min-h-[200px]"
               placeholder="Type your answer here..."
-              disabled={isProcessing}
             />
-            
-            {isProcessing && (
-              <p className="text-sm text-gray-500 mt-2">
-                Processing your recording...
-              </p>
-            )}
           </div>
         </div>
         
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || isLoading || isProcessing}
+            disabled={isSubmitting || isLoading}
             className="bg-interview-primary hover:bg-interview-dark text-white flex items-center gap-2"
           >
             {isSubmitting ? (

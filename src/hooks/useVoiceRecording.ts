@@ -5,7 +5,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
   const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [transcribedText, setTranscribedText] = useState('');
+  const [timerInterval, setTimerInterval] = useState<number | null>(null);
   const { toast } = useToast();
 
   const startRecording = useCallback(async () => {
@@ -14,13 +18,31 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
       const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
 
+      // Reset the recording timer
+      setRecordingTime(0);
+      
+      // Start a timer to track recording duration
+      const interval = window.setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
+      
+      setTimerInterval(interval);
+
       recorder.ondataavailable = (e) => {
         audioChunks.push(e.data);
       };
 
       recorder.onstop = async () => {
+        // Clear the timer
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          setTimerInterval(null);
+        }
+        
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
         const reader = new FileReader();
+        
+        setIsProcessing(true);
         
         reader.onloadend = async () => {
           const base64Audio = (reader.result as string).split(',')[1];
@@ -31,8 +53,15 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
             });
 
             if (error) throw error;
-            if (data.text) {
+            
+            if (data?.text) {
+              setTranscribedText(data.text);
               onTranscriptionComplete(data.text);
+              
+              toast({
+                title: "Transcription complete",
+                description: "Your speech has been converted to text"
+              });
             }
           } catch (error) {
             console.error('Transcription error:', error);
@@ -41,6 +70,8 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
               description: "Failed to transcribe audio. Please try again.",
               variant: "destructive"
             });
+          } finally {
+            setIsProcessing(false);
           }
         };
 
@@ -63,7 +94,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         variant: "destructive"
       });
     }
-  }, [onTranscriptionComplete, toast]);
+  }, [onTranscriptionComplete, toast, timerInterval]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorder && isRecording) {
@@ -72,12 +103,25 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
       setIsRecording(false);
       setMediaRecorder(null);
       
+      // Clear the timer if it's still running
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        setTimerInterval(null);
+      }
+      
       toast({
         title: "Processing",
         description: "Converting your speech to text..."
       });
     }
-  }, [mediaRecorder, isRecording, toast]);
+  }, [mediaRecorder, isRecording, toast, timerInterval]);
 
-  return { isRecording, startRecording, stopRecording };
+  return { 
+    isRecording, 
+    isProcessing, 
+    recordingTime,
+    transcribedText,
+    startRecording, 
+    stopRecording 
+  };
 };
