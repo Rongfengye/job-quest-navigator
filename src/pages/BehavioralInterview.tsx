@@ -41,7 +41,8 @@ const BehavioralInterview = () => {
     setInitialQuestions,
     generateFeedback,
     questions,
-    answers
+    answers,
+    behavioralId
   } = useBehavioralInterview();
 
   const handleTranscription = (text: string) => {
@@ -97,7 +98,7 @@ const BehavioralInterview = () => {
     };
     
     initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions]);
+  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
@@ -152,7 +153,8 @@ const BehavioralInterview = () => {
         
         console.log('Navigating to feedback with:', {
           questions,
-          answers
+          answers,
+          behavioralId
         });
         
         setTimeout(() => {
@@ -160,7 +162,8 @@ const BehavioralInterview = () => {
           navigate('/behavioral/feedback', { 
             state: { 
               questions: questions,
-              answers: answers
+              answers: answers,
+              behavioralId: behavioralId
             } 
           });
         }, 1000);
