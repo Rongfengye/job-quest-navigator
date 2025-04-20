@@ -13,7 +13,7 @@ interface FeedbackItem {
 }
 
 interface FeedbackOverviewProps {
-  feedback: FeedbackItem[];
+  feedback: (FeedbackItem | string)[];
   questions: string[];
 }
 
@@ -30,8 +30,24 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
     );
   }
 
-  const averageScore = feedback.length > 0 
-    ? Math.round(feedback.reduce((sum, item) => sum + (item.score || 0), 0) / feedback.length)
+  // Process feedback items, ensuring they're properly formatted
+  const processedFeedback = feedback.map((item, index) => {
+    // If the item is a string (just an answer) or not properly structured as a feedback item
+    if (typeof item === 'string' || !item || typeof item !== 'object' || !('score' in item)) {
+      // Return a basic feedback item
+      return {
+        pros: ['Your answer has been recorded'],
+        cons: ['Detailed feedback is still being processed'],
+        score: 50, // Default score
+        suggestions: 'Please check back later for detailed feedback.',
+        overall: typeof item === 'string' ? item : 'Answer recorded. Awaiting detailed feedback.',
+      };
+    }
+    return item as FeedbackItem;
+  });
+
+  const averageScore = processedFeedback.length > 0 
+    ? Math.round(processedFeedback.reduce((sum, item) => sum + (item.score || 0), 0) / processedFeedback.length)
     : 0;
 
   const getScoreColor = (score: number) => {
@@ -49,7 +65,7 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
         </Badge>
       </div>
 
-      {feedback.map((item, index) => (
+      {processedFeedback.map((item, index) => (
         <Card key={index} className="mb-6">
           <CardHeader>
             <CardTitle className="text-lg">Question {index + 1}</CardTitle>
@@ -100,7 +116,7 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
         </Card>
       ))}
 
-      {feedback.length === 0 && (
+      {processedFeedback.length === 0 && (
         <div className="p-4 text-center">
           <p className="text-gray-500">No feedback data available.</p>
         </div>

@@ -13,11 +13,18 @@ const BehavioralFeedback = () => {
   const { toast } = useToast();
   const { feedback, questions, answers } = location.state || { feedback: [], questions: [], answers: [] };
 
+  // Log what we received to better understand the structure
   useEffect(() => {
-    if (!location.state || !feedback || !questions || feedback.length === 0 || questions.length === 0) {
+    console.log('BehavioralFeedback page received state:', {
+      hasState: !!location.state,
+      feedbackData: feedback,
+      questionsData: questions,
+      answersData: answers
+    });
+    
+    if (!location.state || !questions || questions.length === 0) {
       console.error('Missing required data for feedback page:', { 
         hasState: !!location.state,
-        feedbackLength: feedback?.length,
         questionsLength: questions?.length
       });
       
@@ -32,10 +39,10 @@ const BehavioralFeedback = () => {
         navigate('/behavioral');
       }, 2000);
     }
-  }, [location.state, feedback, questions, navigate, toast]);
+  }, [location.state, feedback, questions, answers, navigate, toast]);
 
   // Show a loading state while checking data
-  if (!feedback || !questions || feedback.length === 0) {
+  if (!questions || questions.length === 0) {
     return (
       <div className="min-h-screen bg-white p-6 flex items-center justify-center">
         <div className="text-center">
@@ -72,7 +79,10 @@ const BehavioralFeedback = () => {
             <CardTitle className="text-2xl text-center">Interview Feedback</CardTitle>
           </CardHeader>
           <CardContent>
-            <FeedbackOverview feedback={feedback} questions={questions} />
+            <FeedbackOverview 
+              feedback={answers} 
+              questions={questions} 
+            />
           </CardContent>
         </Card>
       </div>

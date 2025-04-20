@@ -150,16 +150,20 @@ const BehavioralInterview = () => {
           description: "Please wait while we analyze your responses...",
         });
         
+        console.log('Navigating to feedback with:', {
+          questions,
+          answers
+        });
+        
         setTimeout(() => {
           setIsSubmitting(false);
           navigate('/behavioral/feedback', { 
             state: { 
-              feedback: answers,
               questions: questions,
               answers: answers
             } 
           });
-        }, 3000);
+        }, 1000);
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
