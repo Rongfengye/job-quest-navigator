@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
+import ProcessingModal from '@/components/ProcessingModal';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -23,6 +23,7 @@ const CreateBehavioral = () => {
   const [resumeText, setResumeText] = React.useState('');
   const [coverLetterText, setCoverLetterText] = React.useState('');
   const [additionalDocumentsText, setAdditionalDocumentsText] = React.useState('');
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -68,7 +69,7 @@ const CreateBehavioral = () => {
     console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!formData.jobTitle || !formData.jobDescription) {
@@ -98,24 +99,37 @@ const CreateBehavioral = () => {
       return;
     }
 
-    // Navigate to the behavioral interview page with the form data
-    navigate('/behavioral/interview', { // Updated route
-      state: {
-        formData,
-        resumeText,
-        coverLetterText,
-        additionalDocumentsText
-      }
-    });
+    setIsProcessing(true);
+
+    try {
+      // Navigate to the behavioral interview page with the form data
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate some processing time
+      navigate('/behavioral/interview', {
+        state: {
+          formData,
+          resumeText,
+          coverLetterText,
+          additionalDocumentsText
+        }
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "An error occurred while processing your request.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  // For debugging
   React.useEffect(() => {
     console.log("CreateBehavioral Form Data:", formData);
   }, [formData]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
+      <ProcessingModal isOpen={isProcessing} />
       <div className="w-full max-w-3xl mx-auto">
         <div className="mb-8">
           <Link to="/behavioral">
