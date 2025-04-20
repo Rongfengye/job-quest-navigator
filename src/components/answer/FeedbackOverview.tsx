@@ -1,0 +1,90 @@
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, XCircle } from 'lucide-react';
+
+interface FeedbackItem {
+  pros: string[];
+  cons: string[];
+  score: number;
+  suggestions: string;
+  overall: string;
+}
+
+interface FeedbackOverviewProps {
+  feedback: FeedbackItem[];
+  questions: string[];
+}
+
+const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions }) => {
+  const averageScore = Math.round(
+    feedback.reduce((sum, item) => sum + item.score, 0) / feedback.length
+  );
+
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'bg-green-500';
+    if (score >= 60) return 'bg-yellow-500';
+    return 'bg-red-500';
+  };
+
+  return (
+    <div className="space-y-6 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Interview Feedback</h2>
+        <Badge className={`${getScoreColor(averageScore)} text-white px-3 py-1`}>
+          Overall Score: {averageScore}/100
+        </Badge>
+      </div>
+
+      {feedback.map((item, index) => (
+        <Card key={index} className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Question {index + 1}</CardTitle>
+            <p className="text-sm text-gray-600 mt-1">{questions[index]}</p>
+            <Badge className={`${getScoreColor(item.score)} text-white mt-2`}>
+              Score: {item.score}/100
+            </Badge>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-green-700 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" /> Strengths
+                </h4>
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                  {item.pros.map((pro, idx) => (
+                    <li key={idx} className="text-green-800">{pro}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-red-700 flex items-center gap-2">
+                  <XCircle className="h-4 w-4" /> Areas for Improvement
+                </h4>
+                <ul className="list-disc pl-5 mt-2 space-y-1">
+                  {item.cons.map((con, idx) => (
+                    <li key={idx} className="text-red-800">{con}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-semibold">Suggestions</h4>
+                <p className="mt-1 text-gray-700">{item.suggestions}</p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold">Overall Assessment</h4>
+                <p className="mt-1 text-gray-700">{item.overall}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+};
+
+export default FeedbackOverview;

@@ -30,9 +30,59 @@ serve(async (req) => {
       previousQuestions,
       previousAnswers,
       questionIndex,
+      generateFeedback = false, // New flag to indicate if we should generate feedback
+      answers = [], // Array of all answers to generate feedback for
+      questions = [] // Array of all questions to generate feedback for
     } = await req.json();
 
-    console.log('Generating question at index:', questionIndex);
+    console.log('Request type:', generateFeedback ? 'Feedback Generation' : 'Question Generation');
+
+    if (generateFeedback) {
+      const feedbackPromises = questions.map(async (question, index) => {
+        const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle} position.
+        Your task is to provide detailed, constructive feedback on the candidate's response.
+        
+        Consider:
+        1. Use of the STAR method (Situation, Task, Action, Result)
+        2. Relevance to the question asked
+        3. Specificity and detail level
+        4. Professional communication
+        5. Alignment with job requirements
+        
+        Provide feedback in this format:
+        {
+          "pros": ["strength 1", "strength 2", ...],
+          "cons": ["area for improvement 1", "area for improvement 2", ...],
+          "score": <number between 0-100>,
+          "suggestions": "specific suggestions for improvement",
+          "overall": "brief overall assessment"
+        }`;
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              { role: 'user', content: `Question: ${question}\n\nAnswer: ${answers[index]}` }
+            ],
+            response_format: { type: "json_object" }
+          }),
+        });
+
+        const data = await response.json();
+        return JSON.parse(data.choices[0].message.content);
+      });
+
+      const feedbackResults = await Promise.all(feedbackPromises);
+      return new Response(JSON.stringify({ feedback: feedbackResults }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     let systemPrompt = '';
     

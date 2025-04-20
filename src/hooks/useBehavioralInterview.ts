@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -71,7 +70,6 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
-      // If it's the first question, create a new behavioral record
       if (currentQuestionIndex === 0 && !behavioralId) {
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
@@ -81,7 +79,7 @@ export const useBehavioralInterview = () => {
             job_description: formData.jobDescription,
             company_name: formData.companyName,
             company_description: formData.companyDescription,
-            resume_path: resumeText ? 'resume.txt' : '', // Simplified for now
+            resume_path: resumeText ? 'resume.txt' : '',
             cover_letter_path: coverLetterText ? 'cover_letter.txt' : null,
             additional_documents_path: additionalDocumentsText ? 'additional_docs.txt' : null
           })
@@ -124,7 +122,6 @@ export const useBehavioralInterview = () => {
       
       console.log('Question generated:', data.question);
       
-      // Set the current question with the behavioralId
       const questionData: BehavioralQuestionData = {
         ...data,
         storylineId: behavioralId || undefined
@@ -133,7 +130,6 @@ export const useBehavioralInterview = () => {
       setCurrentQuestion(questionData);
       
       if (behavioralId) {
-        // Update the questions array in the storyline_behaviorals table
         const updatedQuestions = [...questions];
         updatedQuestions[currentQuestionIndex] = data.question;
         
@@ -159,6 +155,53 @@ export const useBehavioralInterview = () => {
     }
   };
 
+  const generateFeedback = async () => {
+    setIsLoading(true);
+    try {
+      const { data: response, error } = await supabase.functions.invoke('create-behavioral-interview', {
+        body: {
+          generateFeedback: true,
+          questions,
+          answers,
+          jobTitle: location.state?.formData?.jobTitle || '',
+          jobDescription: location.state?.formData?.jobDescription || '',
+          companyName: location.state?.formData?.companyName || '',
+        },
+      });
+
+      if (error) {
+        throw new Error(`Error generating feedback: ${error.message}`);
+      }
+
+      if (!response || !response.feedback) {
+        throw new Error('No feedback was generated');
+      }
+
+      await supabase
+        .from('storyline_behaviorals')
+        .update({
+          feedback: response.feedback
+        })
+        .eq('id', behavioralId);
+
+      toast({
+        title: "Feedback Generated",
+        description: "Your interview responses have been evaluated.",
+      });
+
+      navigate('/behavioral', { state: { interviewComplete: true } });
+    } catch (error) {
+      console.error('Error in generateFeedback:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to generate feedback",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const submitAnswer = async (answer: string) => {
     if (!currentQuestion) return;
     
@@ -172,7 +215,6 @@ export const useBehavioralInterview = () => {
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
       
-      // Update the responses in the database if we have a behavioral ID
       if (behavioralId) {
         await supabase
           .from('storyline_behaviorals')
@@ -184,10 +226,7 @@ export const useBehavioralInterview = () => {
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
-        toast({
-          title: "Interview Complete",
-          description: "You have completed all 5 behavioral interview questions!",
-        });
+        await generateFeedback();
       } else {
         setCurrentQuestionIndex(prev => prev + 1);
       }
@@ -220,6 +259,7 @@ export const useBehavioralInterview = () => {
     generateQuestion,
     submitAnswer,
     resetInterview,
-    setInitialQuestions
+    setInitialQuestions,
+    generateFeedback
   };
 };
