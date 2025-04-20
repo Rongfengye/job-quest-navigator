@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
 import Loading from '@/components/ui/loading';
-import { QuestionCard } from '@/components/behavioral/QuestionCard';
+import QuestionCard from '@/components/behavioral/QuestionCard';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
