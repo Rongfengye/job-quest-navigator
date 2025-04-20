@@ -13,13 +13,13 @@ interface FeedbackItem {
 }
 
 interface FeedbackOverviewProps {
-  feedback: (FeedbackItem | string)[];
+  feedback: any;
   questions: string[];
 }
 
 const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions }) => {
   // Handle case when feedback is not properly formatted
-  if (!Array.isArray(feedback) || !Array.isArray(questions)) {
+  if (!feedback || !Array.isArray(questions) || questions.length === 0) {
     return (
       <div className="p-4">
         <h3 className="text-lg font-semibold text-red-600">
@@ -30,8 +30,11 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
     );
   }
 
+  // Convert feedback to array if it's not already
+  const feedbackArray = Array.isArray(feedback) ? feedback : [feedback];
+
   // Process feedback items, ensuring they're properly formatted
-  const processedFeedback = feedback.map((item, index) => {
+  const processedFeedback = feedbackArray.map((item, index) => {
     // If the item is a string (just an answer) or not properly structured as a feedback item
     if (typeof item === 'string' || !item || typeof item !== 'object' || !('score' in item)) {
       // Return a basic feedback item
