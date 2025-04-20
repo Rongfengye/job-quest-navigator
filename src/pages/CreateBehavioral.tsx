@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -7,6 +8,7 @@ import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
+import { supabase } from '@/integrations/supabase/client';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -27,7 +29,6 @@ const CreateBehavioral = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    console.log(`Updating form field ${name} with value: ${value.substring(0, 30)}...`);
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -35,7 +36,6 @@ const CreateBehavioral = () => {
   };
 
   const handleScrapedContent = (content: string) => {
-    console.log("Received scraped job description:", content.substring(0, 100) + "...");
     setFormData(prev => ({
       ...prev,
       jobDescription: content
@@ -43,7 +43,6 @@ const CreateBehavioral = () => {
   };
 
   const handleScrapedCompanyInfo = (companyName: string, companyDescription: string) => {
-    console.log("Received company info:", { companyName, companyDescription });
     setFormData(prev => ({
       ...prev,
       companyName: companyName || prev.companyName,
@@ -54,19 +53,16 @@ const CreateBehavioral = () => {
   const handleResumeChange = (file: File | null, text: string) => {
     setResumeFile(file);
     setResumeText(text);
-    console.log("Resume text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleCoverLetterChange = (file: File | null, text: string) => {
     setCoverLetterFile(file);
     setCoverLetterText(text);
-    console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
     setAdditionalDocumentsFile(file);
     setAdditionalDocumentsText(text);
-    console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -102,30 +98,51 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
-      // Navigate to the behavioral interview page with the form data
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate some processing time
+      // Call the Supabase function to generate interview questions
+      const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
+        body: {
+          jobTitle: formData.jobTitle,
+          jobDescription: formData.jobDescription,
+          companyName: formData.companyName,
+          companyDescription: formData.companyDescription,
+          resumeText,
+          coverLetterText,
+          additionalDocumentsText,
+          resumePath: resumeFile ? resumeFile.name : null,
+          coverLetterPath: coverLetterFile ? coverLetterFile.name : null,
+          additionalDocumentsPath: additionalDocumentsFile ? additionalDocumentsFile.name : null,
+        },
+      });
+
+      if (error) {
+        throw new Error(`Error generating questions: ${error.message}`);
+      }
+
+      if (!data) {
+        throw new Error('No data returned from the questions generator');
+      }
+
+      // Once we have the data, navigate to the interview page
       navigate('/behavioral/interview', {
         state: {
           formData,
           resumeText,
           coverLetterText,
-          additionalDocumentsText
+          additionalDocumentsText,
+          generatedQuestions: data
         }
       });
     } catch (error) {
+      console.error('Error generating interview questions:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An error occurred while processing your request.",
+        description: error instanceof Error ? error.message : "An error occurred while processing your request.",
       });
     } finally {
       setIsProcessing(false);
     }
   };
-
-  React.useEffect(() => {
-    console.log("CreateBehavioral Form Data:", formData);
-  }, [formData]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">

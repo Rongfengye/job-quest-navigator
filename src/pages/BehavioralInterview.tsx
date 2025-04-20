@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
+import Loading from '@/components/ui/loading';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -27,6 +29,9 @@ const BehavioralInterview = () => {
     companyDescription: 'A leading technology company.'
   };
 
+  // Check if we have pre-generated questions from the form submission
+  const generatedQuestions = location.state?.generatedQuestions;
+
   const {
     isLoading,
     currentQuestionIndex,
@@ -34,7 +39,8 @@ const BehavioralInterview = () => {
     interviewComplete,
     generateQuestion,
     submitAnswer,
-    resetInterview
+    resetInterview,
+    setInitialQuestions
   } = useBehavioralInterview();
 
   // Create a callback function for the voice recording hook
@@ -48,7 +54,7 @@ const BehavioralInterview = () => {
     stopRecording
   } = useVoiceRecording(handleTranscription);
 
-  // Generate the first question when the page loads
+  // Initialize the interview when the page loads
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
@@ -66,33 +72,39 @@ const BehavioralInterview = () => {
           return;
         }
         
-        // Make sure we have resume text
-        const stateResumeText = location.state?.resumeText;
-        if (!stateResumeText && !resumeText) {
-          toast({
-            variant: "destructive",
-            title: "Resume text missing",
-            description: "We couldn't extract text from your resume. Please try again.",
-          });
-          navigate('/behavioral/create');
-          return;
+        // Check if we already have questions from the form submission
+        if (generatedQuestions) {
+          // Use the pre-generated questions
+          setInitialQuestions(generatedQuestions);
+        } else {
+          // Make sure we have resume text
+          const stateResumeText = location.state?.resumeText;
+          if (!stateResumeText && !resumeText) {
+            toast({
+              variant: "destructive",
+              title: "Resume text missing",
+              description: "We couldn't extract text from your resume. Please try again.",
+            });
+            navigate('/behavioral/create');
+            return;
+          }
+          
+          // Generate the first question
+          const coverLetterText = location.state?.coverLetterText || '';
+          const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+          
+          await generateQuestion(
+            formData, 
+            stateResumeText || resumeText, 
+            coverLetterText, 
+            additionalDocumentsText
+          );
         }
-        
-        // Generate the first question
-        const coverLetterText = location.state?.coverLetterText || '';
-        const additionalDocumentsText = location.state?.additionalDocumentsText || '';
-        
-        await generateQuestion(
-          formData, 
-          stateResumeText || resumeText, 
-          coverLetterText, 
-          additionalDocumentsText
-        );
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast]);
+  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions]);
 
   // Handle question submission
   const handleSubmit = async () => {
@@ -166,14 +178,7 @@ const BehavioralInterview = () => {
   };
 
   if (isLoading && !currentQuestion) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-interview-primary mx-auto mb-4"></div>
-          <p>Generating your interview question...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="Preparing your interview questions..." />;
   }
 
   return (

@@ -21,6 +21,48 @@ export const useBehavioralInterview = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Set initial questions from pre-generated data
+  const setInitialQuestions = (generatedData: any) => {
+    if (!generatedData) return;
+    
+    try {
+      // Extract questions from the generated data
+      const technicalQuestions = generatedData.technicalQuestions || [];
+      const behavioralQuestions = generatedData.behavioralQuestions || [];
+      const allQuestions = [...technicalQuestions, ...behavioralQuestions].slice(0, 5);
+      
+      if (allQuestions.length === 0) {
+        throw new Error('No questions found in the generated data');
+      }
+      
+      // Format the first question
+      const firstQuestion = allQuestions[0];
+      const formattedQuestion: BehavioralQuestionData = {
+        question: firstQuestion.question,
+        explanation: firstQuestion.explanation || '',
+        keyPoints: firstQuestion.modelAnswer 
+          ? [`Recommended approach: ${firstQuestion.modelAnswer}`] 
+          : [],
+        questionIndex: 0
+      };
+      
+      // Store the questions for later use
+      const questionTexts = allQuestions.map((q: any) => q.question);
+      setQuestions(questionTexts);
+      setCurrentQuestion(formattedQuestion);
+      setIsLoading(false);
+      
+      console.log('Set initial questions from pre-generated data:', questionTexts);
+    } catch (error) {
+      console.error('Error setting initial questions:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to process the generated questions. Please try again.",
+      });
+    }
+  };
+
   // Generate the first or next question
   const generateQuestion = async (
     formData: {
@@ -125,6 +167,7 @@ export const useBehavioralInterview = () => {
     interviewComplete,
     generateQuestion,
     submitAnswer,
-    resetInterview
+    resetInterview,
+    setInitialQuestions
   };
 };
