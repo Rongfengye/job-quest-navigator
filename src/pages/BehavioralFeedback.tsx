@@ -8,6 +8,7 @@ import FeedbackOverview from '@/components/answer/FeedbackOverview';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
+import { useAuthContext } from '@/context/AuthContext';
 
 const BehavioralFeedback = () => {
   const location = useLocation();
@@ -18,6 +19,7 @@ const BehavioralFeedback = () => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
 
   // Get the interview ID from URL query parameter or location state
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
@@ -26,7 +28,25 @@ const BehavioralFeedback = () => {
   const hasFeedbackInState = !!location.state?.feedback;
   const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
 
+  // Handle authentication check
   useEffect(() => {
+    // Only proceed with the redirect if authentication check is complete and user is not authenticated
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to view feedback.",
+      });
+      navigate('/', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, toast]);
+
+  useEffect(() => {
+    // Don't fetch data if still checking authentication or if not authenticated
+    if (authLoading || !isAuthenticated) {
+      return;
+    }
+    
     // If we already have the feedback in location state, use that instead of fetching
     if (hasFeedbackInState && hasQuestionsInState) {
       setFeedback(location.state.feedback);
@@ -81,7 +101,17 @@ const BehavioralFeedback = () => {
     };
 
     fetchInterviewData();
-  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state]);
+  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state, authLoading, isAuthenticated]);
+
+  // If we're still checking authentication, show loading state
+  if (authLoading) {
+    return <Loading message="Checking authentication..." />;
+  }
+
+  // If not authenticated, don't render anything (the useEffect will handle redirect)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (isLoading) {
     return <Loading message="Loading feedback data..." />;
