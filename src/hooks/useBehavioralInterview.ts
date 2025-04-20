@@ -167,17 +167,26 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  const generateFeedback = async () => {
+  const generateFeedback = async (providedAnswers?: string[]) => {
     setIsLoading(true);
     try {
+      // Use either the provided answers or the current state answers
+      const answersToUse = providedAnswers || answers;
+      
       // Ensure we have all 5 questions and answers
-      if (questions.length < 5 || answers.length < 5) {
+      if (questions.length < 5 || answersToUse.length < 5) {
         console.error('Not enough questions or answers to generate feedback', {
           questionsCount: questions.length,
-          answersCount: answers.length
+          answersCount: answersToUse.length
         });
         throw new Error(`Not enough questions or answers to generate feedback. 
-          Questions: ${questions.length}, Answers: ${answers.length}`);
+          Questions: ${questions.length}, Answers: ${answersToUse.length}`);
+      }
+      
+      // Verify that all answers are non-empty
+      if (!answersToUse.every(a => a?.trim())) {
+        console.error('One or more answers are empty', answersToUse);
+        throw new Error('Cannot generate feedback: one or more answers are empty');
       }
       
       // Get the job data from location state or use default values
@@ -188,13 +197,13 @@ export const useBehavioralInterview = () => {
       };
 
       console.log('Generating feedback for questions:', questions);
-      console.log('Generating feedback for answers:', answers);
+      console.log('Generating feedback for answers:', answersToUse);
 
       const { data: response, error } = await supabase.functions.invoke('create-behavioral-interview', {
         body: {
           generateFeedback: true,
           questions,
-          answers,
+          answers: answersToUse,
           jobTitle: jobData.jobTitle,
           jobDescription: jobData.jobDescription,
           companyName: jobData.companyName,
@@ -270,16 +279,16 @@ export const useBehavioralInterview = () => {
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
+        console.log('Final answer submitted, all answers:', updatedAnswers);
         
-        // Make sure the answers array is updated in state before generating feedback
-        setAnswers(updatedAnswers);
-        
-        // Short delay to ensure the state is updated
+        // Generate feedback with the full set of answers including the latest one
         setTimeout(async () => {
           try {
             // Double-check that we have 5 answers before proceeding
             if (updatedAnswers.length === 5 && updatedAnswers.every(a => a)) {
-              await generateFeedback();
+              console.log('Generating feedback with updated answers array:', updatedAnswers);
+              // Pass the updated answers directly to generateFeedback instead of relying on state
+              await generateFeedback(updatedAnswers);
             } else {
               console.error('Still missing complete answers after delay', updatedAnswers);
               toast({
@@ -291,7 +300,7 @@ export const useBehavioralInterview = () => {
           } catch (feedbackError) {
             console.error('Error in delayed feedback generation:', feedbackError);
           }
-        }, 500);
+        }, 1000);
       } else {
         setCurrentQuestionIndex(prev => prev + 1);
       }

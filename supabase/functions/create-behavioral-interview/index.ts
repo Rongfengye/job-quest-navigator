@@ -53,13 +53,27 @@ serve(async (req) => {
       if (questions.length < 5 || answers.length < 5) {
         console.error('Not enough questions or answers for feedback generation:', { 
           questionsCount: questions.length, 
-          answersCount: answers.length 
+          answersCount: answers.length,
+          questions,
+          answers
         });
         throw new Error(`Not enough questions or answers to generate feedback. 
           Questions: ${questions.length}, Answers: ${answers.length}`);
       }
 
       console.log(`Generating feedback for ${questions.length} questions and ${answers.length} answers`);
+      
+      // Validate all array entries
+      for (let i = 0; i < 5; i++) {
+        if (!questions[i] || typeof questions[i] !== 'string' || !questions[i].trim()) {
+          console.error(`Invalid question at index ${i}:`, questions[i]);
+          throw new Error(`Invalid question at index ${i}`);
+        }
+        if (!answers[i] || typeof answers[i] !== 'string' || !answers[i].trim()) {
+          console.error(`Invalid answer at index ${i}:`, answers[i]);
+          throw new Error(`Invalid answer at index ${i}`);
+        }
+      }
 
       // Make sure we have the same number of questions and answers
       const feedbackLength = Math.min(questions.length, answers.length);
