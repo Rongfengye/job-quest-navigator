@@ -98,8 +98,8 @@ const CreateBehavioral = () => {
       return;
     }
 
-    // Navigate to the behavioral test page with the form data
-    navigate('/behavioral/test', {
+    // Navigate to the behavioral interview page with the form data
+    navigate('/behavioral/interview', { // Updated route
       state: {
         formData,
         resumeText,

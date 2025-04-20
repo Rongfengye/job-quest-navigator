@@ -1,3 +1,5 @@
+
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,7 +16,7 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Behavioral from "./pages/Behavioral";
-import BehavioralTest from "./pages/BehavioralTest";
+import BehavioralInterview from "./pages/BehavioralInterview"; // Rename the page component
 import CreateBehavioral from "./pages/CreateBehavioral";
 
 const queryClient = new QueryClient({
@@ -41,7 +43,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/behavioral" element={<Behavioral />} />
             <Route path="/behavioral/create" element={<CreateBehavioral />} />
-            <Route path="/behavioral/test" element={<BehavioralTest />} />
+            <Route path="/behavioral/interview" element={<BehavioralInterview />} /> {/* Updated route */}
             <Route path="/behavioral/all" element={<Behavioral />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/settings" element={<Settings />} />
