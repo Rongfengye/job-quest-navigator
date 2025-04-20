@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
@@ -38,7 +39,26 @@ serve(async (req) => {
     console.log('Request type:', generateFeedback ? 'Feedback Generation' : 'Question Generation');
 
     if (generateFeedback) {
-      const feedbackPromises = questions.map(async (question, index) => {
+      // Safety check: make sure questions and answers arrays are valid
+      if (!Array.isArray(questions) || !Array.isArray(answers) || questions.length === 0 || answers.length === 0) {
+        console.error('Invalid inputs for feedback generation:', { questions, answers });
+        throw new Error('Invalid questions or answers data provided for feedback generation');
+      }
+
+      console.log(`Generating feedback for ${questions.length} questions and ${answers.length} answers`);
+
+      // Make sure we have the same number of questions and answers
+      const feedbackLength = Math.min(questions.length, answers.length);
+      
+      const feedbackPromises = [];
+      
+      // Only process questions that have corresponding answers
+      for (let index = 0; index < feedbackLength; index++) {
+        if (!questions[index] || !answers[index]) {
+          console.log(`Skipping feedback for index ${index} due to missing question or answer`);
+          continue;
+        }
+        
         const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle} position.
         Your task is to provide detailed, constructive feedback on the candidate's response.
         
@@ -58,7 +78,9 @@ serve(async (req) => {
           "overall": "brief overall assessment"
         }`;
 
-        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        console.log(`Processing feedback for question ${index + 1}: ${questions[index].substring(0, 50)}...`);
+
+        const feedbackPromise = fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${openAIApiKey}`,
@@ -68,17 +90,70 @@ serve(async (req) => {
             model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: systemPrompt },
-              { role: 'user', content: `Question: ${question}\n\nAnswer: ${answers[index]}` }
+              { role: 'user', content: `Question: ${questions[index]}\n\nAnswer: ${answers[index]}` }
             ],
             response_format: { type: "json_object" }
           }),
-        });
+        }).then(response => response.json())
+          .then(data => {
+            if (data.error) {
+              console.error(`Error from OpenAI for question ${index + 1}:`, data.error);
+              // Return a default feedback object if there's an error
+              return {
+                pros: ["Unable to analyze response"],
+                cons: ["Error generating feedback"],
+                score: 0,
+                suggestions: "Please try again later.",
+                overall: "Error in feedback generation"
+              };
+            }
+            
+            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+              console.error(`Unexpected response format from OpenAI for question ${index + 1}:`, data);
+              // Return a default feedback object
+              return {
+                pros: ["Unable to analyze response"],
+                cons: ["Unexpected response format"],
+                score: 0,
+                suggestions: "Please try again later.",
+                overall: "Error in feedback generation"
+              };
+            }
+            
+            try {
+              return JSON.parse(data.choices[0].message.content);
+            } catch (parseError) {
+              console.error(`Error parsing OpenAI response for question ${index + 1}:`, parseError);
+              console.log('Raw response:', data.choices[0].message.content);
+              // Return a default feedback object
+              return {
+                pros: ["Unable to analyze response"],
+                cons: ["Error parsing feedback"],
+                score: 0,
+                suggestions: "Please try again later.",
+                overall: "Error in feedback generation"
+              };
+            }
+          })
+          .catch(error => {
+            console.error(`Network error while getting feedback for question ${index + 1}:`, error);
+            // Return a default feedback object
+            return {
+              pros: ["Unable to analyze response"],
+              cons: ["Network error"],
+              score: 0,
+              suggestions: "Please try again later.",
+              overall: "Error in feedback generation"
+            };
+          });
+        
+        feedbackPromises.push(feedbackPromise);
+      }
 
-        const data = await response.json();
-        return JSON.parse(data.choices[0].message.content);
-      });
-
+      // Wait for all feedback to be generated
       const feedbackResults = await Promise.all(feedbackPromises);
+      console.log(`Successfully generated ${feedbackResults.length} feedback entries`);
+
       return new Response(JSON.stringify({ feedback: feedbackResults }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

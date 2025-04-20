@@ -170,11 +170,24 @@ export const useBehavioralInterview = () => {
   const generateFeedback = async () => {
     setIsLoading(true);
     try {
+      // Ensure we have all 5 questions and answers
+      if (questions.length < 5 || answers.length < 5) {
+        console.error('Not enough questions or answers to generate feedback', {
+          questionsCount: questions.length,
+          answersCount: answers.length
+        });
+        throw new Error('Not enough questions or answers to generate feedback');
+      }
+      
+      // Get the job data from location state or use default values
       const jobData = locationState?.formData || {
         jobTitle: '',
         jobDescription: '',
         companyName: '',
       };
+
+      console.log('Generating feedback for questions:', questions);
+      console.log('Generating feedback for answers:', answers);
 
       const { data: response, error } = await supabase.functions.invoke('create-behavioral-interview', {
         body: {
@@ -195,12 +208,21 @@ export const useBehavioralInterview = () => {
         throw new Error('No feedback was generated');
       }
 
-      await supabase
-        .from('storyline_behaviorals')
-        .update({
-          feedback: response.feedback
-        })
-        .eq('id', behavioralId);
+      console.log('Feedback received:', response.feedback);
+
+      // Update the database with the feedback
+      if (behavioralId) {
+        const updateResult = await supabase
+          .from('storyline_behaviorals')
+          .update({
+            feedback: response.feedback
+          })
+          .eq('id', behavioralId);
+          
+        if (updateResult.error) {
+          console.error('Error saving feedback to database:', updateResult.error);
+        }
+      }
 
       toast({
         title: "Feedback Generated",
@@ -208,6 +230,7 @@ export const useBehavioralInterview = () => {
       });
 
       navigate('/behavioral', { state: { interviewComplete: true } });
+      return response.feedback;
     } catch (error) {
       console.error('Error in generateFeedback:', error);
       toast({
@@ -215,6 +238,7 @@ export const useBehavioralInterview = () => {
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate feedback",
       });
+      return null;
     } finally {
       setIsLoading(false);
     }
