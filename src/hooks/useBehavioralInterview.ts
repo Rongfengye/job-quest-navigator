@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -8,6 +9,15 @@ interface BehavioralQuestionData {
   explanation?: string;
   questionIndex: number;
   storylineId?: string;
+}
+
+interface LocationState {
+  formData?: {
+    jobTitle: string;
+    jobDescription: string;
+    companyName: string;
+    companyDescription: string;
+  };
 }
 
 export const useBehavioralInterview = () => {
@@ -20,6 +30,8 @@ export const useBehavioralInterview = () => {
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as LocationState | null;
 
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
@@ -158,14 +170,20 @@ export const useBehavioralInterview = () => {
   const generateFeedback = async () => {
     setIsLoading(true);
     try {
+      const jobData = locationState?.formData || {
+        jobTitle: '',
+        jobDescription: '',
+        companyName: '',
+      };
+
       const { data: response, error } = await supabase.functions.invoke('create-behavioral-interview', {
         body: {
           generateFeedback: true,
           questions,
           answers,
-          jobTitle: location.state?.formData?.jobTitle || '',
-          jobDescription: location.state?.formData?.jobDescription || '',
-          companyName: location.state?.formData?.companyName || '',
+          jobTitle: jobData.jobTitle,
+          jobDescription: jobData.jobDescription,
+          companyName: jobData.companyName,
         },
       });
 
