@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -5,8 +6,9 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface BehavioralQuestionData {
   question: string;
-  explanation: string;
+  explanation?: string;
   questionIndex: number;
+  storylineId?: string;
 }
 
 export const useBehavioralInterview = () => {
@@ -16,6 +18,7 @@ export const useBehavioralInterview = () => {
   const [answers, setAnswers] = useState<string[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
+  const [behavioralId, setBehavioralId] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -68,6 +71,30 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
+      // If it's the first question, create a new behavioral record
+      if (currentQuestionIndex === 0 && !behavioralId) {
+        const { data: behavioralData, error: behavioralError } = await supabase
+          .from('storyline_behaviorals')
+          .insert({
+            user_id: (await supabase.auth.getUser()).data.user?.id,
+            job_title: formData.jobTitle,
+            job_description: formData.jobDescription,
+            company_name: formData.companyName,
+            company_description: formData.companyDescription,
+            resume_path: resumeText ? 'resume.txt' : '', // Simplified for now
+            cover_letter_path: coverLetterText ? 'cover_letter.txt' : null,
+            additional_documents_path: additionalDocumentsText ? 'additional_docs.txt' : null
+          })
+          .select('id')
+          .single();
+          
+        if (behavioralError) {
+          throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
+        }
+        
+        setBehavioralId(behavioralData.id);
+      }
+      
       const requestBody = {
         jobTitle: formData.jobTitle,
         jobDescription: formData.jobDescription,
@@ -96,15 +123,27 @@ export const useBehavioralInterview = () => {
       }
       
       console.log('Question generated:', data.question);
-      setCurrentQuestion(data);
       
-      await supabase
-        .from('storyline_behaviorals')
-        .update({
-          questions: questions.concat(data.question),
-        })
-        .eq('job_title', formData.jobTitle)
-        .eq('job_description', formData.jobDescription);
+      // Set the current question with the behavioralId
+      const questionData: BehavioralQuestionData = {
+        ...data,
+        storylineId: behavioralId || undefined
+      };
+      
+      setCurrentQuestion(questionData);
+      
+      if (behavioralId) {
+        // Update the questions array in the storyline_behaviorals table
+        const updatedQuestions = [...questions];
+        updatedQuestions[currentQuestionIndex] = data.question;
+        
+        await supabase
+          .from('storyline_behaviorals')
+          .update({
+            questions: updatedQuestions
+          })
+          .eq('id', behavioralId);
+      }
       
       return data;
     } catch (error) {
@@ -133,12 +172,15 @@ export const useBehavioralInterview = () => {
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
       
-      await supabase
-        .from('storyline_behaviorals')
-        .update({
-          responses: updatedAnswers,
-        })
-        .eq('id', currentQuestion.storylineId);
+      // Update the responses in the database if we have a behavioral ID
+      if (behavioralId) {
+        await supabase
+          .from('storyline_behaviorals')
+          .update({
+            responses: updatedAnswers
+          })
+          .eq('id', behavioralId);
+      }
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
@@ -165,6 +207,7 @@ export const useBehavioralInterview = () => {
     setAnswers([]);
     setCurrentQuestion(null);
     setInterviewComplete(false);
+    setBehavioralId(null);
   };
 
   return {
