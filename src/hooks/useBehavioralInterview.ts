@@ -176,7 +176,8 @@ export const useBehavioralInterview = () => {
           questionsCount: questions.length,
           answersCount: answers.length
         });
-        throw new Error('Not enough questions or answers to generate feedback');
+        throw new Error(`Not enough questions or answers to generate feedback. 
+          Questions: ${questions.length}, Answers: ${answers.length}`);
       }
       
       // Get the job data from location state or use default values
@@ -257,6 +258,7 @@ export const useBehavioralInterview = () => {
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
       
+      // Save the answer to the database first
       if (behavioralId) {
         await supabase
           .from('storyline_behaviorals')
@@ -268,7 +270,28 @@ export const useBehavioralInterview = () => {
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
-        await generateFeedback();
+        
+        // Make sure the answers array is updated in state before generating feedback
+        setAnswers(updatedAnswers);
+        
+        // Short delay to ensure the state is updated
+        setTimeout(async () => {
+          try {
+            // Double-check that we have 5 answers before proceeding
+            if (updatedAnswers.length === 5 && updatedAnswers.every(a => a)) {
+              await generateFeedback();
+            } else {
+              console.error('Still missing complete answers after delay', updatedAnswers);
+              toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not generate feedback: missing answers",
+              });
+            }
+          } catch (feedbackError) {
+            console.error('Error in delayed feedback generation:', feedbackError);
+          }
+        }, 500);
       } else {
         setCurrentQuestionIndex(prev => prev + 1);
       }

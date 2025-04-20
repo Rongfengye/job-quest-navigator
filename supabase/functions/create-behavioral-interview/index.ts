@@ -20,6 +20,9 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, supabaseKey);
 
   try {
+    const requestBody = await req.json();
+    console.log('Request type:', requestBody.generateFeedback ? 'Feedback Generation' : 'Question Generation');
+
     const {
       jobTitle,
       jobDescription,
@@ -31,18 +34,29 @@ serve(async (req) => {
       previousQuestions,
       previousAnswers,
       questionIndex,
-      generateFeedback = false, // New flag to indicate if we should generate feedback
-      answers = [], // Array of all answers to generate feedback for
-      questions = [] // Array of all questions to generate feedback for
-    } = await req.json();
-
-    console.log('Request type:', generateFeedback ? 'Feedback Generation' : 'Question Generation');
+      generateFeedback = false,
+      answers = [],
+      questions = []
+    } = requestBody;
 
     if (generateFeedback) {
       // Safety check: make sure questions and answers arrays are valid
-      if (!Array.isArray(questions) || !Array.isArray(answers) || questions.length === 0 || answers.length === 0) {
-        console.error('Invalid inputs for feedback generation:', { questions, answers });
+      if (!Array.isArray(questions) || !Array.isArray(answers)) {
+        console.error('Invalid inputs for feedback generation:', { 
+          questionsIsArray: Array.isArray(questions), 
+          answersIsArray: Array.isArray(answers) 
+        });
         throw new Error('Invalid questions or answers data provided for feedback generation');
+      }
+      
+      // Check if we have enough questions and answers to generate feedback
+      if (questions.length < 5 || answers.length < 5) {
+        console.error('Not enough questions or answers for feedback generation:', { 
+          questionsCount: questions.length, 
+          answersCount: answers.length 
+        });
+        throw new Error(`Not enough questions or answers to generate feedback. 
+          Questions: ${questions.length}, Answers: ${answers.length}`);
       }
 
       console.log(`Generating feedback for ${questions.length} questions and ${answers.length} answers`);
@@ -59,7 +73,7 @@ serve(async (req) => {
           continue;
         }
         
-        const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle} position.
+        const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle || 'professional'} position.
         Your task is to provide detailed, constructive feedback on the candidate's response.
         
         Consider:
@@ -79,6 +93,7 @@ serve(async (req) => {
         }`;
 
         console.log(`Processing feedback for question ${index + 1}: ${questions[index].substring(0, 50)}...`);
+        console.log(`Processing answer ${index + 1}: ${answers[index].substring(0, 50)}...`);
 
         const feedbackPromise = fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -153,6 +168,10 @@ serve(async (req) => {
       // Wait for all feedback to be generated
       const feedbackResults = await Promise.all(feedbackPromises);
       console.log(`Successfully generated ${feedbackResults.length} feedback entries`);
+
+      if (!feedbackResults || feedbackResults.length === 0) {
+        throw new Error('Failed to generate any feedback results');
+      }
 
       return new Response(JSON.stringify({ feedback: feedbackResults }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

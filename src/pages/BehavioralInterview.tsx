@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
 import Loading from '@/components/ui/loading';
+import { QuestionCard } from '@/components/behavioral/QuestionCard';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -108,7 +110,12 @@ const BehavioralInterview = () => {
     setIsSubmitting(true);
     
     try {
-      submitAnswer(answer);
+      if (currentQuestionIndex === 4) {
+        // This is the last question, we need to make sure the answer is properly saved
+        console.log('Final question submitted, saving answer before generating feedback...');
+      }
+      
+      await submitAnswer(answer);
       setAnswer('');
       
       if (currentQuestionIndex < 4) {
@@ -137,8 +144,11 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
-        setIsSubmitting(false);
-        navigate('/behavioral', { state: { interviewComplete: true } });
+        // We need to wait for the feedback to be generated before navigating
+        setTimeout(() => {
+          setIsSubmitting(false);
+          navigate('/behavioral', { state: { interviewComplete: true } });
+        }, 1500); // A bit longer delay for the final navigation to ensure feedback completion
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
