@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,9 @@ const CreateBehavioral = () => {
   const [resumeFile, setResumeFile] = React.useState<File | null>(null);
   const [coverLetterFile, setCoverLetterFile] = React.useState<File | null>(null);
   const [additionalDocumentsFile, setAdditionalDocumentsFile] = React.useState<File | null>(null);
+  const [resumeText, setResumeText] = React.useState('');
+  const [coverLetterText, setCoverLetterText] = React.useState('');
+  const [additionalDocumentsText, setAdditionalDocumentsText] = React.useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -45,16 +49,19 @@ const CreateBehavioral = () => {
 
   const handleResumeChange = (file: File | null, text: string) => {
     setResumeFile(file);
+    setResumeText(text);
     console.log("Resume text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleCoverLetterChange = (file: File | null, text: string) => {
     setCoverLetterFile(file);
+    setCoverLetterText(text);
     console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
   const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
     setAdditionalDocumentsFile(file);
+    setAdditionalDocumentsText(text);
     console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
   };
 
@@ -70,8 +77,33 @@ const CreateBehavioral = () => {
       return;
     }
 
-    // For now, just navigate to the behavioral test
-    navigate('/behavioral/test');
+    if (!resumeFile) {
+      toast({
+        variant: "destructive",
+        title: "Resume Required",
+        description: "Please upload your resume to continue.",
+      });
+      return;
+    }
+
+    if (!resumeText) {
+      toast({
+        variant: "destructive",
+        title: "Resume Text Extraction Failed",
+        description: "We couldn't extract text from your resume. Please try a different file.",
+      });
+      return;
+    }
+
+    // Navigate to the behavioral test page with the form data
+    navigate('/behavioral/test', {
+      state: {
+        formData,
+        resumeText,
+        coverLetterText,
+        additionalDocumentsText
+      }
+    });
   };
 
   return (
