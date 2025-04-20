@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -57,6 +58,7 @@ const BehavioralInterview = () => {
   } = useVoiceRecording(handleTranscription);
 
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
   useEffect(() => {
     const initializeInterview = async () => {
@@ -102,6 +104,41 @@ const BehavioralInterview = () => {
     
     initializeInterview();
   }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
+
+  // Listen for when all answers are ready (5 answers collected)
+  useEffect(() => {
+    if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {
+      const generateFeedbackWithAnswers = async () => {
+        try {
+          console.log('All 5 answers collected, generating feedback with:', answers);
+          const feedback = await generateFeedback();
+          
+          if (feedback) {
+            navigate('/behavioral/feedback', { 
+              state: { 
+                questions,
+                answers,
+                behavioralId
+              } 
+            });
+          } else {
+            throw new Error('Failed to generate feedback');
+          }
+        } catch (error) {
+          console.error('Error generating feedback:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to generate feedback. Please try again.",
+          });
+          setShowFeedbackModal(false);
+          setAllAnswersSubmitted(false);
+        }
+      };
+      
+      generateFeedbackWithAnswers();
+    }
+  }, [answers, allAnswersSubmitted, showFeedbackModal, generateFeedback, navigate, questions, behavioralId, toast]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
@@ -149,30 +186,12 @@ const BehavioralInterview = () => {
           setIsSubmitting(false);
         }, 500);
       } else {
+        // For the final question, show loading modal and set flag that all answers are submitted
         setShowFeedbackModal(true);
-        
-        try {
-          const feedback = await generateFeedback();
-          if (feedback) {
-            navigate('/behavioral/feedback', { 
-              state: { 
-                questions,
-                answers,
-                behavioralId
-              } 
-            });
-          } else {
-            throw new Error('Failed to generate feedback');
-          }
-        } catch (error) {
-          console.error('Error generating feedback:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to generate feedback. Please try again.",
-          });
-          setShowFeedbackModal(false);
-        }
+        // Use setTimeout to ensure the answer array is updated before we try to generate feedback
+        setTimeout(() => {
+          setAllAnswersSubmitted(true);
+        }, 1000);
         setIsSubmitting(false);
       }
     } catch (error) {

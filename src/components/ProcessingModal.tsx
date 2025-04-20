@@ -47,17 +47,17 @@ const ProcessingModal: React.FC<ProcessingModalProps> = ({ isOpen }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-interview-primary">Creating Your Interview Questions</h2>
+        <h2 className="text-2xl font-bold mb-4 text-interview-primary">Analyzing Your Responses</h2>
         <p className="mb-6 text-gray-600">
-          We're analyzing your job details and generating tailored interview questions. This may take a few minutes.
+          We're reviewing all your interview answers and generating comprehensive feedback. This may take a minute.
         </p>
-        <p className="text-gray-600 mb-4">We'll redirect you to your questions once they're ready.</p>
+        <p className="text-gray-600 mb-4">Please don't close this window while we process your feedback.</p>
         
         <div className="mb-2">
           <Progress value={displayProgress} className="h-2" />
         </div>
         <div className="flex justify-between text-sm text-gray-500">
-          <span>Processing...</span>
+          <span>Processing your interview...</span>
           <span>{displayProgress}%</span>
         </div>
       </div>
