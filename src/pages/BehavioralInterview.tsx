@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -241,13 +240,9 @@ const BehavioralInterview = () => {
             <ArrowLeft className="w-4 h-4" />
             Back
           </Button>
-          
-          <div className="text-sm text-gray-500">
-            Question {currentQuestionIndex + 1} of 5
-          </div>
         </div>
         
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
           {isNextQuestionLoading ? (
             <div className="h-full flex flex-col items-center justify-center">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
@@ -255,11 +250,16 @@ const BehavioralInterview = () => {
             </div>
           ) : (
             <>
-              <h2 className="text-xl md:text-2xl font-semibold mb-2 text-interview-primary">
-                {currentQuestion?.question || 'Loading question...'}
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl md:text-2xl font-semibold text-interview-primary">
+                  {currentQuestion?.question || 'Loading question...'}
+                </h2>
+                <div className="text-sm text-gray-500">
+                  Question {currentQuestionIndex + 1} of 5
+                </div>
+              </div>
               
-              <div className="mt-6">
+              <div className="mt-6 flex-1">
                 <div className="flex justify-between items-center mb-2">
                   <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
                     Your Answer
