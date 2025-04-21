@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ const BehavioralInterview = () => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
+  const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const { resumeText } = useResumeText(null);
   
   const formData = location.state?.formData || {
@@ -158,34 +160,43 @@ const BehavioralInterview = () => {
     
     try {
       await submitAnswer(answer);
-      setAnswer('');
       
       if (currentQuestionIndex < 4) {
-        setTimeout(async () => {
-          const tokenCheck = await deductTokens(1);
-          if (!tokenCheck?.success) {
-            toast({
-              variant: "destructive",
-              title: "Insufficient tokens",
-              description: "You need 1 token to continue to the next question.",
-            });
-            navigate('/behavioral');
-            return;
-          }
-          
-          const coverLetterText = location.state?.coverLetterText || '';
-          const additionalDocumentsText = location.state?.additionalDocumentsText || '';
-          const stateResumeText = location.state?.resumeText;
-          
-          await generateQuestion(
-            formData, 
-            stateResumeText || resumeText, 
-            coverLetterText, 
-            additionalDocumentsText
-          );
+        // Start loading the next question but don't clear the answer yet
+        setIsNextQuestionLoading(true);
+        
+        const tokenCheck = await deductTokens(1);
+        if (!tokenCheck?.success) {
           setIsSubmitting(false);
-        }, 500);
+          setIsNextQuestionLoading(false);
+          toast({
+            variant: "destructive",
+            title: "Insufficient tokens",
+            description: "You need 1 token to continue to the next question.",
+          });
+          navigate('/behavioral');
+          return;
+        }
+        
+        const coverLetterText = location.state?.coverLetterText || '';
+        const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+        const stateResumeText = location.state?.resumeText;
+        
+        // Generate the next question
+        await generateQuestion(
+          formData, 
+          stateResumeText || resumeText, 
+          coverLetterText, 
+          additionalDocumentsText
+        );
+        
+        // Only after the question is loaded, clear the answer and update UI
+        setAnswer('');
+        setIsNextQuestionLoading(false);
+        setIsSubmitting(false);
       } else {
+        // For the last question, move directly to feedback
+        setAnswer('');
         setShowFeedbackModal(true);
         
         setTimeout(() => {
@@ -197,6 +208,7 @@ const BehavioralInterview = () => {
     } catch (error) {
       console.error('Error submitting answer:', error);
       setIsSubmitting(false);
+      setIsNextQuestionLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
@@ -236,47 +248,56 @@ const BehavioralInterview = () => {
         </div>
         
         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1">
-          <h2 className="text-xl md:text-2xl font-semibold mb-2 text-interview-primary">
-            {currentQuestion?.question || 'Loading question...'}
-          </h2>
-          
-          <div className="mt-6">
-            <div className="flex justify-between items-center mb-2">
-              <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
-                Your Answer
-              </label>
-              
-              <div className="flex items-center space-x-2">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={isRecording ? "destructive" : "outline"}
-                  onClick={toggleRecording}
-                  className="flex items-center gap-1"
-                >
-                  <Mic className="h-4 w-4" />
-                  {isRecording ? 'Stop' : 'Record'}
-                </Button>
-              </div>
+          {isNextQuestionLoading ? (
+            <div className="h-full flex flex-col items-center justify-center">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
+              <p className="text-gray-600">Loading next question...</p>
             </div>
-            
-            <Textarea
-              id="answer"
-              value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              className="min-h-[200px]"
-              placeholder="Type your answer here..."
-            />
-          </div>
+          ) : (
+            <>
+              <h2 className="text-xl md:text-2xl font-semibold mb-2 text-interview-primary">
+                {currentQuestion?.question || 'Loading question...'}
+              </h2>
+              
+              <div className="mt-6">
+                <div className="flex justify-between items-center mb-2">
+                  <label htmlFor="answer" className="block text-sm font-medium text-gray-700">
+                    Your Answer
+                  </label>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={isRecording ? "destructive" : "outline"}
+                      onClick={toggleRecording}
+                      className="flex items-center gap-1"
+                    >
+                      <Mic className="h-4 w-4" />
+                      {isRecording ? 'Stop' : 'Record'}
+                    </Button>
+                  </div>
+                </div>
+                
+                <Textarea
+                  id="answer"
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  className="min-h-[200px]"
+                  placeholder="Type your answer here..."
+                />
+              </div>
+            </>
+          )}
         </div>
         
         <div className="flex justify-end">
           <Button
             onClick={handleSubmit}
-            disabled={isSubmitting || isLoading}
+            disabled={isSubmitting || isLoading || isNextQuestionLoading}
             className="bg-interview-primary hover:bg-interview-dark text-white flex items-center gap-2"
           >
-            {isSubmitting ? (
+            {isSubmitting || isNextQuestionLoading ? (
               <>Processing...</>
             ) : currentQuestionIndex < 4 ? (
               <>Next Question <ArrowRight className="w-4 h-4" /></>
