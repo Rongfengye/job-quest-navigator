@@ -250,13 +250,13 @@ const BehavioralInterview = () => {
             </div>
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4">
+              <div className="mb-4">
+                <div className="text-sm text-gray-500 mb-2">
+                  Question {currentQuestionIndex + 1} of 5
+                </div>
                 <h2 className="text-xl md:text-2xl font-semibold text-interview-primary">
                   {currentQuestion?.question || 'Loading question...'}
                 </h2>
-                <div className="text-sm text-gray-500">
-                  Question {currentQuestionIndex + 1} of 5
-                </div>
               </div>
               
               <div className="mt-6 flex-1">
