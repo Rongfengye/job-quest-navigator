@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -150,6 +149,7 @@ serve(async (req) => {
           throw new Error('Perplexity did not return the expected data structure');
         }
         
+        // Transform if the response doesn't match our expected structure
         if (parsedContent.questions && !parsedContent.technicalQuestions) {
           const transformedContent = {
             technicalQuestions: [],
@@ -169,6 +169,7 @@ serve(async (req) => {
             }
           });
           
+          // Ensure we have at least some questions
           if (transformedContent.technicalQuestions.length === 0 && parsedContent.questions.length > 0) {
             transformedContent.technicalQuestions.push(parsedContent.questions[0]);
           }
@@ -189,7 +190,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
-
     } else if (requestType === 'GENERATE_ANSWER') {
       const { 
         answerText, 
