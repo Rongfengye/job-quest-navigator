@@ -33,26 +33,22 @@ serve(async (req) => {
     let messages = [];
 
     if (requestType === RequestType.GENERATE_QUESTION) {
-      // Question generation logic
-      systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 10 interview questions for a job candidate applying for a ${requestData.jobTitle} position.
-      ${requestData.companyName ? `The company name is ${requestData.companyName}.` : ''}
-      ${requestData.companyDescription ? `About the company: ${requestData.companyDescription}` : ''}
-      
-      Based on the job description and candidate's resume, generate interview questions that are specifically relevant to:
-      1. The technical skills required for this role
-      2. Past experiences that match the job requirements and are asked at the entry level
-      3. Problem-solving abilities specific to the challenges in this role
-      4. Topics students are expected to be familiar with from coursework, internships, or personal projects
-      
-      Format your response as a JSON object with:
-      - 'technicalQuestions': Array of question objects (5 questions)
-      - 'behavioralQuestions': Array of question objects (5 questions)
-      
-      Each question object should have:
-      - 'question': The main interview question (string)
-      - 'explanation': Why this question is relevant (string)
-      - 'modelAnswer': A strong sample response using STAR format (string)
-      - 'followUp': Array of follow-up questions (array of strings)`;
+      // Original interview questions generation prompt
+      systemPrompt = `You are an AI interview question generator specialized in creating relevant questions based on job descriptions and resumes. Your task is to analyze the provided job information and candidate materials to generate a comprehensive set of interview questions.
+
+Based on the candidate's resume/cover letter and the job requirements, create questions that are:
+1. Tailored to assess technical skills and knowledge required for the position
+2. Designed to evaluate relevant experience and past achievements
+3. Focused on assessing problem-solving abilities and approach
+4. Appropriate for the candidate's experience level
+
+Format your response as a JSON object with:
+- questions: Array of objects (10 questions total)
+Each question object should have:
+- question: The interview question (string)
+- explanation: Why this question is relevant (string)
+- modelAnswer: A strong example response (string)
+- followUp: Array of follow-up questions (array of strings)`;
 
       userPrompt = `Job Title: "${requestData.jobTitle}"
       Job Description: "${requestData.jobDescription}"
@@ -61,21 +57,15 @@ serve(async (req) => {
       ${requestData.additionalDocumentsText ? `Additional Documents content: "${requestData.additionalDocumentsText}"` : ''}`;
 
     } else if (requestType === RequestType.GENERATE_ANSWER) {
-      // Answer feedback logic
-      systemPrompt = `You are an expert interview coach specializing in providing constructive feedback on interview answers.
-    
-      Analyze the candidate's response to the interview question and provide detailed feedback in JSON format with:
-      1. "pros" - Array of strings highlighting strengths
-      2. "cons" - Array of strings highlighting areas for improvement
-      3. "guidelines" - String with concise guidelines for this type of question
-      4. "improvementSuggestions" - String with 2-3 specific suggestions
-      5. "score" - Number between 1-100 for overall quality
-      
-      ${requestData.questionType === 'technical' ? 
-        'Focus on technical knowledge, clarity, problem-solving approach, and relevant experience' : 
-        requestData.questionType === 'behavioral' ? 
-        'Focus on STAR method, specific examples, quantifiable results, and relevance to job requirements' :
-        'Focus on clarity, structure, relevance, and specific examples'}`;
+      // Original answer feedback generation prompt
+      systemPrompt = `You are an expert interview coach specialized in evaluating interview responses. Your task is to analyze an answer to an interview question and provide detailed, constructive feedback.
+
+Provide feedback in JSON format with:
+1. pros: Array of strengths in the response
+2. cons: Array of areas for improvement
+3. guidelines: Best practices for answering this type of question
+4. improvementSuggestions: Specific ways to enhance the response
+5. score: Numerical score (1-100) based on overall quality`;
 
       userPrompt = `Question: ${requestData.question}\n\nAnswer: ${requestData.answerText}`;
     }
@@ -112,28 +102,8 @@ serve(async (req) => {
     try {
       parsedContent = typeof generatedContent === 'string' ? JSON.parse(generatedContent) : generatedContent;
       
-      if (requestType === RequestType.GENERATE_QUESTION && !parsedContent.technicalQuestions) {
-        // Transform legacy format if needed
-        if (parsedContent.questions) {
-          parsedContent = {
-            technicalQuestions: parsedContent.questions.filter((q: any) => {
-              const questionLower = q.question.toLowerCase();
-              return questionLower.includes('technical') || 
-                     questionLower.includes('tool') || 
-                     questionLower.includes('skill') ||
-                     questionLower.includes('technology');
-            }),
-            behavioralQuestions: parsedContent.questions.filter((q: any) => {
-              const questionLower = q.question.toLowerCase();
-              return !questionLower.includes('technical') && 
-                     !questionLower.includes('tool') && 
-                     !questionLower.includes('skill') &&
-                     !questionLower.includes('technology');
-            })
-          };
-        } else {
-          throw new Error('Invalid response structure: missing questions');
-        }
+      if (requestType === RequestType.GENERATE_QUESTION && !parsedContent.questions) {
+        throw new Error('Invalid response structure: missing questions');
       } else if (requestType === RequestType.GENERATE_ANSWER && (!parsedContent.pros || !parsedContent.cons)) {
         throw new Error('Invalid feedback structure: missing pros or cons');
       }
@@ -154,3 +124,4 @@ serve(async (req) => {
     });
   }
 });
+
