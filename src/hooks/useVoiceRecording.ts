@@ -29,7 +29,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         });
 
         try {
-          const { data: transcriptionData, error } = await supabase.functions.invoke('storyline-transcribe-audio', {
+          const { data: transcriptionData, error } = await supabase.functions.invoke('storyline-audio-function', {
             body: { audio: base64Audio.split(',')[1] }
           });
 
