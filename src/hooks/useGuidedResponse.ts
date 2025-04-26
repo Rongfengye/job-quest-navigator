@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -6,7 +5,7 @@ import { Question } from '@/hooks/useQuestionData';
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 
-export const useGuidedResponse = (questionIndex: number, question: Question | null, previousFeedback?: FeedbackData | null) => {
+export const useGuidedResponse = (questionIndex: number, question: Question | null, previousFeedback: any) => {
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [processingThoughts, setProcessingThoughts] = useState(false);
@@ -232,5 +231,77 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
     }
   };
 
-  return { generatingAnswer, processingThoughts, generateGuidedResponse };
+  const generateGuidedQuestions = async (userInput: string = '', resumeText: string = '') => {
+    try {
+      const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
+        body: {
+          questionIndex,
+          questionType: question?.type || 'behavioral',
+          questionText: question?.question || '',
+          action: "generateQuestions",
+          userInput,
+          resumeText,
+          previousFeedback
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data && data.success) {
+        return true;
+      } else {
+        throw new Error('Failed to generate guided questions');
+      }
+    } catch (error) {
+      console.error('Error generating guided questions:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to generate guided questions: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+      
+      // Refund token on error
+      await deductTokens(-1);
+      return false;
+    }
+  };
+
+  const processUserThoughts = async (thoughts: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
+        body: {
+          questionIndex,
+          questionType: question?.type || 'behavioral',
+          questionText: question?.question || '',
+          action: "processThoughts",
+          userThoughts: thoughts
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      if (data && data.success) {
+        return true;
+      } else {
+        throw new Error('Failed to process thoughts into a response');
+      }
+    } catch (error) {
+      console.error('Error processing thoughts:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to process thoughts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      });
+      
+      // Refund token on error
+      await deductTokens(-1);
+      return false;
+    }
+  };
+
+  return { generatingAnswer, processingThoughts, generateGuidedResponse, generateGuidedQuestions, processUserThoughts };
 };
