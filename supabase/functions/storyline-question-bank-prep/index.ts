@@ -42,7 +42,7 @@ serve(async (req) => {
       `;
       */
 
-      // New Perplexity system prompt
+      // Sonar system prompt
       const sonarSystemPrompt = `You are a specialized AI interview coach for college students and recent graduates. Generate interview questions for a ${jobTitle} position.
       ${companyName ? `Company: ${companyName}` : ''}
       ${companyDescription ? `Company Description: ${companyDescription}` : ''}
@@ -104,7 +104,47 @@ serve(async (req) => {
       const openAIData = await openAIResponse.json();
       */
 
-      // New Perplexity Sonar API call
+      // Define the JSON schema for response format
+      const responseSchema = {
+        "type": "object",
+        "properties": {
+          "technicalQuestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question": { "type": "string" },
+                "explanation": { "type": "string" },
+                "modelAnswer": { "type": "string" },
+                "followUp": { 
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "required": ["question", "explanation", "modelAnswer", "followUp"]
+            }
+          },
+          "behavioralQuestions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "question": { "type": "string" },
+                "explanation": { "type": "string" },
+                "modelAnswer": { "type": "string" },
+                "followUp": { 
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "required": ["question", "explanation", "modelAnswer", "followUp"]
+            }
+          }
+        },
+        "required": ["technicalQuestions", "behavioralQuestions"]
+      };
+
+      // New Perplexity Sonar API call with proper response_format
       console.log('Calling Perplexity Sonar API');
       const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
         method: 'POST',
@@ -122,8 +162,11 @@ serve(async (req) => {
           max_tokens: 4000,
           top_p: 0.9,
           frequency_penalty: 1,
-          presence_penalty: 0
-          // Removing the response_format parameter as it's causing errors
+          presence_penalty: 0,
+          response_format: {
+            "type": "json_schema",
+            "json_schema": { "schema": responseSchema }
+          }
         }),
       });
 
