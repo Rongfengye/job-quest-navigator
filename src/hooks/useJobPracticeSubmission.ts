@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -41,19 +40,16 @@ export const useJobPracticeSubmission = (
       return;
     }
     
-    // Check if user has enough tokens (5 tokens required)
     const tokenCheck = await deductTokens(5);
     if (!tokenCheck?.success) {
-      return; // The token hook will show an error toast for insufficient tokens
+      return;
     }
     
-    // Refresh token display immediately after deduction
     fetchTokens();
     setIsLoading(true);
     setProcessingModal(true);
     
     try {
-      // Upload files
       if (!resumeFile.file) {
         throw new Error("Resume file is required");
       }
@@ -70,7 +66,6 @@ export const useJobPracticeSubmission = (
         additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
       }
 
-      // Create storyline job record
       console.log("Inserting job with user_id:", userId);
       const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
@@ -95,7 +90,6 @@ export const useJobPracticeSubmission = (
 
       const storylineId = storylineData.id;
 
-      // Generate interview questions via OpenAI
       const requestBody = {
         jobTitle: formData.jobTitle,
         jobDescription: formData.jobDescription,
@@ -115,7 +109,7 @@ export const useJobPracticeSubmission = (
       console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
       console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
 
-      const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
+      const { data, error } = await supabase.functions.invoke('storyline-generate-interview-questions', {
         body: requestBody,
       });
 
@@ -125,7 +119,6 @@ export const useJobPracticeSubmission = (
 
       console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
-      // Update storyline job with OpenAI response
       const { error: updateError } = await supabase
         .from('storyline_jobs')
         .update({
@@ -153,9 +146,8 @@ export const useJobPracticeSubmission = (
         title: "Error",
         description: "There was an error creating your job practice. Please try again."
       });
-      // If there was an error, refund the tokens
-      await deductTokens(-5); // Add back the tokens that were deducted
-      fetchTokens(); // Update token display after refund
+      await deductTokens(-5);
+      fetchTokens();
     } finally {
       setIsLoading(false);
     }

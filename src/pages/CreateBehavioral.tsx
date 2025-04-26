@@ -99,7 +99,7 @@ const CreateBehavioral = () => {
 
     try {
       // Call the Supabase function to generate interview questions
-      const { data, error } = await supabase.functions.invoke('generate-interview-questions', {
+      const { data, error } = await supabase.functions.invoke('storyline-generate-interview-questions', {
         body: {
           jobTitle: formData.jobTitle,
           jobDescription: formData.jobDescription,
