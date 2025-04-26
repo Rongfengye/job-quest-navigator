@@ -122,8 +122,8 @@ serve(async (req) => {
           max_tokens: 4000,
           top_p: 0.9,
           frequency_penalty: 1,
-          presence_penalty: 0,
-          response_format: { "type": "json_object" }
+          presence_penalty: 0
+          // Removing the response_format parameter as it's causing errors
         }),
       });
 
