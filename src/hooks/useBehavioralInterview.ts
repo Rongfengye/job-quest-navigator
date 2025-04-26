@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -120,7 +119,7 @@ export const useBehavioralInterview = () => {
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
       
-      const { data, error } = await supabase.functions.invoke('create-behavioral-interview', {
+      const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
       });
       
@@ -170,10 +169,8 @@ export const useBehavioralInterview = () => {
   const generateFeedback = async (providedAnswers?: string[]) => {
     setIsLoading(true);
     try {
-      // Use either the provided answers or the current state answers
       const answersToUse = providedAnswers || answers;
       
-      // Ensure we have all 5 questions and answers
       if (questions.length < 5 || answersToUse.length < 5) {
         console.error('Not enough questions or answers to generate feedback', {
           questionsCount: questions.length,
@@ -183,13 +180,11 @@ export const useBehavioralInterview = () => {
           Questions: ${questions.length}, Answers: ${answersToUse.length}`);
       }
       
-      // Verify that all answers are non-empty
       if (!answersToUse.every(a => a?.trim())) {
         console.error('One or more answers are empty', answersToUse);
         throw new Error('Cannot generate feedback: one or more answers are empty');
       }
       
-      // Get the job data from location state or use default values
       const jobData = locationState?.formData || {
         jobTitle: '',
         jobDescription: '',
@@ -199,7 +194,7 @@ export const useBehavioralInterview = () => {
       console.log('Generating feedback for questions:', questions);
       console.log('Generating feedback for answers:', answersToUse);
 
-      const { data: response, error } = await supabase.functions.invoke('create-behavioral-interview', {
+      const { data: response, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: {
           generateFeedback: true,
           questions,
@@ -220,7 +215,6 @@ export const useBehavioralInterview = () => {
 
       console.log('Feedback received:', response.feedback);
 
-      // Update the database with the feedback
       if (behavioralId) {
         const updateResult = await supabase
           .from('storyline_behaviorals')
@@ -267,7 +261,6 @@ export const useBehavioralInterview = () => {
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
       
-      // Save the answer to the database first
       if (behavioralId) {
         await supabase
           .from('storyline_behaviorals')
@@ -281,13 +274,10 @@ export const useBehavioralInterview = () => {
         setInterviewComplete(true);
         console.log('Final answer submitted, all answers:', updatedAnswers);
         
-        // Generate feedback with the full set of answers including the latest one
         setTimeout(async () => {
           try {
-            // Double-check that we have 5 answers before proceeding
             if (updatedAnswers.length === 5 && updatedAnswers.every(a => a)) {
               console.log('Generating feedback with updated answers array:', updatedAnswers);
-              // Pass the updated answers directly to generateFeedback instead of relying on state
               await generateFeedback(updatedAnswers);
             } else {
               console.error('Still missing complete answers after delay', updatedAnswers);

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -31,32 +30,18 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
       setProcessingThoughts(true);
       
       try {
-        // Create the request payload
-        const requestPayload = {
-          questionIndex,
-          questionType: question.type,
-          questionText: question.question,
-          userThoughts: thoughts,
-        };
-        
-        console.log('Process thoughts request payload:', JSON.stringify(requestPayload).substring(0, 500) + '...');
-        
-        // Make the API request
-        const { data, error } = await supabase.functions.invoke('guided-response-generator', {
+        const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
           body: {
             ...requestPayload,
             action: 'processThoughts'
           }
         });
         
-        console.log('Process thoughts response:', data, error);
-        
         if (error) {
           throw new Error(error.message);
         }
         
         if (data && data.success && data.generatedResponse) {
-          // Show feedback as toast if present
           if (data.feedback) {
             toast({
               title: "AI Coach",
@@ -69,7 +54,6 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
             });
           }
           
-          // Dispatch custom event with generated response
           const responseEvent = new CustomEvent('responseGenerated', {
             detail: { generatedResponse: data.generatedResponse }
           });
@@ -87,7 +71,6 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
           description: `Failed to process thoughts: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
         
-        // Refund token on error
         await deductTokens(-1);
         return false;
       } finally {
@@ -102,12 +85,10 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
     };
   }, [questionIndex, question, deductTokens, toast]);
 
-  // Set up event listener for the generated response
   useEffect(() => {
     const handleResponseGenerated = (event: CustomEvent) => {
       const { generatedResponse } = event.detail;
       
-      // Dispatch custom event with the generated response
       const responseEvent = new CustomEvent('responseReceived', {
         detail: { generatedResponse }
       });
@@ -137,25 +118,19 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
     setGeneratingAnswer(true);
     
     try {
-      // Create the request payload with previous feedback if available
       const requestPayload = {
         questionIndex,
         questionType: question.type,
         questionText: question.question,
-        userInput: inputAnswer, // Pass the current user input
-        resumeText: resumeText, // Pass the cleaned resume text
+        userInput: inputAnswer,
+        resumeText: resumeText,
         action: 'generateQuestions',
-        previousFeedback: previousFeedback || null // Pass previous feedback if available
+        previousFeedback: previousFeedback || null
       };
       
-      console.log('Guided response generator request payload:', JSON.stringify(requestPayload).substring(0, 500) + '...');
-      
-      // Make the API request
-      const { data, error } = await supabase.functions.invoke('guided-response-generator', {
+      const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
         body: requestPayload
       });
-      
-      console.log('Guided response generator response:', data, error);
       
       if (error) {
         throw new Error(error.message);
@@ -168,10 +143,8 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
             description: "Guiding questions have been provided to help you craft your answer.",
           });
           
-          // Parse guiding questions
           if (typeof data.guidance.guidingQuestions === 'string') {
             try {
-              // Try to extract questions from a text format
               const questionsText = data.guidance.guidingQuestions;
               const questionsArray = questionsText
                 .split(/\d+\.|\n/)
@@ -179,13 +152,11 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
                 .filter(q => q && q.endsWith('?'));
               
               if (questionsArray.length > 0) {
-                // Dispatch custom event with guiding questions
                 const guidanceEvent = new CustomEvent('guidanceReceived', {
                   detail: { guidingQuestions: questionsArray }
                 });
                 window.dispatchEvent(guidanceEvent);
               } else {
-                // Fallback if no questions with question marks were found
                 const lines = questionsText
                   .split('\n')
                   .map(line => line.trim())
@@ -202,7 +173,6 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
               console.error('Error parsing guiding questions:', parseError);
             }
           } else if (Array.isArray(data.guidance.guidingQuestions)) {
-            // If we already have an array, use it directly
             const guidanceEvent = new CustomEvent('guidanceReceived', {
               detail: { guidingQuestions: data.guidance.guidingQuestions }
             });
@@ -224,7 +194,6 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
         description: `Failed to generate guided response: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
       
-      // Refund token on error
       await deductTokens(-1);
       return false;
     } finally {
