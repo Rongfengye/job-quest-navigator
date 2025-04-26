@@ -13,8 +13,9 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Get API key from environment variables
+  // Get API keys from environment variables
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
   
   try {
     const requestData = await req.json();
@@ -34,31 +35,41 @@ serve(async (req) => {
       console.log('Received request to generate interview questions');
       console.log('Resume text length:', resumeText?.length || 0);
 
-      const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates. Your task is to generate 10 interview questions for a job candidate applying for a ${jobTitle} position.
-      ${companyName ? `The company name is ${companyName}.` : ''}
-      ${companyDescription ? `About the company: ${companyDescription}` : ''}
+      // Original OpenAI system prompt (commented out for reference)
+      /*
+      const systemPrompt = `You are an AI interview coach for current college students and/or recent graduates...
+      ${previousSystemPromptContent}
+      `;
+      */
+
+      // New Perplexity system prompt
+      const sonarSystemPrompt = `You are a specialized AI interview coach for college students and recent graduates. Generate interview questions for a ${jobTitle} position.
+      ${companyName ? `Company: ${companyName}` : ''}
+      ${companyDescription ? `Company Description: ${companyDescription}` : ''}
       
-      Based on the job description and candidate's resume, generate interview questions that are specifically relevant to:
-      1. The technical skills required for this role
-      2. Past experiences that match the job requirements and are asked at the entry level (Practical coding experience, teamwork, and project-based learning)
-      3. Problem-solving abilities specific to the challenges in this role
-      4. Topics students are expected to be familiar with from coursework, internships, or personal projects
+      Based on the provided information, generate 10 interview questions:
+      - 5 technical questions focused on entry-level technical skills and problem-solving
+      - 5 behavioral questions focused on teamwork, learning, and project experience
       
-      For each question, also include:
-      - The "modelAnswer" field should provide a well-structured sample response from the candidate's perspective, following the STAR (Situation, Task, Action, Result) format. It should incorporate corporate values relevant to the specific job opportunity, highlight decision-making rationale, and reflect on the impact, learning, and growth—using quantifiable metrics whenever possible. Additionally, the response should align with the company's culture and values to demonstrate a strong fit for the role
-      - A "followUp" array that contains 2 follow-up questions for deeper discussion
-      
-      Format your response as a JSON object with these fields:
-      - 'technicalQuestions': An array of question objects related to technical skills, specifically related to foundational concepts (e.g., debugging, database choice, programming languages, learning new tools) (5 questions)
-      - 'behavioralQuestions': An array of question objects related to behaviors, past experiences, and soft skills. Focused on teamwork, learning from failure, project experience, communication, or decision-making (5 questions)
-      
-      Do not include overly advanced topics like AWS, distributed systems, or enterprise-level architecture unless they are explicitly mentioned in the resume or job description.
-      
-      Each question object should have:
-      - 'question': The main interview question (string)
-      - 'explanation': A brief explanation of why this question us relevant for early-career candidates (string)
-      - 'modelAnswer': A strong sample response using Situation, Task, Action, Result (string)
-      - 'followUp': An array of follow-up questions (array of strings)`;
+      Format your response as a JSON object with:
+      {
+        "technicalQuestions": [
+          {
+            "question": "string",
+            "explanation": "string",
+            "modelAnswer": "string (STAR format)",
+            "followUp": ["string"]
+          }
+        ],
+        "behavioralQuestions": [
+          {
+            "question": "string",
+            "explanation": "string",
+            "modelAnswer": "string (STAR format)",
+            "followUp": ["string"]
+          }
+        ]
+      }`;
 
       // Create the user prompt with all the relevant information
       const userPrompt = `
@@ -72,6 +83,8 @@ serve(async (req) => {
       ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
       `;
 
+      // Original OpenAI API call (commented out for reference)
+      /*
       const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -89,14 +102,39 @@ serve(async (req) => {
       });
 
       const openAIData = await openAIResponse.json();
-      console.log('OpenAI API response received');
+      */
 
-      if (openAIData.error) {
-        console.error('OpenAI API error:', openAIData.error);
-        throw new Error(`OpenAI API error: ${openAIData.error.message}`);
+      // New Perplexity Sonar API call
+      console.log('Calling Perplexity Sonar API');
+      const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${perplexityApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.1-sonar-small-128k-online',
+          messages: [
+            { role: 'system', content: sonarSystemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          temperature: 0.2,
+          max_tokens: 4000,
+          top_p: 0.9,
+          frequency_penalty: 1,
+          presence_penalty: 0
+        }),
+      });
+
+      const perplexityData = await perplexityResponse.json();
+      console.log('Perplexity API response received');
+
+      if (perplexityData.error) {
+        console.error('Perplexity API error:', perplexityData.error);
+        throw new Error(`Perplexity API error: ${perplexityData.error.message}`);
       }
 
-      const generatedContent = openAIData.choices[0].message.content;
+      const generatedContent = perplexityData.choices[0].message.content;
       console.log('Generated content length:', generatedContent.length);
 
       let parsedContent;
@@ -109,7 +147,7 @@ serve(async (req) => {
         
         if (!parsedContent.technicalQuestions && !parsedContent.questions) {
           console.error('Invalid response structure:', parsedContent);
-          throw new Error('OpenAI did not return the expected data structure');
+          throw new Error('Perplexity did not return the expected data structure');
         }
         
         if (parsedContent.questions && !parsedContent.technicalQuestions) {
@@ -144,7 +182,7 @@ serve(async (req) => {
       } catch (parseError) {
         console.error('Error parsing JSON response:', parseError);
         console.log('Raw response:', generatedContent);
-        throw new Error('Invalid JSON format in the OpenAI response');
+        throw new Error('Invalid JSON format in the Perplexity response');
       }
 
       return new Response(JSON.stringify(parsedContent), {
