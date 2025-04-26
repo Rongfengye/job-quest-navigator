@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -50,7 +51,7 @@ serve(async (req) => {
       - 5 technical questions focused on entry-level technical skills and problem-solving
       - 5 behavioral questions focused on teamwork, learning, and project experience
       
-      Format your response as a JSON object with:
+      Your response MUST be a valid JSON object in the following format:
       {
         "technicalQuestions": [
           {
@@ -121,7 +122,8 @@ serve(async (req) => {
           max_tokens: 4000,
           top_p: 0.9,
           frequency_penalty: 1,
-          presence_penalty: 0
+          presence_penalty: 0,
+          response_format: { "type": "json_object" }
         }),
       });
 
@@ -135,22 +137,49 @@ serve(async (req) => {
 
       const generatedContent = perplexityData.choices[0].message.content;
       console.log('Generated content length:', generatedContent.length);
+      
+      // Log first 100 characters to check format
+      console.log('Content preview:', generatedContent.substring(0, 100));
 
       let parsedContent;
       try {
-        if (typeof generatedContent === 'string') {
-          parsedContent = JSON.parse(generatedContent);
-        } else {
+        // Check if content is already a JSON object
+        if (typeof generatedContent === 'object' && generatedContent !== null) {
           parsedContent = generatedContent;
+          console.log('Content was already a JSON object');
+        } 
+        // Try to parse as JSON string
+        else if (typeof generatedContent === 'string') {
+          // Remove markdown code blocks if present
+          let cleanContent = generatedContent;
+          if (cleanContent.includes('```json')) {
+            cleanContent = cleanContent.replace(/```json/g, '').replace(/```/g, '').trim();
+            console.log('Removed markdown code blocks');
+          }
+          
+          parsedContent = JSON.parse(cleanContent);
+          console.log('Successfully parsed JSON string');
+        } else {
+          console.error('Unexpected content type:', typeof generatedContent);
+          throw new Error('Content is neither a string nor an object');
         }
         
-        if (!parsedContent.technicalQuestions && !parsedContent.questions) {
-          console.error('Invalid response structure:', parsedContent);
+        // Validate the expected structure
+        console.log('Parsed content structure check:', 
+          'technicalQuestions' in parsedContent ? 'has technicalQuestions' : 'no technicalQuestions',
+          'behavioralQuestions' in parsedContent ? 'has behavioralQuestions' : 'no behavioralQuestions',
+          'questions' in parsedContent ? 'has questions' : 'no questions'
+        );
+        
+        if (!parsedContent.technicalQuestions && !parsedContent.behavioralQuestions && !parsedContent.questions) {
+          console.error('Invalid response structure:', JSON.stringify(parsedContent).substring(0, 200));
           throw new Error('Perplexity did not return the expected data structure');
         }
         
         // Transform if the response doesn't match our expected structure
-        if (parsedContent.questions && !parsedContent.technicalQuestions) {
+        if ((!parsedContent.technicalQuestions || !parsedContent.behavioralQuestions) && parsedContent.questions) {
+          console.log('Transforming questions array to separate technical and behavioral arrays');
+          
           const transformedContent = {
             technicalQuestions: [],
             behavioralQuestions: []
@@ -178,12 +207,110 @@ serve(async (req) => {
           }
           
           parsedContent = transformedContent;
+          console.log('Transformed to expected structure');
         }
+        
+        console.log('Final structure:', 
+          'technicalQuestions count:', parsedContent.technicalQuestions?.length || 0,
+          'behavioralQuestions count:', parsedContent.behavioralQuestions?.length || 0
+        );
         
       } catch (parseError) {
         console.error('Error parsing JSON response:', parseError);
         console.log('Raw response:', generatedContent);
-        throw new Error('Invalid JSON format in the Perplexity response');
+        
+        // Fallback: Try to extract JSON from text response
+        try {
+          console.log('Attempting fallback JSON extraction');
+          // Attempt to create a basic structure based on the text
+          const fallbackStructure = {
+            technicalQuestions: [],
+            behavioralQuestions: []
+          };
+          
+          // Simple parsing of questions based on headings
+          const sections = generatedContent.split(/#{2,}/);
+          for (const section of sections) {
+            if (section.toLowerCase().includes('technical questions')) {
+              // Extract questions from this section
+              const questions = section.split(/\d+\.\s+\*\*Question:\*\*/);
+              
+              for (let i = 1; i < questions.length; i++) { // Start from 1 to skip header
+                const parts = questions[i].split(/\*\*Explanation:\*\*/);
+                if (parts.length >= 2) {
+                  const question = parts[0].trim();
+                  const explanation = parts[1].split(/\*\*Model Answer:\*\*/)[0].trim();
+                  let modelAnswer = "";
+                  let followUp = [];
+                  
+                  if (parts[1].includes('**Model Answer:**')) {
+                    const answerParts = parts[1].split(/\*\*Model Answer:\*\*/);
+                    if (answerParts.length >= 2) {
+                      modelAnswer = answerParts[1].split(/\*\*Follow-Up:\*\*/)[0].trim();
+                      
+                      if (answerParts[1].includes('**Follow-Up:**')) {
+                        const followUpText = answerParts[1].split(/\*\*Follow-Up:\*\*/)[1].trim();
+                        followUp = [followUpText];
+                      }
+                    }
+                  }
+                  
+                  fallbackStructure.technicalQuestions.push({
+                    question,
+                    explanation,
+                    modelAnswer,
+                    followUp
+                  });
+                }
+              }
+            } else if (section.toLowerCase().includes('behavioral questions')) {
+              // Similar extraction for behavioral questions
+              const questions = section.split(/\d+\.\s+\*\*Question:\*\*/);
+              
+              for (let i = 1; i < questions.length; i++) {
+                const parts = questions[i].split(/\*\*Explanation:\*\*/);
+                if (parts.length >= 2) {
+                  const question = parts[0].trim();
+                  const explanation = parts[1].split(/\*\*Model Answer:\*\*/)[0].trim();
+                  let modelAnswer = "";
+                  let followUp = [];
+                  
+                  if (parts[1].includes('**Model Answer:**')) {
+                    const answerParts = parts[1].split(/\*\*Model Answer:\*\*/);
+                    if (answerParts.length >= 2) {
+                      modelAnswer = answerParts[1].split(/\*\*Follow-Up:\*\*/)[0].trim();
+                      
+                      if (answerParts[1].includes('**Follow-Up:**')) {
+                        const followUpText = answerParts[1].split(/\*\*Follow-Up:\*\*/)[1].trim();
+                        followUp = [followUpText];
+                      }
+                    }
+                  }
+                  
+                  fallbackStructure.behavioralQuestions.push({
+                    question,
+                    explanation,
+                    modelAnswer,
+                    followUp
+                  });
+                }
+              }
+            }
+          }
+          
+          if (fallbackStructure.technicalQuestions.length === 0 && fallbackStructure.behavioralQuestions.length === 0) {
+            throw new Error('Could not extract questions from response');
+          }
+          
+          parsedContent = fallbackStructure;
+          console.log('Created fallback structure:', 
+            'technicalQuestions:', parsedContent.technicalQuestions.length,
+            'behavioralQuestions:', parsedContent.behavioralQuestions.length
+          );
+        } catch (fallbackError) {
+          console.error('Fallback extraction also failed:', fallbackError);
+          throw new Error('Invalid JSON format in the Perplexity response');
+        }
       }
 
       return new Response(JSON.stringify(parsedContent), {
