@@ -27,11 +27,11 @@ const QuestionCard = ({
     onAnswerChange(answer + (answer ? ' ' : '') + text);
   });
 
-  const handleMicClick = () => {
+  const handleMicClick = async () => {
     if (isRecording) {
-      stopRecording();
+      await stopRecording();
     } else {
-      startRecording();
+      await startRecording();
     }
   };
 

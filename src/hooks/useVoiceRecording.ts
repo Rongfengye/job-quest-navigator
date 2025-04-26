@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -11,7 +12,9 @@ interface UseVoiceRecordingResult {
   resetRecording: () => void;
 }
 
-export const useVoiceRecording = (): UseVoiceRecordingResult => {
+type TranscriptionCallback = (text: string) => void;
+
+export const useVoiceRecording = (onTranscription?: TranscriptionCallback): UseVoiceRecordingResult => {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [recording, setRecording] = useState<Blob | null>(null);
@@ -26,9 +29,28 @@ export const useVoiceRecording = (): UseVoiceRecordingResult => {
         setRecording(event.data);
       };
 
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         setIsRecording(false);
         stream.getTracks().forEach(track => track.stop());
+        
+        // If there's a transcription callback, process the recording
+        if (onTranscription && recording) {
+          try {
+            const reader = new FileReader();
+            reader.readAsDataURL(event.data);
+            reader.onloadend = async () => {
+              const base64Audio = reader.result?.toString().split(',')[1];
+              if (base64Audio) {
+                const transcribedText = await transcribeAudio(base64Audio);
+                if (transcribedText) {
+                  onTranscription(transcribedText);
+                }
+              }
+            };
+          } catch (error) {
+            console.error('Error processing transcription:', error);
+          }
+        }
       };
 
       setMediaRecorder(recorder);
@@ -42,12 +64,14 @@ export const useVoiceRecording = (): UseVoiceRecordingResult => {
         description: "Failed to start recording. Please check your microphone permissions.",
       });
     }
-  }, [toast]);
+  }, [toast, onTranscription, recording]);
 
-  const stopRecording = useCallback(() => {
+  const stopRecording = useCallback(async () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
       mediaRecorder.stop();
+      return Promise.resolve();
     }
+    return Promise.resolve();
   }, [mediaRecorder]);
 
   const transcribeAudio = async (audioBase64: string) => {
