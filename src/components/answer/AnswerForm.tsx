@@ -91,11 +91,11 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     };
   }, []);
 
-  const handleMicClick = async () => {
+  const handleMicClick = () => {
     if (isRecording) {
-      await stopRecording();
+      stopRecording();
     } else {
-      await startRecording();
+      startRecording();
     }
   };
 

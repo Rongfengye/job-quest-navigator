@@ -10,7 +10,7 @@ export const usePerplexityChat = () => {
   const sendMessage = async (message: string) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('storyline-perplexity-chat', {
+      const { data, error } = await supabase.functions.invoke('perplexity-chat', {
         body: { message }
       });
 

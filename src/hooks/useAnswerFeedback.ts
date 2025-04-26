@@ -112,7 +112,7 @@ export const useAnswerFeedback = (
     setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('storyline-generate-answer-feedback', {
+      const { data, error } = await supabase.functions.invoke('generate-answer-feedback', {
         body: {
           answerText,
           question: question.question,
