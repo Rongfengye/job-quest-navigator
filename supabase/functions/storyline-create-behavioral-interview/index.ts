@@ -14,6 +14,7 @@ serve(async (req) => {
   }
 
   const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+  const perplexityApiKey = Deno.env.get('PERPLEXITY_API_KEY');
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -39,162 +40,11 @@ serve(async (req) => {
       questions = []
     } = requestBody;
 
-    if (generateFeedback) {
-      // Safety check: make sure questions and answers arrays are valid
-      if (!Array.isArray(questions) || !Array.isArray(answers)) {
-        console.error('Invalid inputs for feedback generation:', { 
-          questionsIsArray: Array.isArray(questions), 
-          answersIsArray: Array.isArray(answers) 
-        });
-        throw new Error('Invalid questions or answers data provided for feedback generation');
-      }
-      
-      // Check if we have enough questions and answers to generate feedback
-      if (questions.length < 5 || answers.length < 5) {
-        console.error('Not enough questions or answers for feedback generation:', { 
-          questionsCount: questions.length, 
-          answersCount: answers.length,
-          questions,
-          answers
-        });
-        throw new Error(`Not enough questions or answers to generate feedback. 
-          Questions: ${questions.length}, Answers: ${answers.length}`);
-      }
-
-      console.log(`Generating feedback for ${questions.length} questions and ${answers.length} answers`);
-      
-      // Validate all array entries
-      for (let i = 0; i < 5; i++) {
-        if (!questions[i] || typeof questions[i] !== 'string' || !questions[i].trim()) {
-          console.error(`Invalid question at index ${i}:`, questions[i]);
-          throw new Error(`Invalid question at index ${i}`);
-        }
-        if (!answers[i] || typeof answers[i] !== 'string' || !answers[i].trim()) {
-          console.error(`Invalid answer at index ${i}:`, answers[i]);
-          throw new Error(`Invalid answer at index ${i}`);
-        }
-      }
-
-      // Make sure we have the same number of questions and answers
-      const feedbackLength = Math.min(questions.length, answers.length);
-      
-      const feedbackPromises = [];
-      
-      // Only process questions that have corresponding answers
-      for (let index = 0; index < feedbackLength; index++) {
-        if (!questions[index] || !answers[index]) {
-          console.log(`Skipping feedback for index ${index} due to missing question or answer`);
-          continue;
-        }
-        
-        const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle || 'professional'} position.
-        Your task is to provide detailed, constructive feedback on the candidate's response.
-        
-        Consider:
-        1. Use of the STAR method (Situation, Task, Action, Result)
-        2. Relevance to the question asked
-        3. Specificity and detail level
-        4. Professional communication
-        5. Alignment with job requirements
-        
-        Provide feedback in JSON format with the following structure:
-        {
-          "pros": ["strength 1", "strength 2", ...],
-          "cons": ["area for improvement 1", "area for improvement 2", ...],
-          "score": <number between 0-100>,
-          "suggestions": "specific suggestions for improvement",
-          "overall": "brief overall assessment"
-        }`;
-
-        console.log(`Processing feedback for question ${index + 1}: ${questions[index].substring(0, 50)}...`);
-        console.log(`Processing answer ${index + 1}: ${answers[index].substring(0, 50)}...`);
-
-        const feedbackPromise = fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openAIApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'gpt-4o-mini',
-            messages: [
-              { role: 'system', content: systemPrompt },
-              { role: 'user', content: `Question: ${questions[index]}\n\nAnswer: ${answers[index]}` }
-            ],
-            response_format: { type: "json_object" }
-          }),
-        }).then(response => response.json())
-          .then(data => {
-            if (data.error) {
-              console.error(`Error from OpenAI for question ${index + 1}:`, data.error);
-              // Return a default feedback object if there's an error
-              return {
-                pros: ["Unable to analyze response"],
-                cons: ["Error generating feedback"],
-                score: 0,
-                suggestions: "Please try again later.",
-                overall: "Error in feedback generation"
-              };
-            }
-            
-            if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-              console.error(`Unexpected response format from OpenAI for question ${index + 1}:`, data);
-              // Return a default feedback object
-              return {
-                pros: ["Unable to analyze response"],
-                cons: ["Unexpected response format"],
-                score: 0,
-                suggestions: "Please try again later.",
-                overall: "Error in feedback generation"
-              };
-            }
-            
-            try {
-              return JSON.parse(data.choices[0].message.content);
-            } catch (parseError) {
-              console.error(`Error parsing OpenAI response for question ${index + 1}:`, parseError);
-              console.log('Raw response:', data.choices[0].message.content);
-              // Return a default feedback object
-              return {
-                pros: ["Unable to analyze response"],
-                cons: ["Error parsing feedback"],
-                score: 0,
-                suggestions: "Please try again later.",
-                overall: "Error in feedback generation"
-              };
-            }
-          })
-          .catch(error => {
-            console.error(`Network error while getting feedback for question ${index + 1}:`, error);
-            // Return a default feedback object
-            return {
-              pros: ["Unable to analyze response"],
-              cons: ["Network error"],
-              score: 0,
-              suggestions: "Please try again later.",
-              overall: "Error in feedback generation"
-            };
-          });
-        
-        feedbackPromises.push(feedbackPromise);
-      }
-
-      // Wait for all feedback to be generated
-      const feedbackResults = await Promise.all(feedbackPromises);
-      console.log(`Successfully generated ${feedbackResults.length} feedback entries`);
-
-      if (!feedbackResults || feedbackResults.length === 0) {
-        throw new Error('Failed to generate any feedback results');
-      }
-
-      return new Response(JSON.stringify({ feedback: feedbackResults }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     let systemPrompt = '';
+    let sonarSystemPrompt = '';
     
     if (questionIndex === 0) {
+      /* OpenAI System Prompt
       systemPrompt = `You are an experienced interviewer for a ${jobTitle} position.
       ${companyName ? `The company name is ${companyName}.` : ''}
       ${companyDescription ? `About the company: ${companyDescription}` : ''}
@@ -207,7 +57,22 @@ serve(async (req) => {
       
       Format your response as a JSON object with:
       - 'question': The main interview question (string)`;
+      */
+
+      // New Sonar System Prompt
+      sonarSystemPrompt = `You are an experienced interviewer for a ${jobTitle} position.
+      ${companyName ? `The company name is ${companyName}.` : ''}
+      ${companyDescription ? `About the company: ${companyDescription}` : ''}
+      
+      Based on the job description and candidate's resume, generate a thought-provoking behavioral interview question. Your response MUST be a JSON object with a 'question' field containing the interview question.
+      
+      The question should:
+      1. Assess the candidate's past experiences relevant to this role
+      2. Help evaluate their soft skills and cultural fit
+      3. Follow the format of "Tell me about a time when..." or similar open-ended behavioral question
+      4. Be specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response`;
     } else {
+      /* OpenAI System Prompt
       systemPrompt = `You are an experienced interviewer for a ${jobTitle} position conducting a behavioral interview.
       ${companyName ? `The company name is ${companyName}.` : ''}
       ${companyDescription ? `About the company: ${companyDescription}` : ''}
@@ -227,8 +92,28 @@ serve(async (req) => {
       
       Format your response as a JSON object with:
       - 'question': The main interview question (string)`;
+      */
+
+      // New Sonar System Prompt
+      sonarSystemPrompt = `You are an experienced interviewer for a ${jobTitle} position conducting a behavioral interview.
+      ${companyName ? `The company name is ${companyName}.` : ''}
+      ${companyDescription ? `About the company: ${companyDescription}` : ''}
+      
+      Previous conversation:
+      ${previousQuestions.map((q, i) => 
+        `Question ${i+1}: ${q}\nAnswer: ${previousAnswers[i] || "No answer provided"}`
+      ).join('\n\n')}
+      
+      Generate the next behavioral interview question based on this history, the job description, and resume. Your response MUST be a JSON object with a 'question' field containing the interview question.
+      
+      The question should:
+      1. Build upon the previous conversation naturally
+      2. Explore a different aspect of the candidate's experience not yet covered
+      3. Help assess their fit for this specific role
+      4. Be specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response`;
     }
 
+    /* OpenAI User Prompt
     const userPrompt = `
     Job Title: "${jobTitle}"
     Job Description: "${jobDescription}"
@@ -241,52 +126,90 @@ serve(async (req) => {
     
     ${questionIndex > 0 ? 'Please generate the next question in the interview sequence, based on the conversation history provided in the system prompt.' : 'Please generate the first behavioral interview question for this candidate.'}
     `;
+    */
 
-    console.log('Calling OpenAI API');
+    // New Sonar User Prompt
+    const sonarUserPrompt = `
+    Job Title: "${jobTitle}"
+    Job Description: "${jobDescription}"
+    ${companyName ? `Company Name: "${companyName}"` : ''}
+    ${companyDescription ? `Company Description: "${companyDescription}"` : ''}
+    
+    ${resumeText ? `Resume content: "${resumeText}"` : ''}
+    ${coverLetterText ? `Cover Letter content: "${coverLetterText}"` : ''}
+    ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
+    
+    ${questionIndex > 0 ? 'Generate the next question in the interview sequence, based on the conversation history.' : 'Generate the first behavioral interview question for this candidate.'}
+    `;
 
-    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Define JSON schema for Sonar response
+    const responseSchema = {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "The behavioral interview question"
+        }
+      },
+      "required": ["question"]
+    };
+
+    console.log('Calling Perplexity Sonar API');
+
+    const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${perplexityApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'llama-3.1-sonar-small-128k-online',
         messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
+          { role: 'system', content: sonarSystemPrompt },
+          { role: 'user', content: sonarUserPrompt }
         ],
-        response_format: { type: "json_object" }
+        temperature: 0.2,
+        max_tokens: 4000,
+        top_p: 0.9,
+        frequency_penalty: 1,
+        presence_penalty: 0,
+        response_format: {
+          "type": "json_schema",
+          "json_schema": { "schema": responseSchema }
+        }
       }),
     });
 
-    const openAIData = await openAIResponse.json();
-    console.log('OpenAI API response received');
-
-    if (openAIData.error) {
-      console.error('OpenAI API error:', openAIData.error);
-      throw new Error(`OpenAI API error: ${openAIData.error.message}`);
+    if (!perplexityResponse.ok) {
+      const error = await perplexityResponse.text();
+      throw new Error(`Perplexity API error: ${error}`);
     }
 
-    const generatedContent = openAIData.choices[0].message.content;
-    console.log('Generated question:', generatedContent.substring(0, 100) + '...');
+    const sonarData = await perplexityResponse.json();
+    console.log('Sonar API response received');
+    
+    if (!sonarData.choices || !sonarData.choices[0] || !sonarData.choices[0].message) {
+      console.error('Unexpected response format from Sonar:', sonarData);
+      throw new Error('Sonar did not return the expected data structure');
+    }
 
     let parsedContent;
     try {
-      if (typeof generatedContent === 'string') {
-        parsedContent = JSON.parse(generatedContent);
+      const content = sonarData.choices[0].message.content;
+      if (typeof content === 'string') {
+        parsedContent = JSON.parse(content);
       } else {
-        parsedContent = generatedContent;
+        parsedContent = content;
       }
       
       if (!parsedContent.question) {
         console.error('Invalid response structure:', parsedContent);
-        throw new Error('OpenAI did not return the expected data structure');
+        throw new Error('Sonar did not return the expected data structure');
       }
     } catch (parseError) {
       console.error('Error parsing JSON response:', parseError);
-      console.log('Raw response:', generatedContent);
-      throw new Error('Invalid JSON format in the OpenAI response');
+      console.log('Raw response:', sonarData.choices[0].message.content);
+      throw new Error('Invalid JSON format in the Sonar response');
     }
 
     return new Response(JSON.stringify({
