@@ -91,7 +91,6 @@ export const useJobPracticeSubmission = (
       const storylineId = storylineData.id;
 
       const requestBody = {
-        requestType: 'GENERATE_QUESTION',
         jobTitle: formData.jobTitle,
         jobDescription: formData.jobDescription,
         companyName: formData.companyName,
@@ -110,7 +109,7 @@ export const useJobPracticeSubmission = (
       console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
       console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
 
-      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
+      const { data, error } = await supabase.functions.invoke('storyline-generate-interview-questions', {
         body: requestBody,
       });
 
