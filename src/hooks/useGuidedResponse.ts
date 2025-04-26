@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -30,6 +31,14 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
       setProcessingThoughts(true);
       
       try {
+        // Create the request payload
+        const requestPayload = {
+          questionIndex,
+          questionType: question.type,
+          questionText: question.question,
+          userThoughts: thoughts
+        };
+        
         const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
           body: {
             ...requestPayload,
@@ -136,53 +145,53 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
         throw new Error(error.message);
       }
       
-      if (data && data.success) {
-        if (data.guidance) {
-          toast({
-            title: "Response Guide",
-            description: "Guiding questions have been provided to help you craft your answer.",
-          });
-          
-          if (typeof data.guidance.guidingQuestions === 'string') {
-            try {
-              const questionsText = data.guidance.guidingQuestions;
-              const questionsArray = questionsText
-                .split(/\d+\.|\n/)
-                .map(q => q.trim())
-                .filter(q => q && q.endsWith('?'));
+      if (!data || !data.success) {
+        throw new Error('Failed to generate guided response');
+      }
+      
+      if (data.guidance) {
+        toast({
+          title: "Response Guide",
+          description: "Guiding questions have been provided to help you craft your answer.",
+        });
+        
+        if (typeof data.guidance.guidingQuestions === 'string') {
+          try {
+            const questionsText = data.guidance.guidingQuestions;
+            const questionsArray = questionsText
+              .split(/\d+\.|\n/)
+              .map(q => q.trim())
+              .filter(q => q && q.endsWith('?'));
+            
+            if (questionsArray.length > 0) {
+              const guidanceEvent = new CustomEvent('guidanceReceived', {
+                detail: { guidingQuestions: questionsArray }
+              });
+              window.dispatchEvent(guidanceEvent);
+            } else {
+              const lines = questionsText
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 10);
               
-              if (questionsArray.length > 0) {
+              if (lines.length > 0) {
                 const guidanceEvent = new CustomEvent('guidanceReceived', {
-                  detail: { guidingQuestions: questionsArray }
+                  detail: { guidingQuestions: lines.slice(0, 5) }
                 });
                 window.dispatchEvent(guidanceEvent);
-              } else {
-                const lines = questionsText
-                  .split('\n')
-                  .map(line => line.trim())
-                  .filter(line => line.length > 10);
-                
-                if (lines.length > 0) {
-                  const guidanceEvent = new CustomEvent('guidanceReceived', {
-                    detail: { guidingQuestions: lines.slice(0, 5) }
-                  });
-                  window.dispatchEvent(guidanceEvent);
-                }
               }
-            } catch (parseError) {
-              console.error('Error parsing guiding questions:', parseError);
             }
-          } else if (Array.isArray(data.guidance.guidingQuestions)) {
-            const guidanceEvent = new CustomEvent('guidanceReceived', {
-              detail: { guidingQuestions: data.guidance.guidingQuestions }
-            });
-            window.dispatchEvent(guidanceEvent);
+          } catch (parseError) {
+            console.error('Error parsing guiding questions:', parseError);
           }
-          
-          return true;
+        } else if (Array.isArray(data.guidance.guidingQuestions)) {
+          const guidanceEvent = new CustomEvent('guidanceReceived', {
+            detail: { guidingQuestions: data.guidance.guidingQuestions }
+          });
+          window.dispatchEvent(guidanceEvent);
         }
-      } else {
-        throw new Error('Failed to generate guided response');
+        
+        return true;
       }
       
       return false;
