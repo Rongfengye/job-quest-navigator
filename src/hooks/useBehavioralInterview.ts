@@ -197,7 +197,7 @@ export const useBehavioralInterview = () => {
       } else {
         console.error('Invalid question format received:', data);
         toast({
-          variant: "warning",
+          variant: "default",
           title: "Warning",
           description: "Question generated but couldn't be read aloud.",
         });
