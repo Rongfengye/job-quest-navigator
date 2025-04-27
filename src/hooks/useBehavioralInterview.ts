@@ -40,35 +40,24 @@ export const useBehavioralInterview = () => {
     if (!generatedData) return;
     
     try {
-      // Hardcoded test question
-      const testQuestion = "Tell me about a time when you had to manage a group of children in a dynamic environment, ensuring their safety and engagement. How did you handle any challenges that arose, and what was the outcome?";
-      
-      // Create array of 5 identical questions for testing
-      const allQuestions = Array(5).fill({
-        question: testQuestion,
-        explanation: 'Test question for audio length testing',
-      });
-
       const firstQuestion: BehavioralQuestionData = {
-        question: testQuestion,
-        explanation: 'Test question for audio length testing',
+        question: generatedData.question,
+        explanation: generatedData.explanation,
         questionIndex: 0
       };
       
-      const questionTexts = allQuestions.map((q: any) => q.question);
+      const questionTexts = [generatedData.question];
       setQuestions(questionTexts);
       setCurrentQuestion(firstQuestion);
       setIsLoading(false);
       
-      await playQuestionAudio(firstQuestion.question);
-      
-      console.log('Set initial test questions:', questionTexts);
+      console.log('Set initial question:', firstQuestion);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process the test questions. Please try again.",
+        description: "Failed to process the questions. Please try again.",
       });
     }
   };
@@ -122,11 +111,6 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
-      // Use the same test question for all slots
-      const testQuestion = "Tell me about a time when you had to manage a group of children in a dynamic environment, ensuring their safety and engagement. How did you handle any challenges that arose, and what was the outcome?";
-      
-      // Comment out original question generation code
-      /*
       if (currentQuestionIndex === 0 && !behavioralId) {
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
@@ -149,34 +133,57 @@ export const useBehavioralInterview = () => {
         
         setBehavioralId(behavioralData.id);
       }
-      */
+
+      const functionName = currentQuestionIndex === 0 
+        ? 'storyline-question-bank-prep'
+        : 'storyline-create-behavioral-interview';
+
+      const { data: response, error } = await supabase.functions.invoke(functionName, {
+        body: {
+          jobTitle: formData.jobTitle,
+          jobDescription: formData.jobDescription,
+          companyName: formData.companyName,
+          companyDescription: formData.companyDescription,
+          resumeText,
+          coverLetterText,
+          additionalDocumentsText,
+          previousQuestions: questions,
+          previousAnswers: answers,
+          questionIndex: currentQuestionIndex,
+          requestType: currentQuestionIndex === 0 ? 'GENERATE_QUESTION' : undefined
+        }
+      });
+
+      if (error) {
+        throw new Error(`Error generating question: ${error.message}`);
+      }
+
+      if (!response || !response.question) {
+        throw new Error('No question was generated');
+      }
       
       const questionData: BehavioralQuestionData = {
-        question: testQuestion,
-        explanation: 'Test question for audio length testing',
+        question: response.question,
+        explanation: response.explanation,
         questionIndex: currentQuestionIndex,
         storylineId: behavioralId || undefined
       };
       
       setCurrentQuestion(questionData);
       
-      await playQuestionAudio(testQuestion);
-      
       if (behavioralId) {
         const updatedQuestions = [...questions];
-        updatedQuestions[currentQuestionIndex] = testQuestion;
+        updatedQuestions[currentQuestionIndex] = response.question;
         
-        /*
         await supabase
           .from('storyline_behaviorals')
           .update({
             questions: updatedQuestions
           })
           .eq('id', behavioralId);
-        */
       }
       
-      return { question: testQuestion };
+      return response;
     } catch (error) {
       console.error('Error in generateQuestion:', error);
       toast({
