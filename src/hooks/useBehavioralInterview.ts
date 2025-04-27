@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +27,9 @@ export const useBehavioralInterview = () => {
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioCache, setAudioCache] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,7 +47,6 @@ export const useBehavioralInterview = () => {
         throw new Error('No questions found in the generated data');
       }
       
-      // Randomly select the first question
       const randomIndex = Math.floor(Math.random() * allQuestions.length);
       const firstQuestion = allQuestions[randomIndex];
       const formattedQuestion: BehavioralQuestionData = {
@@ -59,6 +60,8 @@ export const useBehavioralInterview = () => {
       setCurrentQuestion(formattedQuestion);
       setIsLoading(false);
       
+      await playQuestionAudio(formattedQuestion.question);
+      
       console.log('Set initial questions:', questionTexts);
       console.log('Selected random first question at index:', randomIndex);
     } catch (error) {
@@ -69,6 +72,49 @@ export const useBehavioralInterview = () => {
         description: "Failed to process the generated questions. Please try again.",
       });
     }
+  };
+
+  const playQuestionAudio = useCallback(async (question: string) => {
+    if (isMuted || !question) return;
+
+    try {
+      setIsPlaying(true);
+      
+      let audioContent = audioCache[question];
+      
+      if (!audioContent) {
+        const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
+          body: { text: question }
+        });
+
+        if (error) throw error;
+        audioContent = data.audioContent;
+        
+        setAudioCache(prev => ({
+          ...prev,
+          [question]: audioContent
+        }));
+      }
+
+      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+      await audio.play();
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to play audio. Please try again.",
+      });
+    }
+  }, [isMuted, audioCache, toast]);
+
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
   };
 
   const generateQuestion = async (
@@ -143,6 +189,8 @@ export const useBehavioralInterview = () => {
       };
       
       setCurrentQuestion(questionData);
+      
+      await playQuestionAudio(data.question);
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
@@ -329,6 +377,10 @@ export const useBehavioralInterview = () => {
     resetInterview,
     setInitialQuestions,
     generateFeedback,
-    behavioralId
+    behavioralId,
+    isMuted,
+    isPlaying,
+    toggleMute,
+    playQuestionAudio,
   };
 };
