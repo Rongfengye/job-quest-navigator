@@ -16,6 +16,10 @@ function processBase64Chunks(arrayBuffer: ArrayBuffer, chunkSize = 32768): strin
     base64 += btoa(String.fromCharCode(...chunk));
   }
   
+  // Log the first and last few characters for debugging
+  console.log('Base64 prefix:', base64.substring(0, 20));
+  console.log('Base64 suffix:', base64.substring(base64.length - 20));
+  
   return base64;
 }
 

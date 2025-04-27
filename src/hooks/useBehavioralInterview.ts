@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAudioPlayback } from './useAudioPlayback';
 
 interface BehavioralQuestionData {
   question: string;
@@ -27,13 +28,13 @@ export const useBehavioralInterview = () => {
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [audioCache, setAudioCache] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
+  
+  const { isPlaying, isMuted, playAudio, toggleMute } = useAudioPlayback();
 
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
@@ -78,69 +79,33 @@ export const useBehavioralInterview = () => {
     if (isMuted || !question) return;
 
     try {
-      setIsPlaying(true);
+      console.log('Generating audio for question:', question.substring(0, 100) + '...');
       
-      let audioContent = audioCache[question];
-      let mimeType = 'audio/mp3';
-      
-      if (!audioContent) {
-        console.log('Generating audio for question:', question.substring(0, 100) + '...');
-        
-        const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-          body: { text: question }
-        });
+      const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
+        body: { text: question }
+      });
 
-        if (error) {
-          console.error('Error invoking text-to-speech function:', error);
-          throw error;
-        }
-
-        if (!data || !data.audioContent) {
-          throw new Error('No audio content received from text-to-speech function');
-        }
-
-        audioContent = data.audioContent;
-        mimeType = data.mimeType || mimeType;
-        
-        setAudioCache(prev => ({
-          ...prev,
-          [question]: audioContent
-        }));
+      if (error) {
+        console.error('Error invoking text-to-speech function:', error);
+        throw error;
       }
 
-      console.log('Creating audio element with data URL');
-      const audio = new Audio(`data:${mimeType};base64,${audioContent}`);
-      
-      audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
-        setIsPlaying(false);
-        toast({
-          variant: "destructive",
-          title: "Audio Error",
-          description: "Failed to play the question audio. You can continue with the interview.",
-        });
-      };
-      
-      audio.onended = () => {
-        console.log('Audio playback completed');
-        setIsPlaying(false);
-      };
+      if (!data || !data.audioContent) {
+        throw new Error('No audio content received from text-to-speech function');
+      }
 
-      await audio.play();
+      console.log('Received audio content length:', data.audioContent.length);
+      await playAudio(data.audioContent, data.mimeType);
+      
     } catch (error) {
       console.error('Error in playQuestionAudio:', error);
-      setIsPlaying(false);
       toast({
         variant: "destructive",
         title: "Audio Error",
-        description: "Failed to generate or play the question audio. You can continue with the interview.",
+        description: "Failed to generate or play audio. You can continue with text.",
       });
     }
-  }, [isMuted, audioCache, toast]);
-
-  const toggleMute = () => {
-    setIsMuted(prev => !prev);
-  };
+  }, [isMuted, playAudio, toast]);
 
   const generateQuestion = async (
     formData: {
