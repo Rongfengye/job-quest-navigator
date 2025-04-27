@@ -31,6 +31,7 @@ const QuestionContent = ({
 }: QuestionContentProps) => {
   const handleReplayClick = () => {
     if (currentQuestion && !isPlaying) {
+      console.log("Attempting to replay audio for question:", currentQuestion.question.substring(0, 50) + "...");
       playQuestionAudio(currentQuestion.question);
     }
   };

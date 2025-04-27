@@ -11,14 +11,16 @@ function processBase64Chunks(arrayBuffer: ArrayBuffer, chunkSize = 32768): strin
   const uint8Array = new Uint8Array(arrayBuffer);
   let base64 = '';
   
+  // Process in smaller chunks to avoid memory issues
   for (let i = 0; i < uint8Array.length; i += chunkSize) {
     const chunk = uint8Array.slice(i, i + chunkSize);
-    base64 += btoa(String.fromCharCode(...chunk));
+    base64 += btoa(String.fromCharCode.apply(null, [...chunk]));
   }
   
   // Log the first and last few characters for debugging
-  console.log('Base64 prefix:', base64.substring(0, 20));
+  console.log('Processed based audio length:', base64.length);
   console.log('Base64 suffix:', base64.substring(base64.length - 20));
+  console.log('Base64 prefix:', base64.substring(0, 20));
   
   return base64;
 }
@@ -67,7 +69,6 @@ serve(async (req) => {
     console.log('Received audio data size:', arrayBuffer.byteLength, 'bytes')
     
     const base64Audio = processBase64Chunks(arrayBuffer)
-    console.log('Processed base64 audio length:', base64Audio.length)
 
     return new Response(
       JSON.stringify({ 
