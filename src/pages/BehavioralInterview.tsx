@@ -80,7 +80,6 @@ const BehavioralInterview = () => {
         }
         
         if (generatedQuestions) {
-          console.log('Using pre-generated questions:', generatedQuestions);
           setInitialQuestions(generatedQuestions);
         } else {
           if (!location.state?.resumeText && !resumeText) {
@@ -96,9 +95,6 @@ const BehavioralInterview = () => {
           const coverLetterText = location.state?.coverLetterText || '';
           const additionalDocumentsText = location.state?.additionalDocumentsText || '';
           
-          console.log('Generating first question with resume text length:', 
-            (location.state?.resumeText || resumeText)?.length);
-            
           await generateQuestion(
             formData, 
             location.state?.resumeText || resumeText, 
@@ -185,39 +181,12 @@ const BehavioralInterview = () => {
         const additionalDocumentsText = location.state?.additionalDocumentsText || '';
         const stateResumeText = location.state?.resumeText;
         
-        console.log(`Generating question ${currentQuestionIndex + 1}`);
-        
-        let attempts = 0;
-        const maxAttempts = 3;
-        let questionGenerated = false;
-        
-        while (attempts < maxAttempts && !questionGenerated) {
-          try {
-            const result = await generateQuestion(
-              formData, 
-              stateResumeText || resumeText, 
-              coverLetterText, 
-              additionalDocumentsText
-            );
-            
-            if (result && result.question) {
-              questionGenerated = true;
-            } else {
-              console.error(`Attempt ${attempts + 1} failed to generate a valid question`);
-              attempts++;
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (genError) {
-            console.error(`Attempt ${attempts + 1} error:`, genError);
-            attempts++;
-            if (attempts >= maxAttempts) throw genError;
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
-        }
-        
-        if (!questionGenerated) {
-          throw new Error('Failed to generate next question after multiple attempts');
-        }
+        await generateQuestion(
+          formData, 
+          stateResumeText || resumeText, 
+          coverLetterText, 
+          additionalDocumentsText
+        );
         
         setAnswer('');
         setIsNextQuestionLoading(false);

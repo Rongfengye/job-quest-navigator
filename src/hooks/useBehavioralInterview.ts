@@ -60,12 +60,7 @@ export const useBehavioralInterview = () => {
       setCurrentQuestion(formattedQuestion);
       setIsLoading(false);
       
-      if (formattedQuestion.question && typeof formattedQuestion.question === 'string' && 
-          formattedQuestion.question.trim().length > 0) {
-        await playQuestionAudio(formattedQuestion.question);
-      } else {
-        console.error('Invalid question format for audio:', formattedQuestion);
-      }
+      await playQuestionAudio(formattedQuestion.question);
       
       console.log('Set initial questions:', questionTexts);
       console.log('Selected random first question at index:', randomIndex);
@@ -83,32 +78,16 @@ export const useBehavioralInterview = () => {
     if (isMuted || !question) return;
 
     try {
-      if (!question || typeof question !== 'string' || question.trim().length < 5) {
-        console.error('Invalid question for TTS:', question);
-        return;
-      }
-      
       setIsPlaying(true);
       
       let audioContent = audioCache[question];
       
       if (!audioContent) {
-        console.log('Calling TTS function for question:', question.substring(0, 50) + '...');
-        
         const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-          body: { text: question, voice: 'alloy' }
+          body: { text: question }
         });
 
-        if (error) {
-          console.error('TTS function error:', error);
-          throw error;
-        }
-        
-        if (!data || !data.audioContent) {
-          console.error('TTS function returned invalid data:', data);
-          throw new Error('Text-to-speech function did not return audio data');
-        }
-        
+        if (error) throw error;
         audioContent = data.audioContent;
         
         setAudioCache(prev => ({
@@ -117,36 +96,12 @@ export const useBehavioralInterview = () => {
         }));
       }
 
-      const audio = new Audio();
+      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+      await audio.play();
       
-      audio.onerror = (e) => {
-        console.error('Audio playback error:', e);
+      audio.onended = () => {
         setIsPlaying(false);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to play audio. Please try again.",
-        });
       };
-
-      const audioSrc = `data:audio/mpeg;base64,${audioContent}`;
-      console.log('Audio source length:', audioSrc.length);
-      
-      const playAudio = () => {
-        audio.play().catch(playError => {
-          console.error('Error during audio play():', playError);
-          setIsPlaying(false);
-        });
-      };
-
-      audio.addEventListener('canplaythrough', playAudio, { once: true });
-      audio.addEventListener('ended', () => {
-        setIsPlaying(false);
-        audio.removeEventListener('canplaythrough', playAudio);
-      });
-
-      audio.src = audioSrc;
-      
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
@@ -214,30 +169,9 @@ export const useBehavioralInterview = () => {
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
       
-      let data;
-      let error;
-      let attempts = 0;
-      const maxAttempts = 3;
-      
-      while (attempts < maxAttempts) {
-        const response = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-          body: requestBody,
-        });
-        
-        if (response.error) {
-          error = response.error;
-          console.error(`Attempt ${attempts + 1} failed:`, error);
-          attempts++;
-          
-          if (attempts >= maxAttempts) break;
-          
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        } else {
-          data = response.data;
-          error = null;
-          break;
-        }
-      }
+      const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
+        body: requestBody,
+      });
       
       if (error) {
         throw new Error(`Error generating question: ${error.message}`);
@@ -245,11 +179,6 @@ export const useBehavioralInterview = () => {
       
       if (!data || !data.question) {
         throw new Error('No question was generated');
-      }
-      
-      if (typeof data.question !== 'string' || data.question.trim().length < 10) {
-        console.error('Invalid question generated:', data.question);
-        throw new Error('Generated question is invalid');
       }
       
       console.log('Question generated:', data.question);
@@ -261,9 +190,7 @@ export const useBehavioralInterview = () => {
       
       setCurrentQuestion(questionData);
       
-      if (data.question && data.question.trim()) {
-        await playQuestionAudio(data.question);
-      }
+      await playQuestionAudio(data.question);
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
@@ -281,7 +208,7 @@ export const useBehavioralInterview = () => {
     } catch (error) {
       console.error('Error in generateQuestion:', error);
       toast({
-        variant: "default",
+        variant: "destructive",
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to generate interview question",
       });

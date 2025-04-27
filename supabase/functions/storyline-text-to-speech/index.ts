@@ -17,15 +17,7 @@ serve(async (req) => {
     if (!text) {
       throw new Error('Text is required')
     }
-    
-    // Limit text length to prevent excessive processing
-    const maxTextLength = 5000;
-    const processedText = text.length > maxTextLength 
-      ? text.substring(0, maxTextLength) + '...' 
-      : text;
 
-    console.log('Generating speech for text:', processedText.substring(0, 100) + (processedText.length > 100 ? '...' : ''));
-    
     // Generate speech from text using OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -35,42 +27,27 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: 'tts-1',
-        input: processedText,
-        voice: voice || 'alloy',
+        input: text,
+        voice: voice || 'alloy', // Default to 'alloy' voice if none specified
         response_format: 'mp3',
       }),
     })
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('OpenAI API error:', errorText);
-      throw new Error(errorText || 'Failed to generate speech');
+      const error = await response.json()
+      throw new Error(error.error?.message || 'Failed to generate speech')
     }
 
-    // Convert array buffer to base64 string
-    const arrayBuffer = await response.arrayBuffer();
-    const bytes = new Uint8Array(arrayBuffer);
-    let base64Audio = '';
-    
-    // Process in smaller chunks to avoid stack overflow
-    const chunkSize = 1024; // Smaller chunks
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
-      const binary = String.fromCharCode(...chunk);
-      base64Audio += btoa(binary);
-    }
-
-    console.log(`Audio generated successfully. Size: ${base64Audio.length} chars, Content preview: ${base64Audio.substring(0, 50)}...`);
+    // Convert audio buffer to base64
+    const arrayBuffer = await response.arrayBuffer()
+    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
 
     return new Response(
-      JSON.stringify({ 
-        audioContent: base64Audio,
-        contentType: 'audio/mpeg' // Explicitly specify content type
-      }),
+      JSON.stringify({ audioContent: base64Audio }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {
-    console.error('Error in text-to-speech function:', error);
+    console.error('Error in text-to-speech function:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       {
