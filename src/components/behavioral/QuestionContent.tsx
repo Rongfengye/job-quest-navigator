@@ -1,8 +1,8 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, Volume2, VolumeX, RefreshCw, Loader2 } from 'lucide-react';
+import { Mic, Volume2, VolumeX, RefreshCw } from 'lucide-react';
 
 interface QuestionContentProps {
   currentQuestionIndex: number;
@@ -11,10 +11,8 @@ interface QuestionContentProps {
   setAnswer: (value: string) => void;
   isRecording: boolean;
   toggleRecording: () => void;
-  stopRecording: () => void;  // Added this prop
   isMuted: boolean;
   isPlaying: boolean;
-  isLoading?: boolean;
   toggleMute: () => void;
   playQuestionAudio: (question: string) => void;
 }
@@ -26,35 +24,11 @@ const QuestionContent = ({
   setAnswer,
   isRecording,
   toggleRecording,
-  stopRecording,  // Added this prop
   isMuted,
   isPlaying,
-  isLoading = false,
   toggleMute,
   playQuestionAudio
 }: QuestionContentProps) => {
-  // Updated useEffect with cleanup
-  useEffect(() => {
-    if (currentQuestion?.question && !isMuted) {
-      console.log('QuestionContent: Auto-playing new question:', currentQuestion.question.substring(0, 50) + '...');
-      playQuestionAudio(currentQuestion.question);
-
-      // Cleanup function to stop audio when component unmounts or question changes
-      return () => {
-        console.log('QuestionContent: Cleaning up audio playback');
-        stopRecording();  // Stop any ongoing recording
-        setAnswer('');    // Clear the answer field
-      };
-    }
-  }, [currentQuestion?.question, isMuted, playQuestionAudio, stopRecording, setAnswer]);
-
-  const handleReplayClick = () => {
-    if (currentQuestion && !isPlaying && !isLoading) {
-      console.log("QuestionContent: Manual replay requested for question:", currentQuestion.question.substring(0, 50) + "...");
-      playQuestionAudio(currentQuestion.question);
-    }
-  };
-
   return (
     <>
       <div className="mb-4">
@@ -76,16 +50,12 @@ const QuestionContent = ({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={handleReplayClick}
-                disabled={isPlaying || isLoading}
+                onClick={() => playQuestionAudio(currentQuestion.question)}
+                disabled={isPlaying}
                 className="flex items-center gap-1"
               >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className={`h-4 w-4 ${isPlaying ? 'animate-spin' : ''}`} />
-                )}
-                {isLoading ? 'Loading...' : isPlaying ? 'Playing...' : 'Replay'}
+                <RefreshCw className={`h-4 w-4 ${isPlaying ? 'animate-spin' : ''}`} />
+                {isPlaying ? 'Playing...' : 'Replay'}
               </Button>
             )}
           </div>

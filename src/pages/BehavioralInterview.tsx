@@ -10,7 +10,6 @@ import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
-import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -64,14 +63,11 @@ const BehavioralInterview = () => {
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
-  const { isLoading: isAudioLoading } = useAudioPlayback();
-
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
         setPageLoaded(true);
         
-        /* Comment out token deduction for testing
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           toast({
@@ -82,12 +78,10 @@ const BehavioralInterview = () => {
           navigate('/behavioral');
           return;
         }
-        */
         
         if (generatedQuestions) {
           setInitialQuestions(generatedQuestions);
         } else {
-          /*
           if (!location.state?.resumeText && !resumeText) {
             toast({
               variant: "destructive",
@@ -97,7 +91,6 @@ const BehavioralInterview = () => {
             navigate('/behavioral/create');
             return;
           }
-          */
           
           const coverLetterText = location.state?.coverLetterText || '';
           const additionalDocumentsText = location.state?.additionalDocumentsText || '';
@@ -113,7 +106,7 @@ const BehavioralInterview = () => {
     };
     
     initializeInterview();
-  }, [pageLoaded]);
+  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
 
   useEffect(() => {
     if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {
@@ -171,7 +164,6 @@ const BehavioralInterview = () => {
       if (currentQuestionIndex < 4) {
         setIsNextQuestionLoading(true);
         
-        /* Comment out token deduction for testing
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
@@ -184,7 +176,6 @@ const BehavioralInterview = () => {
           navigate('/behavioral');
           return;
         }
-        */
         
         const coverLetterText = location.state?.coverLetterText || '';
         const additionalDocumentsText = location.state?.additionalDocumentsText || '';
@@ -253,10 +244,8 @@ const BehavioralInterview = () => {
               setAnswer={setAnswer}
               isRecording={isRecording}
               toggleRecording={toggleRecording}
-              stopRecording={stopRecording}
               isMuted={isMuted}
               isPlaying={isPlaying}
-              isLoading={isAudioLoading}
               toggleMute={toggleMute}
               playQuestionAudio={playQuestionAudio}
             />

@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useAudioPlayback } from './useAudioPlayback';
 
 interface BehavioralQuestionData {
   question: string;
@@ -28,36 +27,49 @@ export const useBehavioralInterview = () => {
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [audioCache, setAudioCache] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
-  
-  const { isPlaying, isMuted, playAudio, stopAudio, toggleMute, isLoading: audioLoading } = useAudioPlayback();
 
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
     
     try {
-      const firstQuestion: BehavioralQuestionData = {
-        question: generatedData.question,
-        explanation: generatedData.explanation,
+      const technicalQuestions = generatedData.technicalQuestions || [];
+      const behavioralQuestions = generatedData.behavioralQuestions || [];
+      const allQuestions = [...technicalQuestions, ...behavioralQuestions].slice(0, 5);
+      
+      if (allQuestions.length === 0) {
+        throw new Error('No questions found in the generated data');
+      }
+      
+      const randomIndex = Math.floor(Math.random() * allQuestions.length);
+      const firstQuestion = allQuestions[randomIndex];
+      const formattedQuestion: BehavioralQuestionData = {
+        question: firstQuestion.question,
+        explanation: firstQuestion.explanation || '',
         questionIndex: 0
       };
       
-      const questionTexts = [generatedData.question];
+      const questionTexts = allQuestions.map((q: any) => q.question);
       setQuestions(questionTexts);
-      setCurrentQuestion(firstQuestion);
+      setCurrentQuestion(formattedQuestion);
       setIsLoading(false);
       
-      console.log('Set initial question:', firstQuestion);
+      await playQuestionAudio(formattedQuestion.question);
+      
+      console.log('Set initial questions:', questionTexts);
+      console.log('Selected random first question at index:', randomIndex);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process the questions. Please try again.",
+        description: "Failed to process the generated questions. Please try again.",
       });
     }
   };
@@ -66,36 +78,44 @@ export const useBehavioralInterview = () => {
     if (isMuted || !question) return;
 
     try {
-      console.log('Generating audio for question:', question.substring(0, 100) + '...');
+      setIsPlaying(true);
       
-      // Stop any currently playing audio first
-      stopAudio();
+      let audioContent = audioCache[question];
       
-      const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-        body: { text: question }
-      });
+      if (!audioContent) {
+        const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
+          body: { text: question }
+        });
 
-      if (error) {
-        console.error('Error invoking text-to-speech function:', error);
-        throw error;
+        if (error) throw error;
+        audioContent = data.audioContent;
+        
+        setAudioCache(prev => ({
+          ...prev,
+          [question]: audioContent
+        }));
       }
 
-      if (!data || !data.audioContent) {
-        throw new Error('No audio content received from text-to-speech function');
-      }
-
-      console.log('Received audio content length:', data.audioContent.length);
-      await playAudio(data.audioContent, data.mimeType);
+      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+      await audio.play();
       
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
     } catch (error) {
-      console.error('Error in playQuestionAudio:', error);
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
       toast({
         variant: "destructive",
-        title: "Audio Error",
-        description: "Failed to generate or play audio. You can continue with text.",
+        title: "Error",
+        description: "Failed to play audio. Please try again.",
       });
     }
-  }, [isMuted, playAudio, stopAudio, toast]);
+  }, [isMuted, audioCache, toast]);
+
+  const toggleMute = () => {
+    setIsMuted(prev => !prev);
+  };
 
   const generateQuestion = async (
     formData: {
@@ -133,47 +153,48 @@ export const useBehavioralInterview = () => {
         
         setBehavioralId(behavioralData.id);
       }
-
-      const functionName = currentQuestionIndex === 0 
-        ? 'storyline-question-bank-prep'
-        : 'storyline-create-behavioral-interview';
-
-      const { data: response, error } = await supabase.functions.invoke(functionName, {
-        body: {
-          jobTitle: formData.jobTitle,
-          jobDescription: formData.jobDescription,
-          companyName: formData.companyName,
-          companyDescription: formData.companyDescription,
-          resumeText,
-          coverLetterText,
-          additionalDocumentsText,
-          previousQuestions: questions,
-          previousAnswers: answers,
-          questionIndex: currentQuestionIndex,
-          requestType: currentQuestionIndex === 0 ? 'GENERATE_QUESTION' : undefined
-        }
+      
+      const requestBody = {
+        jobTitle: formData.jobTitle,
+        jobDescription: formData.jobDescription,
+        companyName: formData.companyName,
+        companyDescription: formData.companyDescription,
+        resumeText,
+        coverLetterText,
+        additionalDocumentsText,
+        previousQuestions: questions,
+        previousAnswers: answers,
+        questionIndex: currentQuestionIndex,
+      };
+      
+      console.log(`Generating question at index: ${currentQuestionIndex}`);
+      
+      const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
+        body: requestBody,
       });
-
+      
       if (error) {
         throw new Error(`Error generating question: ${error.message}`);
       }
-
-      if (!response || !response.question) {
+      
+      if (!data || !data.question) {
         throw new Error('No question was generated');
       }
       
+      console.log('Question generated:', data.question);
+      
       const questionData: BehavioralQuestionData = {
-        question: response.question,
-        explanation: response.explanation,
-        questionIndex: currentQuestionIndex,
+        ...data,
         storylineId: behavioralId || undefined
       };
       
       setCurrentQuestion(questionData);
       
+      await playQuestionAudio(data.question);
+      
       if (behavioralId) {
         const updatedQuestions = [...questions];
-        updatedQuestions[currentQuestionIndex] = response.question;
+        updatedQuestions[currentQuestionIndex] = data.question;
         
         await supabase
           .from('storyline_behaviorals')
@@ -183,7 +204,7 @@ export const useBehavioralInterview = () => {
           .eq('id', behavioralId);
       }
       
-      return response;
+      return data;
     } catch (error) {
       console.error('Error in generateQuestion:', error);
       toast({
@@ -359,7 +380,6 @@ export const useBehavioralInterview = () => {
     behavioralId,
     isMuted,
     isPlaying,
-    isAudioLoading: audioLoading,
     toggleMute,
     playQuestionAudio,
   };
