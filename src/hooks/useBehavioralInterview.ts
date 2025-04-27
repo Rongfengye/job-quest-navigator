@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -44,7 +45,9 @@ export const useBehavioralInterview = () => {
         throw new Error('No questions found in the generated data');
       }
       
-      const firstQuestion = allQuestions[0];
+      // Randomly select the first question
+      const randomIndex = Math.floor(Math.random() * allQuestions.length);
+      const firstQuestion = allQuestions[randomIndex];
       const formattedQuestion: BehavioralQuestionData = {
         question: firstQuestion.question,
         explanation: firstQuestion.explanation || '',
@@ -57,6 +60,7 @@ export const useBehavioralInterview = () => {
       setIsLoading(false);
       
       console.log('Set initial questions:', questionTexts);
+      console.log('Selected random first question at index:', randomIndex);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
