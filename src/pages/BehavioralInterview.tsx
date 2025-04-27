@@ -68,6 +68,7 @@ const BehavioralInterview = () => {
       if (!pageLoaded) {
         setPageLoaded(true);
         
+        /* Comment out token deduction for testing
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           toast({
@@ -78,10 +79,12 @@ const BehavioralInterview = () => {
           navigate('/behavioral');
           return;
         }
+        */
         
         if (generatedQuestions) {
           setInitialQuestions(generatedQuestions);
         } else {
+          /*
           if (!location.state?.resumeText && !resumeText) {
             toast({
               variant: "destructive",
@@ -91,6 +94,7 @@ const BehavioralInterview = () => {
             navigate('/behavioral/create');
             return;
           }
+          */
           
           const coverLetterText = location.state?.coverLetterText || '';
           const additionalDocumentsText = location.state?.additionalDocumentsText || '';
@@ -106,7 +110,7 @@ const BehavioralInterview = () => {
     };
     
     initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
+  }, [pageLoaded]);
 
   useEffect(() => {
     if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {
@@ -164,6 +168,7 @@ const BehavioralInterview = () => {
       if (currentQuestionIndex < 4) {
         setIsNextQuestionLoading(true);
         
+        /* Comment out token deduction for testing
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
@@ -176,6 +181,7 @@ const BehavioralInterview = () => {
           navigate('/behavioral');
           return;
         }
+        */
         
         const coverLetterText = location.state?.coverLetterText || '';
         const additionalDocumentsText = location.state?.additionalDocumentsText || '';

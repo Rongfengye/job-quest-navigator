@@ -40,37 +40,35 @@ export const useBehavioralInterview = () => {
     if (!generatedData) return;
     
     try {
-      const technicalQuestions = generatedData.technicalQuestions || [];
-      const behavioralQuestions = generatedData.behavioralQuestions || [];
-      const allQuestions = [...technicalQuestions, ...behavioralQuestions].slice(0, 5);
+      // Hardcoded test question
+      const testQuestion = "Tell me about a time when you had to manage a group of children in a dynamic environment, ensuring their safety and engagement. How did you handle any challenges that arose, and what was the outcome?";
       
-      if (allQuestions.length === 0) {
-        throw new Error('No questions found in the generated data');
-      }
-      
-      const randomIndex = Math.floor(Math.random() * allQuestions.length);
-      const firstQuestion = allQuestions[randomIndex];
-      const formattedQuestion: BehavioralQuestionData = {
-        question: firstQuestion.question,
-        explanation: firstQuestion.explanation || '',
+      // Create array of 5 identical questions for testing
+      const allQuestions = Array(5).fill({
+        question: testQuestion,
+        explanation: 'Test question for audio length testing',
+      });
+
+      const firstQuestion: BehavioralQuestionData = {
+        question: testQuestion,
+        explanation: 'Test question for audio length testing',
         questionIndex: 0
       };
       
       const questionTexts = allQuestions.map((q: any) => q.question);
       setQuestions(questionTexts);
-      setCurrentQuestion(formattedQuestion);
+      setCurrentQuestion(firstQuestion);
       setIsLoading(false);
       
-      await playQuestionAudio(formattedQuestion.question);
+      await playQuestionAudio(firstQuestion.question);
       
-      console.log('Set initial questions:', questionTexts);
-      console.log('Selected random first question at index:', randomIndex);
+      console.log('Set initial test questions:', questionTexts);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to process the generated questions. Please try again.",
+        description: "Failed to process the test questions. Please try again.",
       });
     }
   };
@@ -121,6 +119,11 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
+      // Use the same test question for all slots
+      const testQuestion = "Tell me about a time when you had to manage a group of children in a dynamic environment, ensuring their safety and engagement. How did you handle any challenges that arose, and what was the outcome?";
+      
+      // Comment out original question generation code
+      /*
       if (currentQuestionIndex === 0 && !behavioralId) {
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
@@ -143,58 +146,34 @@ export const useBehavioralInterview = () => {
         
         setBehavioralId(behavioralData.id);
       }
-      
-      const requestBody = {
-        jobTitle: formData.jobTitle,
-        jobDescription: formData.jobDescription,
-        companyName: formData.companyName,
-        companyDescription: formData.companyDescription,
-        resumeText,
-        coverLetterText,
-        additionalDocumentsText,
-        previousQuestions: questions,
-        previousAnswers: answers,
-        questionIndex: currentQuestionIndex,
-      };
-      
-      console.log(`Generating question at index: ${currentQuestionIndex}`);
-      
-      const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-        body: requestBody,
-      });
-      
-      if (error) {
-        throw new Error(`Error generating question: ${error.message}`);
-      }
-      
-      if (!data || !data.question) {
-        throw new Error('No question was generated');
-      }
-      
-      console.log('Question generated:', data.question);
+      */
       
       const questionData: BehavioralQuestionData = {
-        ...data,
+        question: testQuestion,
+        explanation: 'Test question for audio length testing',
+        questionIndex: currentQuestionIndex,
         storylineId: behavioralId || undefined
       };
       
       setCurrentQuestion(questionData);
       
-      await playQuestionAudio(data.question);
+      await playQuestionAudio(testQuestion);
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
-        updatedQuestions[currentQuestionIndex] = data.question;
+        updatedQuestions[currentQuestionIndex] = testQuestion;
         
+        /*
         await supabase
           .from('storyline_behaviorals')
           .update({
             questions: updatedQuestions
           })
           .eq('id', behavioralId);
+        */
       }
       
-      return data;
+      return { question: testQuestion };
     } catch (error) {
       console.error('Error in generateQuestion:', error);
       toast({
