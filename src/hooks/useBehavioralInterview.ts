@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -96,7 +97,7 @@ export const useBehavioralInterview = () => {
         console.log('Calling TTS function for question:', question.substring(0, 50) + '...');
         
         const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-          body: { text: question }
+          body: { text: question, voice: 'alloy' }
         });
 
         if (error) {
@@ -117,8 +118,9 @@ export const useBehavioralInterview = () => {
         }));
       }
 
-      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+      const audio = new Audio();
       
+      // Add error event listener before setting the source
       audio.onerror = (e) => {
         console.error('Audio playback error:', e);
         setIsPlaying(false);
@@ -129,11 +131,23 @@ export const useBehavioralInterview = () => {
         });
       };
       
-      await audio.play();
+      audio.oncanplay = () => {
+        console.log('Audio can now be played');
+        audio.play()
+          .catch(playError => {
+            console.error('Error during audio play():', playError);
+            setIsPlaying(false);
+          });
+      };
       
       audio.onended = () => {
         setIsPlaying(false);
       };
+      
+      // Set source after adding event listeners
+      audio.src = `data:audio/mp3;base64,${audioContent}`;
+      
+      console.log('Audio element created with data URL length:', audio.src.length);
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
