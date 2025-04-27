@@ -34,7 +34,7 @@ export const useBehavioralInterview = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
   
-  const { isPlaying, isMuted, playAudio, toggleMute } = useAudioPlayback();
+  const { isPlaying, isMuted, playAudio, stopAudio, toggleMute, isLoading: audioLoading } = useAudioPlayback();
 
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
@@ -79,6 +79,9 @@ export const useBehavioralInterview = () => {
     try {
       console.log('Generating audio for question:', question.substring(0, 100) + '...');
       
+      // Stop any currently playing audio first
+      stopAudio();
+      
       const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
         body: { text: question }
       });
@@ -103,7 +106,7 @@ export const useBehavioralInterview = () => {
         description: "Failed to generate or play audio. You can continue with text.",
       });
     }
-  }, [isMuted, playAudio, toast]);
+  }, [isMuted, playAudio, stopAudio, toast]);
 
   const generateQuestion = async (
     formData: {
@@ -349,6 +352,7 @@ export const useBehavioralInterview = () => {
     behavioralId,
     isMuted,
     isPlaying,
+    isAudioLoading: audioLoading,
     toggleMute,
     playQuestionAudio,
   };

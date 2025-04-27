@@ -10,6 +10,7 @@ import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
+import { useAudioPlayback } from '@/hooks/useAudioPlayback';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -62,6 +63,8 @@ const BehavioralInterview = () => {
   const [feedbackGenerated, setFeedbackGenerated] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
+
+  const { isLoading: isAudioLoading } = useAudioPlayback();
 
   useEffect(() => {
     const initializeInterview = async () => {
@@ -252,6 +255,7 @@ const BehavioralInterview = () => {
               toggleRecording={toggleRecording}
               isMuted={isMuted}
               isPlaying={isPlaying}
+              isLoading={isAudioLoading}
               toggleMute={toggleMute}
               playQuestionAudio={playQuestionAudio}
             />

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, Volume2, VolumeX, RefreshCw } from 'lucide-react';
+import { Mic, Volume2, VolumeX, RefreshCw, Loader2 } from 'lucide-react';
 
 interface QuestionContentProps {
   currentQuestionIndex: number;
@@ -13,6 +13,7 @@ interface QuestionContentProps {
   toggleRecording: () => void;
   isMuted: boolean;
   isPlaying: boolean;
+  isLoading?: boolean;
   toggleMute: () => void;
   playQuestionAudio: (question: string) => void;
 }
@@ -26,6 +27,7 @@ const QuestionContent = ({
   toggleRecording,
   isMuted,
   isPlaying,
+  isLoading = false,
   toggleMute,
   playQuestionAudio
 }: QuestionContentProps) => {
@@ -38,7 +40,7 @@ const QuestionContent = ({
   }, [currentQuestion?.question, isMuted, playQuestionAudio]);
 
   const handleReplayClick = () => {
-    if (currentQuestion && !isPlaying) {
+    if (currentQuestion && !isPlaying && !isLoading) {
       console.log("Manual replay requested for question:", currentQuestion.question.substring(0, 50) + "...");
       playQuestionAudio(currentQuestion.question);
     }
@@ -66,11 +68,15 @@ const QuestionContent = ({
                 size="sm"
                 variant="outline"
                 onClick={handleReplayClick}
-                disabled={isPlaying}
+                disabled={isPlaying || isLoading}
                 className="flex items-center gap-1"
               >
-                <RefreshCw className={`h-4 w-4 ${isPlaying ? 'animate-spin' : ''}`} />
-                {isPlaying ? 'Playing...' : 'Replay'}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className={`h-4 w-4 ${isPlaying ? 'animate-spin' : ''}`} />
+                )}
+                {isLoading ? 'Loading...' : isPlaying ? 'Playing...' : 'Replay'}
               </Button>
             )}
           </div>
