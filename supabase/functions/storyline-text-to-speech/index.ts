@@ -36,7 +36,7 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'tts-1',
         input: processedText,
-        voice: voice || 'alloy', // Default to 'alloy' voice if none specified
+        voice: voice || 'alloy',
         response_format: 'mp3',
       }),
     })
@@ -47,23 +47,26 @@ serve(async (req) => {
       throw new Error(errorText || 'Failed to generate speech');
     }
 
-    // Process audio data safely
+    // Convert array buffer to base64 string
     const arrayBuffer = await response.arrayBuffer();
-    
-    // Process in chunks to avoid stack overflow
-    const uint8Array = new Uint8Array(arrayBuffer);
-    const chunkSize = 32768; // 32KB chunks
+    const bytes = new Uint8Array(arrayBuffer);
     let base64Audio = '';
     
-    for (let i = 0; i < uint8Array.length; i += chunkSize) {
-      const chunk = uint8Array.slice(i, Math.min(i + chunkSize, uint8Array.length));
-      base64Audio += btoa(String.fromCharCode.apply(null, Array.from(chunk)));
+    // Process in smaller chunks to avoid stack overflow
+    const chunkSize = 1024; // Smaller chunks
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+      const binary = String.fromCharCode(...chunk);
+      base64Audio += btoa(binary);
     }
 
-    console.log(`Successfully generated audio, size: ${base64Audio.length} characters`);
+    console.log(`Audio generated successfully. Size: ${base64Audio.length} chars, Content preview: ${base64Audio.substring(0, 50)}...`);
 
     return new Response(
-      JSON.stringify({ audioContent: base64Audio }),
+      JSON.stringify({ 
+        audioContent: base64Audio,
+        contentType: 'audio/mpeg' // Explicitly specify content type
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {

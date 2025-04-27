@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -120,7 +119,6 @@ export const useBehavioralInterview = () => {
 
       const audio = new Audio();
       
-      // Add error event listener before setting the source
       audio.onerror = (e) => {
         console.error('Audio playback error:', e);
         setIsPlaying(false);
@@ -130,24 +128,25 @@ export const useBehavioralInterview = () => {
           description: "Failed to play audio. Please try again.",
         });
       };
+
+      const audioSrc = `data:audio/mpeg;base64,${audioContent}`;
+      console.log('Audio source length:', audioSrc.length);
       
-      audio.oncanplay = () => {
-        console.log('Audio can now be played');
-        audio.play()
-          .catch(playError => {
-            console.error('Error during audio play():', playError);
-            setIsPlaying(false);
-          });
+      const playAudio = () => {
+        audio.play().catch(playError => {
+          console.error('Error during audio play():', playError);
+          setIsPlaying(false);
+        });
       };
-      
-      audio.onended = () => {
+
+      audio.addEventListener('canplaythrough', playAudio, { once: true });
+      audio.addEventListener('ended', () => {
         setIsPlaying(false);
-      };
+        audio.removeEventListener('canplaythrough', playAudio);
+      });
+
+      audio.src = audioSrc;
       
-      // Set source after adding event listeners
-      audio.src = `data:audio/mp3;base64,${audioContent}`;
-      
-      console.log('Audio element created with data URL length:', audio.src.length);
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
