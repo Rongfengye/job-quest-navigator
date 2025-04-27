@@ -6,6 +6,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Helper function to convert ArrayBuffer to base64 in chunks
+function arrayBufferToBase64(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 10240; // Process ~10KB chunks
+  
+  console.log('Starting base64 encoding of buffer size:', buffer.byteLength);
+  
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.slice(i, Math.min(i + chunkSize, bytes.length));
+    binary += String.fromCharCode.apply(null, chunk);
+    
+    if (i % (chunkSize * 10) === 0) {
+      console.log(`Processed ${i}/${bytes.length} bytes`);
+    }
+  }
+  
+  console.log('Completed binary string conversion, length:', binary.length);
+  const base64 = btoa(binary);
+  console.log('Completed base64 encoding, length:', base64.length);
+  
+  return base64;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -47,17 +71,22 @@ serve(async (req) => {
     const arrayBuffer = await response.arrayBuffer()
     console.log('Received audio data size:', arrayBuffer.byteLength, 'bytes')
     
-    // Simple base64 encoding without chunking
-    const base64Audio = btoa(String.fromCharCode.apply(null, new Uint8Array(arrayBuffer)))
-    console.log('Generated base64 audio length:', base64Audio.length)
+    try {
+      // Use our new chunked base64 encoding
+      const base64Audio = arrayBufferToBase64(arrayBuffer)
+      console.log('Successfully generated base64 audio, length:', base64Audio.length)
 
-    return new Response(
-      JSON.stringify({ 
-        audioContent: base64Audio,
-        mimeType: 'audio/mp3'
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
-    )
+      return new Response(
+        JSON.stringify({ 
+          audioContent: base64Audio,
+          mimeType: 'audio/mp3'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      )
+    } catch (encodingError) {
+      console.error('Error during base64 encoding:', encodingError)
+      throw new Error(`Failed to encode audio: ${encodingError.message}`)
+    }
   } catch (error) {
     console.error('Error in text-to-speech function:', error)
     return new Response(
