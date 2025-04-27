@@ -8,23 +8,6 @@ export const useAudioPlayback = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const { toast } = useToast();
 
-  // Helper to validate base64 string
-  const isValidBase64 = (str: string): boolean => {
-    try {
-      // Check if it's a non-empty string
-      if (!str || typeof str !== 'string' || str.trim() === '') {
-        return false;
-      }
-      
-      // Basic pattern check (might have padding)
-      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
-      return base64Regex.test(str);
-    } catch (e) {
-      console.error('Base64 validation error:', e);
-      return false;
-    }
-  };
-
   const playAudio = useCallback(async (base64Audio: string, mimeType: string = 'audio/mp3') => {
     if (isMuted) return;
 
@@ -38,13 +21,11 @@ export const useAudioPlayback = () => {
       setIsPlaying(true);
       
       // Validate base64 string
-      if (!base64Audio || base64Audio.trim() === '') {
-        throw new Error('Invalid audio data: empty string received');
+      if (!base64Audio || typeof base64Audio !== 'string' || base64Audio.trim() === '') {
+        throw new Error('Invalid audio data received');
       }
 
-      // Log base64 prefix and suffix for debugging
-      console.log('Audio base64 prefix:', base64Audio.substring(0, 30));
-      console.log('Audio base64 suffix:', base64Audio.substring(base64Audio.length - 30));
+      console.log('Attempting to play audio, base64 length:', base64Audio.length);
       
       // Create data URL
       const audioUrl = `data:${mimeType};base64,${base64Audio}`;
@@ -65,28 +46,24 @@ export const useAudioPlayback = () => {
         });
       };
       
+      audio.oncanplaythrough = () => {
+        console.log('Audio loaded and ready to play');
+        audio.play().catch(playError => {
+          console.error('Error during audio.play():', playError);
+          setIsPlaying(false);
+          throw playError;
+        });
+      };
+      
       audio.onended = () => {
         console.log('Audio playback completed');
         setIsPlaying(false);
-      };
-      
-      audio.oncanplay = () => {
-        console.log('Audio can play, starting playback');
       };
 
       // Set the source and load the audio
       audio.src = audioUrl;
       await audio.load();
       
-      // Play the audio
-      try {
-        await audio.play();
-        console.log('Audio playback started successfully');
-      } catch (playError) {
-        console.error('Error during audio.play():', playError);
-        setIsPlaying(false);
-        throw playError;
-      }
     } catch (error) {
       console.error('Error playing audio:', error);
       setIsPlaying(false);
@@ -101,7 +78,6 @@ export const useAudioPlayback = () => {
   const toggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
     
-    // Stop any playing audio when muting
     if (!isMuted && audioRef.current) {
       audioRef.current.pause();
       setIsPlaying(false);

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Mic, Volume2, VolumeX, RefreshCw } from 'lucide-react';
@@ -29,9 +29,17 @@ const QuestionContent = ({
   toggleMute,
   playQuestionAudio
 }: QuestionContentProps) => {
+  // Auto-play audio when question changes
+  useEffect(() => {
+    if (currentQuestion?.question && !isMuted) {
+      console.log('Auto-playing new question:', currentQuestion.question.substring(0, 50) + '...');
+      playQuestionAudio(currentQuestion.question);
+    }
+  }, [currentQuestion?.question, isMuted, playQuestionAudio]);
+
   const handleReplayClick = () => {
     if (currentQuestion && !isPlaying) {
-      console.log("Attempting to replay audio for question:", currentQuestion.question.substring(0, 50) + "...");
+      console.log("Manual replay requested for question:", currentQuestion.question.substring(0, 50) + "...");
       playQuestionAudio(currentQuestion.question);
     }
   };
