@@ -6,6 +6,19 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Process base64 in chunks to prevent memory issues
+function processBase64Chunks(arrayBuffer: ArrayBuffer, chunkSize = 32768): string {
+  const uint8Array = new Uint8Array(arrayBuffer);
+  let base64 = '';
+  
+  for (let i = 0; i < uint8Array.length; i += chunkSize) {
+    const chunk = uint8Array.slice(i, i + chunkSize);
+    base64 += btoa(String.fromCharCode(...chunk));
+  }
+  
+  return base64;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -18,6 +31,12 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
 
+    if (text.length > 4000) {
+      throw new Error('Text is too long (max 4000 characters)')
+    }
+
+    console.log('Generating speech for text:', text.substring(0, 100) + '...')
+
     // Generate speech from text using OpenAI
     const response = await fetch('https://api.openai.com/v1/audio/speech', {
       method: 'POST',
@@ -28,22 +47,29 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'tts-1',
         input: text,
-        voice: voice || 'alloy', // Default to 'alloy' voice if none specified
+        voice: voice || 'alloy',
         response_format: 'mp3',
       }),
     })
 
     if (!response.ok) {
       const error = await response.json()
+      console.error('OpenAI API error:', error)
       throw new Error(error.error?.message || 'Failed to generate speech')
     }
 
-    // Convert audio buffer to base64
+    // Get the audio data and process it in chunks
     const arrayBuffer = await response.arrayBuffer()
-    const base64Audio = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)))
+    console.log('Received audio data size:', arrayBuffer.byteLength, 'bytes')
+    
+    const base64Audio = processBase64Chunks(arrayBuffer)
+    console.log('Processed base64 audio length:', base64Audio.length)
 
     return new Response(
-      JSON.stringify({ audioContent: base64Audio }),
+      JSON.stringify({ 
+        audioContent: base64Audio,
+        mimeType: 'audio/mp3'
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     )
   } catch (error) {

@@ -81,14 +81,26 @@ export const useBehavioralInterview = () => {
       setIsPlaying(true);
       
       let audioContent = audioCache[question];
+      let mimeType = 'audio/mp3';
       
       if (!audioContent) {
+        console.log('Generating audio for question:', question.substring(0, 100) + '...');
+        
         const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
           body: { text: question }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error invoking text-to-speech function:', error);
+          throw error;
+        }
+
+        if (!data || !data.audioContent) {
+          throw new Error('No audio content received from text-to-speech function');
+        }
+
         audioContent = data.audioContent;
+        mimeType = data.mimeType || mimeType;
         
         setAudioCache(prev => ({
           ...prev,
@@ -96,19 +108,32 @@ export const useBehavioralInterview = () => {
         }));
       }
 
-      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
-      await audio.play();
+      console.log('Creating audio element with data URL');
+      const audio = new Audio(`data:${mimeType};base64,${audioContent}`);
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        setIsPlaying(false);
+        toast({
+          variant: "destructive",
+          title: "Audio Error",
+          description: "Failed to play the question audio. You can continue with the interview.",
+        });
+      };
       
       audio.onended = () => {
+        console.log('Audio playback completed');
         setIsPlaying(false);
       };
+
+      await audio.play();
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('Error in playQuestionAudio:', error);
       setIsPlaying(false);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "Failed to play audio. Please try again.",
+        title: "Audio Error",
+        description: "Failed to generate or play the question audio. You can continue with the interview.",
       });
     }
   }, [isMuted, audioCache, toast]);

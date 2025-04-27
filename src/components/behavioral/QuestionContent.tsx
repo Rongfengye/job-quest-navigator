@@ -29,6 +29,12 @@ const QuestionContent = ({
   toggleMute,
   playQuestionAudio
 }: QuestionContentProps) => {
+  const handleReplayClick = () => {
+    if (currentQuestion && !isPlaying) {
+      playQuestionAudio(currentQuestion.question);
+    }
+  };
+
   return (
     <>
       <div className="mb-4">
@@ -50,7 +56,7 @@ const QuestionContent = ({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => playQuestionAudio(currentQuestion.question)}
+                onClick={handleReplayClick}
                 disabled={isPlaying}
                 className="flex items-center gap-1"
               >
