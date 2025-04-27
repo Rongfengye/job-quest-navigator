@@ -20,9 +20,8 @@ export async function callSonarAPI(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        response_format: {
-          type: "json_schema",
-          schema: { schema: responseSchema }
+        response_format: { 
+          type: "json_object"
         }
       }),
     });
@@ -49,4 +48,3 @@ const responseSchema: SonarResponseSchema = {
   },
   required: ["question"]
 };
-
