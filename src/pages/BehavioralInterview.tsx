@@ -253,6 +253,7 @@ const BehavioralInterview = () => {
               setAnswer={setAnswer}
               isRecording={isRecording}
               toggleRecording={toggleRecording}
+              stopRecording={stopRecording}
               isMuted={isMuted}
               isPlaying={isPlaying}
               isLoading={isAudioLoading}

@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,6 +11,7 @@ interface QuestionContentProps {
   setAnswer: (value: string) => void;
   isRecording: boolean;
   toggleRecording: () => void;
+  stopRecording: () => void;  // Added this prop
   isMuted: boolean;
   isPlaying: boolean;
   isLoading?: boolean;
@@ -24,6 +26,7 @@ const QuestionContent = ({
   setAnswer,
   isRecording,
   toggleRecording,
+  stopRecording,  // Added this prop
   isMuted,
   isPlaying,
   isLoading = false,
@@ -43,7 +46,7 @@ const QuestionContent = ({
         setAnswer('');    // Clear the answer field
       };
     }
-  }, [currentQuestion?.question, isMuted, playQuestionAudio]);
+  }, [currentQuestion?.question, isMuted, playQuestionAudio, stopRecording, setAnswer]);
 
   const handleReplayClick = () => {
     if (currentQuestion && !isPlaying && !isLoading) {
