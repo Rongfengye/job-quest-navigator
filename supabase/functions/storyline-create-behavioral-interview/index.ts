@@ -56,11 +56,22 @@ serve(async (req) => {
     let parsedContent;
     try {
       const content = sonarData.choices[0].message.content;
+      
+      // Validate content
+      if (!content) {
+        throw new Error('Empty content returned from Sonar');
+      }
+      
       parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
       
-      if (!parsedContent.question) {
+      if (!parsedContent || typeof parsedContent !== 'object') {
+        console.error('Invalid parsed content:', parsedContent);
+        throw new Error('Could not parse Sonar response as valid JSON');
+      }
+      
+      if (!parsedContent.question || typeof parsedContent.question !== 'string' || !parsedContent.question.trim()) {
         console.error('Invalid response structure:', parsedContent);
-        throw new Error('Sonar did not return the expected data structure');
+        throw new Error('Sonar did not return a valid question');
       }
     } catch (parseError) {
       console.error('Error parsing JSON response:', parseError);
@@ -68,8 +79,16 @@ serve(async (req) => {
       throw new Error('Invalid JSON format in the Sonar response');
     }
 
+    // Ensure we have a valid question string
+    const questionText = parsedContent.question.trim();
+    if (!questionText) {
+      throw new Error('Question text is empty');
+    }
+
+    console.log('Generated valid question:', questionText.substring(0, 50) + '...');
+
     const response: InterviewQuestion = {
-      question: parsedContent.question,
+      question: questionText,
       questionIndex: questionIndex
     };
 
@@ -85,4 +104,3 @@ serve(async (req) => {
     });
   }
 });
-

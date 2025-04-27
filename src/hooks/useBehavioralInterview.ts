@@ -88,6 +88,8 @@ export const useBehavioralInterview = () => {
         });
 
         if (error) throw error;
+        if (!data || !data.audioContent) throw new Error("No audio content received");
+        
         audioContent = data.audioContent;
         
         setAudioCache(prev => ({
@@ -190,7 +192,16 @@ export const useBehavioralInterview = () => {
       
       setCurrentQuestion(questionData);
       
-      await playQuestionAudio(data.question);
+      if (typeof data.question === 'string' && data.question.trim().length > 0) {
+        await playQuestionAudio(data.question);
+      } else {
+        console.error('Invalid question format received:', data);
+        toast({
+          variant: "warning",
+          title: "Warning",
+          description: "Question generated but couldn't be read aloud.",
+        });
+      }
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
