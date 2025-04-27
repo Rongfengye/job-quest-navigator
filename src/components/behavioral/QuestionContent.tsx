@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,17 +30,24 @@ const QuestionContent = ({
   toggleMute,
   playQuestionAudio
 }: QuestionContentProps) => {
-  // Auto-play audio when question changes
+  // Updated useEffect with cleanup
   useEffect(() => {
     if (currentQuestion?.question && !isMuted) {
-      console.log('Auto-playing new question:', currentQuestion.question.substring(0, 50) + '...');
+      console.log('QuestionContent: Auto-playing new question:', currentQuestion.question.substring(0, 50) + '...');
       playQuestionAudio(currentQuestion.question);
+
+      // Cleanup function to stop audio when component unmounts or question changes
+      return () => {
+        console.log('QuestionContent: Cleaning up audio playback');
+        stopRecording();  // Stop any ongoing recording
+        setAnswer('');    // Clear the answer field
+      };
     }
   }, [currentQuestion?.question, isMuted, playQuestionAudio]);
 
   const handleReplayClick = () => {
     if (currentQuestion && !isPlaying && !isLoading) {
-      console.log("Manual replay requested for question:", currentQuestion.question.substring(0, 50) + "...");
+      console.log("QuestionContent: Manual replay requested for question:", currentQuestion.question.substring(0, 50) + "...");
       playQuestionAudio(currentQuestion.question);
     }
   };
