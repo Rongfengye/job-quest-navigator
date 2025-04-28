@@ -1,33 +1,36 @@
-
-export type InterviewQuestion = {
-  question: string;
-  questionIndex: number;
-};
-
-export type RequestBody = {
+export interface RequestBody {
+  generateFeedback?: boolean;
+  questions?: string[];
+  answers?: string[];
   jobTitle: string;
   jobDescription: string;
-  companyName?: string;
+  companyName: string;
   companyDescription?: string;
-  resumeText: string;
+  resumeText?: string;
   coverLetterText?: string;
   additionalDocumentsText?: string;
   previousQuestions?: string[];
   previousAnswers?: string[];
-  questionIndex: number;
-  generateFeedback?: boolean;
-  answers?: string[];
-  questions?: string[];
-};
+  questionIndex?: number;
+}
 
-export type SonarResponseSchema = {
-  type: "object";
+export interface InterviewQuestion {
+  question: string;
+  questionIndex: number;
+  explanation?: string;
+}
+
+export interface SonarResponseSchema {
+  type: string;
   properties: {
-    question: {
-      type: "string";
-      description: "The behavioral interview question"
+    question?: {
+      type: string;
+      description: string;
+    };
+    feedback?: {
+      type: string;
+      description: string;
     };
   };
-  required: ["question"];
-};
-
+  required: string[];
+}

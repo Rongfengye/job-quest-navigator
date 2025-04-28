@@ -5,9 +5,12 @@ import { SonarResponseSchema } from './types.ts';
 export async function callSonarAPI(
   systemPrompt: string,
   userPrompt: string,
-  apiKey: string
+  apiKey: string,
+  isFeedback: boolean = false
 ) {
   try {
+    const schema = isFeedback ? feedbackResponseSchema : questionResponseSchema;
+    
     const response = await fetch('https://api.perplexity.ai/chat/completions', {
       method: 'POST',
       headers: {
@@ -22,7 +25,7 @@ export async function callSonarAPI(
         ],
         response_format: {
           type: "json_schema",
-          json_schema: { schema: responseSchema }
+          json_schema: { schema }
         }
       }),
     });
@@ -39,7 +42,7 @@ export async function callSonarAPI(
   }
 }
 
-const responseSchema: SonarResponseSchema = {
+const questionResponseSchema: SonarResponseSchema = {
   type: "object",
   properties: {
     question: {
@@ -48,4 +51,15 @@ const responseSchema: SonarResponseSchema = {
     }
   },
   required: ["question"]
+};
+
+const feedbackResponseSchema: SonarResponseSchema = {
+  type: "object",
+  properties: {
+    feedback: {
+      type: "object",
+      description: "Comprehensive feedback for the interview responses"
+    }
+  },
+  required: ["feedback"]
 };
