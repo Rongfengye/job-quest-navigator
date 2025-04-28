@@ -37,7 +37,7 @@ serve(async (req) => {
       const userPrompt = `Please provide comprehensive feedback on these behavioral interview responses:\n\n${questionAnswerPairs}`;
       
       console.log('Calling Sonar API for feedback generation');
-      const sonarData = await callSonarAPI(systemPrompt, userPrompt, perplexityApiKey);
+      const sonarData = await callSonarAPI(systemPrompt, userPrompt, perplexityApiKey, true);
       
       if (!sonarData.choices || !sonarData.choices[0] || !sonarData.choices[0].message) {
         console.error('Unexpected response format from Sonar:', sonarData);

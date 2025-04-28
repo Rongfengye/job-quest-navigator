@@ -1,3 +1,4 @@
+
 export const generateSystemPrompt = (
   jobTitle: string,
   companyName?: string,
@@ -95,3 +96,4 @@ export const generateFeedbackSystemPrompt = (
   - Below 60: Needs improvement
   
   Be constructive, specific, and actionable in your feedback. Focus on the STAR method (Situation, Task, Action, Result), specificity, relevance to the job, and communication skills.`;
+};
