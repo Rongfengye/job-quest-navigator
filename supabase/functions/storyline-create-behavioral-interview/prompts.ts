@@ -1,4 +1,10 @@
 
+/**
+ * Generates the initial system prompt for the first interview question
+ * @param jobTitle - The position being interviewed for
+ * @param companyName - Optional company name for context
+ * @param companyDescription - Optional company description for additional context
+ */
 export const generateSystemPrompt = (
   jobTitle: string,
   companyName?: string,
@@ -17,6 +23,12 @@ export const generateSystemPrompt = (
   4. Be specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response`;
 };
 
+/**
+ * Generates system prompt for follow-up questions, building on previous context
+ * @param jobTitle - The position being interviewed for
+ * @param companyName - Optional company name for context
+ * @param companyDescription - Optional company description for additional context
+ */
 export const generateFollowUpSystemPrompt = (
   jobTitle: string,
   companyName?: string,
@@ -35,6 +47,16 @@ export const generateFollowUpSystemPrompt = (
   4. Be specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response`;
 };
 
+/**
+ * Generates the user prompt combining all available context
+ * @param jobTitle - The position title
+ * @param jobDescription - The job description
+ * @param resumeText - The candidate's resume content
+ * @param companyName - Optional company name
+ * @param companyDescription - Optional company description
+ * @param coverLetterText - Optional cover letter content
+ * @param additionalDocumentsText - Optional additional document content
+ */
 export const generateUserPrompt = (
   jobTitle: string,
   jobDescription: string,
@@ -55,6 +77,12 @@ export const generateUserPrompt = (
   ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}`;
 };
 
+/**
+ * Generates system prompt for providing comprehensive interview feedback
+ * @param jobTitle - The position title
+ * @param companyName - The company name
+ * @param jobDescription - The job description
+ */
 export const generateFeedbackSystemPrompt = (
   jobTitle: string,
   companyName: string,
@@ -80,8 +108,7 @@ export const generateFeedbackSystemPrompt = (
           "strengths": ["Specific strength about this answer"],
           "improvements": ["Specific suggestion for improvement"],
           "score": 85
-        },
-        // ... for all 5 questions
+        }
       ],
       "improvementPlan": "A paragraph with specific suggestions for how the candidate can improve their interview skills",
       "overallScore": 80
