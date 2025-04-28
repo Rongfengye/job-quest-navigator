@@ -35,7 +35,7 @@ export async function callSonarAPI(
         ],
         response_format: {
           type: "json_schema",
-          json_schema: { schema }
+          json_schema: schema
         }
       }),
     });
@@ -53,9 +53,11 @@ export async function callSonarAPI(
   }
 }
 
-// Schema for question generation responses
+// Schema for question generation responses with strict validation
 const questionResponseSchema: SonarResponseSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
+  additionalProperties: false,
   properties: {
     question: {
       type: "string",
@@ -65,13 +67,42 @@ const questionResponseSchema: SonarResponseSchema = {
   required: ["question"]
 };
 
-// Schema for feedback generation responses
+// Schema for feedback generation responses with strict validation
 const feedbackResponseSchema: SonarResponseSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
+  additionalProperties: false,
   properties: {
     feedback: {
       type: "object",
-      description: "Comprehensive feedback for the interview responses"
+      additionalProperties: false,
+      properties: {
+        overallAssessment: { type: "string" },
+        strengthsAndWeaknesses: {
+          type: "object",
+          properties: {
+            strengths: { type: "array", items: { type: "string" } },
+            weaknesses: { type: "array", items: { type: "string" } }
+          },
+          required: ["strengths", "weaknesses"]
+        },
+        individualResponses: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              questionIndex: { type: "number" },
+              strengths: { type: "array", items: { type: "string" } },
+              improvements: { type: "array", items: { type: "string" } },
+              score: { type: "number" }
+            },
+            required: ["questionIndex", "strengths", "improvements", "score"]
+          }
+        },
+        improvementPlan: { type: "string" },
+        overallScore: { type: "number" }
+      },
+      required: ["overallAssessment", "strengthsAndWeaknesses", "individualResponses", "improvementPlan", "overallScore"]
     }
   },
   required: ["feedback"]
