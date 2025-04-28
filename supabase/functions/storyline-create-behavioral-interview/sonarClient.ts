@@ -25,7 +25,7 @@ export async function callSonarAPI(
         ],
         response_format: {
           type: "json_schema",
-          schema: schema
+          json_schema: { schema }
         }
       }),
     });
