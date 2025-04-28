@@ -25,7 +25,7 @@ export async function callSonarAPI(
         ],
         response_format: {
           type: "json_schema",
-          schema: schema
+          json_schema: schema
         }
       }),
     });
@@ -43,7 +43,9 @@ export async function callSonarAPI(
 }
 
 const questionResponseSchema: SonarResponseSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
+  additionalProperties: false,
   properties: {
     question: {
       type: "string",
@@ -54,11 +56,39 @@ const questionResponseSchema: SonarResponseSchema = {
 };
 
 const feedbackResponseSchema: SonarResponseSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
   type: "object",
+  additionalProperties: false,
   properties: {
     feedback: {
       type: "object",
-      description: "Comprehensive feedback for the interview responses"
+      description: "Comprehensive feedback for the interview responses",
+      additionalProperties: false,
+      properties: {
+        overallAssessment: { type: "string" },
+        strengthsAndWeaknesses: {
+          type: "object",
+          properties: {
+            strengths: { type: "array", items: { type: "string" } },
+            weaknesses: { type: "array", items: { type: "string" } }
+          }
+        },
+        individualResponses: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              questionIndex: { type: "number" },
+              strengths: { type: "array", items: { type: "string" } },
+              improvements: { type: "array", items: { type: "string" } },
+              score: { type: "number" }
+            }
+          }
+        },
+        improvementPlan: { type: "string" },
+        overallScore: { type: "number" }
+      },
+      required: ["overallAssessment", "strengthsAndWeaknesses", "individualResponses", "improvementPlan", "overallScore"]
     }
   },
   required: ["feedback"]

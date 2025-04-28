@@ -65,11 +65,10 @@ export const generateQuestions = async (
       presence_penalty: 0,
       response_format: {
         "type": "json_schema",
-        "json_schema": { "schema": responseSchema }
+        "json_schema": responseSchema
       }
     }),
   });
 
   return perplexityResponse;
 };
-
