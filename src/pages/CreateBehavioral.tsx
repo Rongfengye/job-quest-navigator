@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -99,8 +98,10 @@ const CreateBehavioral = () => {
 
     try {
       // Call the Supabase function to generate interview questions
-      const { data, error } = await supabase.functions.invoke('storyline-generate-interview-questions', {
+      // Using storyline-question-bank-prep instead of storyline-generate-interview-questions
+      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
         body: {
+          requestType: 'GENERATE_QUESTION',
           jobTitle: formData.jobTitle,
           jobDescription: formData.jobDescription,
           companyName: formData.companyName,
