@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,9 +27,6 @@ export const useBehavioralInterview = () => {
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [audioCache, setAudioCache] = useState<{ [key: string]: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
@@ -47,8 +44,7 @@ export const useBehavioralInterview = () => {
         throw new Error('No questions found in the generated data');
       }
       
-      const randomIndex = Math.floor(Math.random() * allQuestions.length);
-      const firstQuestion = allQuestions[randomIndex];
+      const firstQuestion = allQuestions[0];
       const formattedQuestion: BehavioralQuestionData = {
         question: firstQuestion.question,
         explanation: firstQuestion.explanation || '',
@@ -60,10 +56,7 @@ export const useBehavioralInterview = () => {
       setCurrentQuestion(formattedQuestion);
       setIsLoading(false);
       
-      await playQuestionAudio(formattedQuestion.question);
-      
       console.log('Set initial questions:', questionTexts);
-      console.log('Selected random first question at index:', randomIndex);
     } catch (error) {
       console.error('Error setting initial questions:', error);
       toast({
@@ -72,49 +65,6 @@ export const useBehavioralInterview = () => {
         description: "Failed to process the generated questions. Please try again.",
       });
     }
-  };
-
-  const playQuestionAudio = useCallback(async (question: string) => {
-    if (isMuted || !question) return;
-
-    try {
-      setIsPlaying(true);
-      
-      let audioContent = audioCache[question];
-      
-      if (!audioContent) {
-        const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-          body: { text: question }
-        });
-
-        if (error) throw error;
-        audioContent = data.audioContent;
-        
-        setAudioCache(prev => ({
-          ...prev,
-          [question]: audioContent
-        }));
-      }
-
-      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
-      await audio.play();
-      
-      audio.onended = () => {
-        setIsPlaying(false);
-      };
-    } catch (error) {
-      console.error('Error playing audio:', error);
-      setIsPlaying(false);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to play audio. Please try again.",
-      });
-    }
-  }, [isMuted, audioCache, toast]);
-
-  const toggleMute = () => {
-    setIsMuted(prev => !prev);
   };
 
   const generateQuestion = async (
@@ -167,25 +117,21 @@ export const useBehavioralInterview = () => {
         questionIndex: currentQuestionIndex,
       };
       
-      console.log(`[DEBUG - useBehavioralInterview] Generating question at index: ${currentQuestionIndex}`);
-      console.log('[DEBUG - useBehavioralInterview] Request body:', JSON.stringify(requestBody, null, 2));
+      console.log(`Generating question at index: ${currentQuestionIndex}`);
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
       });
       
-      console.log('[DEBUG - useBehavioralInterview] Response received:', JSON.stringify(data));
       if (error) {
-        console.error('[ERROR - useBehavioralInterview] Function error:', error);
         throw new Error(`Error generating question: ${error.message}`);
       }
       
       if (!data || !data.question) {
-        console.error('[ERROR - useBehavioralInterview] Invalid response format:', data);
         throw new Error('No question was generated');
       }
       
-      console.log('[DEBUG - useBehavioralInterview] Question generated:', data.question);
+      console.log('Question generated:', data.question);
       
       const questionData: BehavioralQuestionData = {
         ...data,
@@ -193,8 +139,6 @@ export const useBehavioralInterview = () => {
       };
       
       setCurrentQuestion(questionData);
-      
-      await playQuestionAudio(data.question);
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
@@ -210,7 +154,7 @@ export const useBehavioralInterview = () => {
       
       return data;
     } catch (error) {
-      console.error('[ERROR - useBehavioralInterview] Error in generateQuestion:', error);
+      console.error('Error in generateQuestion:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -247,36 +191,29 @@ export const useBehavioralInterview = () => {
         companyName: '',
       };
 
-      console.log('[DEBUG - useBehavioralInterview] Generating feedback for questions:', questions);
-      console.log('[DEBUG - useBehavioralInterview] Generating feedback for answers:', answersToUse);
-      
-      const requestBody = {
-        generateFeedback: true,
-        questions,
-        answers: answersToUse,
-        jobTitle: jobData.jobTitle,
-        jobDescription: jobData.jobDescription,
-        companyName: jobData.companyName,
-      };
-      
-      console.log('[DEBUG - useBehavioralInterview] Feedback request body:', JSON.stringify(requestBody, null, 2));
+      console.log('Generating feedback for questions:', questions);
+      console.log('Generating feedback for answers:', answersToUse);
 
       const { data: response, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-        body: requestBody,
+        body: {
+          generateFeedback: true,
+          questions,
+          answers: answersToUse,
+          jobTitle: jobData.jobTitle,
+          jobDescription: jobData.jobDescription,
+          companyName: jobData.companyName,
+        },
       });
 
-      console.log('[DEBUG - useBehavioralInterview] Feedback response received:', JSON.stringify(response));
       if (error) {
-        console.error('[ERROR - useBehavioralInterview] Function error:', error);
         throw new Error(`Error generating feedback: ${error.message}`);
       }
 
       if (!response || !response.feedback) {
-        console.error('[ERROR - useBehavioralInterview] Invalid feedback response:', response);
         throw new Error('No feedback was generated');
       }
 
-      console.log('[DEBUG - useBehavioralInterview] Feedback received:', response.feedback);
+      console.log('Feedback received:', response.feedback);
 
       if (behavioralId) {
         const updateResult = await supabase
@@ -299,7 +236,7 @@ export const useBehavioralInterview = () => {
       navigate('/behavioral', { state: { interviewComplete: true } });
       return response.feedback;
     } catch (error) {
-      console.error('[ERROR - useBehavioralInterview] Error in generateFeedback:', error);
+      console.error('Error in generateFeedback:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -388,10 +325,6 @@ export const useBehavioralInterview = () => {
     resetInterview,
     setInitialQuestions,
     generateFeedback,
-    behavioralId,
-    isMuted,
-    isPlaying,
-    toggleMute,
-    playQuestionAudio,
+    behavioralId
   };
 };

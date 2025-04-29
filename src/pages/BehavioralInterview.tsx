@@ -41,11 +41,7 @@ const BehavioralInterview = () => {
     answers,
     behavioralId,
     setInitialQuestions,
-    generateFeedback,
-    isMuted,
-    isPlaying,
-    toggleMute,
-    playQuestionAudio
+    generateFeedback
   } = useBehavioralInterview();
 
   const handleTranscription = (text: string) => {
@@ -244,10 +240,6 @@ const BehavioralInterview = () => {
               setAnswer={setAnswer}
               isRecording={isRecording}
               toggleRecording={toggleRecording}
-              isMuted={isMuted}
-              isPlaying={isPlaying}
-              toggleMute={toggleMute}
-              playQuestionAudio={playQuestionAudio}
             />
           )}
         </div>
