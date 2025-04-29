@@ -113,26 +113,33 @@ export const useAnswerFeedback = (
     setError(null);
 
     try {
+      const requestBody = {
+        requestType: 'GENERATE_ANSWER',
+        answerText,
+        question: question.question,
+        questionType: question.type,
+        jobTitle,
+        companyName,
+        jobDescription: '',
+      };
+      
+      console.log('[DEBUG] Request to storyline-question-bank-prep:', JSON.stringify(requestBody, null, 2));
+
       const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
-        body: {
-          requestType: 'GENERATE_ANSWER',
-          answerText,
-          question: question.question,
-          questionType: question.type,
-          jobTitle,
-          companyName,
-          jobDescription: '',
-        },
+        body: requestBody,
       });
+      
+      console.log('[DEBUG] Response from storyline-question-bank-prep:', JSON.stringify(data, null, 2));
 
       if (error) {
-        console.error('Error generating feedback:', error);
+        console.error('[ERROR] Error generating feedback:', error);
         setError(error.message || 'Failed to generate feedback');
         await deductTokens(-2);
         return null;
       }
 
       if (!data || !data.pros || !data.cons) {
+        console.error('[ERROR] Invalid feedback data received:', data);
         setError('Invalid feedback data received');
         await deductTokens(-2);
         return null;
@@ -142,7 +149,7 @@ export const useAnswerFeedback = (
       setFeedback(feedbackData);
       return feedbackData;
     } catch (err) {
-      console.error('Error in feedback generation:', err);
+      console.error('[ERROR] Error in feedback generation:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       await deductTokens(-2);
       return null;

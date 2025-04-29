@@ -18,56 +18,59 @@ serve(async (req) => {
   
   try {
     const requestData = await req.json() as RequestData;
+    console.log('[DEBUG] Request type:', requestData.requestType);
+    console.log('[DEBUG] Request data:', JSON.stringify(requestData, null, 2));
 
     if (requestData.requestType === 'GENERATE_QUESTION') {
-      console.log('Received request to generate interview questions');
-      console.log('Resume text length:', requestData.resumeText?.length || 0);
+      console.log('[DEBUG] Received request to generate interview questions');
+      console.log('[DEBUG] Resume text length:', requestData.resumeText?.length || 0);
 
+      console.log('[DEBUG] Calling Perplexity API for question generation...');
       const perplexityResponse = await generateQuestions(requestData, perplexityApiKey!);
       const perplexityData = await perplexityResponse.json();
-      console.log('Perplexity API response received');
+      console.log('[DEBUG] Perplexity API response received');
 
       if (perplexityData.error) {
-        console.error('Perplexity API error:', perplexityData.error);
+        console.error('[ERROR] Perplexity API error:', perplexityData.error);
         throw new Error(`Perplexity API error: ${perplexityData.error.message}`);
       }
 
       const generatedContent = perplexityData.choices[0].message.content;
-      console.log('Generated content length:', generatedContent.length);
-      console.log('Content preview:', generatedContent.substring(0, 100));
+      console.log('[DEBUG] Generated content length:', generatedContent.length);
+      console.log('[DEBUG] Content preview:', generatedContent.substring(0, 100));
 
       let parsedContent;
       try {
         if (typeof generatedContent === 'object' && generatedContent !== null) {
           parsedContent = generatedContent;
-          console.log('Content was already a JSON object');
+          console.log('[DEBUG] Content was already a JSON object');
         } else if (typeof generatedContent === 'string') {
           let cleanContent = generatedContent;
           if (cleanContent.includes('```json')) {
             cleanContent = cleanContent.replace(/```json/g, '').replace(/```/g, '').trim();
-            console.log('Removed markdown code blocks');
+            console.log('[DEBUG] Removed markdown code blocks');
           }
           
           parsedContent = JSON.parse(cleanContent);
-          console.log('Successfully parsed JSON string');
+          console.log('[DEBUG] Successfully parsed JSON string');
         } else {
-          console.error('Unexpected content type:', typeof generatedContent);
+          console.error('[ERROR] Unexpected content type:', typeof generatedContent);
           throw new Error('Content is neither a string nor an object');
         }
         
-        console.log('Parsed content structure check:', 
+        console.log('[DEBUG] Parsed content structure check:', 
           'technicalQuestions' in parsedContent ? 'has technicalQuestions' : 'no technicalQuestions',
           'behavioralQuestions' in parsedContent ? 'has behavioralQuestions' : 'no behavioralQuestions',
           'questions' in parsedContent ? 'has questions' : 'no questions'
         );
         
         if (!parsedContent.technicalQuestions && !parsedContent.behavioralQuestions && !parsedContent.questions) {
-          console.error('Invalid response structure:', JSON.stringify(parsedContent).substring(0, 200));
+          console.error('[ERROR] Invalid response structure:', JSON.stringify(parsedContent).substring(0, 200));
           throw new Error('Perplexity did not return the expected data structure');
         }
         
         if ((!parsedContent.technicalQuestions || !parsedContent.behavioralQuestions) && parsedContent.questions) {
-          console.log('Transforming questions array to separate technical and behavioral arrays');
+          console.log('[DEBUG] Transforming questions array to separate technical and behavioral arrays');
           
           const transformedContent = {
             technicalQuestions: [],
@@ -95,17 +98,17 @@ serve(async (req) => {
           }
           
           parsedContent = transformedContent;
-          console.log('Transformed to expected structure');
+          console.log('[DEBUG] Transformed to expected structure');
         }
         
-        console.log('Final structure:', 
+        console.log('[DEBUG] Final structure:', 
           'technicalQuestions count:', parsedContent.technicalQuestions?.length || 0,
           'behavioralQuestions count:', parsedContent.behavioralQuestions?.length || 0
         );
         
       } catch (parseError) {
-        console.error('Error parsing JSON response:', parseError);
-        console.log('Raw response:', generatedContent);
+        console.error('[ERROR] Error parsing JSON response:', parseError);
+        console.log('[ERROR] Raw response:', generatedContent);
         throw new Error('Invalid JSON format in the Perplexity response');
       }
 
@@ -115,32 +118,35 @@ serve(async (req) => {
       });
 
     } else if (requestData.requestType === 'GENERATE_ANSWER') {
-      console.log('Received request to generate feedback for answer');
-      console.log('Question type:', requestData.questionType);
-      console.log('Answer length:', requestData.answerText?.length || 0);
+      console.log('[DEBUG] Received request to generate feedback for answer');
+      console.log('[DEBUG] Question type:', requestData.questionType);
+      console.log('[DEBUG] Answer length:', requestData.answerText?.length || 0);
 
+      console.log('[DEBUG] Calling OpenAI API for feedback generation...');
       const openAIResponse = await generateAnswerFeedback(requestData, openAIApiKey!);
       const openAIData = await openAIResponse.json();
-      console.log('OpenAI API response received');
+      console.log('[DEBUG] OpenAI API response received');
       
       if (openAIData.error) {
-        console.error('OpenAI API error:', openAIData.error);
+        console.error('[ERROR] OpenAI API error:', openAIData.error);
         throw new Error(`OpenAI API error: ${openAIData.error.message}`);
       }
 
       const generatedContent = openAIData.choices[0].message.content;
-      console.log('Generated feedback received, parsing JSON');
+      console.log('[DEBUG] Generated feedback received, parsing JSON');
       
       let feedbackContent;
       try {
         feedbackContent = JSON.parse(generatedContent);
         
         if (!feedbackContent.pros || !feedbackContent.cons) {
-          console.error('Invalid feedback structure:', feedbackContent);
+          console.error('[ERROR] Invalid feedback structure:', feedbackContent);
           throw new Error('OpenAI did not return the expected data structure');
         }
+        
+        console.log('[DEBUG] Successfully parsed feedback JSON');
       } catch (parseError) {
-        console.error('Error parsing feedback JSON:', parseError);
+        console.error('[ERROR] Error parsing feedback JSON:', parseError);
         throw new Error('Invalid JSON format in the OpenAI response');
       }
 
@@ -153,11 +159,10 @@ serve(async (req) => {
     }
 
   } catch (error) {
-    console.error('Error processing request:', error);
+    console.error('[ERROR] Error processing request:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
-
