@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -168,26 +167,21 @@ export const useBehavioralInterview = () => {
         questionIndex: currentQuestionIndex,
       };
       
-      console.log(`[DEBUG] Generating question at index: ${currentQuestionIndex}`);
-      console.log('[DEBUG] Request to storyline-create-behavioral-interview:', JSON.stringify(requestBody, null, 2));
+      console.log(`Generating question at index: ${currentQuestionIndex}`);
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
       });
       
-      console.log('[DEBUG] Response from storyline-create-behavioral-interview:', JSON.stringify(data, null, 2));
-      
       if (error) {
-        console.error('[ERROR] Error response from storyline-create-behavioral-interview:', error);
         throw new Error(`Error generating question: ${error.message}`);
       }
       
       if (!data || !data.question) {
-        console.error('[ERROR] Invalid response from storyline-create-behavioral-interview:', data);
         throw new Error('No question was generated');
       }
       
-      console.log('[DEBUG] Question generated:', data.question);
+      console.log('Question generated:', data.question);
       
       const questionData: BehavioralQuestionData = {
         ...data,
@@ -212,7 +206,7 @@ export const useBehavioralInterview = () => {
       
       return data;
     } catch (error) {
-      console.error('[ERROR] Error in generateQuestion:', error);
+      console.error('Error in generateQuestion:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -230,7 +224,7 @@ export const useBehavioralInterview = () => {
       const answersToUse = providedAnswers || answers;
       
       if (questions.length < 5 || answersToUse.length < 5) {
-        console.error('[ERROR] Not enough questions or answers to generate feedback', {
+        console.error('Not enough questions or answers to generate feedback', {
           questionsCount: questions.length,
           answersCount: answersToUse.length
         });
@@ -239,7 +233,7 @@ export const useBehavioralInterview = () => {
       }
       
       if (!answersToUse.every(a => a?.trim())) {
-        console.error('[ERROR] One or more answers are empty', answersToUse);
+        console.error('One or more answers are empty', answersToUse);
         throw new Error('Cannot generate feedback: one or more answers are empty');
       }
       
@@ -249,37 +243,29 @@ export const useBehavioralInterview = () => {
         companyName: '',
       };
 
-      console.log('[DEBUG] Generating feedback for questions:', questions);
-      console.log('[DEBUG] Generating feedback for answers:', answersToUse);
-
-      const requestBody = {
-        generateFeedback: true,
-        questions,
-        answers: answersToUse,
-        jobTitle: jobData.jobTitle,
-        jobDescription: jobData.jobDescription,
-        companyName: jobData.companyName,
-      };
-
-      console.log('[DEBUG] Request to storyline-create-behavioral-interview for feedback:', JSON.stringify(requestBody, null, 2));
+      console.log('Generating feedback for questions:', questions);
+      console.log('Generating feedback for answers:', answersToUse);
 
       const { data: response, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-        body: requestBody,
+        body: {
+          generateFeedback: true,
+          questions,
+          answers: answersToUse,
+          jobTitle: jobData.jobTitle,
+          jobDescription: jobData.jobDescription,
+          companyName: jobData.companyName,
+        },
       });
 
-      console.log('[DEBUG] Response from storyline-create-behavioral-interview feedback:', JSON.stringify(response, null, 2));
-
       if (error) {
-        console.error('[ERROR] Error response from feedback generation:', error);
         throw new Error(`Error generating feedback: ${error.message}`);
       }
 
       if (!response || !response.feedback) {
-        console.error('[ERROR] Invalid feedback response:', response);
         throw new Error('No feedback was generated');
       }
 
-      console.log('[DEBUG] Feedback received:', response.feedback);
+      console.log('Feedback received:', response.feedback);
 
       if (behavioralId) {
         const updateResult = await supabase
@@ -302,7 +288,7 @@ export const useBehavioralInterview = () => {
       navigate('/behavioral', { state: { interviewComplete: true } });
       return response.feedback;
     } catch (error) {
-      console.error('[ERROR] Error in generateFeedback:', error);
+      console.error('Error in generateFeedback:', error);
       toast({
         variant: "destructive",
         title: "Error",
