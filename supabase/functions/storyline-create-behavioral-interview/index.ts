@@ -17,65 +17,108 @@ serve(async (req) => {
 
   try {
     const requestBody: RequestBody = await req.json();
-    console.log('Processing interview question generation request');
-
-    const {
-      jobTitle,
-      jobDescription,
-      companyName,
-      companyDescription,
-      resumeText,
-      coverLetterText,
-      additionalDocumentsText,
-      previousQuestions,
-      previousAnswers,
-      questionIndex,
-    } = requestBody;
-
-    const systemPrompt = questionIndex === 0
-      ? generateSystemPrompt(jobTitle, companyName, companyDescription)
-      : generateFollowUpSystemPrompt(jobTitle, companyName, companyDescription);
-
-    const userPrompt = generateUserPrompt(
-      jobTitle,
-      jobDescription,
-      resumeText,
-      companyName,
-      companyDescription,
-      coverLetterText,
-      additionalDocumentsText
-    );
-
-    const sonarData = await callSonarAPI(systemPrompt, userPrompt, perplexityApiKey);
+    console.log('[DEBUG] Received request body:', JSON.stringify(requestBody, null, 2));
     
-    if (!sonarData.choices || !sonarData.choices[0] || !sonarData.choices[0].message) {
-      console.error('Unexpected response format from Sonar:', sonarData);
-      throw new Error('Sonar did not return the expected data structure');
-    }
-
-    let parsedContent;
-    try {
-      const content = sonarData.choices[0].message.content;
-      parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+    // Check if this is a feedback generation request
+    if (requestBody.generateFeedback) {
+      console.log('[DEBUG] Processing feedback generation request');
+      console.log('[DEBUG] Questions count:', requestBody.questions?.length);
+      console.log('[DEBUG] Answers count:', requestBody.answers?.length);
       
-      if (!parsedContent.question) {
-        console.error('Invalid response structure:', parsedContent);
+      // Log the full questions and answers for debugging
+      if (requestBody.questions) {
+        console.log('[DEBUG] Questions:', JSON.stringify(requestBody.questions));
+      }
+      if (requestBody.answers) {
+        console.log('[DEBUG] Answers:', JSON.stringify(requestBody.answers));
+      }
+    } else {
+      console.log('Processing interview question generation request');
+
+      const {
+        jobTitle,
+        jobDescription,
+        companyName,
+        companyDescription,
+        resumeText,
+        coverLetterText,
+        additionalDocumentsText,
+        previousQuestions,
+        previousAnswers,
+        questionIndex,
+      } = requestBody;
+
+      console.log(`[DEBUG] Generating question at index: ${questionIndex}`);
+      console.log('[DEBUG] Job title:', jobTitle);
+      console.log('[DEBUG] Company:', companyName || 'Not specified');
+      console.log('[DEBUG] Resume length:', resumeText?.length || 0, 'chars');
+      
+      if (previousQuestions && previousQuestions.length > 0) {
+        console.log('[DEBUG] Previous questions:', JSON.stringify(previousQuestions));
+      }
+      
+      if (previousAnswers && previousAnswers.length > 0) {
+        console.log('[DEBUG] Previous answers:', JSON.stringify(previousAnswers));
+      }
+
+      const systemPrompt = questionIndex === 0
+        ? generateSystemPrompt(jobTitle, companyName, companyDescription)
+        : generateFollowUpSystemPrompt(jobTitle, companyName, companyDescription);
+
+      console.log('[DEBUG] System prompt:', systemPrompt);
+      console.log('[DEBUG] System prompt length:', systemPrompt.length);
+      
+      const userPrompt = generateUserPrompt(
+        jobTitle,
+        jobDescription,
+        resumeText,
+        companyName,
+        companyDescription,
+        coverLetterText,
+        additionalDocumentsText
+      );
+      
+      console.log('[DEBUG] User prompt length:', userPrompt.length);
+      console.log('[DEBUG] Calling Perplexity Sonar API...');
+
+      const sonarData = await callSonarAPI(systemPrompt, userPrompt, perplexityApiKey);
+      
+      if (!sonarData.choices || !sonarData.choices[0] || !sonarData.choices[0].message) {
+        console.error('Unexpected response format from Sonar:', sonarData);
         throw new Error('Sonar did not return the expected data structure');
       }
-    } catch (parseError) {
-      console.error('Error parsing JSON response:', parseError);
-      console.log('Raw response:', sonarData.choices[0].message.content);
-      throw new Error('Invalid JSON format in the Sonar response');
+
+      let parsedContent;
+      try {
+        const content = sonarData.choices[0].message.content;
+        parsedContent = typeof content === 'string' ? JSON.parse(content) : content;
+        
+        if (!parsedContent.question) {
+          console.error('Invalid response structure:', parsedContent);
+          throw new Error('Sonar did not return the expected data structure');
+        }
+      } catch (parseError) {
+        console.error('Error parsing JSON response:', parseError);
+        console.log('Raw response:', sonarData.choices[0].message.content);
+        throw new Error('Invalid JSON format in the Sonar response');
+      }
+
+      console.log('[DEBUG] Generated question:', parsedContent.question);
+
+      const response: InterviewQuestion = {
+        question: parsedContent.question,
+        questionIndex: questionIndex
+      };
+
+      return new Response(JSON.stringify(response), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
     }
-
-    const response: InterviewQuestion = {
-      question: parsedContent.question,
-      questionIndex: questionIndex
-    };
-
-    return new Response(JSON.stringify(response), {
+    
+    return new Response(JSON.stringify({ error: "Request type not implemented" }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
+      status: 400,
     });
   } catch (error) {
     console.error('Error processing request:', error);
@@ -85,4 +128,3 @@ serve(async (req) => {
     });
   }
 });
-
