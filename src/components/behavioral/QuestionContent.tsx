@@ -24,9 +24,10 @@ const QuestionContent = ({
 }: QuestionContentProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
+  // Clean up audio when component unmounts or question changes
   useEffect(() => {
-    // Clean up audio when question changes
     return () => {
       if (audioSrc) {
         URL.revokeObjectURL(audioSrc);
@@ -35,15 +36,25 @@ const QuestionContent = ({
     };
   }, [currentQuestion]);
 
-  const handleTextToSpeech = async () => {
-    if (!currentQuestion?.question) return;
+  // Auto-play when a new question is received
+  useEffect(() => {
+    if (currentQuestion?.question) {
+      playTextToSpeech(currentQuestion.question);
+    }
+  }, [currentQuestion?.question]);
+
+  const playTextToSpeech = async (text: string) => {
+    if (!text || isProcessing) return;
     
     try {
+      setIsProcessing(true);
       setIsPlaying(true);
       
       const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-        body: { text: currentQuestion.question, voice: 'alloy' }
+        body: { text: text, voice: 'alloy' }
       });
+      
+      setIsProcessing(false);
       
       if (error) {
         console.error('Error calling text-to-speech:', error);
@@ -63,6 +74,11 @@ const QuestionContent = ({
         const byteArray = new Uint8Array(byteNumbers);
         const audioBlob = new Blob([byteArray], { type: 'audio/mp3' });
         
+        // Clean up previous audio if it exists
+        if (audioSrc) {
+          URL.revokeObjectURL(audioSrc);
+        }
+        
         const audioUrl = URL.createObjectURL(audioBlob);
         setAudioSrc(audioUrl);
         
@@ -75,6 +91,13 @@ const QuestionContent = ({
     } catch (error) {
       console.error('Error playing text-to-speech:', error);
       setIsPlaying(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTextToSpeech = () => {
+    if (currentQuestion?.question) {
+      playTextToSpeech(currentQuestion.question);
     }
   };
 
@@ -93,11 +116,11 @@ const QuestionContent = ({
             size="sm"
             variant="ghost"
             onClick={handleTextToSpeech}
-            disabled={isPlaying || !currentQuestion}
+            disabled={isPlaying || isProcessing || !currentQuestion}
             className="flex items-center gap-1 ml-2 mt-1"
           >
-            <Volume2 className={`h-4 w-4 ${isPlaying ? 'text-interview-primary' : ''}`} />
-            {isPlaying ? 'Playing...' : ''}
+            <Volume2 className={`h-4 w-4 ${isPlaying || isProcessing ? 'text-interview-primary' : ''}`} />
+            {isProcessing ? 'Processing...' : isPlaying ? 'Playing...' : ''}
           </Button>
         </div>
       </div>
