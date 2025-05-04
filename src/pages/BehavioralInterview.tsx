@@ -22,6 +22,7 @@ const BehavioralInterview = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const { resumeText } = useResumeText(null);
+  const [transitionAudio, setTransitionAudio] = useState<HTMLAudioElement | null>(null);
   
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
@@ -42,6 +43,27 @@ const BehavioralInterview = () => {
     generateFeedback,
     interviewComplete
   } = useBehavioralInterview();
+
+  // Initialize transition audio
+  useEffect(() => {
+    const audio = new Audio('/audio-assets/hello_world.mp3');
+    setTransitionAudio(audio);
+    
+    return () => {
+      if (transitionAudio) {
+        transitionAudio.pause();
+        transitionAudio.currentTime = 0;
+      }
+    };
+  }, []);
+
+  const playTransitionAudio = () => {
+    if (transitionAudio) {
+      transitionAudio.currentTime = 0;
+      return transitionAudio.play();
+    }
+    return Promise.resolve();
+  };
 
   const handleTranscription = (text: string) => {
     setAnswer(prev => prev ? `${prev}\n\n${text}` : text);
@@ -157,6 +179,14 @@ const BehavioralInterview = () => {
       
       // After submitting the 5th question (index 4), we don't need to generate a new question
       if (currentQuestionIndex < 4) {
+        // Play transition audio before loading next question
+        try {
+          await playTransitionAudio();
+        } catch (error) {
+          console.error('Error playing transition audio:', error);
+          // Continue even if audio fails
+        }
+        
         setIsNextQuestionLoading(true);
         
         const tokenCheck = await deductTokens(1);
