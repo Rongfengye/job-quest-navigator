@@ -51,19 +51,22 @@ const BehavioralInterview = () => {
     const audio = new Audio(audioPath);
     
     return new Promise<void>((resolve) => {
-      audio.onended = () => {
-        resolve();
-      };
-      
-      audio.onerror = () => {
-        console.error('Error playing audio');
-        resolve(); // Resolve anyway to continue the flow
-      };
-      
-      audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-        resolve(); // Resolve anyway to continue the flow
-      });
+      // Add a 750ms delay before playing the audio
+      setTimeout(() => {
+        audio.onended = () => {
+          resolve();
+        };
+        
+        audio.onerror = () => {
+          console.error('Error playing audio');
+          resolve(); // Resolve anyway to continue the flow
+        };
+        
+        audio.play().catch(error => {
+          console.error('Error playing audio:', error);
+          resolve(); // Resolve anyway to continue the flow
+        });
+      }, 750); // 750ms delay
     });
   };
 
