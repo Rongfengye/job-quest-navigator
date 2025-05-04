@@ -29,8 +29,6 @@ const BehavioralInterview = () => {
     companyDescription: 'A leading technology company.'
   };
 
-  const generatedQuestions = location.state?.generatedQuestions;
-
   const {
     isLoading,
     currentQuestionIndex,
@@ -40,7 +38,6 @@ const BehavioralInterview = () => {
     questions,
     answers,
     behavioralId,
-    setInitialQuestions,
     generateFeedback
   } = useBehavioralInterview();
 
@@ -75,34 +72,31 @@ const BehavioralInterview = () => {
           return;
         }
         
-        if (generatedQuestions) {
-          setInitialQuestions(generatedQuestions);
-        } else {
-          if (!location.state?.resumeText && !resumeText) {
-            toast({
-              variant: "destructive",
-              title: "Resume text missing",
-              description: "We couldn't extract text from your resume. Please try again.",
-            });
-            navigate('/behavioral/create');
-            return;
-          }
-          
-          const coverLetterText = location.state?.coverLetterText || '';
-          const additionalDocumentsText = location.state?.additionalDocumentsText || '';
-          
-          await generateQuestion(
-            formData, 
-            location.state?.resumeText || resumeText, 
-            coverLetterText, 
-            additionalDocumentsText
-          );
+        // Always generate the first question directly
+        if (!location.state?.resumeText && !resumeText) {
+          toast({
+            variant: "destructive",
+            title: "Resume text missing",
+            description: "We couldn't extract text from your resume. Please try again.",
+          });
+          navigate('/behavioral/create');
+          return;
         }
+        
+        const coverLetterText = location.state?.coverLetterText || '';
+        const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+        
+        await generateQuestion(
+          formData, 
+          location.state?.resumeText || resumeText, 
+          coverLetterText, 
+          additionalDocumentsText
+        );
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, generatedQuestions, setInitialQuestions, behavioralId]);
+  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, behavioralId]);
 
   useEffect(() => {
     if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {

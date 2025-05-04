@@ -7,7 +7,6 @@ import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
-import { supabase } from '@/integrations/supabase/client';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -97,44 +96,17 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
-      // Call the Supabase function to generate interview questions
-      // Using storyline-question-bank-prep instead of storyline-generate-interview-questions
-      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
-        body: {
-          requestType: 'GENERATE_QUESTION',
-          jobTitle: formData.jobTitle,
-          jobDescription: formData.jobDescription,
-          companyName: formData.companyName,
-          companyDescription: formData.companyDescription,
-          resumeText,
-          coverLetterText,
-          additionalDocumentsText,
-          resumePath: resumeFile ? resumeFile.name : null,
-          coverLetterPath: coverLetterFile ? coverLetterFile.name : null,
-          additionalDocumentsPath: additionalDocumentsFile ? additionalDocumentsFile.name : null,
-        },
-      });
-
-      if (error) {
-        throw new Error(`Error generating questions: ${error.message}`);
-      }
-
-      if (!data) {
-        throw new Error('No data returned from the questions generator');
-      }
-
-      // Once we have the data, navigate to the interview page
+      // Navigate directly to the interview page with form data and resume text
       navigate('/behavioral/interview', {
         state: {
           formData,
           resumeText,
           coverLetterText,
-          additionalDocumentsText,
-          generatedQuestions: data
+          additionalDocumentsText
         }
       });
     } catch (error) {
-      console.error('Error generating interview questions:', error);
+      console.error('Error navigating to interview:', error);
       toast({
         variant: "destructive",
         title: "Error",

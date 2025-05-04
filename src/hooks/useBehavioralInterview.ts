@@ -32,6 +32,7 @@ export const useBehavioralInterview = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
 
+  // Keep this for backward compatibility but it won't be used in the new flow
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
     
@@ -46,7 +47,7 @@ export const useBehavioralInterview = () => {
       
       const randomIndex = Math.floor(Math.random() * allQuestions.length);
       const randomQuestion = allQuestions[randomIndex];
-      // Eventually we can honestly onboard this to point at create storyline-create-behavioral-interview as well
+      
       const formattedQuestion: BehavioralQuestionData = {
         question: randomQuestion.question,
         explanation: randomQuestion.explanation || '',
