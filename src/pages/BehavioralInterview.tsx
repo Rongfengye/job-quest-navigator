@@ -46,7 +46,9 @@ const BehavioralInterview = () => {
 
   // Initialize transition audio
   useEffect(() => {
-    const audio = new Audio('/audio-assets/hello_world.mp3');
+    const selectedNumber = Math.floor(Math.random() * 10) + 1
+    const transitionAudioPath = `/audio-assets/audio${selectedNumber}.mp3`
+    const audio = new Audio(transitionAudioPath);
     setTransitionAudio(audio);
     
     return () => {
