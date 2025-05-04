@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -136,13 +137,13 @@ const QuestionContent = ({
           <Button
             type="button"
             size="sm"
-            variant="ghost"
+            variant={isPlaying || isProcessing ? "default" : "ghost"}
             onClick={handleTextToSpeech}
             disabled={isPlaying || isProcessing || !currentQuestion}
-            className="flex items-center gap-1 ml-2 mt-1"
+            className="flex items-center justify-center w-10 h-10 ml-2 mt-1"
+            aria-label={isPlaying ? "Playing audio" : "Play audio"}
           >
-            <Volume2 className={`h-4 w-4 ${isPlaying || isProcessing ? 'text-interview-primary' : ''}`} />
-            {isProcessing ? 'Processing...' : isPlaying ? 'Playing...' : ''}
+            <Volume2 className={`h-4 w-4 ${isPlaying || isProcessing ? 'text-primary-foreground' : ''}`} />
           </Button>
         </div>
       </div>
