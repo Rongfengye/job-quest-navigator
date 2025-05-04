@@ -9,6 +9,7 @@ interface SubmitButtonProps {
   isLoading: boolean;
   isNextQuestionLoading: boolean;
   onClick: () => void;
+  showProcessing?: boolean;
 }
 
 const SubmitButton = ({
@@ -16,16 +17,17 @@ const SubmitButton = ({
   isSubmitting,
   isLoading,
   isNextQuestionLoading,
-  onClick
+  onClick,
+  showProcessing = false
 }: SubmitButtonProps) => {
   return (
     <div className="flex justify-end">
       <Button
         onClick={onClick}
-        disabled={isSubmitting || isLoading || isNextQuestionLoading}
+        disabled={isSubmitting || isLoading || isNextQuestionLoading || showProcessing}
         className="bg-interview-primary hover:bg-interview-dark text-white flex items-center gap-2"
       >
-        {isSubmitting || isNextQuestionLoading ? (
+        {isSubmitting || isNextQuestionLoading || showProcessing ? (
           <>Processing...</>
         ) : currentQuestionIndex < 4 ? (
           <>Next Question <ArrowRight className="w-4 h-4" /></>

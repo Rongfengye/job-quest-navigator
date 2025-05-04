@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -21,6 +20,7 @@ const BehavioralInterview = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
+  const [showProcessing, setShowProcessing] = useState(false);
   const { resumeText } = useResumeText(null);
   
   const formData = location.state?.formData || {
@@ -177,6 +177,8 @@ const BehavioralInterview = () => {
       return;
     }
     
+    // Show processing immediately
+    setShowProcessing(true);
     setIsSubmitting(true);
     
     try {
@@ -198,6 +200,7 @@ const BehavioralInterview = () => {
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
           setIsNextQuestionLoading(false);
+          setShowProcessing(false); // Hide processing when there's an error
           toast({
             variant: "destructive",
             title: "Insufficient tokens",
@@ -220,6 +223,7 @@ const BehavioralInterview = () => {
         
         setAnswer('');
         setIsNextQuestionLoading(false);
+        setShowProcessing(false); // Hide processing when the next question is ready
       } else {
         setAnswer('');
         setShowFeedbackModal(true);
@@ -233,6 +237,7 @@ const BehavioralInterview = () => {
         title: "Error",
         description: "There was an error submitting your answer. Please try again.",
       });
+      setShowProcessing(false); // Hide processing on error
     } finally {
       setIsSubmitting(false);
     }
@@ -255,23 +260,30 @@ const BehavioralInterview = () => {
       <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">
         <InterviewHeader />
         
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-          {isNextQuestionLoading ? (
-            <div className="h-full flex flex-col items-center justify-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
-              <p className="text-gray-600">Loading next question...</p>
-            </div>
-          ) : (
-            <QuestionContent
-              currentQuestionIndex={currentQuestionIndex}
-              currentQuestion={currentQuestion}
-              answer={answer}
-              setAnswer={setAnswer}
-              isRecording={isRecording}
-              toggleRecording={toggleRecording}
-            />
-          )}
-        </div>
+        {showProcessing ? (
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
+            <p className="text-gray-600">{currentQuestionIndex < 4 ? "Processing your answer..." : "Completing interview..."}</p>
+          </div>
+        ) : (
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
+            {isNextQuestionLoading ? (
+              <div className="h-full flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
+                <p className="text-gray-600">Loading next question...</p>
+              </div>
+            ) : (
+              <QuestionContent
+                currentQuestionIndex={currentQuestionIndex}
+                currentQuestion={currentQuestion}
+                answer={answer}
+                setAnswer={setAnswer}
+                isRecording={isRecording}
+                toggleRecording={toggleRecording}
+              />
+            )}
+          </div>
+        )}
         
         <SubmitButton
           currentQuestionIndex={currentQuestionIndex}
@@ -279,6 +291,7 @@ const BehavioralInterview = () => {
           isLoading={isLoading}
           isNextQuestionLoading={isNextQuestionLoading}
           onClick={handleSubmit}
+          showProcessing={showProcessing}
         />
       </div>
       
