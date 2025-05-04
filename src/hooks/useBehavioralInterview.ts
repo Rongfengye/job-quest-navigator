@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -179,15 +178,7 @@ export const useBehavioralInterview = () => {
     try {
       const answersToUse = providedAnswers || answers;
       
-      if (questions.length < 5 || answersToUse.length < 5) {
-        console.error('Not enough questions or answers to generate feedback', {
-          questionsCount: questions.length,
-          answersCount: answersToUse.length
-        });
-        throw new Error(`Not enough questions or answers to generate feedback. 
-          Questions: ${questions.length}, Answers: ${answersToUse.length}`);
-      }
-      
+      // Fix: Only check for answers.length when generating feedback
       if (!answersToUse.every(a => a?.trim())) {
         console.error('One or more answers are empty', answersToUse);
         throw new Error('Cannot generate feedback: one or more answers are empty');
@@ -278,27 +269,12 @@ export const useBehavioralInterview = () => {
           .eq('id', behavioralId);
       }
       
+      // Fix: Check if we've completed all 5 questions (0-based index equals 4)
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
         console.log('Final answer submitted, all answers:', updatedAnswers);
         
-        setTimeout(async () => {
-          try {
-            if (updatedAnswers.length === 5 && updatedAnswers.every(a => a)) {
-              console.log('Generating feedback with updated answers array:', updatedAnswers);
-              await generateFeedback(updatedAnswers);
-            } else {
-              console.error('Still missing complete answers after delay', updatedAnswers);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Could not generate feedback: missing answers",
-              });
-            }
-          } catch (feedbackError) {
-            console.error('Error in delayed feedback generation:', feedbackError);
-          }
-        }, 1000);
+        // Don't try to generate any more questions, just set up for feedback generation
       } else {
         setCurrentQuestionIndex(prev => prev + 1);
       }

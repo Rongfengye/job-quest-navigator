@@ -39,7 +39,8 @@ const BehavioralInterview = () => {
     questions,
     answers,
     behavioralId,
-    generateFeedback
+    generateFeedback,
+    interviewComplete
   } = useBehavioralInterview();
 
   const handleTranscription = (text: string) => {
@@ -99,10 +100,13 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, behavioralId]);
 
+  // Modified effect to handle feedback generation when interview is complete
   useEffect(() => {
-    if (answers.length === 5 && allAnswersSubmitted && showFeedbackModal) {
+    // Check if we have 5 answers and the interview is complete (this means question 5 was just submitted)
+    if (answers.length === 5 && interviewComplete && !feedbackGenerated) {
       const generateFeedbackWithAnswers = async () => {
         try {
+          setShowFeedbackModal(true);
           console.log('All 5 answers collected, generating feedback with:', answers);
           const feedback = await generateFeedback();
           
@@ -129,13 +133,12 @@ const BehavioralInterview = () => {
             description: "Failed to generate feedback. Please try again.",
           });
           setShowFeedbackModal(false);
-          setAllAnswersSubmitted(false);
         }
       };
       
       generateFeedbackWithAnswers();
     }
-  }, [answers, allAnswersSubmitted, showFeedbackModal, generateFeedback, navigate, questions, behavioralId, toast]);
+  }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, questions, behavioralId, toast]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
@@ -152,6 +155,7 @@ const BehavioralInterview = () => {
     try {
       await submitAnswer(answer);
       
+      // After submitting the 5th question (index 4), we don't need to generate a new question
       if (currentQuestionIndex < 4) {
         setIsNextQuestionLoading(true);
         
@@ -181,26 +185,21 @@ const BehavioralInterview = () => {
         
         setAnswer('');
         setIsNextQuestionLoading(false);
-        setIsSubmitting(false);
       } else {
         setAnswer('');
         setShowFeedbackModal(true);
         
-        setTimeout(() => {
-          setAllAnswersSubmitted(true);
-        }, 1000);
-        
-        setIsSubmitting(false);
+        // Let the useEffect handle the feedback generation
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
-      setIsSubmitting(false);
-      setIsNextQuestionLoading(false);
       toast({
         variant: "destructive",
         title: "Error",
         description: "There was an error submitting your answer. Please try again.",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
