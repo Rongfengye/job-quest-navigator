@@ -230,6 +230,7 @@ export type Database = {
       storyline_jobs: {
         Row: {
           additional_documents_path: string | null
+          behavioral_id: string | null
           company_description: string | null
           company_name: string | null
           cover_letter_path: string | null
@@ -244,6 +245,7 @@ export type Database = {
         }
         Insert: {
           additional_documents_path?: string | null
+          behavioral_id?: string | null
           company_description?: string | null
           company_name?: string | null
           cover_letter_path?: string | null
@@ -258,6 +260,7 @@ export type Database = {
         }
         Update: {
           additional_documents_path?: string | null
+          behavioral_id?: string | null
           company_description?: string | null
           company_name?: string | null
           cover_letter_path?: string | null
@@ -270,7 +273,15 @@ export type Database = {
           status?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "storyline_jobs_behavioral_id_fkey"
+            columns: ["behavioral_id"]
+            isOneToOne: false
+            referencedRelation: "storyline_behaviorals"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       storyline_user_tokens: {
         Row: {

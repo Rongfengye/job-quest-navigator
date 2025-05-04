@@ -6,7 +6,8 @@ import { useAuthContext } from '@/context/AuthContext';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Briefcase, Clock, FileText, Plus } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Briefcase, Clock, FileText, MessageSquare, Plus, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface JobCard {
@@ -15,25 +16,56 @@ interface JobCard {
   company_name: string | null;
   created_at: string;
   status: string;
+  behavioral_id: string | null;
+}
+
+interface BehavioralCard {
+  id: string;
+  job_title: string;
+  company_name: string | null;
+  created_at: string;
+  has_feedback: boolean;
 }
 
 const Dashboard = () => {
   const { user } = useAuthContext();
   
   // Fetch user's storyline jobs
-  const { data: jobs, isLoading, error } = useQuery({
+  const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
     queryKey: ['storylineJobs', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
       
       const { data, error } = await supabase
         .from('storyline_jobs')
-        .select('id, job_title, company_name, created_at, status')
+        .select('id, job_title, company_name, created_at, status, behavioral_id')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
       return data as JobCard[];
+    },
+    enabled: !!user?.id
+  });
+
+  // Fetch user's behavioral interviews
+  const { data: behaviorals, isLoading: behavioralsLoading, error: behavioralsError } = useQuery({
+    queryKey: ['storylineBehaviorals', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('storyline_behaviorals')
+        .select('id, job_title, company_name, created_at, feedback')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      return data.map(item => ({
+        ...item,
+        has_feedback: item.feedback !== null && item.feedback !== undefined && Object.keys(item.feedback).length > 0
+      })) as BehavioralCard[];
     },
     enabled: !!user?.id
   });
@@ -58,19 +90,31 @@ const Dashboard = () => {
     return statusColors[status as keyof typeof statusColors] || statusColors.default;
   };
 
+  const isLoading = jobsLoading || behavioralsLoading;
+  const hasError = jobsError || behavioralsError;
+  const hasData = (jobs && jobs.length > 0) || (behaviorals && behaviorals.length > 0);
+
   return (
     <DashboardLayout>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-interview-primary">Job Dashboard</h1>
+          <h1 className="text-3xl font-bold text-interview-primary">Interview Dashboard</h1>
           <p className="text-muted-foreground mt-1">Manage your interview preparations</p>
         </div>
-        <Link to="/create">
-          <Button className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
-            New Job Prep
-          </Button>
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/create">
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Technical Prep
+            </Button>
+          </Link>
+          <Link to="/behavioral">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              New Behavioral Prep
+            </Button>
+          </Link>
+        </div>
       </div>
       
       {isLoading ? (
@@ -82,64 +126,134 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
-      ) : error ? (
+      ) : hasError ? (
         <Card className="bg-red-50 border-red-200">
           <CardHeader>
-            <CardTitle className="text-red-700">Error loading jobs</CardTitle>
+            <CardTitle className="text-red-700">Error loading data</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-red-600">
-              There was an error loading your job preparations. Please try again later.
+              There was an error loading your interview preparations. Please try again later.
             </p>
           </CardContent>
         </Card>
-      ) : jobs && jobs.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {jobs.map(job => (
-            <Link to={`/questions?id=${job.id}`} key={job.id}>
-              <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-xl">{job.job_title}</CardTitle>
-                      {job.company_name && (
-                        <CardDescription>{job.company_name}</CardDescription>
-                      )}
-                    </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(job.status)}`}>
-                      {job.status}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center text-muted-foreground text-sm mb-4">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>Created on {formatDate(job.created_at)}</span>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Button variant="ghost" className="w-full" size="sm">
-                    <FileText className="h-4 w-4 mr-2" />
-                    View Questions
-                  </Button>
-                </CardFooter>
-              </Card>
-            </Link>
-          ))}
+      ) : hasData ? (
+        <div className="space-y-8">
+          {behaviorals && behaviorals.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Behavioral Interview Preparations
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {behaviorals.map(interview => (
+                  <Link 
+                    to={interview.has_feedback ? `/behavioral-feedback?id=${interview.id}` : `/behavioral-interview?id=${interview.id}`}
+                    key={interview.id}
+                  >
+                    <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-xl">{interview.job_title}</CardTitle>
+                            {interview.company_name && (
+                              <CardDescription>{interview.company_name}</CardDescription>
+                            )}
+                          </div>
+                          <Badge className={interview.has_feedback ? "bg-green-500" : "bg-yellow-500"}>
+                            {interview.has_feedback ? 'Completed' : 'In Progress'}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center text-muted-foreground text-sm mb-4">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>Created on {formatDate(interview.created_at)}</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="border-t pt-4">
+                        <Button variant="ghost" className="w-full" size="sm">
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          {interview.has_feedback ? 'View Feedback' : 'Continue Interview'}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {jobs && jobs.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Briefcase className="h-5 w-5" />
+                Technical Interview Questions
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {jobs.map(job => (
+                  <Link to={`/questions?id=${job.id}`} key={job.id}>
+                    <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-xl">{job.job_title}</CardTitle>
+                            {job.company_name && (
+                              <CardDescription>{job.company_name}</CardDescription>
+                            )}
+                          </div>
+                          <div className="flex flex-col gap-2 items-end">
+                            <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(job.status)}`}>
+                              {job.status}
+                            </div>
+                            {job.behavioral_id && (
+                              <Badge variant="outline" className="border-blue-300 text-blue-700">
+                                From Behavioral
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center text-muted-foreground text-sm mb-4">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>Created on {formatDate(job.created_at)}</span>
+                        </div>
+                      </CardContent>
+                      <CardFooter className="border-t pt-4">
+                        <Button variant="ghost" className="w-full" size="sm">
+                          <FileText className="h-4 w-4 mr-2" />
+                          View Questions
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
           <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-1">No job preparations yet</h3>
+          <h3 className="text-xl font-medium text-gray-900 mb-1">No interview preparations yet</h3>
           <p className="text-gray-500 text-center mb-6">
-            Create your first job preparation to get personalized interview questions
+            Create your first interview preparation to get personalized interview questions
           </p>
-          <Link to="/create">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Job Prep
-            </Button>
-          </Link>
+          <div className="flex gap-4">
+            <Link to="/create">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Technical Prep
+              </Button>
+            </Link>
+            <Link to="/behavioral">
+              <Button variant="outline">
+                <Users className="h-4 w-4 mr-2" />
+                Behavioral Prep
+              </Button>
+            </Link>
+          </div>
         </div>
       )}
     </DashboardLayout>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -232,7 +233,15 @@ export const useBehavioralInterview = () => {
         description: "Your interview responses have been evaluated.",
       });
 
-      navigate('/behavioral', { state: { interviewComplete: true } });
+      navigate('/behavioral-feedback', { 
+        state: { 
+          interviewComplete: true,
+          behavioralId,
+          feedback: response.feedback,
+          questions
+        }
+      });
+      
       return response.feedback;
     } catch (error) {
       console.error('Error in generateFeedback:', error);
