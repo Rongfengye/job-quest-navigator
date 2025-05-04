@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -10,6 +11,7 @@ import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
+import ProcessingMessages from '@/components/behavioral/ProcessingMessages';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -262,15 +264,16 @@ const BehavioralInterview = () => {
         
         {showProcessing ? (
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
-            <p className="text-gray-600">{currentQuestionIndex < 4 ? "Processing your answer..." : "Completing interview..."}</p>
+            <ProcessingMessages 
+              currentQuestionIndex={currentQuestionIndex} 
+              isNextQuestion={currentQuestionIndex < 4} 
+            />
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
             {isNextQuestionLoading ? (
               <div className="h-full flex flex-col items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4"></div>
-                <p className="text-gray-600">Loading next question...</p>
+                <ProcessingMessages isNextQuestion={true} />
               </div>
             ) : (
               <QuestionContent
