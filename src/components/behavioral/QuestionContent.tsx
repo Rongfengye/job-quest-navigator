@@ -1,13 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Mic, Volume2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 
 interface QuestionContentProps {
   currentQuestionIndex: number;
-  currentQuestion: { question: string } | null;
+  currentQuestion: { question: string; audio?: string | null } | null;
   answer: string;
   setAnswer: (value: string) => void;
   isRecording: boolean;
@@ -36,13 +34,62 @@ const QuestionContent = ({
     };
   }, [currentQuestion]);
 
-  // Auto-play when a new question is received
+  // Process and play audio when a new question with audio data is received
   useEffect(() => {
-    if (currentQuestion?.question) {
+    if (currentQuestion?.audio) {
+      processAndPlayAudio(currentQuestion.audio);
+    }
+  }, [currentQuestion?.audio]);
+
+  const processAndPlayAudio = async (base64Audio: string) => {
+    if (!base64Audio) return;
+    
+    try {
+      setIsProcessing(true);
+      setIsPlaying(true);
+      
+      // Convert base64 to a binary array
+      const byteCharacters = atob(base64Audio);
+      const byteNumbers = new Array(byteCharacters.length);
+      
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      
+      const byteArray = new Uint8Array(byteNumbers);
+      const audioBlob = new Blob([byteArray], { type: 'audio/mp3' });
+      
+      // Clean up previous audio if it exists
+      if (audioSrc) {
+        URL.revokeObjectURL(audioSrc);
+      }
+      
+      const audioUrl = URL.createObjectURL(audioBlob);
+      setAudioSrc(audioUrl);
+      setIsProcessing(false);
+      
+      const audio = new Audio(audioUrl);
+      audio.onended = () => {
+        setIsPlaying(false);
+      };
+      audio.play();
+    } catch (error) {
+      console.error('Error playing audio:', error);
+      setIsPlaying(false);
+      setIsProcessing(false);
+    }
+  };
+
+  const handleTextToSpeech = () => {
+    if (currentQuestion?.audio) {
+      processAndPlayAudio(currentQuestion.audio);
+    } else if (currentQuestion?.question) {
+      // Fall back to the old method only if needed
       playTextToSpeech(currentQuestion.question);
     }
-  }, [currentQuestion?.question]);
+  };
 
+  // Keep this for backward compatibility
   const playTextToSpeech = async (text: string) => {
     if (!text || isProcessing) return;
     
@@ -50,9 +97,13 @@ const QuestionContent = ({
       setIsProcessing(true);
       setIsPlaying(true);
       
-      const { data, error } = await supabase.functions.invoke('storyline-text-to-speech', {
-        body: { text: text, voice: 'alloy' }
-      });
+      const { data, error } = await fetch('/api/storyline-text-to-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: text, voice: 'alloy' }),
+      }).then(res => res.json());
       
       setIsProcessing(false);
       
@@ -63,41 +114,12 @@ const QuestionContent = ({
       }
       
       if (data.audio) {
-        const base64Audio = data.audio;
-        const byteCharacters = atob(base64Audio);
-        const byteNumbers = new Array(byteCharacters.length);
-        
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        
-        const byteArray = new Uint8Array(byteNumbers);
-        const audioBlob = new Blob([byteArray], { type: 'audio/mp3' });
-        
-        // Clean up previous audio if it exists
-        if (audioSrc) {
-          URL.revokeObjectURL(audioSrc);
-        }
-        
-        const audioUrl = URL.createObjectURL(audioBlob);
-        setAudioSrc(audioUrl);
-        
-        const audio = new Audio(audioUrl);
-        audio.onended = () => {
-          setIsPlaying(false);
-        };
-        audio.play();
+        processAndPlayAudio(data.audio);
       }
     } catch (error) {
       console.error('Error playing text-to-speech:', error);
       setIsPlaying(false);
       setIsProcessing(false);
-    }
-  };
-
-  const handleTextToSpeech = () => {
-    if (currentQuestion?.question) {
-      playTextToSpeech(currentQuestion.question);
     }
   };
 

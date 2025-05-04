@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,7 @@ interface BehavioralQuestionData {
   explanation?: string;
   questionIndex: number;
   storylineId?: string;
+  audio?: string | null;
 }
 
 interface LocationState {
@@ -118,6 +120,8 @@ export const useBehavioralInterview = () => {
         previousQuestions: questions,
         previousAnswers: answers,
         questionIndex: currentQuestionIndex,
+        generateAudio: true, // Request audio generation
+        voice: 'alloy'       // Default voice
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
@@ -135,6 +139,7 @@ export const useBehavioralInterview = () => {
       }
       
       console.log('Question generated:', data.question);
+      console.log('Audio data received:', data.audio ? 'Yes' : 'No');
       
       const questionData: BehavioralQuestionData = {
         ...data,
