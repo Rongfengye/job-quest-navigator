@@ -4,11 +4,15 @@ import React, { useState, useEffect } from 'react';
 interface ProcessingMessagesProps {
   currentQuestionIndex?: number;
   isNextQuestion?: boolean;
+  messages?: string[];
+  interval?: number;
 }
 
 const ProcessingMessages: React.FC<ProcessingMessagesProps> = ({
   currentQuestionIndex = 0,
   isNextQuestion = false,
+  messages,
+  interval = 1500,
 }) => {
   const [messageIndex, setMessageIndex] = useState(0);
   
@@ -28,21 +32,21 @@ const ProcessingMessages: React.FC<ProcessingMessagesProps> = ({
     "Finalizing your performance evaluation…"
   ];
   
-  const messages = isNextQuestion ? processingMessages : finalProcessingMessages;
+  const displayMessages = messages || (isNextQuestion ? processingMessages : finalProcessingMessages);
   
   useEffect(() => {
-    const interval = setInterval(() => {
-      setMessageIndex(prevIndex => (prevIndex + 1) % messages.length);
-    }, 1500);
+    const rotationInterval = setInterval(() => {
+      setMessageIndex(prevIndex => (prevIndex + 1) % displayMessages.length);
+    }, interval);
     
-    return () => clearInterval(interval);
-  }, [messages.length]);
+    return () => clearInterval(rotationInterval);
+  }, [displayMessages.length, interval]);
   
   return (
     <div className="text-center">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-interview-primary mb-4 mx-auto"></div>
       <p className="text-gray-600 transition-opacity duration-500">
-        {messages[messageIndex]}
+        {displayMessages[messageIndex]}
       </p>
     </div>
   );

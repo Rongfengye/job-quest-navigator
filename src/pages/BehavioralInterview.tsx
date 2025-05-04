@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -254,7 +253,7 @@ const BehavioralInterview = () => {
   };
 
   if (isLoading && !currentQuestion) {
-    return <Loading message="Preparing your interview questions..." />;
+    return <Loading />; // Now uses rotating messages by default
   }
 
   return (
