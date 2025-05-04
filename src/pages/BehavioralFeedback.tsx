@@ -135,7 +135,7 @@ const BehavioralFeedback = () => {
               onClick={() => navigate('/behavioral')}
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Interview
+              Back to Dashboard
             </Button>
           </div>
 
