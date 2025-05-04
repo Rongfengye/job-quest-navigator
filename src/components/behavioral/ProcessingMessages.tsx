@@ -33,7 +33,7 @@ const ProcessingMessages: React.FC<ProcessingMessagesProps> = ({
   useEffect(() => {
     const interval = setInterval(() => {
       setMessageIndex(prevIndex => (prevIndex + 1) % messages.length);
-    }, 2000);
+    }, 500);
     
     return () => clearInterval(interval);
   }, [messages.length]);
