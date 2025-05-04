@@ -44,10 +44,12 @@ export const useBehavioralInterview = () => {
         throw new Error('No questions found in the generated data');
       }
       
-      const firstQuestion = allQuestions[0];
+      const randomIndex = Math.floor(Math.random() * allQuestions.length);
+      const randomQuestion = allQuestions[randomIndex];
+      // Eventually we can honestly onboard this to point at create storyline-create-behavioral-interview as well
       const formattedQuestion: BehavioralQuestionData = {
-        question: firstQuestion.question,
-        explanation: firstQuestion.explanation || '',
+        question: randomQuestion.question,
+        explanation: randomQuestion.explanation || '',
         questionIndex: 0
       };
       
