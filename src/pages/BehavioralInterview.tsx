@@ -22,7 +22,6 @@ const BehavioralInterview = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const { resumeText } = useResumeText(null);
-  const [transitionAudio, setTransitionAudio] = useState<HTMLAudioElement | null>(null);
   
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
@@ -44,27 +43,28 @@ const BehavioralInterview = () => {
     interviewComplete
   } = useBehavioralInterview();
 
-  // Initialize transition audio
-  useEffect(() => {
-    const selectedNumber = Math.floor(Math.random() * 10) + 1
-    const transitionAudioPath = `/audio-assets/audio${selectedNumber}.mp3`
-    const audio = new Audio(transitionAudioPath);
-    setTransitionAudio(audio);
-    
-    return () => {
-      if (transitionAudio) {
-        transitionAudio.pause();
-        transitionAudio.currentTime = 0;
-      }
-    };
-  }, []);
-
   const playTransitionAudio = () => {
-    if (transitionAudio) {
-      transitionAudio.currentTime = 0;
-      return transitionAudio.play();
-    }
-    return Promise.resolve();
+    // Select a random audio file each time this function is called
+    const selectedNumber = Math.floor(Math.random() * 10) + 1;
+    const audioPath = `/audio-assets/audio${selectedNumber}.mp3`;
+    
+    const audio = new Audio(audioPath);
+    
+    return new Promise<void>((resolve) => {
+      audio.onended = () => {
+        resolve();
+      };
+      
+      audio.onerror = () => {
+        console.error('Error playing audio');
+        resolve(); // Resolve anyway to continue the flow
+      };
+      
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        resolve(); // Resolve anyway to continue the flow
+      });
+    });
   };
 
   const handleTranscription = (text: string) => {
