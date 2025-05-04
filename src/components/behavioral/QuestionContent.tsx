@@ -72,6 +72,11 @@ const QuestionContent = ({
       const audio = new Audio(audioUrl);
       audio.onended = () => {
         setIsPlaying(false);
+        
+        // Automatically start recording when audio finishes playing
+        if (!isRecording) {
+          toggleRecording();
+        }
       };
       audio.play();
     } catch (error) {
