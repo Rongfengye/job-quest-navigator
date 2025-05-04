@@ -51,7 +51,7 @@ const BehavioralInterview = () => {
     const audio = new Audio(audioPath);
     
     return new Promise<void>((resolve) => {
-      // Add a 750ms delay before playing the audio
+      // Increased delay from 750ms to 1500ms before playing the audio
       setTimeout(() => {
         audio.onended = () => {
           resolve();
@@ -66,7 +66,7 @@ const BehavioralInterview = () => {
           console.error('Error playing audio:', error);
           resolve(); // Resolve anyway to continue the flow
         });
-      }, 750); // 750ms delay
+      }, 1500); // Changed from 750ms to 1500ms
     });
   };
 
