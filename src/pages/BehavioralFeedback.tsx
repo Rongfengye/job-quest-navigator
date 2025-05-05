@@ -11,6 +11,8 @@ import Loading from '@/components/ui/loading';
 import { useAuthContext } from '@/context/AuthContext';
 import NavBar from '@/components/NavBar';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
+import { useJobPracticeSubmission } from '@/hooks/useJobPracticeSubmission';
+import ProcessingModal from '@/components/ProcessingModal';
 
 const BehavioralFeedback = () => {
   const location = useLocation();
@@ -18,16 +20,39 @@ const BehavioralFeedback = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingQuestions, setIsCreatingQuestions] = useState(false);
   const [questions, setQuestions] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [interviewData, setInterviewData] = useState<any>(null);
-  const { isAuthenticated, isLoading: authLoading } = useAuthContext();
+  const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
 
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
   const hasFeedbackInState = !!location.state?.feedback;
   const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
+
+  // Empty placeholder data for the useJobPracticeSubmission hook
+  // We'll use the real data from interviewData when calling submitJobPractice
+  const emptyFormData = {
+    jobTitle: '',
+    jobDescription: '',
+    companyName: '',
+    companyDescription: ''
+  };
+  
+  const emptyFileData = {
+    file: null,
+    text: ''
+  };
+
+  const { isLoading: isCreatingQuestions, processingModal, submitJobPractice } = 
+    useJobPracticeSubmission(
+      user?.id,
+      emptyFormData,
+      emptyFileData,
+      emptyFileData,
+      emptyFileData,
+      interviewId
+    );
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -109,81 +134,17 @@ const BehavioralFeedback = () => {
       return;
     }
 
-    setIsCreatingQuestions(true);
+    // Use the real data from the interview for creating technical questions
+    const formData = {
+      jobTitle: interviewData.job_title,
+      jobDescription: interviewData.job_description,
+      companyName: interviewData.company_name || '',
+      companyDescription: interviewData.company_description || ''
+    };
 
-    try {
-      // Create a new storyline_jobs entry linked to this behavioral interview
-      const { data: jobData, error: jobError } = await supabase
-        .from('storyline_jobs')
-        .insert({
-          job_title: interviewData.job_title,
-          job_description: interviewData.job_description,
-          company_name: interviewData.company_name,
-          company_description: interviewData.company_description,
-          resume_path: interviewData.resume_path,
-          status: 'processing',
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          behavioral_id: interviewId
-        })
-        .select('id')
-        .single();
-
-      if (jobError) {
-        throw jobError;
-      }
-
-      const storylineId = safeDatabaseData(jobData).id;
-
-      // Generate technical questions based on the behavioral interview data
-      const requestBody = {
-        requestType: 'GENERATE_QUESTION',
-        jobTitle: interviewData.job_title,
-        jobDescription: interviewData.job_description,
-        companyName: interviewData.company_name,
-        companyDescription: interviewData.company_description,
-        resumePath: interviewData.resume_path,
-        behavioralId: interviewId,
-        generateFromBehavioral: true
-      };
-
-      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
-        body: requestBody,
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      // Update the storyline_jobs entry with the generated questions
-      const { error: updateError } = await supabase
-        .from('storyline_jobs')
-        .update({
-          openai_response: data,
-          status: 'completed'
-        })
-        .eq('id', storylineId);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      toast({
-        title: "Success!",
-        description: "Technical interview questions have been generated based on your behavioral interview.",
-      });
-
-      // Navigate to the questions page
-      navigate(`/questions?id=${storylineId}&from=behavioral`);
-    } catch (err) {
-      console.error('Error creating technical questions:', err);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate technical questions. Please try again.",
-      });
-    } finally {
-      setIsCreatingQuestions(false);
-    }
+    // The actual resumeFile and other files will be used from the behavioral interview
+    // via the behavioralId, so we can use empty data here
+    await submitJobPractice();
   };
 
   if (authLoading) {
@@ -218,6 +179,12 @@ const BehavioralFeedback = () => {
   return (
     <>
       <NavBar />
+      {processingModal && (
+        <ProcessingModal 
+          title="Generating Technical Questions" 
+          message="We're creating technical interview questions based on your behavioral interview responses..." 
+        />
+      )}
       <div className="min-h-screen bg-white p-6">
         <div className="w-full max-w-4xl mx-auto">
           <div className="mb-8">

@@ -241,6 +241,7 @@ export type Database = {
           openai_response: Json | null
           resume_path: string
           status: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
@@ -256,6 +257,7 @@ export type Database = {
           openai_response?: Json | null
           resume_path: string
           status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
@@ -271,6 +273,7 @@ export type Database = {
           openai_response?: Json | null
           resume_path?: string
           status?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [

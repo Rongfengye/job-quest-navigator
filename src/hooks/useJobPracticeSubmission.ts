@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,7 +22,8 @@ export const useJobPracticeSubmission = (
   formData: FormData,
   resumeFile: FileData,
   coverLetterFile: FileData,
-  additionalDocumentsFile: FileData
+  additionalDocumentsFile: FileData,
+  behavioralId?: string // Optional parameter to link from behavioral interview
 ) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -41,30 +41,40 @@ export const useJobPracticeSubmission = (
       return;
     }
     
-    const tokenCheck = await deductTokens(5);
-    if (!tokenCheck?.success) {
-      return;
+    // Skip token deduction if coming from a behavioral interview
+    // since tokens were already deducted for the behavioral interview
+    if (!behavioralId) {
+      const tokenCheck = await deductTokens(5);
+      if (!tokenCheck?.success) {
+        return;
+      }
+      fetchTokens();
     }
     
-    fetchTokens();
     setIsLoading(true);
     setProcessingModal(true);
     
     try {
-      if (!resumeFile.file) {
+      if (!resumeFile.file && !behavioralId) {
         throw new Error("Resume file is required");
       }
       
-      const resumePath = await uploadFile(resumeFile.file, 'resumes');
+      // Only upload files if we don't have a behavioral ID
+      // Otherwise, we'll use the files from the behavioral interview
+      let resumePath = '';
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
       
-      if (coverLetterFile.file) {
-        coverLetterPath = await uploadFile(coverLetterFile.file, 'cover-letters');
-      }
-      
-      if (additionalDocumentsFile.file) {
-        additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
+      if (!behavioralId) {
+        resumePath = await uploadFile(resumeFile.file!, 'resumes');
+        
+        if (coverLetterFile.file) {
+          coverLetterPath = await uploadFile(coverLetterFile.file, 'cover-letters');
+        }
+        
+        if (additionalDocumentsFile.file) {
+          additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
+        }
       }
 
       console.log("Inserting job with user_id:", userId);
@@ -75,11 +85,12 @@ export const useJobPracticeSubmission = (
           job_description: formData.jobDescription,
           company_name: formData.companyName,
           company_description: formData.companyDescription,
-          resume_path: resumePath,
+          resume_path: resumePath || null, // Will be null if coming from behavioral
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
           status: 'processing',
-          user_id: userId
+          user_id: userId,
+          behavioral_id: behavioralId || null
         })
         .select('id')
         .single();
@@ -97,17 +108,23 @@ export const useJobPracticeSubmission = (
         jobDescription: formData.jobDescription,
         companyName: formData.companyName,
         companyDescription: formData.companyDescription,
-        resumeText: resumeFile.text,
-        coverLetterText: coverLetterFile.text,
-        additionalDocumentsText: additionalDocumentsFile.text,
-        resumePath: resumePath,
+        resumeText: resumeFile.text || '',
+        coverLetterText: coverLetterFile.text || '',
+        additionalDocumentsText: additionalDocumentsFile.text || '',
+        resumePath: resumePath || null,
         coverLetterPath: coverLetterPath,
         additionalDocumentsPath: additionalDocumentsPath,
+        behavioralId: behavioralId || null,
+        generateFromBehavioral: !!behavioralId
       };
 
       console.log("Sending data to OpenAI function:");
       console.log("Resume text length:", resumeFile.text?.length || 0);
-      console.log("Resume text preview:", resumeFile.text?.substring(0, 200) + "...");
+      
+      if (resumeFile.text) {
+        console.log("Resume text preview:", resumeFile.text.substring(0, 200) + "...");
+      }
+      
       console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
       console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
 
@@ -148,8 +165,12 @@ export const useJobPracticeSubmission = (
         title: "Error",
         description: "There was an error creating your job practice. Please try again."
       });
-      await deductTokens(-5);
-      fetchTokens();
+      
+      // Only refund tokens if we deducted them (not from behavioral)
+      if (!behavioralId) {
+        await deductTokens(-5);
+        fetchTokens();
+      }
     } finally {
       setIsLoading(false);
     }
