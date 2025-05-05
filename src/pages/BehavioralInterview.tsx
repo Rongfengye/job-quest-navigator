@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -5,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
+import { supabase } from '@/integrations/supabase/client'; // Add this import
 import Loading from '@/components/ui/loading';
 import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
