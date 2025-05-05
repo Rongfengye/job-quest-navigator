@@ -142,9 +142,18 @@ const BehavioralFeedback = () => {
       companyDescription: interviewData.company_description || ''
     };
 
-    // The actual resumeFile and other files will be used from the behavioral interview
-    // via the behavioralId, so we can use empty data here
-    await submitJobPractice();
+    try {
+      // The actual resumeFile and other files will be used from the behavioral interview
+      // via the behavioralId, so we can use empty data here
+      await submitJobPractice();
+    } catch (error) {
+      console.error("Error generating technical questions:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate technical questions. Please try again."
+      });
+    }
   };
 
   if (authLoading) {

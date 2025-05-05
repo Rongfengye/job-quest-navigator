@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -55,17 +56,37 @@ export const useJobPracticeSubmission = (
     setProcessingModal(true);
     
     try {
+      // Only perform resume validation if not coming from behavioral
       if (!resumeFile.file && !behavioralId) {
         throw new Error("Resume file is required");
       }
       
-      // Only upload files if we don't have a behavioral ID
-      // Otherwise, we'll use the files from the behavioral interview
       let resumePath = '';
       let coverLetterPath = null;
       let additionalDocumentsPath = null;
       
-      if (!behavioralId) {
+      // If coming from behavioral, get the resume path from the behavioral record
+      if (behavioralId) {
+        const { data: behavioralData, error: behavioralError } = await supabase
+          .from('storyline_behaviorals')
+          .select('resume_path, cover_letter_path, additional_documents_path')
+          .eq('id', behavioralId)
+          .single();
+          
+        if (behavioralError) {
+          console.error("Error fetching behavioral data:", behavioralError);
+          throw new Error(`Error retrieving behavioral interview data: ${behavioralError.message}`);
+        }
+        
+        if (!behavioralData.resume_path) {
+          throw new Error("No resume found in the behavioral interview data");
+        }
+        
+        resumePath = behavioralData.resume_path;
+        coverLetterPath = behavioralData.cover_letter_path;
+        additionalDocumentsPath = behavioralData.additional_documents_path;
+      } else {
+        // Regular flow - upload files
         resumePath = await uploadFile(resumeFile.file!, 'resumes');
         
         if (coverLetterFile.file) {
@@ -85,7 +106,7 @@ export const useJobPracticeSubmission = (
           job_description: formData.jobDescription,
           company_name: formData.companyName,
           company_description: formData.companyDescription,
-          resume_path: resumePath || null, // Will be null if coming from behavioral
+          resume_path: resumePath,
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocumentsPath,
           status: 'processing',
@@ -102,6 +123,7 @@ export const useJobPracticeSubmission = (
 
       const storylineId = storylineData.id;
 
+      // Prepare the request body for the OpenAI function
       const requestBody = {
         requestType: 'GENERATE_QUESTION',
         jobTitle: formData.jobTitle,
@@ -111,7 +133,7 @@ export const useJobPracticeSubmission = (
         resumeText: resumeFile.text || '',
         coverLetterText: coverLetterFile.text || '',
         additionalDocumentsText: additionalDocumentsFile.text || '',
-        resumePath: resumePath || null,
+        resumePath: resumePath,
         coverLetterPath: coverLetterPath,
         additionalDocumentsPath: additionalDocumentsPath,
         behavioralId: behavioralId || null,
@@ -173,6 +195,7 @@ export const useJobPracticeSubmission = (
       }
     } finally {
       setIsLoading(false);
+      setProcessingModal(false);
     }
   };
 
