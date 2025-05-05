@@ -4,11 +4,13 @@ import { Progress } from '@/components/ui/progress';
 
 interface ProcessingModalProps {
   isOpen: boolean;
+  title?: string;
   processingMessage?: string;
 }
 
 const ProcessingModal: React.FC<ProcessingModalProps> = ({ 
   isOpen, 
+  title = "Processing Your Request",
   processingMessage = "Analyzing Your Responses" 
 }) => {
   const [progress, setProgress] = useState(0);
@@ -51,9 +53,9 @@ const ProcessingModal: React.FC<ProcessingModalProps> = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white p-8 rounded-lg max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4 text-interview-primary">{processingMessage}</h2>
+        <h2 className="text-2xl font-bold mb-4 text-interview-primary">{title}</h2>
         <p className="mb-6 text-gray-600">
-          We're reviewing all your interview answers and generating comprehensive feedback. This may take a minute.
+          {processingMessage}
         </p>
         <p className="text-gray-600 mb-4">Please don't close this window while we process your feedback.</p>
         

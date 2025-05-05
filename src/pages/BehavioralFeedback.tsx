@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import { useAuthContext } from '@/context/AuthContext';
 import NavBar from '@/components/NavBar';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
+import { filterValue } from '@/utils/supabaseTypes';
 import { useJobPracticeSubmission } from '@/hooks/useJobPracticeSubmission';
 import ProcessingModal from '@/components/ProcessingModal';
 
@@ -181,8 +181,9 @@ const BehavioralFeedback = () => {
       <NavBar />
       {processingModal && (
         <ProcessingModal 
+          isOpen={processingModal}
           title="Generating Technical Questions" 
-          message="We're creating technical interview questions based on your behavioral interview responses..." 
+          processingMessage="We're creating technical interview questions based on your behavioral interview responses..." 
         />
       )}
       <div className="min-h-screen bg-white p-6">
