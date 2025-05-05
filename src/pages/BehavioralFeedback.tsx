@@ -231,7 +231,7 @@ const BehavioralFeedback = () => {
                 disabled={isCreatingQuestions}
               >
                 <BookOpen className="w-4 h-4" />
-                {isCreatingQuestions ? 'Generating Questions...' : 'Continue with Technical Questions'}
+                {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual questions to practice'}
               </Button>
             </CardFooter>
           </Card>
