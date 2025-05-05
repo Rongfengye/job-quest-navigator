@@ -67,9 +67,10 @@ export const useJobPracticeSubmission = (
       
       // If coming from behavioral, get the resume path from the behavioral record
       if (behavioralId) {
+        console.log("Getting resume from behavioral interview:", behavioralId);
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
-          .select('resume_path, cover_letter_path, additional_documents_path')
+          .select('resume_path, cover_letter_path, additional_documents_path, job_title, job_description, company_name, company_description')
           .eq('id', behavioralId)
           .single();
           
@@ -78,6 +79,8 @@ export const useJobPracticeSubmission = (
           throw new Error(`Error retrieving behavioral interview data: ${behavioralError.message}`);
         }
         
+        console.log("Behavioral data retrieved:", behavioralData);
+        
         if (!behavioralData.resume_path) {
           throw new Error("No resume found in the behavioral interview data");
         }
@@ -85,6 +88,14 @@ export const useJobPracticeSubmission = (
         resumePath = behavioralData.resume_path;
         coverLetterPath = behavioralData.cover_letter_path;
         additionalDocumentsPath = behavioralData.additional_documents_path;
+        
+        // Use the data from behavioral interview if formData is empty
+        if (!formData.jobTitle && behavioralData.job_title) {
+          formData.jobTitle = behavioralData.job_title;
+          formData.jobDescription = behavioralData.job_description;
+          formData.companyName = behavioralData.company_name || '';
+          formData.companyDescription = behavioralData.company_description || '';
+        }
       } else {
         // Regular flow - upload files
         resumePath = await uploadFile(resumeFile.file!, 'resumes');
@@ -99,6 +110,9 @@ export const useJobPracticeSubmission = (
       }
 
       console.log("Inserting job with user_id:", userId);
+      console.log("Using resume path:", resumePath);
+      console.log("Form data:", formData);
+      
       const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
@@ -122,6 +136,7 @@ export const useJobPracticeSubmission = (
       }
 
       const storylineId = storylineData.id;
+      console.log("Created storyline job with ID:", storylineId);
 
       // Prepare the request body for the OpenAI function
       const requestBody = {
@@ -141,6 +156,7 @@ export const useJobPracticeSubmission = (
       };
 
       console.log("Sending data to OpenAI function:");
+      console.log("Resume path:", resumePath);
       console.log("Resume text length:", resumeFile.text?.length || 0);
       
       if (resumeFile.text) {
@@ -177,7 +193,6 @@ export const useJobPracticeSubmission = (
         description: "Your interview questions have been generated. Redirecting to results page.",
       });
 
-      setProcessingModal(false);
       navigate(`/questions?id=${storylineId}`);
 
     } catch (error) {

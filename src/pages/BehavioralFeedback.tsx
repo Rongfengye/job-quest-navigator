@@ -73,6 +73,12 @@ const BehavioralFeedback = () => {
     if (hasFeedbackInState && hasQuestionsInState) {
       setFeedback(location.state.feedback);
       setQuestions(location.state.questions.map(String));
+      
+      // Save interview data if it's in location state
+      if (location.state.interviewData) {
+        setInterviewData(location.state.interviewData);
+      }
+      
       setIsLoading(false);
       return;
     }
@@ -87,7 +93,7 @@ const BehavioralFeedback = () => {
       try {
         const { data, error } = await supabase
           .from('storyline_behaviorals')
-          .select('questions, feedback, responses, job_title, job_description, company_name, company_description, resume_path')
+          .select('questions, feedback, responses, job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
           .eq('id', filterValue(interviewId))
           .single();
 

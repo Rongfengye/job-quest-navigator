@@ -142,12 +142,20 @@ const BehavioralInterview = () => {
             setFeedbackData(feedback);
             setFeedbackGenerated(true);
             
+            // Get the most recent behavioral data to pass to feedback page
+            const { data: behavioralData } = await supabase
+              .from('storyline_behaviorals')
+              .select('job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
+              .eq('id', behavioralId)
+              .single();
+              
             navigate(`/behavioralFeedback?id=${behavioralId}`, { 
               state: { 
                 questions,
                 answers,
                 behavioralId,
-                feedback
+                feedback,
+                interviewData: behavioralData // Include the complete interview data
               } 
             });
           } else {
