@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarTrigger
 } from "@/components/ui/sidebar";
-import { Vault, User, Settings, BookOpen } from 'lucide-react';
+import { Vault, User, Settings } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 
 const DashboardSidebar = () => {
@@ -26,11 +26,6 @@ const DashboardSidebar = () => {
       title: "Question Vault",
       url: "/dashboard",
       icon: Vault,
-    },
-    {
-      title: "Behavioral Prep",
-      url: "/behavioral",
-      icon: BookOpen,
     },
     {
       title: "Profile",
