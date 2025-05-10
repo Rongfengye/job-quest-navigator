@@ -9,9 +9,9 @@ import { Navigate } from 'react-router-dom';
 const Index = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
   
-  // If authenticated, redirect to dashboard
+  // If authenticated, redirect to behavioral instead of dashboard
   if (isAuthenticated && !isLoading) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/behavioral" replace />;
   }
   
   // Show landing page for non-authenticated users
