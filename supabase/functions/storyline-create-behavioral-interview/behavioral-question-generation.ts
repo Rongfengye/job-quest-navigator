@@ -64,6 +64,8 @@ export async function generateBehavioralQuestion(
     
     ${formatRequirement}`;
   } else {
+    // NOTE TO SELF
+    // removed 1. Builds upon the previous conversation naturally
     systemPrompt = `${companyContextString}
     
     You have already asked the following questions and received these answers:
@@ -72,12 +74,11 @@ export async function generateBehavioralQuestion(
     ).join('\n\n')}
     
     Based on this conversation history, the job description, and candidate's resume, generate the next behavioral interview question that:
-    1. Builds upon the previous conversation naturally
-    2. Explores a different aspect of the candidate's experience or skill set not yet covered
-    3. Helps assess their fit for this specific role
-    4. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
+    1. Explores a different aspect of the candidate's experience or skill set not yet covered
+    2. Helps assess their fit for this specific role
+    3. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
     
-    Make your question feel like a natural follow-up to the previous conversation, as if this were a real interview flow.
+    Make your question feel like a natural follow-up to the conversation, as if this were a real interview flow.
     
     ${formatRequirement}`;
   }

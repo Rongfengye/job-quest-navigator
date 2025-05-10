@@ -27,6 +27,7 @@ const contentConsiderations = `Additionally, please keep these in mind:
   1. If mentioning a weakness in the STAR method, clarify whether the Situation, Task, Action, or Result was missing or underdeveloped.
   2. Group similar critiques into a single point where possible to avoid redundancy.
   3. In the 'suggestions' section, build on the 'cons' by proposing **specific ways to improve**, such as example techniques, frameworks, or prompts.
+  4. Place emphasis on having more developed Action and Results that demonstrate growth from the situation. Ideally situation and task only goes into just enough detail to explain action and result
 
   Base your score (0–100) on a weighted evaluation of:
   - STAR structure clarity
