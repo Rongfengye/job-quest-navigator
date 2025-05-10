@@ -6,6 +6,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+
+const structureGuidelines = `Provide feedback in JSON format with the following structure:
+  {
+    "pros": ["strength 1", "strength 2", ...],
+    "cons": ["area for improvement 1", "area for improvement 2", ...],
+    "score": <number between 0-100>,
+    "suggestions": "specific suggestions for improvement",
+    "overall": "brief overall assessment"
+  }`
+
+const considerationGuidelines = `Consider:
+  1. Use of the STAR method (Situation, Task, Action, Result)
+  2. Relevance to the question asked
+  3. Specificity and detail level
+  4. Professional communication
+  5. Alignment with job requirements`
+
 // Renamed from generateFeedback to avoid collision with the generateFeedback boolean input parameter
 export async function generateFeedbackHelper(
   openAIApiKey: string,
@@ -64,21 +81,9 @@ export async function generateFeedbackHelper(
     const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle || 'professional'} position.
     Your task is to provide detailed, constructive feedback on the candidate's response.
     
-    Consider:
-    1. Use of the STAR method (Situation, Task, Action, Result)
-    2. Relevance to the question asked
-    3. Specificity and detail level
-    4. Professional communication
-    5. Alignment with job requirements
+    ${considerationGuidelines}
     
-    Provide feedback in JSON format with the following structure:
-    {
-      "pros": ["strength 1", "strength 2", ...],
-      "cons": ["area for improvement 1", "area for improvement 2", ...],
-      "score": <number between 0-100>,
-      "suggestions": "specific suggestions for improvement",
-      "overall": "brief overall assessment"
-    }`;
+    ${structureGuidelines}`;
 
     console.log(`Processing feedback for question ${index + 1}: ${questions[index].substring(0, 50)}...`);
     console.log(`Processing answer ${index + 1}: ${answers[index].substring(0, 50)}...`);
@@ -93,7 +98,7 @@ export async function generateFeedbackHelper(
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Question: ${questions[index]}\n\nAnswer: ${answers[index]}` }
+          { role: 'user', content: `Question: """${questions[index]}""" \n\nAnswer: """${answers[index]}"""` }
         ],
         response_format: { type: "json_object" }
       }),
