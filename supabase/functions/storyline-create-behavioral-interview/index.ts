@@ -44,6 +44,7 @@ serve(async (req) => {
       voice = 'alloy'
     } = requestBody;
 
+    // Upon the submission of the last question, we actually turn this flag on and feedback is prompted for isntead
     if (generateFeedback) {
       // Use the imported feedback function
       const feedbackResults = await generateFeedbackHelper(
@@ -59,7 +60,7 @@ serve(async (req) => {
       });
     }
 
-    // Use the modularized question generation function
+    // For questions 1-5, use the modularized question generation function to generate questions
     const parsedContent = await generateBehavioralQuestion(
       openAIApiKey,
       questionIndex,
@@ -75,6 +76,7 @@ serve(async (req) => {
     );
 
     // Generate audio for the question if requested
+    // We have this here so that the Text and audio is delivered to the front end at the same time
     let audioData = null;
     if (generateAudio && parsedContent.question) {
       try {
