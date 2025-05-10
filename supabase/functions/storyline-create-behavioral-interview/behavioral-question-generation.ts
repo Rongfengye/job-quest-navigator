@@ -14,11 +14,14 @@ export async function generateBehavioralQuestion(
   previousAnswers: string[] = []
 ) {
   let systemPrompt = '';
+
+  const companyContextString = `You are an experienced interviewer for a ${jobTitle} position.
+  ${companyName ? `The company name is ${companyName}.` : ''}
+  ${companyDescription ? `About the company: ${companyDescription}` : ''}
+  ${jobDescription ? `About the job: ${jobDescription}` : ''}`
   
   if (questionIndex === 0) {
-    systemPrompt = `You are an experienced interviewer for a ${jobTitle} position.
-    ${companyName ? `The company name is ${companyName}.` : ''}
-    ${companyDescription ? `About the company: ${companyDescription}` : ''}
+    systemPrompt = `${companyContextString}
     
     Based on the job description and candidate's resume, generate a thought-provoking behavioral interview question that:
     1. Assesses the candidate's past experiences relevant to this role
@@ -29,9 +32,7 @@ export async function generateBehavioralQuestion(
     Format your response as a JSON object with:
     - 'question': The main interview question (string)`;
   } else {
-    systemPrompt = `You are an experienced interviewer for a ${jobTitle} position conducting a behavioral interview.
-    ${companyName ? `The company name is ${companyName}.` : ''}
-    ${companyDescription ? `About the company: ${companyDescription}` : ''}
+    systemPrompt = `${companyContextString}
     
     You have already asked the following questions and received these answers:
     ${previousQuestions.map((q, i) => 
@@ -51,11 +52,6 @@ export async function generateBehavioralQuestion(
   }
 
   const userPrompt = `
-  Job Title: "${jobTitle}"
-  Job Description: "${jobDescription}"
-  ${companyName ? `Company Name: "${companyName}"` : ''}
-  ${companyDescription ? `Company Description: "${companyDescription}"` : ''}
-  
   ${resumeText ? `Resume content: "${resumeText}"` : ''}
   ${coverLetterText ? `Cover Letter content: "${coverLetterText}"` : ''}
   ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
