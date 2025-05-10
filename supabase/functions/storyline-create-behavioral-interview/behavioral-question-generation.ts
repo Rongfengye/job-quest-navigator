@@ -27,6 +27,8 @@ export async function generateBehavioralQuestion(
     }
   `
   
+  // NOTE TO SELF, DO NOT DELETE
+  // It is a very dense prompt, so we have to find a balance between Prompt Bloat/Context Window Saturation/Instruction Dilution/Semantic Overload
   if (questionIndex === 0) {
     const fewShotQuestionList = `
     Here are examples of thoughtful behavioral questions often used to evaluate early-career candidates:
