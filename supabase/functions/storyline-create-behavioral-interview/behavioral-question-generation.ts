@@ -28,6 +28,28 @@ export async function generateBehavioralQuestion(
   `
   
   if (questionIndex === 0) {
+    const fewShotQuestionList = `
+    Here are examples of thoughtful behavioral questions often used to evaluate early-career candidates:
+
+    - "Tell me about a time when you worked with someone who had a very different communication or work style than you. How did you navigate that?"
+    - "Describe a situation where you had to learn something unfamiliar quickly to succeed."
+    - "Tell me about a time you failed or fell short of your goals. What did you take away from the experience?"
+    - "Share how you've handled managing multiple competing priorities — what worked and what didn’t?"
+    - "Describe a time when you took initiative on a project, even though it wasn’t expected of you."
+    - "Tell me about a team project where you made a meaningful impact. What specifically did you contribute?"
+    - "Give an example of a time you received difficult or constructive feedback. How did you respond, and what changed afterward?"
+    - "Describe a time when you had to approach a problem differently than others around you. What did you do?"
+    - "Tell me about a moment when you were under a tight deadline. How did you decide what to focus on?"
+    - "Describe a time when you had to persuade someone — a teammate, a classmate, or a leader — to support your idea."
+
+    These are examples to guide the tone and depth of your response. Your question should be tailored to the candidate's background and the job description.
+    `
+
+    // NOTE TO SELF, DO NOT DELETE
+    // We may want to look into providing 10 example behaviorals, which would allow for few-shot prompting
+    // However this is something we need to test out, as there is a tradeoff between guiding the model and constraining it
+    // Can read up on semantic anchoring more
+
     systemPrompt = `${companyContextString}
     
     Based on the job description and candidate's resume, generate a thought-provoking behavioral interview question that:
@@ -35,13 +57,10 @@ export async function generateBehavioralQuestion(
     2. Helps evaluate their soft skills and cultural fit
     3. Follows the format of "Tell me about a time when..." or similar open-ended behavioral question
     4. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
+
+    ${fewShotQuestionList}
     
     ${formatRequirement}`;
-
-    // NOTE TO SELF, DO NOT DELETE
-    // We may want to look into providing 10 example behaviorals, which would allow for few-shot prompting
-    // However this is something we need to test out, as there is a tradeoff between guiding the model and constraining it
-    // Can read up on semantic anchoring more
   } else {
     systemPrompt = `${companyContextString}
     
