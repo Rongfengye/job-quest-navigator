@@ -89,45 +89,45 @@ const QuestionContent = ({
   const handleTextToSpeech = () => {
     if (currentQuestion?.audio) {
       processAndPlayAudio(currentQuestion.audio);
-    } else if (currentQuestion?.question) {
-      // Fall back to the old method only if needed
-      playTextToSpeech(currentQuestion.question);
+    // } else if (currentQuestion?.question) {
+    //   // Fall back to the old method only if needed
+    //   playTextToSpeech(currentQuestion.question);
     }
   };
 
-  // Keep this for backward compatibility
-  const playTextToSpeech = async (text: string) => {
-    if (!text || isProcessing) return;
+  // DO NOT DELETE Keep this for backward compatibility
+  // const playTextToSpeech = async (text: string) => {
+  //   if (!text || isProcessing) return;
     
-    try {
-      setIsProcessing(true);
-      setIsPlaying(true);
+  //   try {
+  //     setIsProcessing(true);
+  //     setIsPlaying(true);
       
-      const { data, error } = await fetch('/api/storyline-text-to-speech', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: text, voice: 'alloy' }),
-      }).then(res => res.json());
+  //     const { data, error } = await fetch('/api/storyline-text-to-speech', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({ text: text, voice: 'alloy' }),
+  //     }).then(res => res.json());
       
-      setIsProcessing(false);
+  //     setIsProcessing(false);
       
-      if (error) {
-        console.error('Error calling text-to-speech:', error);
-        setIsPlaying(false);
-        return;
-      }
+  //     if (error) {
+  //       console.error('Error calling text-to-speech:', error);
+  //       setIsPlaying(false);
+  //       return;
+  //     }
       
-      if (data.audio) {
-        processAndPlayAudio(data.audio);
-      }
-    } catch (error) {
-      console.error('Error playing text-to-speech:', error);
-      setIsPlaying(false);
-      setIsProcessing(false);
-    }
-  };
+  //     if (data.audio) {
+  //       processAndPlayAudio(data.audio);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error playing text-to-speech:', error);
+  //     setIsPlaying(false);
+  //     setIsProcessing(false);
+  //   }
+  // };
 
   return (
     <>
