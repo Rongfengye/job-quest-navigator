@@ -60,8 +60,7 @@ const Behavioral = () => {
         </div> */}
       </div>
 
-      <div className="flex flex-col space-y-8 min-h-[calc(100vh-120px)]">
-        {hasData && (
+      {hasData && (
           <Card className="w-full max-w-md mx-auto">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">Answer 5 Interview Questions</CardTitle>
@@ -80,13 +79,14 @@ const Behavioral = () => {
           </Card>
         )}
 
-        <div className="w-full max-w-4xl mx-auto">
-          {hasData && (
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Briefcase className="h-5 w-5" />
-            Previous Practice Sessions
-          </h2>
-        )}
+      <div className="flex flex-col space-y-8 min-h-[calc(100vh-120px)]">
+          <div className="w-full max-w-4xl mx-auto">
+            {hasData && (
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Briefcase className="h-5 w-5" />
+              Previous Practice Sessions
+            </h2>
+          )}
           
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
