@@ -6,6 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Renamed from generateFeedback to avoid collision with the generateFeedback boolean input parameter
 export async function generateFeedbackHelper(
   openAIApiKey: string,
   supabase: ReturnType<typeof createClient>,
