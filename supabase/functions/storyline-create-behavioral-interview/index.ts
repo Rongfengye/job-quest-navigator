@@ -2,8 +2,8 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
-import { generateTextToSpeech } from './audio-generation-helpers.ts';
-import { generateFeedback } from './feedback-logic.ts';
+import { generateTextToSpeech } from './audio-generation-helpers';
+import { generateFeedbackHelper } from './feedback-logic';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -45,7 +45,7 @@ serve(async (req) => {
 
     if (generateFeedback) {
       // Use the imported feedback function
-      const feedbackResults = await generateFeedback(
+      const feedbackResults = await generateFeedbackHelper(
         openAIApiKey,
         supabase,
         questions,
