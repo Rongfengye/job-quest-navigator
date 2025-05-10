@@ -189,6 +189,7 @@ export const useBehavioralInterview = () => {
         jobTitle: '',
         jobDescription: '',
         companyName: '',
+        companyDescription: '',
       };
 
       console.log('Generating feedback for questions:', questions);
@@ -202,6 +203,8 @@ export const useBehavioralInterview = () => {
           jobTitle: jobData.jobTitle,
           jobDescription: jobData.jobDescription,
           companyName: jobData.companyName,
+          companyDescription: jobData.companyDescription,
+          resumeText: locationState?.resumeText || '',
         },
       });
 

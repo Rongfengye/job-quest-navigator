@@ -1,4 +1,5 @@
 
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
 
 const corsHeaders = {
@@ -29,7 +30,11 @@ export async function generateFeedbackHelper(
   supabase: ReturnType<typeof createClient>,
   questions: string[],
   answers: string[],
-  jobTitle: string = ''
+  jobTitle: string = '',
+  companyName: string = '',
+  companyDescription: string = '',
+  jobDescription: string = '',
+  resumeText: string = ''
 ) {
   // Safety check: make sure questions and answers arrays are valid
   if (!Array.isArray(questions) || !Array.isArray(answers)) {
@@ -79,6 +84,10 @@ export async function generateFeedbackHelper(
     }
     
     const systemPrompt = `You are an expert behavioral interview evaluator for a ${jobTitle || 'professional'} position.
+    ${companyName ? `The company name is ${companyName}.` : ''}
+    ${companyDescription ? `About the company: ${companyDescription}` : ''}
+    ${jobDescription ? `Job Description: ${jobDescription}` : ''}
+    ${resumeText ? `Based on the candidate's resume: ${resumeText}` : ''}
     Your task is to provide detailed, constructive feedback on the candidate's response.
     
     ${considerationGuidelines}
@@ -168,3 +177,4 @@ export async function generateFeedbackHelper(
 
   return feedbackResults;
 }
+

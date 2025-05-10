@@ -46,13 +46,17 @@ serve(async (req) => {
 
     // Upon the submission of the last question, we actually turn this flag on and feedback is prompted for isntead
     if (generateFeedback) {
-      // Use the imported feedback function
+      // Use the imported feedback function with the additional parameters
       const feedbackResults = await generateFeedbackHelper(
         openAIApiKey,
         supabase,
         questions,
         answers,
-        jobTitle
+        jobTitle,
+        companyName,
+        companyDescription,
+        jobDescription,
+        resumeText
       );
 
       return new Response(JSON.stringify({ feedback: feedbackResults }), {
