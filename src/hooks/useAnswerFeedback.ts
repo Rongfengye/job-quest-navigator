@@ -113,7 +113,7 @@ export const useAnswerFeedback = (
     setError(null);
 
     try {
-      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
+      const { data, error } = await supabase.functions.invoke('storyline-question-vault-prep', {
         body: {
           requestType: 'GENERATE_ANSWER',
           answerText,

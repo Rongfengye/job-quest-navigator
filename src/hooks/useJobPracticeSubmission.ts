@@ -166,7 +166,7 @@ export const useJobPracticeSubmission = (
       console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
       console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
 
-      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
+      const { data, error } = await supabase.functions.invoke('storyline-question-vault-prep', {
         body: requestBody,
       });
 

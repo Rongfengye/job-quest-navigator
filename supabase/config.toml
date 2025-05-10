@@ -28,9 +28,6 @@ name = "storyline-guided-response-generator"
 verify_jwt = true
 
 [[functions]]
-name = "storyline-question-bank-prep"
+name = "storyline-question-vault-prep"
 verify_jwt = true
 
-[[functions]]
-name = "storyline-text-to-speech"
-verify_jwt = true
