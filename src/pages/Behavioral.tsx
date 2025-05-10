@@ -45,6 +45,21 @@ const Behavioral = () => {
 
   return (
     <DashboardLayout>
+      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-interview-primary">Behavioral Interview Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Manage your interview preparations</p>
+        </div>
+        {/* <div className="flex flex-wrap gap-2">
+          <Link to="/create">
+            <Button className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              New Job Prep
+            </Button>
+          </Link>
+        </div> */}
+      </div>
+
       <div className="flex flex-col space-y-8 min-h-[calc(100vh-120px)]">
         {hasData && (
           <Card className="w-full max-w-md mx-auto">
