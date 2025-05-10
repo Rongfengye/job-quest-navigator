@@ -1,14 +1,19 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from "@/components/ui/collapsible";
 
 interface FeedbackItem {
   pros: string[];
@@ -21,9 +26,12 @@ interface FeedbackItem {
 interface FeedbackOverviewProps {
   feedback: any;
   questions: string[];
+  responses?: string[]; // Made optional for backward compatibility
 }
 
-const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions }) => {
+const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions, responses = [] }) => {
+  const [expandedResponses, setExpandedResponses] = useState<Record<string, boolean>>({});
+
   // Handle case when feedback is not properly formatted
   if (!feedback || !Array.isArray(questions) || questions.length === 0) {
     return (
@@ -65,6 +73,21 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
     return 'bg-red-500';
   };
 
+  const toggleResponseExpand = (index: number) => {
+    setExpandedResponses(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  // Function to truncate text and add ellipsis
+  const truncateText = (text: string, maxLength: number = 150) => {
+    if (text && text.length > maxLength) {
+      return text.substring(0, maxLength) + '...';
+    }
+    return text;
+  };
+
   return (
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
@@ -94,6 +117,46 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
               <Card className="border-0 shadow-none">
                 <CardContent className="p-2">
                   <div className="space-y-4">
+                    {/* Display full question */}
+                    <div className="bg-gray-50 p-3 rounded-md">
+                      <h4 className="font-semibold text-gray-800">Question:</h4>
+                      <p className="mt-1 text-gray-700">{questions[index] || 'Question not available'}</p>
+                    </div>
+
+                    {/* Display response with collapsible functionality */}
+                    {responses && responses[index] && (
+                      <div className="bg-blue-50 p-3 rounded-md">
+                        <h4 className="font-semibold text-blue-800">Your Response:</h4>
+                        <Collapsible
+                          open={expandedResponses[index]}
+                          onOpenChange={() => toggleResponseExpand(index)}
+                          className="mt-1"
+                        >
+                          <div className="text-gray-700">
+                            {!expandedResponses[index] ? (
+                              <p>{truncateText(responses[index], 150)}</p>
+                            ) : (
+                              <p>{responses[index]}</p>
+                            )}
+                          </div>
+                          
+                          {responses[index] && responses[index].length > 150 && (
+                            <CollapsibleTrigger asChild>
+                              <button className="flex items-center text-sm text-blue-600 hover:text-blue-800 mt-1">
+                                {expandedResponses[index] ? (
+                                  <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
+                                ) : (
+                                  <>Show more <ChevronDown className="h-4 w-4 ml-1" /></>
+                                )}
+                              </button>
+                            </CollapsibleTrigger>
+                          )}
+                          
+                          <CollapsibleContent className="overflow-hidden" />
+                        </Collapsible>
+                      </div>
+                    )}
+
                     <div>
                       <h4 className="font-semibold text-green-700 flex items-center gap-2">
                         <CheckCircle className="h-4 w-4" /> Strengths

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -30,6 +29,7 @@ const BehavioralFeedback = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [questions, setQuestions] = useState<string[]>([]);
+  const [responses, setResponses] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [interviewData, setInterviewData] = useState<any>(null);
@@ -40,6 +40,7 @@ const BehavioralFeedback = () => {
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
   const hasFeedbackInState = !!location.state?.feedback;
   const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
+  const hasResponsesInState = !!location.state?.answers && Array.isArray(location.state.answers);
 
   // Empty placeholder data for the useJobPracticeSubmission hook
   // We'll use the real data from interviewData when calling submitJobPractice
@@ -85,6 +86,11 @@ const BehavioralFeedback = () => {
       setFeedback(location.state.feedback);
       setQuestions(location.state.questions.map(String));
       
+      // Set responses if available in location state
+      if (hasResponsesInState) {
+        setResponses(location.state.answers.map(String));
+      }
+      
       // Save interview data if it's in location state
       if (location.state.interviewData) {
         setInterviewData(location.state.interviewData);
@@ -121,7 +127,14 @@ const BehavioralFeedback = () => {
           ? questionsData.map(q => String(q)) 
           : [];
           
+        // Also save responses
+        const responsesData = data.responses as any[];
+        const processedResponses = Array.isArray(responsesData)
+          ? responsesData.map(r => String(r))
+          : [];
+          
         setQuestions(processedQuestions);
+        setResponses(processedResponses);
         setFeedback(data.feedback);
         setInterviewData(data);
         setIsLoading(false);
@@ -139,7 +152,7 @@ const BehavioralFeedback = () => {
     };
 
     fetchInterviewData();
-  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state, authLoading, isAuthenticated]);
+  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, hasResponsesInState, location.state, authLoading, isAuthenticated]);
 
   // Fetch related practices
   useEffect(() => {
@@ -263,7 +276,8 @@ const BehavioralFeedback = () => {
             <CardContent>
               <FeedbackOverview 
                 feedback={feedback} 
-                questions={questions} 
+                questions={questions}
+                responses={responses} 
               />
               
               <RelatedPracticesList 
