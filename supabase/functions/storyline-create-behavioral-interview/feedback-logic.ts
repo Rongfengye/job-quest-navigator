@@ -1,5 +1,4 @@
 
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
 
 const corsHeaders = {
@@ -103,6 +102,8 @@ export async function generateFeedbackHelper(
     Your task is to provide detailed, constructive feedback on the candidate's response.
     
     ${considerationGuidelines}
+    
+    ${contentConsiderations}
     
     ${structureGuidelines}`;
 
