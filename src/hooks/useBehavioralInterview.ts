@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +18,9 @@ interface LocationState {
     companyName: string;
     companyDescription: string;
   };
+  resumeText?: string;
+  coverLetterText?: string;
+  additionalDocumentsText?: string;
 }
 
 export const useBehavioralInterview = () => {
