@@ -22,11 +22,11 @@ const DashboardSidebar = () => {
   const { user } = useAuthContext();
   
   const menuItems = [
-    {
-      title: "Question Vault",
-      url: "/dashboard",
-      icon: Vault,
-    },
+    // {
+    //   title: "Question Vault",
+    //   url: "/dashboard",
+    //   icon: Vault,
+    // },
     {
       title: "Behavioral Prep",
       url: "/behavioral",
