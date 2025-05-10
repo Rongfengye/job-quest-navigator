@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -73,7 +74,8 @@ export const useJobPracticeSubmission = (
           company_name: formData.companyName,
           company_description: formData.companyDescription,
           behavioral_id: finalBehavioralId || null,
-          status: 'processing'
+          status: 'processing',
+          resume_path: resumeData.text ? 'resume.txt' : '' // Add the required resume_path field
         });
 
       if (insertError) throw insertError;
@@ -118,7 +120,7 @@ export const useJobPracticeSubmission = (
       const { error: updateError } = await supabase
         .from('storyline_jobs')
         .update({
-          resume_path: resumePath,
+          resume_path: resumePath || resumeData.text ? 'resume.txt' : '',
           cover_letter_path: coverLetterPath,
           additional_documents_path: additionalDocsPath
         })
