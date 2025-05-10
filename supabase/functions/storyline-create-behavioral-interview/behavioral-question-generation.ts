@@ -17,8 +17,15 @@ export async function generateBehavioralQuestion(
 
   const companyContextString = `You are an experienced interviewer for a ${jobTitle} position.
   ${companyName ? `The company name is ${companyName}.` : ''}
-  ${companyDescription ? `About the company: ${companyDescription}` : ''}
-  ${jobDescription ? `About the job: ${jobDescription}` : ''}`
+  ${companyDescription ? `About the company: """${companyDescription}"""` : ''}
+  ${jobDescription ? `About the job: """${jobDescription}"""` : ''}`
+
+  const formatRequirement = `
+  Do not include any explanation, reasoning, or additional text. Only return the response as a JSON object like:
+    {
+      - 'question': The main interview question (string)
+    }
+  `
   
   if (questionIndex === 0) {
     systemPrompt = `${companyContextString}
@@ -29,14 +36,18 @@ export async function generateBehavioralQuestion(
     3. Follows the format of "Tell me about a time when..." or similar open-ended behavioral question
     4. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
     
-    Format your response as a JSON object with:
-    - 'question': The main interview question (string)`;
+    ${formatRequirement}`;
+
+    // NOTE TO SELF, DO NOT DELETE
+    // We may want to look into providing 10 example behaviorals, which would allow for few-shot prompting
+    // However this is something we need to test out, as there is a tradeoff between guiding the model and constraining it
+    // Can read up on semantic anchoring more
   } else {
     systemPrompt = `${companyContextString}
     
     You have already asked the following questions and received these answers:
     ${previousQuestions.map((q, i) => 
-      `Question ${i+1}: ${q}\nAnswer: ${previousAnswers[i] || "No answer provided"}`
+      `Q${i+1}: """${q}"""\nA${i+1}: """${previousAnswers[i] || "No answer provided"}"""`
     ).join('\n\n')}
     
     Based on this conversation history, the job description, and candidate's resume, generate the next behavioral interview question that:
@@ -47,14 +58,15 @@ export async function generateBehavioralQuestion(
     
     Make your question feel like a natural follow-up to the previous conversation, as if this were a real interview flow.
     
-    Format your response as a JSON object with:
-    - 'question': The main interview question (string)`;
+    ${formatRequirement}`;
   }
 
   const userPrompt = `
-  ${resumeText ? `Resume content: "${resumeText}"` : ''}
-  ${coverLetterText ? `Cover Letter content: "${coverLetterText}"` : ''}
-  ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
+  Candidate Documents and Context:
+  
+  ${resumeText ? `Resume content: """${resumeText}"""` : ''}
+  ${coverLetterText ? `Cover Letter content: """${coverLetterText}"""` : ''}
+  ${additionalDocumentsText ? `Additional Documents content: """${additionalDocumentsText}"""` : ''}
   
   ${questionIndex > 0 ? 'Please generate the next question in the interview sequence, based on the conversation history provided in the system prompt.' : 'Please generate the first behavioral interview question for this candidate.'}
   `;
