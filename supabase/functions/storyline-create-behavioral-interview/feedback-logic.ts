@@ -18,11 +18,23 @@ const structureGuidelines = `Provide feedback in JSON format with the following 
   }`
 
 const considerationGuidelines = `Consider:
-  1. Use of the STAR method (Situation, Task, Action, Result)
+  1. Use of the STAR method (Situation, Task, Action, Result). 
   2. Relevance to the question asked
   3. Specificity and detail level
   4. Professional communication
   5. Alignment with job requirements`
+
+const contentConsiderations = `Additionally, please keep these in mind:
+  1. If mentioning a weakness in the STAR method, clarify whether the Situation, Task, Action, or Result was missing or underdeveloped.
+  2. Group similar critiques into a single point where possible to avoid redundancy.
+  3. In the 'suggestions' section, build on the 'cons' by proposing **specific ways to improve**, such as example techniques, frameworks, or prompts.
+
+  Base your score (0–100) on a weighted evaluation of:
+  - STAR structure clarity
+  - Specificity of examples
+  - Relevance to the question
+  - Professionalism and communication
+`
 
 // Renamed from generateFeedback to avoid collision with the generateFeedback boolean input parameter
 export async function generateFeedbackHelper(
