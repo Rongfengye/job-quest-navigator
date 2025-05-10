@@ -61,27 +61,27 @@ const Behavioral = () => {
       </div>
 
       {hasData && (
-          <Card className="w-full max-w-md mx-auto">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">Answer 5 Interview Questions</CardTitle>
-              <CardDescription>
-                When you're done, review your answers and discover insights.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <Button 
-                className="w-full max-w-xs" 
-                onClick={() => navigate('/behavioral/create')}
-              >
-                Start
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="w-full max-w-md mx-auto mb-8">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Answer 5 Interview Questions</CardTitle>
+            <CardDescription>
+              When you're done, review your answers and discover insights.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center">
+            <Button 
+              className="w-full max-w-xs" 
+              onClick={() => navigate('/behavioral/create')}
+            >
+              Start
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col space-y-8 min-h-[calc(100vh-120px)]">
-          <div className="w-full max-w-4xl mx-auto">
-            {hasData && (
+        <div className="w-full">
+          {hasData && (
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
               Previous Practice Sessions
@@ -143,7 +143,7 @@ const Behavioral = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
+            <div className="w-full flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
               <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
               <h3 className="text-xl font-medium text-gray-900 mb-1">No practice sessions yet</h3>
               <p className="text-gray-500 text-center mb-6">
