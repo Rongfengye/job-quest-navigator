@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Calendar, FileText, Plus } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface BehavioralInterview {
@@ -17,6 +17,7 @@ interface BehavioralInterview {
   company_name: string | null;
   created_at: string;
   feedback: any;
+  _technical_count?: number;
 }
 
 const Behavioral = () => {
@@ -25,13 +26,30 @@ const Behavioral = () => {
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['behavioral-interviews'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch behavioral interviews
+      const { data: behaviorals, error } = await supabase
         .from('storyline_behaviorals')
         .select('*')
         .order('created_at', { ascending: false });
         
       if (error) throw error;
-      return data as BehavioralInterview[];
+      
+      // Then fetch counts of technical questions for each behavioral
+      const enhancedBehaviorals = await Promise.all(
+        (behaviorals || []).map(async (behavioral) => {
+          const { count, error: countError } = await supabase
+            .from('storyline_jobs')
+            .select('id', { count: 'exact', head: true })
+            .eq('behavioral_id', behavioral.id);
+          
+          return {
+            ...behavioral,
+            _technical_count: count || 0
+          };
+        })
+      );
+      
+      return enhancedBehaviorals as BehavioralInterview[];
     }
   });
   
@@ -50,14 +68,6 @@ const Behavioral = () => {
           <h1 className="text-3xl font-bold text-interview-primary">Behavioral Interview Dashboard</h1>
           <p className="text-muted-foreground mt-1">Manage your interview preparations</p>
         </div>
-        {/* <div className="flex flex-wrap gap-2">
-          <Link to="/create">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              New Job Prep
-            </Button>
-          </Link>
-        </div> */}
       </div>
 
       {hasData && (
@@ -131,6 +141,13 @@ const Behavioral = () => {
                         <Calendar className="h-4 w-4 mr-2" />
                         <span>Created on {formatDate(interview.created_at)}</span>
                       </div>
+                      
+                      {interview._technical_count > 0 && (
+                        <div className="flex items-center text-sm text-blue-600">
+                          <Book className="h-4 w-4 mr-2" />
+                          <span>{interview._technical_count} related technical {interview._technical_count === 1 ? 'practice' : 'practices'}</span>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter className="border-t pt-4">
                       <Button variant="ghost" className="w-full" size="sm">

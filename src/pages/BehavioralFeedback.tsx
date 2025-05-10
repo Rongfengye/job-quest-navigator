@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,15 @@ import NavBar from '@/components/NavBar';
 import { filterValue } from '@/utils/supabaseTypes';
 import { useJobPracticeSubmission } from '@/hooks/useJobPracticeSubmission';
 import ProcessingModal from '@/components/ProcessingModal';
+import RelatedPracticesList from '@/components/behavioral/RelatedPracticesList';
+
+interface RelatedPractice {
+  id: string;
+  job_title: string;
+  company_name: string | null;
+  created_at: string;
+  status: string | null;
+}
 
 const BehavioralFeedback = () => {
   const location = useLocation();
@@ -24,6 +34,8 @@ const BehavioralFeedback = () => {
   const [error, setError] = useState<string | null>(null);
   const [interviewData, setInterviewData] = useState<any>(null);
   const { isAuthenticated, isLoading: authLoading, user } = useAuthContext();
+  const [relatedPractices, setRelatedPractices] = useState<RelatedPractice[] | null>(null);
+  const [isLoadingPractices, setIsLoadingPractices] = useState(false);
 
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
   const hasFeedbackInState = !!location.state?.feedback;
@@ -129,6 +141,33 @@ const BehavioralFeedback = () => {
     fetchInterviewData();
   }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state, authLoading, isAuthenticated]);
 
+  // Fetch related practices
+  useEffect(() => {
+    if (!interviewId || !isAuthenticated) return;
+    
+    const fetchRelatedPractices = async () => {
+      setIsLoadingPractices(true);
+      try {
+        const { data, error } = await supabase
+          .from('storyline_jobs')
+          .select('id, job_title, company_name, created_at, status')
+          .eq('behavioral_id', interviewId)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        setRelatedPractices(data);
+      } catch (err) {
+        console.error('Error fetching related practices:', err);
+        setRelatedPractices(null);
+      } finally {
+        setIsLoadingPractices(false);
+      }
+    };
+
+    fetchRelatedPractices();
+  }, [interviewId, isAuthenticated]);
+
   // Define the function to continue to questions
   function handleContinueToQuestions() {
     if (!interviewData) {
@@ -222,6 +261,12 @@ const BehavioralFeedback = () => {
               <FeedbackOverview 
                 feedback={feedback} 
                 questions={questions} 
+              />
+              
+              <RelatedPracticesList 
+                practices={relatedPractices} 
+                isLoading={isLoadingPractices}
+                behavioralId={interviewId || ''}
               />
             </CardContent>
             <CardFooter className="flex justify-center border-t pt-4">
