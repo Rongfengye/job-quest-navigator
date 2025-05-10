@@ -22,6 +22,7 @@ export type ParsedResponse = {
 export type JobDetails = {
   jobTitle: string;
   companyName: string;
+  behavioralId?: string | null;
 };
 
 // Function to categorize a question by keywords in the text
@@ -64,6 +65,7 @@ export const useQuestionData = (storylineId: string | null) => {
   const [jobDetails, setJobDetails] = useState<JobDetails>({
     jobTitle: '',
     companyName: '',
+    behavioralId: null,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -104,6 +106,7 @@ export const useQuestionData = (storylineId: string | null) => {
         setJobDetails({
           jobTitle: safeData.job_title || 'Untitled Position',
           companyName: safeData.company_name,
+          behavioralId: safeData.behavioral_id,
         });
 
         if (safeData.openai_response) {

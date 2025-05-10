@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { useQuestionData } from '@/hooks/useQuestionData';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
 import QuestionsList from '@/components/questions/QuestionsList';
 import NoQuestions from '@/components/questions/NoQuestions';
+import QuestionPageHeader from '@/components/questions/QuestionPageHeader';
 
 const Questions = () => {
   const location = useLocation();
@@ -23,14 +22,7 @@ const Questions = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container max-w-4xl mx-auto px-4">
-        <div className="mb-6">
-          <Link to="/">
-            <Button variant="outline" className="flex items-center gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Button>
-          </Link>
-        </div>
+        <QuestionPageHeader behavioralId={jobDetails.behavioralId} />
 
         <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
           <h1 className="text-3xl font-bold text-interview-primary mb-2">
