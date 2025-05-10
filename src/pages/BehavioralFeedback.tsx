@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft, BookOpen, InfoIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import FeedbackOverview from '@/components/answer/FeedbackOverview';
 import { useToast } from '@/hooks/use-toast';
@@ -230,6 +230,9 @@ const BehavioralFeedback = () => {
     );
   }
 
+  // Check if there's at least one related practice
+  const hasRelatedPractice = relatedPractices && relatedPractices.length > 0;
+
   return (
     <>
       <NavBar />
@@ -269,15 +272,27 @@ const BehavioralFeedback = () => {
                 behavioralId={interviewId || ''}
               />
             </CardContent>
-            <CardFooter className="flex justify-center border-t pt-4">
-              <Button
-                className="flex items-center gap-2"
-                onClick={handleContinueToQuestions}
-                disabled={isCreatingQuestions}
-              >
-                <BookOpen className="w-4 h-4" />
-                {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual questions to practice'}
-              </Button>
+            <CardFooter className="flex flex-col justify-center border-t pt-4">
+              {!hasRelatedPractice ? (
+                <Button
+                  className="w-full max-w-md flex items-center gap-2"
+                  onClick={handleContinueToQuestions}
+                  disabled={isCreatingQuestions}
+                >
+                  <BookOpen className="w-4 h-4" />
+                  {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual questions to practice'}
+                </Button>
+              ) : (
+                <div className="w-full max-w-md text-center">
+                  <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
+                    <InfoIcon className="w-4 h-4" />
+                    <p className="text-sm">Technical questions have already been generated for this interview</p>
+                  </div>
+                  <p className="text-xs text-muted-foreground italic">
+                    You can view them in the related practices section above
+                  </p>
+                </div>
+              )}
             </CardFooter>
           </Card>
         </div>
