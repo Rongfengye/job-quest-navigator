@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -130,7 +129,8 @@ const BehavioralFeedback = () => {
     fetchInterviewData();
   }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, location.state, authLoading, isAuthenticated]);
 
-  const handleContinueToQuestions = async () => {
+  // Define the function to continue to questions
+  function handleContinueToQuestions() {
     if (!interviewData) {
       toast({
         variant: "destructive",
@@ -151,7 +151,7 @@ const BehavioralFeedback = () => {
     try {
       // The actual resumeFile and other files will be used from the behavioral interview
       // via the behavioralId, so we can use empty data here
-      await submitJobPractice();
+      submitJobPractice();
     } catch (error) {
       console.error("Error generating technical questions:", error);
       toast({
@@ -160,7 +160,7 @@ const BehavioralFeedback = () => {
         description: "Failed to generate technical questions. Please try again."
       });
     }
-  };
+  }
 
   if (authLoading) {
     return <Loading message="Checking authentication..." />;

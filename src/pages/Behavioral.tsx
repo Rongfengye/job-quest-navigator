@@ -1,13 +1,15 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Briefcase, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Briefcase, Calendar, FileText, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface BehavioralInterview {
   id: string;
@@ -32,6 +34,14 @@ const Behavioral = () => {
       return data as BehavioralInterview[];
     }
   });
+  
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return format(date, 'MMM d, yyyy');
+  };
+
+  const hasData = (interviews && interviews.length > 0);
+  const hasError = false;
 
   return (
     <DashboardLayout>
@@ -54,55 +64,79 @@ const Behavioral = () => {
         </Card>
 
         <div className="w-full max-w-4xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Previous Practice Sessions</h2>
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <Briefcase className="h-5 w-5" />
+            Previous Practice Sessions
+          </h2>
+          
           {isLoading ? (
-            <div className="flex justify-center p-8">
-              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => (
+                <Card key={i} className="opacity-60 animate-pulse">
+                  <CardHeader className="h-24 bg-gray-100"></CardHeader>
+                  <CardContent className="h-20 mt-4 bg-gray-100 rounded"></CardContent>
+                </Card>
+              ))}
             </div>
-          ) : interviews && interviews.length > 0 ? (
-            <Card>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Job Title</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {interviews.map((interview) => (
-                    <TableRow key={interview.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                          <Briefcase className="h-4 w-4" />
-                          {interview.job_title}
-                        </div>
-                      </TableCell>
-                      <TableCell>{interview.company_name || 'N/A'}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4" />
-                          {format(new Date(interview.created_at), 'MMM d, yyyy')}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          onClick={() => navigate(`/behavioralFeedback?id=${interview.id}`)}
-                        >
-                          View Feedback
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+          ) : hasError ? (
+            <Card className="bg-red-50 border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-700">Error loading data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-red-600">
+                  There was an error loading your interview preparations. Please try again later.
+                </p>
+              </CardContent>
             </Card>
+          ) : hasData ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {interviews.map(interview => (
+                <Link to={`/behavioralFeedback?id=${interview.id}`} key={interview.id}>
+                  <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-xl">{interview.job_title}</CardTitle>
+                          {interview.company_name && (
+                            <CardDescription>{interview.company_name}</CardDescription>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="border-green-300 text-green-700">
+                          completed
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center text-muted-foreground text-sm mb-4">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>Created on {formatDate(interview.created_at)}</span>
+                      </div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-4">
+                      <Button variant="ghost" className="w-full" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Feedback
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))}
+            </div>
           ) : (
-            <Card className="p-8 text-center text-muted-foreground">
-              No practice sessions yet. Click "Start" to begin your first behavioral interview practice.
-            </Card>
+            <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
+              <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-1">No practice sessions yet</h3>
+              <p className="text-gray-500 text-center mb-6">
+                Create your first behavioral practice to receive personalized feedback
+              </p>
+              <div className="flex gap-4">
+                <Button onClick={() => navigate('/behavioral/create')}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Start Practice
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </div>
