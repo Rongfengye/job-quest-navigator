@@ -1,10 +1,15 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { v4 as uuidv4 } from 'uuid';
+import { uploadFile } from './useFileUpload';
+
+interface FileData {
+  file: File | null;
+  text: string;
+}
 
 interface FormData {
   jobTitle: string;
@@ -13,176 +18,201 @@ interface FormData {
   companyDescription: string;
 }
 
-interface FileData {
-  file: File | null;
-  text: string;
-}
-
 export const useJobPracticeSubmission = (
   userId: string | undefined,
   formData: FormData,
-  resumeData: FileData,
-  coverLetterData: FileData,
-  additionalDocsData: FileData,
-  behavioralId?: string | null
+  resumeFile: FileData,
+  coverLetterFile: FileData,
+  additionalDocumentsFile: FileData,
+  behavioralId?: string // Optional parameter to link from behavioral interview
 ) => {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { deductTokens } = useUserTokens();
+  const navigate = useNavigate();
+  const { deductTokens, fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(false);
   const [processingModal, setProcessingModal] = useState(false);
 
-  const submitJobPractice = async (behavioralIdParam?: string) => {
+  const submitJobPractice = async () => {
     if (!userId) {
       toast({
         variant: "destructive",
-        title: "Authentication Required",
-        description: "Please log in to create a practice interview.",
+        title: "Authentication required",
+        description: "Please sign in to create a job practice."
       });
       return;
     }
-
-    // Use the behavioralId from params if provided, otherwise use the one from props
-    const finalBehavioralId = behavioralIdParam || behavioralId;
-
-    // Check if user has enough tokens
-    const tokenCheck = await deductTokens(5);
-    if (!tokenCheck?.success) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient tokens",
-        description: "You need at least 5 tokens to create a practice interview.",
-      });
-      return;
+    
+    // Skip token deduction if coming from a behavioral interview
+    // since tokens were already deducted for the behavioral interview
+    if (!behavioralId) {
+      const tokenCheck = await deductTokens(5);
+      if (!tokenCheck?.success) {
+        return;
+      }
+      fetchTokens();
     }
-
+    
     setIsLoading(true);
     setProcessingModal(true);
-
+    
     try {
-      // Generate a unique ID for the storyline
-      const storylineId = uuidv4();
+      // Only perform resume validation if not coming from behavioral
+      if (!resumeFile.file && !behavioralId) {
+        throw new Error("Resume file is required");
+      }
+      
+      let resumePath = '';
+      let coverLetterPath = null;
+      let additionalDocumentsPath = null;
+      
+      // If coming from behavioral, get the resume path from the behavioral record
+      if (behavioralId) {
+        console.log("Getting resume from behavioral interview:", behavioralId);
+        const { data: behavioralData, error: behavioralError } = await supabase
+          .from('storyline_behaviorals')
+          .select('resume_path, cover_letter_path, additional_documents_path, job_title, job_description, company_name, company_description')
+          .eq('id', behavioralId)
+          .single();
+          
+        if (behavioralError) {
+          console.error("Error fetching behavioral data:", behavioralError);
+          throw new Error(`Error retrieving behavioral interview data: ${behavioralError.message}`);
+        }
+        
+        console.log("Behavioral data retrieved:", behavioralData);
+        
+        if (!behavioralData.resume_path) {
+          throw new Error("No resume found in the behavioral interview data");
+        }
+        
+        resumePath = behavioralData.resume_path;
+        coverLetterPath = behavioralData.cover_letter_path;
+        additionalDocumentsPath = behavioralData.additional_documents_path;
+        
+        // Use the data from behavioral interview if formData is empty
+        if (!formData.jobTitle && behavioralData.job_title) {
+          formData.jobTitle = behavioralData.job_title;
+          formData.jobDescription = behavioralData.job_description;
+          formData.companyName = behavioralData.company_name || '';
+          formData.companyDescription = behavioralData.company_description || '';
+        }
+      } else {
+        // Regular flow - upload files
+        resumePath = await uploadFile(resumeFile.file!, 'resumes');
+        
+        if (coverLetterFile.file) {
+          coverLetterPath = await uploadFile(coverLetterFile.file, 'cover-letters');
+        }
+        
+        if (additionalDocumentsFile.file) {
+          additionalDocumentsPath = await uploadFile(additionalDocumentsFile.file, 'additional-documents');
+        }
+      }
 
-      // Create the storyline record
-      const { error: insertError } = await supabase
+      console.log("Inserting job with user_id:", userId);
+      console.log("Using resume path:", resumePath);
+      console.log("Form data:", formData);
+      
+      const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
-          id: storylineId,
-          user_id: userId,
           job_title: formData.jobTitle,
           job_description: formData.jobDescription,
           company_name: formData.companyName,
           company_description: formData.companyDescription,
-          behavioral_id: finalBehavioralId || null,
+          resume_path: resumePath,
+          cover_letter_path: coverLetterPath,
+          additional_documents_path: additionalDocumentsPath,
           status: 'processing',
-          resume_path: resumeData.text ? 'resume.txt' : '' // Add the required resume_path field
-        });
+          user_id: userId,
+          behavioral_id: behavioralId || null
+        })
+        .select('id')
+        .single();
 
-      if (insertError) throw insertError;
-
-      // Upload resume if provided
-      let resumePath = null;
-      if (resumeData.file) {
-        const resumeFileName = `${userId}/${storylineId}/resume-${resumeData.file.name}`;
-        const { error: resumeError } = await supabase.storage
-          .from('job-documents')
-          .upload(resumeFileName, resumeData.file);
-
-        if (resumeError) throw resumeError;
-        resumePath = resumeFileName;
+      if (insertError) {
+        console.error("Insert error details:", insertError);
+        throw new Error(`Error saving your application: ${insertError.message}`);
       }
 
-      // Upload cover letter if provided
-      let coverLetterPath = null;
-      if (coverLetterData.file) {
-        const coverLetterFileName = `${userId}/${storylineId}/cover-letter-${coverLetterData.file.name}`;
-        const { error: coverLetterError } = await supabase.storage
-          .from('job-documents')
-          .upload(coverLetterFileName, coverLetterData.file);
+      const storylineId = storylineData.id;
+      console.log("Created storyline job with ID:", storylineId);
 
-        if (coverLetterError) throw coverLetterError;
-        coverLetterPath = coverLetterFileName;
+      // Prepare the request body for the OpenAI function
+      const requestBody = {
+        requestType: 'GENERATE_QUESTION',
+        jobTitle: formData.jobTitle,
+        jobDescription: formData.jobDescription,
+        companyName: formData.companyName,
+        companyDescription: formData.companyDescription,
+        resumeText: resumeFile.text || '',
+        coverLetterText: coverLetterFile.text || '',
+        additionalDocumentsText: additionalDocumentsFile.text || '',
+        resumePath: resumePath,
+        coverLetterPath: coverLetterPath,
+        additionalDocumentsPath: additionalDocumentsPath,
+        behavioralId: behavioralId || null,
+        generateFromBehavioral: !!behavioralId
+      };
+
+      console.log("Sending data to OpenAI function:");
+      console.log("Resume path:", resumePath);
+      console.log("Resume text length:", resumeFile.text?.length || 0);
+      
+      if (resumeFile.text) {
+        console.log("Resume text preview:", resumeFile.text.substring(0, 200) + "...");
+      }
+      
+      console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
+      console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
+
+      const { data, error } = await supabase.functions.invoke('storyline-question-bank-prep', {
+        body: requestBody,
+      });
+
+      if (error) {
+        throw new Error(`Error processing your application: ${error.message}`);
       }
 
-      // Upload additional documents if provided
-      let additionalDocsPath = null;
-      if (additionalDocsData.file) {
-        const additionalDocsFileName = `${userId}/${storylineId}/additional-docs-${additionalDocsData.file.name}`;
-        const { error: additionalDocsError } = await supabase.storage
-          .from('job-documents')
-          .upload(additionalDocsFileName, additionalDocsData.file);
+      console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
-        if (additionalDocsError) throw additionalDocsError;
-        additionalDocsPath = additionalDocsFileName;
-      }
-
-      // Update the storyline record with file paths
       const { error: updateError } = await supabase
         .from('storyline_jobs')
         .update({
-          resume_path: resumePath || resumeData.text ? 'resume.txt' : '',
-          cover_letter_path: coverLetterPath,
-          additional_documents_path: additionalDocsPath
+          openai_response: data,
+          status: 'completed'
         })
         .eq('id', storylineId);
 
-      if (updateError) throw updateError;
-
-      // Call the Edge Function to generate questions
-      const { error: functionError } = await supabase.functions.invoke('storyline-question-bank-prep', {
-        body: {
-          requestType: 'GENERATE_QUESTIONS',
-          storylineId,
-          jobTitle: formData.jobTitle,
-          jobDescription: formData.jobDescription,
-          companyName: formData.companyName,
-          companyDescription: formData.companyDescription,
-          resumeText: resumeData.text,
-          coverLetterText: coverLetterData.text,
-          additionalDocsText: additionalDocsData.text,
-          behavioralId: finalBehavioralId || null
-        },
-      });
-
-      if (functionError) throw functionError;
-
-      // Dispatch a custom event that the job practice was created
-      const event = new CustomEvent('jobPracticeCreated', {
-        detail: { storylineId, behavioralId: finalBehavioralId }
-      });
-      window.dispatchEvent(event);
-
-      // Navigate to the questions page with both IDs if behavioralId is provided
-      if (finalBehavioralId) {
-        navigate(`/questions?id=${storylineId}&behavioralId=${finalBehavioralId}`);
-      } else {
-        navigate(`/questions?id=${storylineId}`);
+      if (updateError) {
+        throw new Error(`Error updating your application: ${updateError.message}`);
       }
 
       toast({
         title: "Success!",
-        description: "Your practice interview is being prepared.",
+        description: "Your interview questions have been generated. Redirecting to results page.",
       });
+
+      navigate(`/questions?id=${storylineId}`);
+
     } catch (error) {
-      console.error('Error creating practice interview:', error);
-      
-      // Refund tokens on error
-      await deductTokens(-5);
-      
+      console.error('Error creating storyline job:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create practice interview. Please try again.",
+        description: "There was an error creating your job practice. Please try again."
       });
+      
+      // Only refund tokens if we deducted them (not from behavioral)
+      if (!behavioralId) {
+        await deductTokens(-5);
+        fetchTokens();
+      }
     } finally {
       setIsLoading(false);
       setProcessingModal(false);
     }
   };
 
-  return {
-    isLoading,
-    processingModal,
-    submitJobPractice
-  };
+  return { isLoading, processingModal, submitJobPractice };
 };
