@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -188,9 +187,9 @@ const BehavioralFeedback = () => {
     };
 
     try {
-      // The actual resumeFile and other files will be used from the behavioral interview
-      // via the behavioralId, so we can use empty data here
-      submitJobPractice();
+      // Pass the behavioralId to the submitJobPractice function
+      // The behavioralId will be added to the URL when navigating to the Questions page
+      submitJobPractice(interviewId);
     } catch (error) {
       console.error("Error generating technical questions:", error);
       toast({
@@ -200,6 +199,28 @@ const BehavioralFeedback = () => {
       });
     }
   }
+
+  // Listen for the submission completion event
+  useEffect(() => {
+    if (!interviewId) return;
+    
+    // Custom event listener for when job practice submission is complete
+    const handleJobPracticeCreated = (event: any) => {
+      const { storylineId } = event.detail;
+      if (storylineId) {
+        // Navigate to questions page with both IDs
+        navigate(`/questions?id=${storylineId}&behavioralId=${interviewId}`);
+      }
+    };
+    
+    // Add event listener
+    window.addEventListener('jobPracticeCreated', handleJobPracticeCreated);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('jobPracticeCreated', handleJobPracticeCreated);
+    };
+  }, [interviewId, navigate]);
 
   if (authLoading) {
     return <Loading message="Checking authentication..." />;
