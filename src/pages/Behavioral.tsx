@@ -133,12 +133,10 @@ const Behavioral = () => {
                       </div>
                     </CardContent>
                     <CardFooter className="border-t pt-4">
-                      {/* <Button variant="ghost" className="w-full" size="sm">
+                      <Button variant="ghost" className="w-full" size="sm">
                         <FileText className="h-4 w-4 mr-2" />
                         View Feedback
-                      </Button> */}
-                      <FileText className="h-4 w-4 mr-2" />
-                        View Feedback
+                      </Button>
                     </CardFooter>
                   </Card>
                 </Link>
