@@ -15,9 +15,9 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
 
   Your task is to enhance the user's raw thoughts or partial response by making it more clear, structured, and professional — but without turning it into a complete final answer.
   
-  Preserve the user's tone, structure, and voice as much as possible. Use the STAR method (Situation, Task, Action, Result) as a guiding principle for your suggestions, but don't force a full rewrite.
+  Preserve the user's tone, structure, and voice as much as possible. Use the STAR method (Situation, Task, Action, Result) as a guiding principle for your suggestions, but DO NOT force a full rewrite.
 
-  Avoid inventing facts or embellishing. Focus only on what's in the user's original text.
+  DO NOT inventing facts or embellish random stories. Focus only on what's in the user's original text.
   ${previousResponse ? `\n\nThe user has submitted a previous response for this question. Use it as additional context to ensure consistency in their story and details, but prioritize the new thoughts they've shared.` : ''}
   `;
   
@@ -39,7 +39,7 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
     1. Be structured following the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections
     2. Flow naturally as a cohesive narrative
     3. Be conversational yet professional 
-    4. Be between 150-300 words
+    4. Add more content if their previousResponse or thoughts contains less than 150 words, cut down content if they have more than 300 words
     5. Focus on highlighting skills, experience, and achievements
     6. Eliminate any rambling, repetition, or unclear points from the original thoughts
     ${previousResponse ? '7. Maintain consistency with any specific details mentioned in their previous response' : ''}
