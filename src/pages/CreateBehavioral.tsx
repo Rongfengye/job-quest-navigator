@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -66,11 +67,11 @@ const CreateBehavioral = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!formData.jobTitle || !formData.jobDescription) {
+    if (!formData.jobTitle || !formData.jobDescription || !formData.companyName) {
       toast({
         variant: "destructive",
         title: "Required Fields Missing",
-        description: "Please fill in both job title and description.",
+        description: "Please fill in job title, job description, and company name.",
       });
       return;
     }
@@ -166,10 +167,11 @@ const CreateBehavioral = () => {
           <FormField
             id="companyName"
             name="companyName"
-            label="Company Name (Optional)"
+            label="Company Name"
             value={formData.companyName}
             onChange={handleInputChange}
             placeholder="Enter company name"
+            required
           />
 
           <FormField
