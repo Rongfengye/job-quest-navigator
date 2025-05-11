@@ -101,7 +101,7 @@ serve(async (req) => {
     if (action === "generateQuestions") {
       return await handleGenerateQuestions(openAIApiKey, questionIndex, questionType, questionText, userInput, resumeText, previousFeedback, corsHeaders);
     } else if (action === "processThoughts") {
-      return await handleProcessThoughts(openAIApiKey, questionIndex, questionType, questionText, userThoughts, previousResponse, corsHeaders);
+      return await handleProcessThoughts(openAIApiKey, questionIndex, questionType, questionText, userThoughts, previousResponse, corsHeaders, previousFeedback);
     } else {
       throw new Error(`Unknown action: ${action}`);
     }

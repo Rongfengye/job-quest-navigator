@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -40,14 +39,23 @@ export const useGuidedResponse = (
       setProcessingThoughts(true);
       
       try {
-        // Get the most recent response from iterations if available
+        // Get the most recent response and feedback from iterations if available
         let previousResponse = null;
+        let latestFeedback = previousFeedback || null;
+        
         if (iterations.length > 0) {
           const latestIteration = [...iterations].sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
           )[0];
+          
           previousResponse = latestIteration?.answer || null;
           console.log(`Found previous response (${previousResponse ? previousResponse.length : 0} chars)`);
+          
+          // Use the feedback from the latest iteration if available, otherwise use the provided previousFeedback
+          if (latestIteration?.feedback && !latestFeedback) {
+            latestFeedback = latestIteration.feedback;
+            console.log('Found feedback in latest iteration:', latestFeedback ? 'Yes' : 'No');
+          }
         }
         
         // Create the request payload
@@ -56,13 +64,15 @@ export const useGuidedResponse = (
           questionType: question.type,
           questionText: question.question,
           userThoughts: thoughts,
-          previousResponse
+          previousResponse,
+          previousFeedback: latestFeedback
         };
         
         console.log('Sending thoughts processing request with payload:', JSON.stringify({
           ...requestPayload,
           userThoughts: `${thoughts.substring(0, 50)}... (${thoughts.length} chars)`,
-          previousResponse: previousResponse ? `(${previousResponse.length} chars)` : null
+          previousResponse: previousResponse ? `(${previousResponse.length} chars)` : null,
+          previousFeedback: latestFeedback ? `(has ${latestFeedback.pros?.length || 0} pros, ${latestFeedback.cons?.length || 0} cons)` : null
         }));
         
         const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
@@ -118,7 +128,7 @@ export const useGuidedResponse = (
     return () => {
       window.removeEventListener('thoughtsSubmitted' as any, handleThoughtsSubmitted);
     };
-  }, [questionIndex, question, deductTokens, toast, iterations]);
+  }, [questionIndex, question, deductTokens, toast, iterations, previousFeedback]);
 
   useEffect(() => {
     const handleResponseGenerated = (event: CustomEvent) => {

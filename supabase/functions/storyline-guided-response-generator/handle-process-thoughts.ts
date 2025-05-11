@@ -2,12 +2,27 @@
 import { corsHeaders } from './index.ts';
 
 // Handler for processing thoughts into a structured response
-export async function handleProcessThoughts(openAIApiKey: string, questionIndex: number, questionType: string, questionText: string, userThoughts: string, previousResponse: string | null, corsHeaders: Record<string, string>) {
+export async function handleProcessThoughts(
+  openAIApiKey: string, 
+  questionIndex: number, 
+  questionType: string, 
+  questionText: string, 
+  userThoughts: string, 
+  previousResponse: string | null, 
+  corsHeaders: Record<string, string>,
+  previousFeedback: { pros: string[], cons: string[], improvementSuggestions?: string, guidelines?: string, score?: number } | null = null
+) {
   console.log(`Processing thoughts for question #${questionIndex}`);
   console.log(`User's thoughts: ${userThoughts.substring(0, 200)}${userThoughts.length > 200 ? '...' : ''}`);
   console.log(`Previous response available: ${previousResponse ? 'Yes' : 'No'}`);
+  console.log(`Previous feedback available: ${previousFeedback ? 'Yes' : 'No'}`);
+  
   if (previousResponse) {
     console.log(`Previous response length: ${previousResponse.length}`);
+  }
+  
+  if (previousFeedback) {
+    console.log(`Previous feedback: ${previousFeedback.pros.length} strengths, ${previousFeedback.cons.length} weaknesses`);
   }
   
   // Calculate the approximate word count of user input
@@ -19,8 +34,8 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   const maxResponseWords = Math.min(Math.max(wordCount * targetResponseMultiplier, 75), 200);
   console.log(`Target response size: ~${maxResponseWords} words`);
   
-  // Prepare the system prompt for OpenAI
-  const systemPrompt = `You are an interview coach helping a candidate improve their response to a behavioral question through incremental iterations.
+  // Prepare the system prompt for OpenAI with feedback integration
+  let systemPrompt = `You are an interview coach helping a candidate improve their response to a behavioral question through incremental iterations.
 
   Your goal is to make modest, focused improvements to the user's raw thoughts - NOT to create a complete polished answer yet.
   
@@ -34,37 +49,76 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   7. Absolutely avoid creating complete STAR stories if the user hasn't provided all those elements
   8. DO NOT begin your response with any introductory phrases like "Here's a response:" or "Sure!" or similar text
   9. Return ONLY the enhanced response text with no additional commentary
-  
-  ${previousResponse ? `\n\nThe user has submitted a previous response for this question. Consider this context, but focus primarily on improving the new thoughts they've shared. Don't make dramatic changes to their story direction.` : 'This is their first draft, so focus on modest improvements.'}
   `;
   
-  // Prepare the user prompt
-  const userPrompt = `
-  Interview Question (${questionType}): ${questionText}
-
-  ${previousResponse ? `The user previously submitted this response:
+  // Add feedback-specific instructions if available
+  if (previousFeedback && previousFeedback.pros.length > 0 || previousFeedback?.cons.length > 0) {
+    systemPrompt += `\n\n===FEEDBACK INTEGRATION INSTRUCTIONS===
+    The user has received specific feedback on their previous response. Your task is to:
+    1. PRESERVE and BUILD UPON the strengths identified in the previous response
+    2. ADDRESS and IMPROVE upon the weaknesses identified
+    3. Incorporate the user's new thoughts within this feedback framework
+    4. Maintain a consistent narrative with the previous response\n`;
+  }
+  
+  systemPrompt += `\n${previousResponse ? `\nThe user has submitted a previous response for this question. Consider this context, but focus primarily on improving the new thoughts they've shared. Don't make dramatic changes to their story direction.` : 'This is their first draft, so focus on modest improvements.'}`;
+  
+  // Prepare the user prompt with feedback integration
+  let userPrompt = `
+  Interview Question (${questionType}): ${questionText}\n\n`;
+  
+  if (previousResponse) {
+    userPrompt += `The user previously submitted this response:
   
   PREVIOUS RESPONSE:
-  ${previousResponse}
-  
-  They have now shared additional thoughts on how to improve their answer:` : `The user has shared their initial thoughts on how to answer this question:`}
-
-    USER'S THOUGHTS:
-    ${userThoughts}
-
-    Please help build ${previousResponse ? 'an incrementally improved' : 'a slightly enhanced'} version of their response. Your response should:
+  ${previousResponse}\n\n`;
     
-    1. Make modest improvements to clarity, structure, and detail
-    2. Maintain the user's original tone and voice
-    3. Be approximately ${Math.round(targetResponseMultiplier * 100)}% the length of their input
-    4. Focus only on what they've explicitly mentioned
-    5. Not create a complete STAR method response unless all elements are already present
-    6. Avoid artificial expansions or embellishments
-    ${previousResponse ? '7. Maintain consistency with the general story from their previous response' : ''}
-    8. DO NOT include any introductory text like "Here's your response:" or "Here's an improved version:"
-    9. Return ONLY the enhanced answer with no other text
+    if (previousFeedback) {
+      userPrompt += `This response received the following feedback:
+      
+  STRENGTHS TO PRESERVE:
+  ${previousFeedback.pros.map(pro => `- ${pro}`).join('\n')}
+  
+  WEAKNESSES TO ADDRESS:
+  ${previousFeedback.cons.map(con => `- ${con}`).join('\n')}\n\n`;
+      
+      if (previousFeedback.improvementSuggestions) {
+        userPrompt += `IMPROVEMENT SUGGESTIONS:
+  ${previousFeedback.improvementSuggestions}\n\n`;
+      }
+    }
+    
+    userPrompt += `They have now shared additional thoughts on how to improve their answer:`;
+  } else {
+    userPrompt += `The user has shared their initial thoughts on how to answer this question:`;
+  }
+  
+  userPrompt += `\n\nUSER'S THOUGHTS:
+  ${userThoughts}\n\n`;
+  
+  userPrompt += `Please help build ${previousResponse ? 'an incrementally improved' : 'a slightly enhanced'} version of their response. Your response should:
+  
+  1. Make modest improvements to clarity, structure, and detail
+  2. Maintain the user's original tone and voice
+  3. Be approximately ${Math.round(targetResponseMultiplier * 100)}% the length of their input
+  4. Focus only on what they've explicitly mentioned`;
+  
+  if (previousFeedback) {
+    userPrompt += `
+  5. Address the specific weaknesses identified in the feedback
+  6. Preserve and build upon the strengths identified in the feedback`;
+  } else {
+    userPrompt += `
+  5. Not create a complete STAR method response unless all elements are already present
+  6. Avoid artificial expansions or embellishments`;
+  }
+  
+  userPrompt += `
+  ${previousResponse ? '7. Maintain consistency with the general story from their previous response' : ''}
+  8. DO NOT include any introductory text like "Here's your response:" or "Here's an improved version:"
+  9. Return ONLY the enhanced answer with no other text
 
-    Remember: This is an iterative process. The goal is gradual improvement, not a complete transformation.
+  Remember: This is an iterative process. The goal is gradual improvement, not a complete transformation.
   `;
   
   // Prepare API request
@@ -162,7 +216,9 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   const response = {
     success: true,
     generatedResponse: generatedResponse,
-    feedback: "Your response has been incrementally improved based on your thoughts. Continue refining for a stronger answer."
+    feedback: previousFeedback 
+      ? "Your response has been improved based on previous feedback and your new thoughts." 
+      : "Your response has been incrementally improved based on your thoughts. Continue refining for a stronger answer."
   };
 
   console.log('Returning final response with generated answer');
