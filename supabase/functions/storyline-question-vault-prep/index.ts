@@ -30,7 +30,7 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
       });
-    } else if (requestType === 'GENERATE_ANSWER') {
+    } else if (requestType === 'GENERATE_FEEDBACK') {
       const feedbackContent = await generateAnswer(requestData, openAIApiKey!);
 
       return new Response(JSON.stringify(feedbackContent), {

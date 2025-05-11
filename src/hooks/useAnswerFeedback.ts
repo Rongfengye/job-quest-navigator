@@ -115,7 +115,7 @@ export const useAnswerFeedback = (
     try {
       const { data, error } = await supabase.functions.invoke('storyline-question-vault-prep', {
         body: {
-          requestType: 'GENERATE_ANSWER',
+          requestType: 'GENERATE_FEEDBACK',
           answerText,
           question: question.question,
           questionType: question.type,
