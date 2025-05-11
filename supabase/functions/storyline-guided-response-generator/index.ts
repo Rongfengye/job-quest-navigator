@@ -79,7 +79,8 @@ serve(async (req) => {
       userInput = "", 
       userThoughts = "", 
       resumeText = "",
-      previousFeedback = null
+      previousFeedback = null,
+      previousResponse = null
     } = requestData;
     
     if (questionIndex === undefined || !questionType || !questionText) {
@@ -100,7 +101,7 @@ serve(async (req) => {
     if (action === "generateQuestions") {
       return await handleGenerateQuestions(openAIApiKey, questionIndex, questionType, questionText, userInput, resumeText, previousFeedback, corsHeaders);
     } else if (action === "processThoughts") {
-      return await handleProcessThoughts(openAIApiKey, questionIndex, questionType, questionText, userThoughts, corsHeaders);
+      return await handleProcessThoughts(openAIApiKey, questionIndex, questionType, questionText, userThoughts, previousResponse, corsHeaders);
     } else {
       throw new Error(`Unknown action: ${action}`);
     }

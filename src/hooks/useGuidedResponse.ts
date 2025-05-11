@@ -5,12 +5,17 @@ import { useUserTokens } from '@/hooks/useUserTokens';
 import { Question } from '@/hooks/useQuestionData';
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { useAnswers } from '@/hooks/useAnswers';
 
 export const useGuidedResponse = (questionIndex: number, question: Question | null, previousFeedback?: FeedbackData | null) => {
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [processingThoughts, setProcessingThoughts] = useState(false);
   const { deductTokens } = useUserTokens();
+  
+  // Get the current answer iterations to access the most recent response
+  const storylineId = question?.storyline_id || '';
+  const { iterations } = useAnswers(storylineId, questionIndex);
 
   useEffect(() => {
     const handleThoughtsSubmitted = async (event: CustomEvent) => {
@@ -31,13 +36,30 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
       setProcessingThoughts(true);
       
       try {
+        // Get the most recent response from iterations if available
+        let previousResponse = null;
+        if (iterations.length > 0) {
+          const latestIteration = [...iterations].sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+          )[0];
+          previousResponse = latestIteration?.answer || null;
+          console.log(`Found previous response (${previousResponse ? previousResponse.length : 0} chars)`);
+        }
+        
         // Create the request payload
         const requestPayload = {
           questionIndex,
           questionType: question.type,
           questionText: question.question,
-          userThoughts: thoughts
+          userThoughts: thoughts,
+          previousResponse
         };
+        
+        console.log('Sending thoughts processing request with payload:', JSON.stringify({
+          ...requestPayload,
+          userThoughts: `${thoughts.substring(0, 50)}... (${thoughts.length} chars)`,
+          previousResponse: previousResponse ? `(${previousResponse.length} chars)` : null
+        }));
         
         const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
           body: {
@@ -92,7 +114,7 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
     return () => {
       window.removeEventListener('thoughtsSubmitted' as any, handleThoughtsSubmitted);
     };
-  }, [questionIndex, question, deductTokens, toast]);
+  }, [questionIndex, question, deductTokens, toast, iterations]);
 
   useEffect(() => {
     const handleResponseGenerated = (event: CustomEvent) => {
