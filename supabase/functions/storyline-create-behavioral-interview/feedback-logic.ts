@@ -19,12 +19,12 @@ const structureGuidelines = `Provide feedback in JSON format with the following 
 const considerationGuidelines = `Consider:
   1. Use of the STAR method (Situation, Task, Action, Result). 
   2. Relevance to the question asked
-  3. Specificity and detail level
+  3. Clarity, Specificity, and detail level
   4. Professional communication
   5. Alignment with job requirements`
 
 const contentConsiderations = `Additionally, please keep these in mind:
-  1. Place emphasis on having more developed Action and Results that demonstrate growth from the situation.
+  1. Place emphasis on having more developed Action and Results that demonstrate self-reflection, growth, and lessons learned from the situation.
   2. Ensure that situation and task only goes into just enough detail to explain action and result of the scenario.
   3. If mentioning a weakness in the STAR method, clarify whether the Situation, Task, Action, or Result was missing or under/overdeveloped, while keeping in mind of the suggestions from points 1,2 
   4. When applicable, refer to specific parts of the response to explain strengths and weaknesses
