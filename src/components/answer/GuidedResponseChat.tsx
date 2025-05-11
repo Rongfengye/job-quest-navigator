@@ -65,7 +65,7 @@ const GuidedResponseChat: React.FC<GuidedResponseChatProps> = ({
             className="flex items-center gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            {processingThoughts ? 'Processing...' : 'Transform into Response'}
+            {processingThoughts ? 'Processing...' : 'Build Your Response'}
             <ArrowRightCircle className="ml-1 h-4 w-4" />
           </Button>
         </div>
