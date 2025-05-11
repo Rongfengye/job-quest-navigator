@@ -15,15 +15,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   console.log('Received request to generate interview questions');
   console.log('Resume text length:', resumeText?.length || 0);
 
-  // Sonar system prompt
-  const sonarSystemPrompt = `You are a specialized AI interview coach for college students and recent graduates. Generate interview questions for a ${jobTitle} position.
-  ${companyName ? `Company: ${companyName}` : ''}
-  ${companyDescription ? `Company Description: ${companyDescription}` : ''}
-  
-  Based on the provided information, generate 10 interview questions:
-  - 5 technical questions focused on entry-level technical skills and problem-solving
-  - 5 behavioral questions focused on teamwork, learning, and project experience
-  
+  const formatSpecification = `
   Your response MUST be a valid JSON object in the following format:
   {
     "technicalQuestions": [
@@ -42,18 +34,35 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
         "followUp": ["string"]
       }
     ]
-  }`;
+  }
+  `
+
+  const suggestedWebsiteList = 'Glassdoor, Reddit, Blind, Wall Street Oasis, OneClass, Fishbowl, PrepLounge, Quora, LeetCode Discuss, Indeed'
+
+  // Sonar system prompt
+  const sonarSystemPrompt = `You are an experienced interviewer for a ${jobTitle} position.
+  ${companyName ? `The company name is ${companyName}.` : ''}
+  ${companyDescription ? `About the company: """${companyDescription}"""` : ''}
+  ${jobDescription ? `About the job: """${jobDescription}"""` : ''}`
+
+  const searchSpecification = `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${suggestedWebsiteList}) to find interview questions that have actually been asked by ${companyName} for the role the candidate is applying to. 
+  If you find such questions, prioritize them in the list of returned questions. 
+  If not, generate questions based on the job description and candidate profile.`
 
   // Create the user prompt with all the relevant information
   const userPrompt = `
-  Job Title: "${jobTitle}"
-  Job Description: "${jobDescription}"
-  ${companyName ? `Company Name: "${companyName}"` : ''}
-  ${companyDescription ? `Company Description: "${companyDescription}"` : ''}
-  
+  Candidate Documents and Context:
   ${resumeText ? `Resume content: "${resumeText}"` : ''}
   ${coverLetterText ? `Cover Letter content: "${coverLetterText}"` : ''}
   ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
+
+  Based on the provided information, generate 10 interview questions:
+  - 5 technical questions focused on entry-level technical skills and problem-solving
+  - 5 behavioral questions focused on teamwork, learning, and project experience
+
+  ${searchSpecification}
+
+  ${formatSpecification}
   `;
 
   // Define the JSON schema for response format
@@ -96,6 +105,17 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     "required": ["technicalQuestions", "behavioralQuestions"]
   };
 
+  // TODO LATER look into search domain filters
+    // search_domain_filter: [
+    //   "glassdoor.com",
+    //   "reddit.com",
+    //   "linkedin.com",
+    //   "wallstreetoasis.com",
+    //   "prepfully.com",
+    //   "indeed.com",
+    //   "teamblind.com"
+    // ],
+
   // New Perplexity Sonar API call with proper response_format
   console.log('Calling Perplexity Sonar API');
   const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
@@ -110,7 +130,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
         { role: 'system', content: sonarSystemPrompt },
         { role: 'user', content: userPrompt }
       ],
-      temperature: 0.2,
+      temperature: 0.3,
       max_tokens: 4000,
       top_p: 0.9,
       frequency_penalty: 1,
