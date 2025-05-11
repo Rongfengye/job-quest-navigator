@@ -32,6 +32,8 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   5. Do NOT invent new details or examples that weren't in the original text
   6. Keep your response proportional to the user's input length (approximately ${Math.round(targetResponseMultiplier * 100)}% of their word count)
   7. Absolutely avoid creating complete STAR stories if the user hasn't provided all those elements
+  8. DO NOT begin your response with any introductory phrases like "Here's a response:" or "Sure!" or similar text
+  9. Return ONLY the enhanced response text with no additional commentary
   
   ${previousResponse ? `\n\nThe user has submitted a previous response for this question. Consider this context, but focus primarily on improving the new thoughts they've shared. Don't make dramatic changes to their story direction.` : 'This is their first draft, so focus on modest improvements.'}
   `;
@@ -59,6 +61,8 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
     5. Not create a complete STAR method response unless all elements are already present
     6. Avoid artificial expansions or embellishments
     ${previousResponse ? '7. Maintain consistency with the general story from their previous response' : ''}
+    8. DO NOT include any introductory text like "Here's your response:" or "Here's an improved version:"
+    9. Return ONLY the enhanced answer with no other text
 
     Remember: This is an iterative process. The goal is gradual improvement, not a complete transformation.
   `;
@@ -131,38 +135,34 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   const generatedContent = openAIData.choices[0].message.content;
   console.log('Generated response received, length:', generatedContent.length);
   
-  // Process the generated content to extract just the response without any surrounding text
+  // Process the generated content - remove any prefixes like "Here's a response:" or "Sure!"
   let generatedResponse = generatedContent;
   
-  // Check if the content contains markdown separators (---)
-  const markdownSeparatorPattern = /^---\r?\n([\s\S]*?)\r?\n---/m;
-  const match = generatedContent.match(markdownSeparatorPattern);
+  // Clean up any prefixes from the response
+  const prefixesToRemove = [
+    /^(Sure!|Here'?s|I've|Now|Here is|This is|I have|Following is|Below is|As requested|As an improvement|Here are|I'd suggest|Let me|Your improved|The following is|An enhanced version of|The updated version of|Based on your thoughts|Enhancing your response)/i,
+    /^(a |an |the |your |some |my |this |that |these |those )?(slightly |enhanced |improved |updated |modified |polished |revised |refined |adjusted |clearer |better |structured |more |professional |tailored |focused |concise )+(version|response|answer|draft|iteration|text|note|narrative|statement|submission|enhancement)/i,
+    /^(.*?)(:|\.\.\.|\-|\—)/
+  ];
   
-  if (match && match[1]) {
-    // Extract only the content between the markdown separators
-    generatedResponse = match[1].trim();
-  } else {
-    // If no separators, try to clean up any prefixes like "Here's a response:"
-    const cleanupPattern = /^(Here'?s\s+a\s+(polished|structured|professional|formatted|improved)\s+response.*?:?\s*)/i;
-    generatedResponse = generatedContent.replace(cleanupPattern, '').trim();
-  }
-  
-  // Extract any feedback or instructions from outside the response content
-  let feedback = "";
-  
-  // Look for text after the last markdown separator
-  if (match) {
-    const afterSeparator = generatedContent.substring(generatedContent.lastIndexOf('---') + 3).trim();
-    if (afterSeparator) {
-      feedback = afterSeparator;
+  // Try each pattern and remove the prefix if found
+  for (const pattern of prefixesToRemove) {
+    const match = generatedResponse.match(pattern);
+    if (match && match.index === 0) {
+      generatedResponse = generatedResponse.substring(match[0].length).trim();
+      console.log('Removed prefix:', match[0]);
+      break;
     }
   }
   
-  // Return a structured response with the generated answer and any feedback
+  // Remove any quotes that might be wrapping the response
+  generatedResponse = generatedResponse.replace(/^["']|["']$/g, '').trim();
+  
+  // Return a structured response with the generated answer
   const response = {
     success: true,
     generatedResponse: generatedResponse,
-    feedback: feedback || "Your response has been incrementally improved based on your thoughts. Continue refining for a stronger answer."
+    feedback: "Your response has been incrementally improved based on your thoughts. Continue refining for a stronger answer."
   };
 
   console.log('Returning final response with generated answer');
