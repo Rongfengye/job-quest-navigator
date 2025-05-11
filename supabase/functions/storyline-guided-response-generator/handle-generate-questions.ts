@@ -14,8 +14,19 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
     console.log(`- Cons: ${previousFeedback.cons ? previousFeedback.cons.length : 0} items`);
   }
   
+  // Determine if we should focus on elaboration based on existing input
+  const hasSubstantialInput = userInput && userInput.length > 50;
+  
   // Prepare the system prompt for OpenAI - ENSURING WE INCLUDE THE WORD "JSON" IN THE PROMPT
-  const systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience. Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
+  let systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience.";
+  
+  if (hasSubstantialInput) {
+    systemPrompt += " Focus on helping the candidate elaborate on their existing response, asking questions that encourage adding more relevant details, examples, and specifics to strengthen their answer.";
+  } else {
+    systemPrompt += " Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant.";
+  }
+  
+  systemPrompt += " Respond strictly in valid JSON format with a 'guidingQuestions' array.";
   
   // Prepare the user prompt - ALSO MAKING SURE TO INCLUDE "JSON" 
   let userPrompt = `Interview Question (${questionType}): """${questionText}"""\n\nUser's current response: """${userInput || "No response yet"}"""\n\n`;
@@ -41,7 +52,11 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
       userPrompt += `IMPROVEMENT SUGGESTIONS:\n"""${previousFeedback.improvementSuggestions}"""\n\n`;
     }
     
-    userPrompt += `Based on this feedback, tailor your guiding questions to help the user address their weaknesses and build on their strengths.\n\n`;
+    if (hasSubstantialInput) {
+      userPrompt += `Since the user already has a partial response, focus your questions on helping them elaborate and address the areas for improvement mentioned above. Ask questions that encourage adding depth, specific examples, and measurable outcomes to strengthen what they've already written.\n\n`;
+    } else {
+      userPrompt += `Based on this feedback, tailor your guiding questions to help the user address their weaknesses and build on their strengths.\n\n`;
+    }
   }
   
   userPrompt += "Please provide 5 guiding questions in JSON format like: { \"guidingQuestions\": [\"Q1\", \"Q2\", ...] }. Make these questions specific to the user's background when possible.";
