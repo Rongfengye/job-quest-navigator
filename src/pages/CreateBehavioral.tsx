@@ -8,6 +8,7 @@ import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
+import { uploadFile } from '@/hooks/useFileUpload';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -97,17 +98,42 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
-      // Navigate directly to the interview page with form data and resume text
+      // Upload resume file to Supabase storage
+      let resumePath = '';
+      let coverLetterPath = '';
+      let additionalDocumentsPath = '';
+      
+      console.log("Uploading resume file to Supabase storage...");
+      
+      if (resumeFile) {
+        resumePath = await uploadFile(resumeFile, 'job_documents');
+        console.log("Resume uploaded successfully, path:", resumePath);
+      }
+      
+      if (coverLetterFile) {
+        coverLetterPath = await uploadFile(coverLetterFile, 'job_documents');
+        console.log("Cover letter uploaded successfully, path:", coverLetterPath);
+      }
+      
+      if (additionalDocumentsFile) {
+        additionalDocumentsPath = await uploadFile(additionalDocumentsFile, 'job_documents');
+        console.log("Additional document uploaded successfully, path:", additionalDocumentsPath);
+      }
+      
+      // Navigate to the interview page with form data, file paths and extracted text
       navigate('/behavioral/interview', {
         state: {
           formData,
           resumeText,
+          resumePath,
           coverLetterText,
-          additionalDocumentsText
+          coverLetterPath,
+          additionalDocumentsText,
+          additionalDocumentsPath
         }
       });
     } catch (error) {
-      console.error('Error navigating to interview:', error);
+      console.error('Error uploading files:', error);
       toast({
         variant: "destructive",
         title: "Error",

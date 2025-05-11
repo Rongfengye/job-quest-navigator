@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -19,8 +20,11 @@ interface LocationState {
     companyDescription: string;
   };
   resumeText?: string;
+  resumePath?: string;
   coverLetterText?: string;
+  coverLetterPath?: string;
   additionalDocumentsText?: string;
+  additionalDocumentsPath?: string;
 }
 
 export const useBehavioralInterview = () => {
@@ -83,7 +87,10 @@ export const useBehavioralInterview = () => {
     },
     resumeText: string,
     coverLetterText: string = '',
-    additionalDocumentsText: string = ''
+    additionalDocumentsText: string = '',
+    resumePath: string = '',
+    coverLetterPath: string = '',
+    additionalDocumentsPath: string = ''
   ) => {
     setIsLoading(true);
     
@@ -97,9 +104,9 @@ export const useBehavioralInterview = () => {
             job_description: formData.jobDescription,
             company_name: formData.companyName,
             company_description: formData.companyDescription,
-            resume_path: resumeText ? 'resume.txt' : '',
-            cover_letter_path: coverLetterText ? 'cover_letter.txt' : null,
-            additional_documents_path: additionalDocumentsText ? 'additional_docs.txt' : null
+            resume_path: resumePath || '',
+            cover_letter_path: coverLetterPath || null,
+            additional_documents_path: additionalDocumentsPath || null
           })
           .select('id')
           .single();
@@ -107,6 +114,9 @@ export const useBehavioralInterview = () => {
         if (behavioralError) {
           throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
         }
+        
+        console.log("Created behavioral interview with ID:", behavioralData.id);
+        console.log("Resume path stored:", resumePath);
         
         setBehavioralId(behavioralData.id);
       }
@@ -123,10 +133,12 @@ export const useBehavioralInterview = () => {
         previousAnswers: answers,
         questionIndex: currentQuestionIndex,
         generateAudio: true, // Request audio generation
-        voice: 'alloy'       // Default voice
+        voice: 'alloy',      // Default voice
+        resumePath: resumePath || ''
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
+      console.log(`Using resume path: ${resumePath}`);
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,

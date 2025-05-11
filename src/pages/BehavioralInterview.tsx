@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -25,6 +24,13 @@ const BehavioralInterview = () => {
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
   const { resumeText } = useResumeText(null);
+  
+  // Extract file paths from location state
+  const resumePath = location.state?.resumePath || '';
+  const coverLetterPath = location.state?.coverLetterPath || '';
+  const additionalDocumentsPath = location.state?.additionalDocumentsPath || '';
+  
+  console.log("BehavioralInterview - Resume path from state:", resumePath);
   
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
@@ -115,20 +121,22 @@ const BehavioralInterview = () => {
           return;
         }
         
-        const coverLetterText = location.state?.coverLetterText || '';
-        const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+        console.log("Initializing interview with resume path:", resumePath);
         
         await generateQuestion(
           formData, 
           location.state?.resumeText || resumeText, 
-          coverLetterText, 
-          additionalDocumentsText
+          location.state?.coverLetterText || '',
+          location.state?.additionalDocumentsText || '',
+          resumePath,
+          coverLetterPath,
+          additionalDocumentsPath
         );
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, behavioralId]);
+  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, behavioralId, resumePath, coverLetterPath, additionalDocumentsPath]);
 
   // Modified effect to handle feedback generation when interview is complete
   useEffect(() => {
@@ -221,15 +229,14 @@ const BehavioralInterview = () => {
           return;
         }
         
-        const coverLetterText = location.state?.coverLetterText || '';
-        const additionalDocumentsText = location.state?.additionalDocumentsText || '';
-        const stateResumeText = location.state?.resumeText;
-        
         await generateQuestion(
           formData, 
-          stateResumeText || resumeText, 
-          coverLetterText, 
-          additionalDocumentsText
+          location.state?.resumeText || resumeText, 
+          location.state?.coverLetterText || '',
+          location.state?.additionalDocumentsText || '',
+          resumePath,
+          coverLetterPath,
+          additionalDocumentsPath
         );
         
         setAnswer('');
