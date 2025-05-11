@@ -7,24 +7,31 @@ export async function handleProcessThoughts(openAIApiKey: string, questionIndex:
   console.log(`User's thoughts: ${userThoughts.substring(0, 200)}${userThoughts.length > 200 ? '...' : ''}`);
   
   // Prepare the system prompt for OpenAI
-  const systemPrompt = "You're an expert interview coach. Your task is to transform the user's thoughts into a professional, structured interview answer that follows the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections. Create a natural, flowing response that incorporates these elements subtly. Focus on clarity, relevance, and conversational tone. Add specific details and quantifiable achievements if mentioned in their thoughts. The response should sound natural and professional.";
+  const systemPrompt = `You're an expert interview coach. You are an interview coach helping a candidate improve their behavioral response over multiple drafts.
+
+  Your task is to enhance the user’s raw thoughts or partial response by making it more clear, structured, and professional — but without turning it into a complete final answer.
+  
+  Preserve the user's tone, structure, and voice as much as possible. Use the STAR method (Situation, Task, Action, Result) as a guiding principle for your suggestions, but don’t force a full rewrite.
+
+  Avoid inventing facts or embellishing. Focus only on what’s in the user’s original text.
+  `;
   
   // Prepare the user prompt
   const userPrompt = `
-Interview Question (${questionType}): ${questionText}
+  Interview Question (${questionType}): ${questionText}
 
-The user has shared their thoughts on how to answer this question. Please transform these raw thoughts into a well-structured, professional response that they could use in an interview:
+  The user has shared their thoughts on how to answer this question. Please transform these raw thoughts into a well-structured, professional response that they could use in an interview:
 
-USER'S THOUGHTS:
-${userThoughts}
+    USER'S THOUGHTS:
+    ${userThoughts}
 
-Please create a polished, interview-ready response based on these thoughts. The response should:
-1. Be structured following the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections
-2. Flow naturally as a cohesive narrative
-3. Be conversational yet professional 
-4. Be between 150-300 words
-5. Focus on highlighting skills, experience, and achievements
-6. Eliminate any rambling, repetition, or unclear points from the original thoughts
+    Please help build the current response towards interview-ready response based on these thoughts. The response should:
+    1. Be structured following the STAR method (Situation, Task, Action, Result) without explicitly labeling these sections
+    2. Flow naturally as a cohesive narrative
+    3. Be conversational yet professional 
+    4. Be between 150-300 words
+    5. Focus on highlighting skills, experience, and achievements
+    6. Eliminate any rambling, repetition, or unclear points from the original thoughts
   `;
   
   // Prepare API request
