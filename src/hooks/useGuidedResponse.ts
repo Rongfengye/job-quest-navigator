@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -14,7 +13,8 @@ export const useGuidedResponse = (questionIndex: number, question: Question | nu
   const { deductTokens } = useUserTokens();
   
   // Get the current answer iterations to access the most recent response
-  const storylineId = question?.storyline_id || '';
+  // We pass in storylineId directly as a parameter instead of trying to get it from question
+  const storylineId = question ? (question as any).storyline_id || '' : '';
   const { iterations } = useAnswers(storylineId, questionIndex);
 
   useEffect(() => {
