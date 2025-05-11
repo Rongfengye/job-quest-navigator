@@ -18,11 +18,11 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
   const systemPrompt = "You're an interview coach that helps candidates come up with personalized responses based on their resume and experience. Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant. Respond strictly in valid JSON format with a 'guidingQuestions' array.";
   
   // Prepare the user prompt - ALSO MAKING SURE TO INCLUDE "JSON" 
-  let userPrompt = `Interview Question (${questionType}): ${questionText}\n\nUser's current response: ${userInput || "No response yet"}\n\n`;
+  let userPrompt = `Interview Question (${questionType}): """${questionText}"""\n\nUser's current response: """${userInput || "No response yet"}"""\n\n`;
   
   // Add resume info if available
   if (resumeText && resumeText.length > 0) {
-    userPrompt += `Here is relevant information from the user's resume to help personalize your guidance:\n${resumeText.substring(0, 2000)}\n\n`;
+    userPrompt += `Here is relevant information from the user's resume to help personalize your guidance:\n"""${resumeText.substring(0, 2000)}"""\n\n`;
   }
   
   // Add previous feedback if available
@@ -30,15 +30,15 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
     userPrompt += `This is the feedback provided on the user's previous answer that should guide your questions:\n`;
     
     if (previousFeedback.pros && previousFeedback.pros.length > 0) {
-      userPrompt += `STRENGTHS:\n${previousFeedback.pros.map((pro: string) => `- ${pro}`).join('\n')}\n\n`;
+      userPrompt += `STRENGTHS:\n"""${previousFeedback.pros.map((pro: string) => `- ${pro}`).join('\n')}"""\n\n`;
     }
     
     if (previousFeedback.cons && previousFeedback.cons.length > 0) {
-      userPrompt += `AREAS FOR IMPROVEMENT:\n${previousFeedback.cons.map((con: string) => `- ${con}`).join('\n')}\n\n`;
+      userPrompt += `AREAS FOR IMPROVEMENT:\n"""${previousFeedback.cons.map((con: string) => `- ${con}`).join('\n')}"""\n\n`;
     }
     
     if (previousFeedback.improvementSuggestions) {
-      userPrompt += `IMPROVEMENT SUGGESTIONS:\n${previousFeedback.improvementSuggestions}\n\n`;
+      userPrompt += `IMPROVEMENT SUGGESTIONS:\n"""${previousFeedback.improvementSuggestions}"""\n\n`;
     }
     
     userPrompt += `Based on this feedback, tailor your guiding questions to help the user address their weaknesses and build on their strengths.\n\n`;
