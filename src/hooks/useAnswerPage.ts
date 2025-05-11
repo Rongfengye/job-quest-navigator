@@ -47,9 +47,11 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
 
   const previousFeedback = getPreviousFeedback();
   
+  // Pass storylineId directly as a parameter
   const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(
     questionIndex, 
-    question, 
+    question,
+    storylineId || '',
     previousFeedback
   );
 

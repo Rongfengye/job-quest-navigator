@@ -7,14 +7,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { useAnswers } from '@/hooks/useAnswers';
 
-export const useGuidedResponse = (questionIndex: number, question: Question | null, previousFeedback?: FeedbackData | null) => {
+export const useGuidedResponse = (
+  questionIndex: number, 
+  question: Question | null,
+  storylineId: string,
+  previousFeedback?: FeedbackData | null
+) => {
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [processingThoughts, setProcessingThoughts] = useState(false);
   const { deductTokens } = useUserTokens();
   
-  // Get the current answer iterations to access the most recent response
-  const storylineId = question?.storyline_id || '';
+  // Use the storylineId parameter directly instead of extracting from question
   const { iterations } = useAnswers(storylineId, questionIndex);
 
   useEffect(() => {
