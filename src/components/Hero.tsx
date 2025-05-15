@@ -21,57 +21,93 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-16 md:py-24 px-6">
-      <div className="absolute inset-0 bg-gradient-to-b from-interview-light/50 to-transparent -z-10" />
+    <section className="relative overflow-hidden py-16 md:py-20 px-6">
+      <div className="absolute inset-0 bg-interview-primary/10 -z-10">
+        {/* Wave-like blue background */}
+        <div className="absolute top-0 right-0 w-full h-full bg-interview-primary rounded-bl-[40%]"></div>
+      </div>
       
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
-          <div className="text-left order-2 md:order-1">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-text-primary mb-6 opacity-0 animate-fade-up">
+          <div className="text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-text-primary mb-6">
               Ace Your Interviews with AI-Powered Practice
             </h1>
             
-            <p className="text-interview-text-secondary text-lg mb-8 opacity-0 animate-fade-up animation-delay-300">
-              Get tailored interview preparation based on job descriptions and your resume. 
-              Practice with real interview questions, receive detailed feedback, and improve your chances of landing your dream job.
+            <p className="text-interview-text-secondary text-lg mb-8">
+              Tailored Interview prep built around your resume and goals. Practice, get real-time coaching, and perform with confidence.
             </p>
             
-            <div className="opacity-0 animate-fade-up animation-delay-600">
-              <Button 
-                onClick={handleGetStarted}
-                className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg flex items-center justify-center gap-2 group"
-              >
-                Get Started
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
+            <Button 
+              onClick={handleGetStarted}
+              className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg"
+            >
+              Get Started
+            </Button>
           </div>
           
           {/* Right Column - Feature Cards */}
-          <div className="order-1 md:order-2 grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-0 animate-fade-up animation-delay-300">
-            {/* Feature Card 1 */}
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
-              <div className="mb-3 text-interview-primary font-semibold text-lg">Behavioral Interview</div>
-              <p className="text-interview-text-secondary text-sm">Practice answering common behavioral interview questions with AI feedback.</p>
-            </div>
-            
-            {/* Feature Card 2 */}
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
-              <div className="mb-3 text-interview-primary font-semibold text-lg">Audio Feedback</div>
-              <p className="text-interview-text-secondary text-sm">Get detailed analysis of your verbal responses and delivery style.</p>
-            </div>
-            
-            {/* Feature Card 3 */}
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
-              <div className="mb-3 text-interview-primary font-semibold text-lg">Guided Response</div>
-              <p className="text-interview-text-secondary text-sm">Step-by-step guidance to craft perfect answers to tough questions.</p>
-            </div>
-            
-            {/* Feature Card 4 */}
-            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
-              <div className="mb-3 text-interview-primary font-semibold text-lg">Performance Analysis</div>
-              <p className="text-interview-text-secondary text-sm">Track your progress and identify areas for improvement.</p>
+          <div className="relative">
+            {/* Main illustration containing all feature cards */}
+            <div className="w-full h-full relative">
+              {/* Behavioral Interview Card */}
+              <div className="absolute top-0 left-0 bg-white p-4 rounded-xl shadow-lg w-64">
+                <h3 className="font-semibold mb-2">Behavioral Interview</h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-interview-primary rounded-full flex-shrink-0">
+                    <svg viewBox="0 0 100 100" className="w-full h-full p-3 text-white">
+                      <circle cx="50" cy="40" r="20" fill="currentColor"/>
+                      <path d="M50,70 C33,70 20,85 20,100 L80,100 C80,85 67,70 50,70" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <div className="bg-interview-primary text-white p-2 rounded-md">
+                    •••
+                  </div>
+                </div>
+              </div>
+              
+              {/* Audio Feedback Card */}
+              <div className="absolute top-0 right-0 bg-white p-4 rounded-xl shadow-lg">
+                <h3 className="font-semibold mb-2">Audio Feedback</h3>
+                <div className="flex justify-center">
+                  <svg viewBox="0 0 100 40" className="h-10 w-48 text-interview-primary">
+                    <path d="M5,20 Q10,5 15,20 Q20,35 25,20 Q30,5 35,20 Q40,35 45,20 Q50,5 55,20 Q60,35 65,20 Q70,5 75,20 Q80,35 85,20 Q90,5 95,20" 
+                          stroke="currentColor" 
+                          strokeWidth="3" 
+                          fill="none" />
+                  </svg>
+                </div>
+              </div>
+              
+              {/* Guided Response Card */}
+              <div className="absolute bottom-0 left-0 bg-white p-4 rounded-xl shadow-lg w-64">
+                <h3 className="font-semibold mb-2">Guided Response</h3>
+                <div className="flex flex-col gap-2">
+                  <div className="h-2 bg-interview-light rounded-full w-full"></div>
+                  <div className="h-2 bg-interview-light rounded-full w-3/4"></div>
+                  <div className="h-2 bg-interview-light rounded-full w-full"></div>
+                  <div className="h-2 bg-interview-light rounded-full w-4/5"></div>
+                </div>
+              </div>
+              
+              {/* Performance Analysis Card */}
+              <div className="absolute bottom-0 right-0 bg-white p-4 rounded-xl shadow-lg">
+                <h3 className="font-semibold mb-2">Performance Analysis</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-end gap-1 h-12">
+                    <div className="w-4 h-6 bg-interview-primary"></div>
+                    <div className="w-4 h-8 bg-interview-light"></div>
+                    <div className="w-4 h-12 bg-interview-primary/70"></div>
+                  </div>
+                  <div className="w-12 h-12">
+                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                      <circle cx="50" cy="50" r="45" fill="transparent" stroke="#E7F3FF" strokeWidth="10" />
+                      <path d="M50,5 A45,45 0 0,1 95,50" stroke="#1877F2" strokeWidth="10" fill="transparent" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
