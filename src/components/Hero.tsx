@@ -55,11 +55,19 @@ const Hero = () => {
               <div className="absolute top-0 left-0 bg-white p-4 rounded-xl shadow-lg w-64">
                 <h3 className="font-semibold mb-2">Behavioral Interview</h3>
                 <div className="flex items-center gap-3">
-                  <img 
-                    src="/lovable-uploads/9020c4af-c3f9-4b48-a38d-769edef61736.png" 
-                    alt="Behavioral Interview" 
-                    className="w-full h-auto rounded-lg"
-                  />
+                  <div className="w-12 h-12 flex items-center justify-center">
+                    <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="50" cy="35" r="25" fill="#1877F2"/>
+                      <path d="M50,70 C33,70 20,85 20,100 L80,100 C80,85 67,70 50,70" fill="#1877F2"/>
+                    </svg>
+                  </div>
+                  <div className="bg-interview-primary text-white p-2 rounded-md">
+                    <svg width="30" height="24" viewBox="0 0 30 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="6" cy="12" r="4" fill="white"/>
+                      <circle cx="15" cy="12" r="4" fill="white"/>
+                      <circle cx="24" cy="12" r="4" fill="white"/>
+                    </svg>
+                  </div>
                 </div>
               </div>
               
