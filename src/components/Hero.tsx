@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -13,8 +12,8 @@ const Hero = () => {
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      // If user is already logged in, navigate directly to Create page
-      navigate('/dashboard');
+      // If user is already logged in, navigate directly to Behavioral page
+      navigate('/behavioral');
     } else {
       // Otherwise show auth modal for login/signup
       setShowAuthModal(true);
@@ -22,45 +21,23 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-12 md:py-20 px-6">
-      <div className="absolute inset-0 bg-gradient-to-b from-interview-light/30 to-transparent -z-10" />
+    <section className="relative overflow-hidden py-16 md:py-24 px-6">
+      <div className="absolute inset-0 bg-gradient-to-b from-interview-light/50 to-transparent -z-10" />
       
       <div className="max-w-7xl mx-auto">
-        {/* Header - Centered above the grid */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-interview-primary opacity-0 animate-fade-up">
-            Storyline
-          </h1>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
-          {/* Left Column - Video Placeholder */}
-          <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200 bg-white aspect-video flex items-center justify-center order-2 md:order-1 opacity-0 animate-fade-up">
-            <div className="flex flex-col items-center justify-center p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-interview-light flex items-center justify-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-interview-primary">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-              </div>
-              <p className="text-interview-text-secondary">Demo video coming soon</p>
-            </div>
-          </div>
-          
-          {/* Right Column - Content */}
-          <div className="text-left order-1 md:order-2">
-            {/* Added text from Features section */}
-            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-interview-text-primary opacity-0 animate-fade-up">
-              Everything You Need To Crush Your Next Job Interview
-            </h2>
-            <p className="text-interview-text-secondary mb-6 opacity-0 animate-fade-up animation-delay-200">
-              Prepare for success with our comprehensive interview tools designed to help you stand out and land your dream job.
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          {/* Left Column - Content */}
+          <div className="text-left order-2 md:order-1">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-text-primary mb-6 opacity-0 animate-fade-up">
+              Ace Your Interviews with AI-Powered Practice
+            </h1>
+            
+            <p className="text-interview-text-secondary text-lg mb-8 opacity-0 animate-fade-up animation-delay-300">
+              Get tailored interview preparation based on job descriptions and your resume. 
+              Practice with real interview questions, receive detailed feedback, and improve your chances of landing your dream job.
             </p>
             
-            <p className="text-interview-text-secondary mb-8 opacity-0 animate-fade-up animation-delay-300">
-              From interview prep to real-time interview help, Storyline is a complete solution to help you land any job and get the bag.
-            </p>
-            
-            <div className="opacity-0 animate-fade-up animation-delay-900">
+            <div className="opacity-0 animate-fade-up animation-delay-600">
               <Button 
                 onClick={handleGetStarted}
                 className="bg-interview-primary hover:bg-interview-dark text-white px-6 py-6 rounded-md transition-all duration-300 text-lg flex items-center justify-center gap-2 group"
@@ -68,6 +45,33 @@ const Hero = () => {
                 Get Started
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
+            </div>
+          </div>
+          
+          {/* Right Column - Feature Cards */}
+          <div className="order-1 md:order-2 grid grid-cols-1 sm:grid-cols-2 gap-4 opacity-0 animate-fade-up animation-delay-300">
+            {/* Feature Card 1 */}
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
+              <div className="mb-3 text-interview-primary font-semibold text-lg">Behavioral Interview</div>
+              <p className="text-interview-text-secondary text-sm">Practice answering common behavioral interview questions with AI feedback.</p>
+            </div>
+            
+            {/* Feature Card 2 */}
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
+              <div className="mb-3 text-interview-primary font-semibold text-lg">Audio Feedback</div>
+              <p className="text-interview-text-secondary text-sm">Get detailed analysis of your verbal responses and delivery style.</p>
+            </div>
+            
+            {/* Feature Card 3 */}
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
+              <div className="mb-3 text-interview-primary font-semibold text-lg">Guided Response</div>
+              <p className="text-interview-text-secondary text-sm">Step-by-step guidance to craft perfect answers to tough questions.</p>
+            </div>
+            
+            {/* Feature Card 4 */}
+            <div className="bg-white rounded-xl p-6 shadow-md border border-gray-100 transition-all hover:shadow-lg">
+              <div className="mb-3 text-interview-primary font-semibold text-lg">Performance Analysis</div>
+              <p className="text-interview-text-secondary text-sm">Track your progress and identify areas for improvement.</p>
             </div>
           </div>
         </div>
