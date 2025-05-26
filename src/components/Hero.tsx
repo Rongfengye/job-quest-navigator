@@ -32,11 +32,14 @@ const Hero = () => {
           {/* Left Column - Content */}
           <div className="text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-interview-text-primary mb-6">
-              Ace Your Interviews with AI-Powered Practice
+              Ace Your Next Interview with AI-Guided Practice
             </h1>
             
             <p className="text-interview-text-secondary text-lg mb-8">
-              Tailored Interview prep built around your resume and goals. Practice, get real-time coaching, and perform with confidence.
+              Personalized interview preparation tailored to your resume and job goals.
+            </p>
+            <p className="text-interview-text-secondary text-lg mb-8">
+              Practice with realistic simulations, receive real-time guidance, and analyze your performance.
             </p>
             
             <Button 
