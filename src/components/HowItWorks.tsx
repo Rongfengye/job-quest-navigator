@@ -4,7 +4,7 @@ import { FileText, Monitor, ChartBar } from 'lucide-react';
 
 const HowItWorks = () => {
   return (
-    <section className="py-20 px-6 bg-gray-50">
+    <section className="py-20 px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
