@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -23,8 +24,8 @@ const Hero = () => {
   return (
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
       <div className="absolute inset-0 -z-10">
-        {/* Wave-like blue background - fixed visibility */}
-        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-blue-500 via-blue-400 to-blue-600 rounded-bl-[40%] opacity-70"></div>
+        {/* Wave-like blue background using CSS variables */}
+        <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-interview-primary via-interview-primary/80 to-interview-dark rounded-bl-[40%] opacity-70"></div>
       </div>
       
       <div className="max-w-7xl mx-auto">
