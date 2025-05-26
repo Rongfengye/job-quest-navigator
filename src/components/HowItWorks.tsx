@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, monitor, ChartBar } from 'lucide-react';
+import { FileText, Monitor, ChartBar } from 'lucide-react';
 
 const HowItWorks = () => {
   return (
@@ -31,7 +31,7 @@ const HowItWorks = () => {
           <div className="text-center">
             <div className="mb-6 flex justify-center">
               <div className="w-24 h-24 bg-white rounded-xl shadow-md flex items-center justify-center">
-                <monitor className="w-12 h-12 text-interview-primary" />
+                <Monitor className="w-12 h-12 text-interview-primary" />
               </div>
             </div>
             <h3 className="text-xl font-semibold mb-3 text-interview-text-primary">
