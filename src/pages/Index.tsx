@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Hero from '@/components/Hero';
+import HowItWorks from '@/components/HowItWorks';
 import Features from '@/components/Features';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
@@ -19,6 +20,7 @@ const Index = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
         <Hero />
+        <HowItWorks />
         <Separator className="max-w-5xl mx-auto" />
         <Features />
       </main>

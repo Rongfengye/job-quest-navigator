@@ -54,6 +54,7 @@ export type Database = {
           crawled_content: Json | null
           created_at: string
           file_type: string | null
+          file_url: string | null
           filename: string | null
           guiding_questions: Json | null
           id: string
@@ -71,6 +72,7 @@ export type Database = {
           crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
+          file_url?: string | null
           filename?: string | null
           guiding_questions?: Json | null
           id?: string
@@ -88,6 +90,7 @@ export type Database = {
           crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
+          file_url?: string | null
           filename?: string | null
           guiding_questions?: Json | null
           id?: string
