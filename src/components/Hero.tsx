@@ -24,7 +24,7 @@ const Hero = () => {
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
       <div className="absolute inset-0 bg-interview-primary/10 -z-10">
         {/* Wave-like blue background */}
-        <div className="absolute top-0 right-0 w-full h-full bg-interview-primary rounded-bl-[40%]"></div>
+        <div className="absolute top-0 right-0 w-full h-full bg-interview-primary rounded-bl-[90%]"></div>
       </div>
       
       <div className="max-w-7xl mx-auto">
