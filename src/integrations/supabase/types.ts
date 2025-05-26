@@ -61,6 +61,7 @@ export type Database = {
           job_descriptions: Json | null
           question_answers: Json | null
           resume_text: string
+          structured_resume: Json | null
           tailored_content: string | null
           tailoring_timestamp: string | null
           title: string | null
@@ -79,6 +80,7 @@ export type Database = {
           job_descriptions?: Json | null
           question_answers?: Json | null
           resume_text: string
+          structured_resume?: Json | null
           tailored_content?: string | null
           tailoring_timestamp?: string | null
           title?: string | null
@@ -97,6 +99,7 @@ export type Database = {
           job_descriptions?: Json | null
           question_answers?: Json | null
           resume_text?: string
+          structured_resume?: Json | null
           tailored_content?: string | null
           tailoring_timestamp?: string | null
           title?: string | null
