@@ -22,7 +22,8 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
-      <div className="absolute inset-0 bg-interview-primary/80 -z-10">
+      {/* <div className="absolute inset-0 bg-interview-primary/80 -z-10"> */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-br from-blue-500 via-blue-400 to-blue-600 opacity-20">
         {/* Wave-like blue background */}
         <div className="absolute top-0 right-0 w-full h-full bg-interview-primary rounded-bl-[40%]"></div>
       </div>
