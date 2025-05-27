@@ -25,7 +25,7 @@ const Hero = () => {
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
       {/* Complex Blue Blob Background - Positioned on Right Half */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-3/5 h-full">
+        <div className="absolute top-0 right-0 w-[70%] h-[110%]">
           <svg
             className="absolute inset-0 w-full h-full"
             viewBox="0 0 800 600"
@@ -44,9 +44,9 @@ const Hero = () => {
               
               {/* Secondary deeper blue gradient */}
               <linearGradient id="complexBlobGradient2" x1="100%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#0B5ED7" stopOpacity="0.8" />
-                <stop offset="50%" stopColor="#1877F2" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#0B5ED7" stopOpacity="0.9" />
+                <stop offset="0%" stopColor="#5DA9F6" stopOpacity="0.6" />
+                <stop offset="50%" stopColor="#A3D2FF" stopOpacity="0.6" />
+                <stop offset="100%" stopColor="#D6ECFF" stopOpacity="0.5" />
               </linearGradient>
               
               {/* Accent gradient for layering */}
@@ -75,6 +75,7 @@ const Hero = () => {
                  C160,230 180,200 160,160 
                  C140,120 160,90 200,50 Z"
               fill="url(#complexBlobGradient1)"
+              opacity="0.4"
             />
             
             {/* Secondary jagged blob for depth */}
