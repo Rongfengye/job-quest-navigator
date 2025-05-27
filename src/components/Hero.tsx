@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
@@ -23,8 +22,8 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
-      {/* Complex Blue Blob Background - Positioned on Right Half */}
-      <div className="absolute inset-0 z-0">
+      {/* Complex Blue Blob Background - Hidden on mobile, visible on large screens */}
+      <div className="absolute inset-0 z-0 hidden lg:block">
         <div className="absolute top-10 right-0 w-[70%] h-[110%] scale-105 overflow-hidden">
           <svg
             className="absolute inset-0 w-full h-full"
