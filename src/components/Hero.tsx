@@ -23,7 +23,7 @@ const Hero = () => {
 
   return (
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
-      <div className="absolute inset-0 -z-10">
+      <div className="absolute inset-0 z-10 opacity-100">
         {/* Organic blue blob background */}
         <svg
           className="absolute inset-0 w-full h-full"
@@ -74,6 +74,7 @@ const Hero = () => {
         </svg>
       </div>
       
+
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </section>
   );
