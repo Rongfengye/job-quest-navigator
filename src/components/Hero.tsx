@@ -25,7 +25,7 @@ const Hero = () => {
     <section className="relative overflow-hidden py-16 md:py-20 px-6">
       {/* Complex Blue Blob Background - Positioned on Right Half */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-0 right-0 w-[70%] h-[110%]">
+        <div className="absolute top-10 right-0 w-[70%] h-[110%] scale-105 overflow-hidden">
           <svg
             className="absolute inset-0 w-full h-full"
             viewBox="0 0 800 600"
