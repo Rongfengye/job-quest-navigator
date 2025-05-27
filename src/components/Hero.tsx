@@ -75,7 +75,7 @@ const Hero = () => {
                  C160,230 180,200 160,160 
                  C140,120 160,90 200,50 Z"
               fill="url(#complexBlobGradient1)"
-              opacity="0.4"
+              opacity="0.8"
             />
             
             {/* Secondary jagged blob for depth */}
