@@ -28,7 +28,7 @@ interface LocationState {
 
 export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(false); // Changed default to false since we pre-load
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isTransitionLoading, setIsTransitionLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -169,8 +169,8 @@ export const useBehavioralInterview = () => {
         previousQuestions: questions,
         previousAnswers: answers,
         questionIndex: currentQuestionIndex,
-        generateAudio: true, // Request audio generation
-        voice: 'alloy',      // Default voice
+        generateAudio: true,
+        voice: 'alloy',
         resumePath: resumePath || ''
       };
       
@@ -207,10 +207,12 @@ export const useBehavioralInterview = () => {
       
       setCurrentQuestionWithLog(questionData);
       
+      // Update questions array immediately when question is generated
+      const updatedQuestions = [...questions];
+      updatedQuestions[currentQuestionIndex] = data.question;
+      setQuestions(updatedQuestions);
+      
       if (behavioralId) {
-        const updatedQuestions = [...questions];
-        updatedQuestions[currentQuestionIndex] = data.question;
-        
         await supabase
           .from('storyline_behaviorals')
           .update({
@@ -241,7 +243,6 @@ export const useBehavioralInterview = () => {
     try {
       const answersToUse = providedAnswers || answers;
       
-      // Fix: Only check for answers.length when generating feedback
       if (!answersToUse.every(a => a?.trim())) {
         console.error('One or more answers are empty', answersToUse);
         throw new Error('Cannot generate feedback: one or more answers are empty');
@@ -281,15 +282,20 @@ export const useBehavioralInterview = () => {
       console.log('Feedback received:', response.feedback);
 
       if (behavioralId) {
+        // Save both feedback and ensure questions are also saved
         const updateResult = await supabase
           .from('storyline_behaviorals')
           .update({
-            feedback: response.feedback
+            feedback: response.feedback,
+            questions: questions,  // Ensure questions are saved with feedback
+            responses: answersToUse
           })
           .eq('id', behavioralId);
           
         if (updateResult.error) {
           console.error('Error saving feedback to database:', updateResult.error);
+        } else {
+          console.log('Successfully saved feedback and questions to database');
         }
       }
 
@@ -330,6 +336,7 @@ export const useBehavioralInterview = () => {
       const updatedQuestions = [...questions];
       const updatedAnswers = [...answers];
       
+      // Ensure the current question is saved in the questions array
       updatedQuestions[currentQuestionIndex] = currentQuestion.question;
       updatedAnswers[currentQuestionIndex] = answer;
       
@@ -339,28 +346,30 @@ export const useBehavioralInterview = () => {
       console.log('MAY 31 DEBUG - Answer submitted, updated arrays:', {
         questionsLength: updatedQuestions.length,
         answersLength: updatedAnswers.length,
-        currentIndex: currentQuestionIndex
+        currentIndex: currentQuestionIndex,
+        currentQuestion: currentQuestion.question.substring(0, 50) + '...'
       });
       
       if (behavioralId) {
+        // Save both questions and responses to ensure data consistency
         await supabase
           .from('storyline_behaviorals')
           .update({
+            questions: updatedQuestions,
             responses: updatedAnswers
           })
           .eq('id', behavioralId);
       }
       
-      // Fix: Check if we've completed all 5 questions (0-based index equals 4)
       if (currentQuestionIndex >= 4) {
         console.log('MAY 31 DEBUG - Final answer submitted, setting interview complete');
         setInterviewComplete(true);
-        console.log('Final answer submitted, all answers:', updatedAnswers);
-        
-        // Don't try to generate any more questions, just set up for feedback generation
+        console.log('Final answer submitted, all questions and answers:', {
+          questions: updatedQuestions,
+          answers: updatedAnswers
+        });
       } else {
         console.log('MAY 31 DEBUG - Moving to next question index:', currentQuestionIndex + 1);
-        // Set transition loading to true for question transitions
         setIsTransitionLoadingWithLog(true);
         setCurrentQuestionIndex(prev => prev + 1);
       }
