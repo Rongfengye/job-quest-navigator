@@ -11,7 +11,6 @@ import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
-// import ProcessingMessages from '@/components/behavioral/ProcessingMessages';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -320,36 +319,16 @@ const BehavioralInterview = () => {
       <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">
         <InterviewHeader />
         
-        {/* {showProcessing ? (
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col items-center justify-center">
-            <ProcessingMessages 
-              currentQuestionIndex={currentQuestionIndex} 
-              isNextQuestion={currentQuestionIndex < 4} 
-            />
-          </div>
-        ) : (
-          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-            <QuestionContent
-              currentQuestionIndex={currentQuestionIndex}
-              currentQuestion={currentQuestion}
-              answer={answer}
-              setAnswer={setAnswer}
-              isRecording={isRecording}
-              toggleRecording={toggleRecording}
-            />
-          </div>
-        )}
-         */}
-         <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-            <QuestionContent
-              currentQuestionIndex={currentQuestionIndex}
-              currentQuestion={currentQuestion}
-              answer={answer}
-              setAnswer={setAnswer}
-              isRecording={isRecording}
-              toggleRecording={toggleRecording}
-            />
-          </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
+          <QuestionContent
+            currentQuestionIndex={currentQuestionIndex}
+            currentQuestion={currentQuestion}
+            answer={answer}
+            setAnswer={setAnswer}
+            isRecording={isRecording}
+            toggleRecording={toggleRecording}
+          />
+        </div>
         
         <SubmitButton
           currentQuestionIndex={currentQuestionIndex}

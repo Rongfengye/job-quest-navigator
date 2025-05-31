@@ -14,14 +14,15 @@ const Loading: React.FC<LoadingProps> = ({
 }) => {
   const [messageIndex, setMessageIndex] = useState(0);
   
-  const initialMessages = [
-    "Setting up your interview experience…",
-    "Generating your first challenge…",
-    "Getting your first question ready…",
-    "Warming up the interview engine…"
+  const transitionMessages = [
+    "Reviewing your last response…",
+    "Summarizing key points…",
+    "Shaping the next question…",
+    "Crafting the next challenge…",
+    "Preparing the next step for you…"
   ];
   
-  const displayMessages = messages || initialMessages;
+  const displayMessages = messages || transitionMessages;
   const showRotatingMessages = Array.isArray(messages) || messages === undefined;
   
   useEffect(() => {
