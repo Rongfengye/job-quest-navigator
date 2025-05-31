@@ -127,17 +127,17 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           const { companyName, companyDescription } = findCompanyInfo(doc);
           if (companyName || companyDescription) {
             onCompanyInfoFound(companyName, companyDescription);
-            toast({
-              title: "Company Information Found",
-              description: "Successfully extracted company details",
-            });
+            // toast({
+            //   title: "Company Information Found",
+            //   description: "Successfully extracted company details",
+            // });
           }
         }
         
-        toast({
-          title: "Job Description Scraped",
-          description: "Successfully extracted job description from URL",
-        });
+        // toast({
+        //   title: "Job Description Scraped",
+        //   description: "Successfully extracted job description from URL",
+        // });
       } else {
         console.error("No content container found");
         throw new Error('Could not extract job description from the page');
