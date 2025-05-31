@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -331,6 +330,12 @@ const BehavioralInterview = () => {
   if (isTransitionLoading) {
     console.log('MAY 31 DEBUG - Rendering full-screen Loading component for question transition');
     return <Loading />;
+  }
+
+  // During initial loading, don't render anything - let ProcessingModal from previous page stay visible
+  if (isInitialLoading) {
+    console.log('MAY 31 DEBUG - Initial loading in progress, not rendering interview layout');
+    return null;
   }
 
   console.log('MAY 31 DEBUG - Rendering main interview layout');
