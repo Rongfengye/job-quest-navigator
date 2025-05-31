@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -26,6 +27,14 @@ const BehavioralInterview = () => {
   const [firstQuestionLoaded, setFirstQuestionLoaded] = useState(false);
   const { resumeText } = useResumeText(null);
   
+  // Initial state logging
+  console.log('MAY 31 DEBUG - Component initialized with states:', {
+    isNextQuestionLoading,
+    showProcessing,
+    firstQuestionLoaded,
+    pageLoaded
+  });
+  
   // Extract file paths from location state
   const resumePath = location.state?.resumePath || '';
   const coverLetterPath = location.state?.coverLetterPath || '';
@@ -52,6 +61,37 @@ const BehavioralInterview = () => {
     generateFeedback,
     interviewComplete
   } = useBehavioralInterview();
+
+  // Debug logging for key states from useBehavioralInterview hook
+  console.log('MAY 31 DEBUG - Hook states:', {
+    isLoading,
+    currentQuestion: currentQuestion ? 'Question exists' : 'No question',
+    currentQuestionIndex
+  });
+
+  // Watch for currentQuestion changes
+  useEffect(() => {
+    console.log('MAY 31 DEBUG - currentQuestion changed:', {
+      hasQuestion: !!currentQuestion,
+      questionText: currentQuestion?.question ? currentQuestion.question.substring(0, 50) + '...' : 'No question',
+      previousFirstQuestionLoaded: firstQuestionLoaded
+    });
+    
+    if (currentQuestion && !firstQuestionLoaded) {
+      console.log('MAY 31 DEBUG - First question received from edge function!');
+      setFirstQuestionLoaded(true);
+    }
+  }, [currentQuestion, firstQuestionLoaded]);
+
+  // Watch for isLoading changes
+  useEffect(() => {
+    console.log('MAY 31 DEBUG - isLoading changed:', isLoading);
+  }, [isLoading]);
+
+  // Watch for isNextQuestionLoading changes
+  useEffect(() => {
+    console.log('MAY 31 DEBUG - isNextQuestionLoading changed:', isNextQuestionLoading);
+  }, [isNextQuestionLoading]);
 
   const playTransitionAudio = () => {
     // Select a random audio file each time this function is called
@@ -98,6 +138,7 @@ const BehavioralInterview = () => {
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
+        console.log('MAY 31 DEBUG - Starting interview initialization');
         setPageLoaded(true);
         
         const tokenCheck = await deductTokens(1);
@@ -123,6 +164,7 @@ const BehavioralInterview = () => {
         }
         
         console.log("Initializing interview with resume path:", resumePath);
+        console.log('MAY 31 DEBUG - About to call generateQuestion for first question');
         
         await generateQuestion(
           formData, 
@@ -134,8 +176,7 @@ const BehavioralInterview = () => {
           additionalDocumentsPath
         );
         
-        // Mark first question as loaded
-        setFirstQuestionLoaded(true);
+        console.log('MAY 31 DEBUG - generateQuestion call completed for first question');
       }
     };
     
@@ -203,12 +244,15 @@ const BehavioralInterview = () => {
     // Show processing immediately
     setShowProcessing(true);
     setIsSubmitting(true);
+    console.log('MAY 31 DEBUG - Starting answer submission, showProcessing set to true');
     
     try {
       await submitAnswer(answer);
       
       // After submitting the 5th question (index 4), we don't need to generate a new question
       if (currentQuestionIndex < 4) {
+        console.log('MAY 31 DEBUG - Submitting answer for question', currentQuestionIndex + 1, 'of 5');
+        
         // Play transition audio before loading next question
         try {
           await playTransitionAudio();
@@ -218,6 +262,7 @@ const BehavioralInterview = () => {
         }
         
         // Only set isNextQuestionLoading to true for transitions between questions
+        console.log('MAY 31 DEBUG - Setting isNextQuestionLoading to true for question transition');
         setIsNextQuestionLoading(true);
         
         const tokenCheck = await deductTokens(1);
@@ -234,6 +279,7 @@ const BehavioralInterview = () => {
           return;
         }
         
+        console.log('MAY 31 DEBUG - About to generate next question');
         await generateQuestion(
           formData, 
           location.state?.resumeText || resumeText, 
@@ -244,6 +290,7 @@ const BehavioralInterview = () => {
           additionalDocumentsPath
         );
         
+        console.log('MAY 31 DEBUG - Next question generated, clearing states');
         setAnswer('');
         setIsNextQuestionLoading(false);
         setShowProcessing(false);
@@ -274,11 +321,24 @@ const BehavioralInterview = () => {
     }
   };
 
+  // Log the condition that determines Loading vs ProcessingMessages
+  const shouldShowFullScreenLoading = isNextQuestionLoading && firstQuestionLoaded;
+  console.log('MAY 31 DEBUG - Rendering condition check:', {
+    isNextQuestionLoading,
+    firstQuestionLoaded,
+    shouldShowFullScreenLoading,
+    showProcessing,
+    hasCurrentQuestion: !!currentQuestion,
+    isLoading
+  });
+
   // Only show full-screen Loading for transitions between questions (not initial load)
-  if (isNextQuestionLoading && firstQuestionLoaded) {
+  if (shouldShowFullScreenLoading) {
+    console.log('MAY 31 DEBUG - Rendering full-screen Loading component');
     return <Loading />;
   }
 
+  console.log('MAY 31 DEBUG - Rendering main interview layout');
   return (
     <div className="min-h-screen bg-white flex flex-col p-6">
       <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">

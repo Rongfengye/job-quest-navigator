@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -40,6 +39,22 @@ export const useBehavioralInterview = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
 
+  // Debug logging for isLoading state changes
+  const setIsLoadingWithLog = (value: boolean) => {
+    console.log('MAY 31 DEBUG - useBehavioralInterview isLoading changing from', isLoading, 'to', value);
+    setIsLoading(value);
+  };
+
+  // Debug logging for currentQuestion state changes
+  const setCurrentQuestionWithLog = (value: BehavioralQuestionData | null) => {
+    console.log('MAY 31 DEBUG - useBehavioralInterview currentQuestion changing:', {
+      from: currentQuestion ? 'Has question' : 'No question',
+      to: value ? 'Has question' : 'No question',
+      newQuestionText: value?.question ? value.question.substring(0, 50) + '...' : 'No question'
+    });
+    setCurrentQuestion(value);
+  };
+
   // Keep this for backward compatibility but it won't be used in the new flow
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
@@ -64,8 +79,8 @@ export const useBehavioralInterview = () => {
       
       const questionTexts = allQuestions.map((q: any) => q.question);
       setQuestions(questionTexts);
-      setCurrentQuestion(formattedQuestion);
-      setIsLoading(false);
+      setCurrentQuestionWithLog(formattedQuestion);
+      setIsLoadingWithLog(false);
       
       console.log('Set initial questions:', questionTexts);
     } catch (error) {
@@ -92,10 +107,12 @@ export const useBehavioralInterview = () => {
     coverLetterPath: string = '',
     additionalDocumentsPath: string = ''
   ) => {
-    setIsLoading(true);
+    console.log('MAY 31 DEBUG - generateQuestion called for question index:', currentQuestionIndex);
+    setIsLoadingWithLog(true);
     
     try {
       if (currentQuestionIndex === 0 && !behavioralId) {
+        console.log('MAY 31 DEBUG - Creating new behavioral interview record');
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
           .insert({
@@ -139,9 +156,16 @@ export const useBehavioralInterview = () => {
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
       console.log(`Using resume path: ${resumePath}`);
+      console.log('MAY 31 DEBUG - About to call edge function storyline-create-behavioral-interview');
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
+      });
+      
+      console.log('MAY 31 DEBUG - Edge function response received:', {
+        hasData: !!data,
+        hasError: !!error,
+        hasQuestion: data?.question ? true : false
       });
       
       if (error) {
@@ -154,13 +178,14 @@ export const useBehavioralInterview = () => {
       
       console.log('Question generated:', data.question);
       console.log('Audio data received:', data.audio ? 'Yes' : 'No');
+      console.log('MAY 31 DEBUG - Successfully received question from edge function, setting currentQuestion');
       
       const questionData: BehavioralQuestionData = {
         ...data,
         storylineId: behavioralId || undefined
       };
       
-      setCurrentQuestion(questionData);
+      setCurrentQuestionWithLog(questionData);
       
       if (behavioralId) {
         const updatedQuestions = [...questions];
@@ -174,9 +199,11 @@ export const useBehavioralInterview = () => {
           .eq('id', behavioralId);
       }
       
+      console.log('MAY 31 DEBUG - generateQuestion completed successfully');
       return data;
     } catch (error) {
       console.error('Error in generateQuestion:', error);
+      console.log('MAY 31 DEBUG - generateQuestion failed with error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -184,12 +211,13 @@ export const useBehavioralInterview = () => {
       });
       return null;
     } finally {
-      setIsLoading(false);
+      console.log('MAY 31 DEBUG - generateQuestion finally block, setting isLoading to false');
+      setIsLoadingWithLog(false);
     }
   };
 
   const generateFeedback = async (providedAnswers?: string[]) => {
-    setIsLoading(true);
+    setIsLoadingWithLog(true);
     try {
       const answersToUse = providedAnswers || answers;
       
@@ -269,12 +297,14 @@ export const useBehavioralInterview = () => {
       });
       return null;
     } finally {
-      setIsLoading(false);
+      setIsLoadingWithLog(false);
     }
   };
 
   const submitAnswer = async (answer: string) => {
     if (!currentQuestion) return;
+    
+    console.log('MAY 31 DEBUG - submitAnswer called for question index:', currentQuestionIndex);
     
     try {
       const updatedQuestions = [...questions];
@@ -285,6 +315,12 @@ export const useBehavioralInterview = () => {
       
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
+      
+      console.log('MAY 31 DEBUG - Answer submitted, updated arrays:', {
+        questionsLength: updatedQuestions.length,
+        answersLength: updatedAnswers.length,
+        currentIndex: currentQuestionIndex
+      });
       
       if (behavioralId) {
         await supabase
@@ -297,11 +333,13 @@ export const useBehavioralInterview = () => {
       
       // Fix: Check if we've completed all 5 questions (0-based index equals 4)
       if (currentQuestionIndex >= 4) {
+        console.log('MAY 31 DEBUG - Final answer submitted, setting interview complete');
         setInterviewComplete(true);
         console.log('Final answer submitted, all answers:', updatedAnswers);
         
         // Don't try to generate any more questions, just set up for feedback generation
       } else {
+        console.log('MAY 31 DEBUG - Moving to next question index:', currentQuestionIndex + 1);
         setCurrentQuestionIndex(prev => prev + 1);
       }
     } catch (error) {
@@ -318,7 +356,7 @@ export const useBehavioralInterview = () => {
     setCurrentQuestionIndex(0);
     setQuestions([]);
     setAnswers([]);
-    setCurrentQuestion(null);
+    setCurrentQuestionWithLog(null);
     setInterviewComplete(false);
     setBehavioralId(null);
   };
