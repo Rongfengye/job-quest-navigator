@@ -252,8 +252,8 @@ const BehavioralFeedback = () => {
       {processingModal && (
         <ProcessingModal 
           isOpen={processingModal}
-          title="Generating Technical Questions" 
-          processingMessage="We're creating technical interview questions based on your behavioral interview responses..." 
+          title="Generating Practice Questions" 
+          processingMessage="We're creating practice interview questions based on your behavioral interview responses..." 
         />
       )}
       <div className="min-h-screen bg-white p-6">
