@@ -163,6 +163,16 @@ const CreateBehavioral = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
           <FormField
+            id="companyName"
+            name="companyName"
+            label="Company Name"
+            value={formData.companyName}
+            onChange={handleInputChange}
+            placeholder="Enter company name"
+            required
+          />
+
+          <FormField
             id="jobTitle"
             name="jobTitle"
             label="Job Title"
@@ -188,16 +198,6 @@ const CreateBehavioral = () => {
                 className="mb-2" 
               />
             }
-          />
-
-          <FormField
-            id="companyName"
-            name="companyName"
-            label="Company Name"
-            value={formData.companyName}
-            onChange={handleInputChange}
-            placeholder="Enter company name"
-            required
           />
 
           {/* Company Description field is now hidden */}
