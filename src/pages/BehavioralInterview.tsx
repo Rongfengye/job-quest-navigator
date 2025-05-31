@@ -5,8 +5,7 @@ import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { useResumeText } from '@/hooks/useResumeText';
-import { supabase } from '@/integrations/supabase/client'; // Add this import
+import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
@@ -21,24 +20,23 @@ const BehavioralInterview = () => {
   const { deductTokens } = useUserTokens();
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pageLoaded, setPageLoaded] = useState(false);
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
-  const { resumeText } = useResumeText(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   
-  // Extract file paths from location state
+  // Extract data from location state
+  const formData = location.state?.formData || {};
+  const resumeText = location.state?.resumeText || '';
   const resumePath = location.state?.resumePath || '';
   const coverLetterPath = location.state?.coverLetterPath || '';
   const additionalDocumentsPath = location.state?.additionalDocumentsPath || '';
+  const coverLetterText = location.state?.coverLetterText || '';
+  const additionalDocumentsText = location.state?.additionalDocumentsText || '';
+  const behavioralId = location.state?.behavioralId || null;
+  const preloadedQuestion = location.state?.preloadedQuestion || null;
   
-  console.log("BehavioralInterview - Resume path from state:", resumePath);
-  
-  const formData = location.state?.formData || {
-    jobTitle: 'Software Developer',
-    jobDescription: 'A position requiring strong technical and interpersonal skills.',
-    companyName: 'Tech Company',
-    companyDescription: 'A leading technology company.'
-  };
+  console.log("BehavioralInterview - Received preloaded question:", preloadedQuestion);
+  console.log("BehavioralInterview - Behavioral ID:", behavioralId);
 
   const {
     isLoading,
@@ -48,20 +46,18 @@ const BehavioralInterview = () => {
     submitAnswer,
     questions,
     answers,
-    behavioralId,
     generateFeedback,
-    interviewComplete
+    interviewComplete,
+    initializeWithPreloadedQuestion
   } = useBehavioralInterview();
 
   const playTransitionAudio = () => {
-    // Select a random audio file each time this function is called
     const selectedNumber = Math.floor(Math.random() * 10) + 1;
     const audioPath = `/audio-assets/audio${selectedNumber}.mp3`;
     
     const audio = new Audio(audioPath);
     
     return new Promise<void>((resolve) => {
-      // Increased delay from 750ms to 1500ms before playing the audio
       setTimeout(() => {
         audio.onended = () => {
           resolve();
@@ -69,14 +65,14 @@ const BehavioralInterview = () => {
         
         audio.onerror = () => {
           console.error('Error playing audio');
-          resolve(); // Resolve anyway to continue the flow
+          resolve();
         };
         
         audio.play().catch(error => {
           console.error('Error playing audio:', error);
-          resolve(); // Resolve anyway to continue the flow
+          resolve();
         });
-      }, 1500); // Changed from 750ms to 1500ms
+      }, 1500);
     });
   };
 
@@ -90,59 +86,25 @@ const BehavioralInterview = () => {
     stopRecording
   } = useVoiceRecording(handleTranscription);
 
-  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [feedbackGenerated, setFeedbackGenerated] = useState(false);
-  const [feedbackData, setFeedbackData] = useState(null);
-  const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
-
+  // Initialize with preloaded question
   useEffect(() => {
-    const initializeInterview = async () => {
-      if (!pageLoaded) {
-        setPageLoaded(true);
-        
-        const tokenCheck = await deductTokens(1);
-        if (!tokenCheck?.success) {
-          toast({
-            variant: "destructive",
-            title: "Insufficient tokens",
-            description: "You need at least 1 token to start a behavioral interview.",
-          });
-          navigate('/behavioral');
-          return;
-        }
-        
-        // Always generate the first question directly
-        if (!location.state?.resumeText && !resumeText) {
-          toast({
-            variant: "destructive",
-            title: "Resume text missing",
-            description: "We couldn't extract text from your resume. Please try again.",
-          });
-          navigate('/behavioral/create');
-          return;
-        }
-        
-        console.log("Initializing interview with resume path:", resumePath);
-        
-        await generateQuestion(
-          formData, 
-          location.state?.resumeText || resumeText, 
-          location.state?.coverLetterText || '',
-          location.state?.additionalDocumentsText || '',
-          resumePath,
-          coverLetterPath,
-          additionalDocumentsPath
-        );
-      }
-    };
-    
-    initializeInterview();
-  }, [pageLoaded, deductTokens, formData, generateQuestion, navigate, resumeText, location.state, toast, behavioralId, resumePath, coverLetterPath, additionalDocumentsPath]);
+    if (preloadedQuestion && behavioralId) {
+      console.log("Initializing with preloaded question...");
+      initializeWithPreloadedQuestion(preloadedQuestion, behavioralId);
+    } else if (!preloadedQuestion) {
+      console.error("No preloaded question found in navigation state");
+      toast({
+        variant: "destructive",
+        title: "Session Error",
+        description: "Interview session data is missing. Please start a new interview.",
+      });
+      navigate('/behavioral/create');
+    }
+  }, [preloadedQuestion, behavioralId, initializeWithPreloadedQuestion, toast, navigate]);
 
-  // Modified effect to handle feedback generation when interview is complete
+  // Handle feedback generation when interview is complete
   useEffect(() => {
-    // Check if we have 5 answers and the interview is complete (this means question 5 was just submitted)
-    if (answers.length === 5 && interviewComplete && !feedbackGenerated) {
+    if (answers.length === 5 && interviewComplete) {
       const generateFeedbackWithAnswers = async () => {
         try {
           setShowFeedbackModal(true);
@@ -150,10 +112,6 @@ const BehavioralInterview = () => {
           const feedback = await generateFeedback();
           
           if (feedback) {
-            setFeedbackData(feedback);
-            setFeedbackGenerated(true);
-            
-            // Get the most recent behavioral data to pass to feedback page
             const { data: behavioralData } = await supabase
               .from('storyline_behaviorals')
               .select('job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
@@ -166,7 +124,7 @@ const BehavioralInterview = () => {
                 answers,
                 behavioralId,
                 feedback,
-                interviewData: behavioralData // Include the complete interview data
+                interviewData: behavioralData
               } 
             });
           } else {
@@ -185,7 +143,7 @@ const BehavioralInterview = () => {
       
       generateFeedbackWithAnswers();
     }
-  }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, questions, behavioralId, toast]);
+  }, [answers, interviewComplete, generateFeedback, navigate, questions, behavioralId, toast]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) {
@@ -197,7 +155,6 @@ const BehavioralInterview = () => {
       return;
     }
     
-    // Show processing immediately
     setShowProcessing(true);
     setIsSubmitting(true);
     
@@ -206,12 +163,10 @@ const BehavioralInterview = () => {
       
       // After submitting the 5th question (index 4), we don't need to generate a new question
       if (currentQuestionIndex < 4) {
-        // Play transition audio before loading next question
         try {
           await playTransitionAudio();
         } catch (error) {
           console.error('Error playing transition audio:', error);
-          // Continue even if audio fails
         }
         
         setIsNextQuestionLoading(true);
@@ -220,7 +175,7 @@ const BehavioralInterview = () => {
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
           setIsNextQuestionLoading(false);
-          setShowProcessing(false); // Hide processing when there's an error
+          setShowProcessing(false);
           toast({
             variant: "destructive",
             title: "Insufficient tokens",
@@ -232,9 +187,9 @@ const BehavioralInterview = () => {
         
         await generateQuestion(
           formData, 
-          location.state?.resumeText || resumeText, 
-          location.state?.coverLetterText || '',
-          location.state?.additionalDocumentsText || '',
+          resumeText, 
+          coverLetterText,
+          additionalDocumentsText,
           resumePath,
           coverLetterPath,
           additionalDocumentsPath
@@ -242,12 +197,10 @@ const BehavioralInterview = () => {
         
         setAnswer('');
         setIsNextQuestionLoading(false);
-        setShowProcessing(false); // Hide processing when the next question is ready
+        setShowProcessing(false);
       } else {
         setAnswer('');
         setShowFeedbackModal(true);
-        
-        // Let the useEffect handle the feedback generation
       }
     } catch (error) {
       console.error('Error submitting answer:', error);
@@ -256,7 +209,7 @@ const BehavioralInterview = () => {
         title: "Error",
         description: "There was an error submitting your answer. Please try again.",
       });
-      setShowProcessing(false); // Hide processing on error
+      setShowProcessing(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -270,10 +223,8 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Only show full-screen Loading between questions (when isNextQuestionLoading is true)
-  // For initial load, show the layout with ProcessingMessages instead
   if (isNextQuestionLoading) {
-    return <Loading />; // Only use Loading component for transitions between questions
+    return <Loading />;
   }
 
   return (
@@ -294,10 +245,9 @@ const BehavioralInterview = () => {
               <div className="h-full flex flex-col items-center justify-center">
                 <ProcessingMessages 
                   messages={[
-                    "Setting up your interview experience…",
-                    "Generating your first challenge…",
-                    "Getting your first question ready…",
-                    "Warming up the interview engine…"
+                    "Loading your interview session...",
+                    "Preparing your first question...",
+                    "Setting up the interview environment..."
                   ]}
                 />
               </div>

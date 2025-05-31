@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,10 +8,13 @@ import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
+import { supabase } from '@/integrations/supabase/client';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { deductTokens } = useUserTokens();
   const [formData, setFormData] = React.useState({
     jobTitle: '',
     jobDescription: '',
@@ -98,7 +100,18 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
-      // Upload resume file to Supabase storage
+      // Check tokens first
+      const tokenCheck = await deductTokens(1);
+      if (!tokenCheck?.success) {
+        toast({
+          variant: "destructive",
+          title: "Insufficient tokens",
+          description: "You need at least 1 token to start a behavioral interview.",
+        });
+        return;
+      }
+
+      // Upload files to Supabase storage
       let resumePath = '';
       let coverLetterPath = '';
       let additionalDocumentsPath = '';
@@ -119,8 +132,71 @@ const CreateBehavioral = () => {
         additionalDocumentsPath = await uploadFile(additionalDocumentsFile, 'job_documents');
         console.log("Additional document uploaded successfully, path:", additionalDocumentsPath);
       }
+
+      // Create behavioral interview record
+      const { data: behavioralData, error: behavioralError } = await supabase
+        .from('storyline_behaviorals')
+        .insert({
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          job_title: formData.jobTitle,
+          job_description: formData.jobDescription,
+          company_name: formData.companyName,
+          company_description: formData.companyDescription,
+          resume_path: resumePath || '',
+          cover_letter_path: coverLetterPath || null,
+          additional_documents_path: additionalDocumentsPath || null
+        })
+        .select('id')
+        .single();
+        
+      if (behavioralError) {
+        throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
+      }
       
-      // Navigate to the interview page with form data, file paths and extracted text
+      console.log("Created behavioral interview with ID:", behavioralData.id);
+
+      // Generate the first question
+      const requestBody = {
+        jobTitle: formData.jobTitle,
+        jobDescription: formData.jobDescription,
+        companyName: formData.companyName,
+        companyDescription: formData.companyDescription,
+        resumeText,
+        coverLetterText,
+        additionalDocumentsText,
+        previousQuestions: [],
+        previousAnswers: [],
+        questionIndex: 0,
+        generateAudio: true,
+        voice: 'alloy',
+        resumePath: resumePath || ''
+      };
+      
+      console.log('Generating first question on create page...');
+      
+      const { data: questionData, error: questionError } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
+        body: requestBody,
+      });
+      
+      if (questionError) {
+        throw new Error(`Error generating question: ${questionError.message}`);
+      }
+      
+      if (!questionData || !questionData.question) {
+        throw new Error('No question was generated');
+      }
+      
+      console.log('First question generated successfully:', questionData.question);
+
+      // Update the behavioral record with the first question
+      await supabase
+        .from('storyline_behaviorals')
+        .update({
+          questions: [questionData.question]
+        })
+        .eq('id', behavioralData.id);
+      
+      // Navigate to the interview page with all the data including the pre-loaded question
       navigate('/behavioral/interview', {
         state: {
           formData,
@@ -129,11 +205,19 @@ const CreateBehavioral = () => {
           coverLetterText,
           coverLetterPath,
           additionalDocumentsText,
-          additionalDocumentsPath
+          additionalDocumentsPath,
+          behavioralId: behavioralData.id,
+          preloadedQuestion: {
+            question: questionData.question,
+            explanation: questionData.explanation || '',
+            questionIndex: 0,
+            storylineId: behavioralData.id,
+            audio: questionData.audio || null
+          }
         }
       });
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('Error processing behavioral interview:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -200,22 +284,7 @@ const CreateBehavioral = () => {
             required
           />
 
-          {/* Company Description field is now hidden */}
-          {/*
-          <FormField
-            id="companyDescription"
-            name="companyDescription"
-            label="Company Description (Optional)"
-            value={formData.companyDescription}
-            onChange={handleInputChange}
-            placeholder="Enter company description"
-            isTextarea
-          />
-          */}
-
           <div className="pt-4">
-            {/* <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p> */}
-            
             <div className="space-y-4">
               <FileUpload
                 id="resume"

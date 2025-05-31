@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +38,15 @@ export const useBehavioralInterview = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
+
+  const initializeWithPreloadedQuestion = (preloadedQuestion: BehavioralQuestionData, id: string) => {
+    console.log("Initializing with preloaded question:", preloadedQuestion);
+    setCurrentQuestion(preloadedQuestion);
+    setQuestions([preloadedQuestion.question]);
+    setBehavioralId(id);
+    setCurrentQuestionIndex(0);
+    setIsLoading(false);
+  };
 
   // Keep this for backward compatibility but it won't be used in the new flow
   const setInitialQuestions = async (generatedData: any) => {
@@ -335,6 +343,7 @@ export const useBehavioralInterview = () => {
     resetInterview,
     setInitialQuestions,
     generateFeedback,
-    behavioralId
+    behavioralId,
+    initializeWithPreloadedQuestion
   };
 };
