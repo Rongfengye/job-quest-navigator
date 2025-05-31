@@ -28,7 +28,7 @@ interface LocationState {
 
 export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(false); // Changed default to false since we pre-load
   const [isTransitionLoading, setIsTransitionLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
@@ -400,6 +400,8 @@ export const useBehavioralInterview = () => {
     setInitialQuestions,
     generateFeedback,
     behavioralId,
-    setIsTransitionLoading: setIsTransitionLoadingWithLog
+    setIsTransitionLoading: setIsTransitionLoadingWithLog,
+    setCurrentQuestion: setCurrentQuestionWithLog,
+    setBehavioralId
   };
 };
