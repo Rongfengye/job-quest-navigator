@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
-import { supabase } from '@/integrations/supabase/client';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import { supabase } from '@/integrations/supabase/client';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -108,6 +108,7 @@ const CreateBehavioral = () => {
           title: "Insufficient tokens",
           description: "You need at least 1 token to start a behavioral interview.",
         });
+        setIsProcessing(false);
         return;
       }
 
@@ -152,7 +153,7 @@ const CreateBehavioral = () => {
       if (behavioralError) {
         throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
       }
-      
+
       console.log("Created behavioral interview with ID:", behavioralData.id);
 
       // Generate the first question
@@ -171,32 +172,24 @@ const CreateBehavioral = () => {
         voice: 'alloy',
         resumePath: resumePath || ''
       };
-      
-      console.log('Generating first question on create page...');
+
+      console.log('Generating first question...');
       
       const { data: questionData, error: questionError } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
       });
-      
+
       if (questionError) {
         throw new Error(`Error generating question: ${questionError.message}`);
       }
-      
+
       if (!questionData || !questionData.question) {
         throw new Error('No question was generated');
       }
-      
-      console.log('First question generated successfully:', questionData.question);
 
-      // Update the behavioral record with the first question
-      await supabase
-        .from('storyline_behaviorals')
-        .update({
-          questions: [questionData.question]
-        })
-        .eq('id', behavioralData.id);
-      
-      // Navigate to the interview page with all the data including the pre-loaded question
+      console.log('First question generated successfully');
+
+      // Navigate to the interview page with all the data including the first question
       navigate('/behavioral/interview', {
         state: {
           formData,
@@ -207,21 +200,15 @@ const CreateBehavioral = () => {
           additionalDocumentsText,
           additionalDocumentsPath,
           behavioralId: behavioralData.id,
-          preloadedQuestion: {
-            question: questionData.question,
-            explanation: questionData.explanation || '',
-            questionIndex: 0,
-            storylineId: behavioralData.id,
-            audio: questionData.audio || null
-          }
+          firstQuestion: questionData
         }
       });
     } catch (error) {
-      console.error('Error processing behavioral interview:', error);
+      console.error('Error during interview creation:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred while processing your request.",
+        description: error instanceof Error ? error.message : "An error occurred while creating your interview.",
       });
     } finally {
       setIsProcessing(false);
@@ -230,7 +217,7 @@ const CreateBehavioral = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
-      <ProcessingModal isOpen={isProcessing} />
+      <ProcessingModal isOpen={isProcessing} processingMessage="Setting up your interview experience…" />
       <div className="w-full max-w-3xl mx-auto">
         <div className="mb-8">
           <Link to="/behavioral">
@@ -284,7 +271,22 @@ const CreateBehavioral = () => {
             }
           />
 
+          {/* Company Description field is now hidden */}
+          {/*
+          <FormField
+            id="companyDescription"
+            name="companyDescription"
+            label="Company Description (Optional)"
+            value={formData.companyDescription}
+            onChange={handleInputChange}
+            placeholder="Enter company description"
+            isTextarea
+          />
+          */}
+
           <div className="pt-4">
+            {/* <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p> */}
+            
             <div className="space-y-4">
               <FileUpload
                 id="resume"
