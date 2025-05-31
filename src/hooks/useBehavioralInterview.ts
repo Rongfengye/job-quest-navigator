@@ -28,6 +28,8 @@ interface LocationState {
 
 export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isTransitionLoading, setIsTransitionLoading] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -45,6 +47,18 @@ export const useBehavioralInterview = () => {
     setIsLoading(value);
   };
 
+  // Debug logging for isInitialLoading state changes
+  const setIsInitialLoadingWithLog = (value: boolean) => {
+    console.log('MAY 31 DEBUG - useBehavioralInterview isInitialLoading changing from', isInitialLoading, 'to', value);
+    setIsInitialLoading(value);
+  };
+
+  // Debug logging for isTransitionLoading state changes
+  const setIsTransitionLoadingWithLog = (value: boolean) => {
+    console.log('MAY 31 DEBUG - useBehavioralInterview isTransitionLoading changing from', isTransitionLoading, 'to', value);
+    setIsTransitionLoading(value);
+  };
+
   // Debug logging for currentQuestion state changes
   const setCurrentQuestionWithLog = (value: BehavioralQuestionData | null) => {
     console.log('MAY 31 DEBUG - useBehavioralInterview currentQuestion changing:', {
@@ -53,6 +67,12 @@ export const useBehavioralInterview = () => {
       newQuestionText: value?.question ? value.question.substring(0, 50) + '...' : 'No question'
     });
     setCurrentQuestion(value);
+    
+    // If this is the first question being set, mark initial loading as complete
+    if (value && isInitialLoading) {
+      console.log('MAY 31 DEBUG - First question received, setting isInitialLoading to false');
+      setIsInitialLoadingWithLog(false);
+    }
   };
 
   // Keep this for backward compatibility but it won't be used in the new flow
@@ -340,6 +360,8 @@ export const useBehavioralInterview = () => {
         // Don't try to generate any more questions, just set up for feedback generation
       } else {
         console.log('MAY 31 DEBUG - Moving to next question index:', currentQuestionIndex + 1);
+        // Set transition loading to true for question transitions
+        setIsTransitionLoadingWithLog(true);
         setCurrentQuestionIndex(prev => prev + 1);
       }
     } catch (error) {
@@ -359,10 +381,14 @@ export const useBehavioralInterview = () => {
     setCurrentQuestionWithLog(null);
     setInterviewComplete(false);
     setBehavioralId(null);
+    setIsInitialLoadingWithLog(true);
+    setIsTransitionLoadingWithLog(false);
   };
 
   return {
     isLoading,
+    isInitialLoading,
+    isTransitionLoading,
     currentQuestionIndex,
     questions,
     answers,
@@ -373,6 +399,7 @@ export const useBehavioralInterview = () => {
     resetInterview,
     setInitialQuestions,
     generateFeedback,
-    behavioralId
+    behavioralId,
+    setIsTransitionLoading: setIsTransitionLoadingWithLog
   };
 };

@@ -22,16 +22,12 @@ const BehavioralInterview = () => {
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
-  const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
-  const [firstQuestionLoaded, setFirstQuestionLoaded] = useState(false);
   const { resumeText } = useResumeText(null);
   
   // Initial state logging
   console.log('MAY 31 DEBUG - Component initialized with states:', {
-    isNextQuestionLoading,
     showProcessing,
-    firstQuestionLoaded,
     pageLoaded
   });
   
@@ -51,6 +47,8 @@ const BehavioralInterview = () => {
 
   const {
     isLoading,
+    isInitialLoading,
+    isTransitionLoading,
     currentQuestionIndex,
     currentQuestion,
     generateQuestion,
@@ -59,12 +57,15 @@ const BehavioralInterview = () => {
     answers,
     behavioralId,
     generateFeedback,
-    interviewComplete
+    interviewComplete,
+    setIsTransitionLoading
   } = useBehavioralInterview();
 
   // Debug logging for key states from useBehavioralInterview hook
   console.log('MAY 31 DEBUG - Hook states:', {
     isLoading,
+    isInitialLoading,
+    isTransitionLoading,
     currentQuestion: currentQuestion ? 'Question exists' : 'No question',
     currentQuestionIndex
   });
@@ -74,24 +75,24 @@ const BehavioralInterview = () => {
     console.log('MAY 31 DEBUG - currentQuestion changed:', {
       hasQuestion: !!currentQuestion,
       questionText: currentQuestion?.question ? currentQuestion.question.substring(0, 50) + '...' : 'No question',
-      previousFirstQuestionLoaded: firstQuestionLoaded
+      isInitialLoading
     });
-    
-    if (currentQuestion && !firstQuestionLoaded) {
-      console.log('MAY 31 DEBUG - First question received from edge function!');
-      setFirstQuestionLoaded(true);
-    }
-  }, [currentQuestion, firstQuestionLoaded]);
+  }, [currentQuestion, isInitialLoading]);
 
   // Watch for isLoading changes
   useEffect(() => {
     console.log('MAY 31 DEBUG - isLoading changed:', isLoading);
   }, [isLoading]);
 
-  // Watch for isNextQuestionLoading changes
+  // Watch for isInitialLoading changes
   useEffect(() => {
-    console.log('MAY 31 DEBUG - isNextQuestionLoading changed:', isNextQuestionLoading);
-  }, [isNextQuestionLoading]);
+    console.log('MAY 31 DEBUG - isInitialLoading changed:', isInitialLoading);
+  }, [isInitialLoading]);
+
+  // Watch for isTransitionLoading changes
+  useEffect(() => {
+    console.log('MAY 31 DEBUG - isTransitionLoading changed:', isTransitionLoading);
+  }, [isTransitionLoading]);
 
   const playTransitionAudio = () => {
     // Select a random audio file each time this function is called
@@ -261,14 +262,10 @@ const BehavioralInterview = () => {
           // Continue even if audio fails
         }
         
-        // Only set isNextQuestionLoading to true for transitions between questions
-        console.log('MAY 31 DEBUG - Setting isNextQuestionLoading to true for question transition');
-        setIsNextQuestionLoading(true);
-        
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
-          setIsNextQuestionLoading(false);
+          setIsTransitionLoading(false);
           setShowProcessing(false);
           toast({
             variant: "destructive",
@@ -292,7 +289,7 @@ const BehavioralInterview = () => {
         
         console.log('MAY 31 DEBUG - Next question generated, clearing states');
         setAnswer('');
-        setIsNextQuestionLoading(false);
+        setIsTransitionLoading(false);
         setShowProcessing(false);
       } else {
         setAnswer('');
@@ -322,19 +319,17 @@ const BehavioralInterview = () => {
   };
 
   // Log the condition that determines Loading vs ProcessingMessages
-  const shouldShowFullScreenLoading = isNextQuestionLoading && firstQuestionLoaded;
   console.log('MAY 31 DEBUG - Rendering condition check:', {
-    isNextQuestionLoading,
-    firstQuestionLoaded,
-    shouldShowFullScreenLoading,
+    isTransitionLoading,
     showProcessing,
     hasCurrentQuestion: !!currentQuestion,
-    isLoading
+    isLoading,
+    isInitialLoading
   });
 
   // Only show full-screen Loading for transitions between questions (not initial load)
-  if (shouldShowFullScreenLoading) {
-    console.log('MAY 31 DEBUG - Rendering full-screen Loading component');
+  if (isTransitionLoading) {
+    console.log('MAY 31 DEBUG - Rendering full-screen Loading component for question transition');
     return <Loading />;
   }
 
@@ -353,7 +348,7 @@ const BehavioralInterview = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-            {isLoading && !currentQuestion ? (
+            {isInitialLoading && !currentQuestion ? (
               <div className="h-full flex flex-col items-center justify-center">
                 <ProcessingMessages 
                   messages={[
@@ -381,7 +376,7 @@ const BehavioralInterview = () => {
           currentQuestionIndex={currentQuestionIndex}
           isSubmitting={isSubmitting}
           isLoading={isLoading}
-          isNextQuestionLoading={isNextQuestionLoading}
+          isNextQuestionLoading={isTransitionLoading}
           onClick={handleSubmit}
           showProcessing={showProcessing}
         />
