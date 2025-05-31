@@ -200,6 +200,8 @@ const CreateBehavioral = () => {
             required
           />
 
+          {/* Company Description field is now hidden */}
+          {/*
           <FormField
             id="companyDescription"
             name="companyDescription"
@@ -209,6 +211,7 @@ const CreateBehavioral = () => {
             placeholder="Enter company description"
             isTextarea
           />
+          */}
 
           <div className="pt-4">
             <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p>
