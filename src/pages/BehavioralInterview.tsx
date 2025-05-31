@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -269,8 +270,10 @@ const BehavioralInterview = () => {
     }
   };
 
-  if (isLoading && !currentQuestion) {
-    return <Loading />; // Now uses rotating messages by default
+  // Only show full-screen Loading between questions (when isNextQuestionLoading is true)
+  // For initial load, show the layout with ProcessingMessages instead
+  if (isNextQuestionLoading) {
+    return <Loading />; // Only use Loading component for transitions between questions
   }
 
   return (
@@ -287,9 +290,16 @@ const BehavioralInterview = () => {
           </div>
         ) : (
           <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-            {isNextQuestionLoading ? (
+            {isLoading && !currentQuestion ? (
               <div className="h-full flex flex-col items-center justify-center">
-                <ProcessingMessages isNextQuestion={true} />
+                <ProcessingMessages 
+                  messages={[
+                    "Setting up your interview experience…",
+                    "Generating your first challenge…",
+                    "Getting your first question ready…",
+                    "Warming up the interview engine…"
+                  ]}
+                />
               </div>
             ) : (
               <QuestionContent
