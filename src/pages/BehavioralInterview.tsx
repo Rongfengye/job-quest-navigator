@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -6,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
-import { supabase } from '@/integrations/supabase/client'; // Add this import
+import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
@@ -24,6 +23,7 @@ const BehavioralInterview = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [isNextQuestionLoading, setIsNextQuestionLoading] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
+  const [firstQuestionLoaded, setFirstQuestionLoaded] = useState(false);
   const { resumeText } = useResumeText(null);
   
   // Extract file paths from location state
@@ -133,6 +133,9 @@ const BehavioralInterview = () => {
           coverLetterPath,
           additionalDocumentsPath
         );
+        
+        // Mark first question as loaded
+        setFirstQuestionLoaded(true);
       }
     };
     
@@ -214,13 +217,14 @@ const BehavioralInterview = () => {
           // Continue even if audio fails
         }
         
+        // Only set isNextQuestionLoading to true for transitions between questions
         setIsNextQuestionLoading(true);
         
         const tokenCheck = await deductTokens(1);
         if (!tokenCheck?.success) {
           setIsSubmitting(false);
           setIsNextQuestionLoading(false);
-          setShowProcessing(false); // Hide processing when there's an error
+          setShowProcessing(false);
           toast({
             variant: "destructive",
             title: "Insufficient tokens",
@@ -242,7 +246,7 @@ const BehavioralInterview = () => {
         
         setAnswer('');
         setIsNextQuestionLoading(false);
-        setShowProcessing(false); // Hide processing when the next question is ready
+        setShowProcessing(false);
       } else {
         setAnswer('');
         setShowFeedbackModal(true);
@@ -256,7 +260,7 @@ const BehavioralInterview = () => {
         title: "Error",
         description: "There was an error submitting your answer. Please try again.",
       });
-      setShowProcessing(false); // Hide processing on error
+      setShowProcessing(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -270,10 +274,9 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Only show full-screen Loading between questions (when isNextQuestionLoading is true)
-  // For initial load, show the layout with ProcessingMessages instead
-  if (isNextQuestionLoading) {
-    return <Loading />; // Only use Loading component for transitions between questions
+  // Only show full-screen Loading for transitions between questions (not initial load)
+  if (isNextQuestionLoading && firstQuestionLoaded) {
+    return <Loading />;
   }
 
   return (
