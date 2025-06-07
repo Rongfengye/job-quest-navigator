@@ -1,4 +1,3 @@
-
 import React from "react";
 import { FileText, Monitor, ChartBar } from "lucide-react";
 
@@ -18,7 +17,7 @@ const HowItWorks = () => {
           {/* Step 1: Upload */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] -mt-[5px] -mb-[5px] -ml-[3px] pt-0 px-4 pb-[30px]">
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] -mt-[5px] -mb-[5px] -ml-[3px] pt-[30px] px-4 pb-[30px]">
                 <div className="flex flex-col relative mt-5 min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
                     <video
@@ -31,7 +30,7 @@ const HowItWorks = () => {
                     >
                       <source
                         type="video/mp4"
-                        src="/video-assets/CreateBehavioralFlow.mov"
+                        src="https://cdn.builder.io/o/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F2ce2eb36b6884f168a9e3b27ae824d8a?alt=media&token=af5fdf7d-c8b5-47a5-8864-fdec10c7a867&apiKey=b8e315bfeb1c42d1adbc4bb65543fa63"
                       />
                     </video>
                   </div>
