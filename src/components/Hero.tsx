@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -101,9 +99,9 @@ const Hero = () => {
               <div
                 className="absolute bg-white p-4 rounded-xl shadow-lg"
                 style={{
-                  left: "158px",
-                  top: "110px",
-                  width: "243px",
+                  left: "-7px",
+                  top: "55px",
+                  width: "289px",
                   zIndex: 10,
                 }}
               >
@@ -178,4 +176,3 @@ const Hero = () => {
 };
 
 export default Hero;
-
