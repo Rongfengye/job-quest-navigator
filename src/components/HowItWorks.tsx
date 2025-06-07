@@ -36,7 +36,7 @@ const HowItWorks = () => {
                   </div>
                 </div>
                 <span className="text-gray-800 text-xl font-semibold leading-7">
-                  Upload your resume and job description
+                  Upload your application info
                 </span>
               </div>
             </div>
