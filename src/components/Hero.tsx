@@ -80,17 +80,17 @@ const Hero = () => {
                 className="absolute bg-white p-4 rounded-xl shadow-lg"
                 style={{
                   right: "0px",
-                  top: "64px",
-                  width: "217px",
-                  left: "308px",
+                  top: "-142px",
+                  width: "259px",
+                  left: "295px",
                 }}
               >
                 <h3 className="font-semibold mb-2">Audio Feedback</h3>
                 <img
                   loading="lazy"
-                  srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e"
+                  src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=2000"
                   className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
-                  style={{ aspectRatio: "3.33", margin: "15px 0 18px" }}
+                  style={{ aspectRatio: "3.33", margin: "25px 0 34px" }}
                   alt="Audio Feedback visualization"
                 />
               </div>
