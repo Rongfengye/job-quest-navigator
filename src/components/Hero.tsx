@@ -95,19 +95,6 @@ const Hero = () => {
                 />
               </div>
 
-              {/* Guided Response Card */}
-              <div
-                className="absolute bg-white rounded-xl shadow-lg w-64"
-                style={{
-                  bottom: "0px",
-                  left: "0px",
-                  top: "20px",
-                  padding: "16px 16px 64px",
-                }}
-              >
-                Guided Responses
-              </div>
-
               {/* Performance Analysis Card */}
               <div className="absolute bottom-0 right-0 bg-white p-4 rounded-xl shadow-lg">
                 <h3 className="font-semibold mb-2">Performance Analysis</h3>
