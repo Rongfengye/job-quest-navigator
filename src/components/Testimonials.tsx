@@ -6,18 +6,18 @@ const Testimonials = () => {
   const testimonials = [
     {
       quote: "Storyline helped me feel more confident and prepared for my interviews. The personalized questions were exactly what I needed to practice.",
-      name: "Emma Johnson",
-      role: "Marketing Specialist"
+      name: "Jonathan Chung",
+      role: "Tax Technology Intern at PwC"
     },
     {
       quote: "The personalized questions were spot on. I landed my dream job thanks to Storyline's targeted interview preparation.",
-      name: "Jason Lee", 
-      role: "Software Engineer"
+      name: "Alexander Eum", 
+      role: "Software Engineer Intern at IMC"
     },
     {
       quote: "The real-time feedback was incredibly valuable. I could improve immediately and see my progress with each practice session.",
-      name: "Aisha Patel",
-      role: "Product Manager"
+      name: "Dylan Lai",
+      role: "Technology Analyst at Accenture"
     }
   ];
 
