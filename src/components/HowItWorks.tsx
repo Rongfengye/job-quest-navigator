@@ -1,6 +1,5 @@
-
-import React from 'react';
-import { FileText, Monitor, ChartBar } from 'lucide-react';
+import React from "react";
+import { FileText, Monitor, ChartBar } from "lucide-react";
 
 const HowItWorks = () => {
   return (
@@ -18,13 +17,22 @@ const HowItWorks = () => {
           {/* Step 1: Upload */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="w-24 h-24 bg-white rounded-xl shadow-md flex items-center justify-center">
-                <FileText className="w-12 h-12 text-interview-primary" />
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[266px] -mt-[1px] pt-[203px] pb-[30px]">
+                <video
+                  className="absolute top-4 left-4 right-4 h-[180px] w-[calc(100%-32px)] object-cover rounded-lg"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                >
+                  <source src="/placeholder-video.mp4" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+                <span className="text-gray-800 text-xl font-semibold">
+                  Upload your resume and job description
+                </span>
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-interview-text-primary">
-              Upload your resume and job description
-            </h3>
           </div>
 
           {/* Step 2: Practice */}
