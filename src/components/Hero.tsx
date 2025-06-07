@@ -111,42 +111,29 @@ const Hero = () => {
               {/* Performance Analysis Card */}
               <div className="absolute bottom-0 right-0 bg-white p-4 rounded-xl shadow-lg">
                 <h3 className="font-semibold mb-2">Performance Analysis</h3>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-end gap-1 h-12">
+                <div
+                  className="flex items-center"
+                  style={{ gap: "6px", marginLeft: "-3px" }}
+                >
+                  <div
+                    className="flex items-end gap-1 h-12"
+                    style={{ margin: "0 -1px 0 18px" }}
+                  >
                     <div className="w-4 h-6 bg-interview-primary rounded-t"></div>
                     <div className="w-4 h-10 bg-interview-primary/70 rounded-t"></div>
                     <div className="w-4 h-12 bg-interview-light rounded-t"></div>
                   </div>
-                  <div className="w-12 h-12">
-                    <svg
-                      width="100%"
-                      height="100%"
-                      viewBox="0 0 100 100"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <circle
-                        cx="50"
-                        cy="50"
-                        r="45"
-                        fill="transparent"
-                        stroke="#E7F3FF"
-                        strokeWidth="10"
-                      />
-                      <path
-                        d="M50,5 A45,45 0 0,1 95,50"
-                        stroke="#1877F2"
-                        strokeWidth="10"
-                        fill="transparent"
-                      />
-                      <path
-                        d="M50,50 L80,30"
-                        stroke="#1877F2"
-                        strokeWidth="5"
-                      />
-                      <circle cx="50" cy="50" r="5" fill="#1877F2" />
-                    </svg>
-                  </div>
+                  <img
+                    loading="lazy"
+                    srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0"
+                    className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
+                    style={{
+                      aspectRatio: "0.99",
+                      maxWidth: "75px",
+                      margin: "0 11px 0 20px",
+                    }}
+                    alt="Performance Analysis chart"
+                  />
                 </div>
               </div>
             </div>
