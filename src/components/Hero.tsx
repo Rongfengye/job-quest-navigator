@@ -55,20 +55,20 @@ const Hero = () => {
               <div
                 className="absolute bg-white rounded-xl shadow-lg"
                 style={{
-                  left: "-10px",
-                  top: "-211px",
-                  width: "318px",
+                  left: "18px",
+                  top: "-201px",
+                  width: "303px",
                   padding: "16px 26px 16px 16px",
                 }}
               >
                 <h3 className="font-semibold mb-2">Behavioral Interview</h3>
                 <img
                   loading="lazy"
-                  srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615"
-                  className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden mr-20 max-w-62"
+                  src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=2000"
+                  className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
                   style={{
                     aspectRatio: "1.48",
-                    marginRight: "79px",
+                    margin: "-3px 79px 0 0",
                     maxWidth: "248px",
                   }}
                   alt="Behavioral Interview illustration"
