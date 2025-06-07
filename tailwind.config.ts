@@ -70,6 +70,7 @@ export default {
 					accent: '#F59E0B',
 					background: '#FFFFFF',
 					card: '#F9FAFB',
+					'hero-bg': '#F0F4FF',
 					text: {
 						primary: '#1F2937',
 						secondary: '#6B7280',
