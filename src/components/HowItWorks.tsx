@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from "react";
 import {
   Carousel,
@@ -17,17 +18,17 @@ const HowItWorks = () => {
     {
       src: "/video-assets/CreateBehavioralFlow.mov",
       title: "Upload your application info",
-      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit."
+      description: "Start by uploading your resume, job description, and any other relevant documents. Our AI analyzes your background and the role requirements to create personalized interview questions that match your experience and the position you're applying for."
     },
     {
       src: "/video-assets/Feedbackrecording.mov", 
       title: "Receive Custom Feedback",
-      description: "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Mauris viverra venenenatis lacus. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore."
+      description: "Practice answering behavioral questions and receive detailed, personalized feedback on your responses. Our AI evaluates your storytelling structure, relevance to the question, and overall delivery to help you improve your interview performance."
     },
     {
       src: "/video-assets/GenerateMoreIndividualQuestions.mov",
       title: "Practice more company specific questions",
-      description: "Nulla facilisi morbi tempus iaculis urna id volutpat lacus laoreet. At varius vel pharetra vel turpis nunc eget lorem dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra convallis posuere morbi leo urna."
+      description: "Access an unlimited library of company-specific behavioral questions tailored to your target role. Practice with questions that are commonly asked at your dream company and refine your answers until you feel confident and prepared."
     }
   ];
 
@@ -103,7 +104,7 @@ const HowItWorks = () => {
                 <CarouselItem key={index}>
                   <div className="text-center">
                     <div className="mb-6 flex justify-center">
-                      <div className="relative h-auto bg-white rounded-xl shadow-md w-[80%] pt-[30px] px-6 pb-[30px]">
+                      <div className="relative h-auto bg-white rounded-xl shadow-md w-[95%] pt-[30px] px-6 pb-[30px]">
                         <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                           <div className="relative mb-5">
                             <video
