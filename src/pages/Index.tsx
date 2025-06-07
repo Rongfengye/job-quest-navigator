@@ -22,6 +22,12 @@ const Index = () => {
         {/* Continuous gradient background for Hero and How It Works sections */}
         <div className="bg-gradient-to-tr from-blue-50 to-blue-300">
           <Hero />
+          {/* Subtle separator line between Hero and How It Works */}
+          <div className="flex justify-center px-6">
+            <div className="w-full max-w-4xl">
+              <Separator className="bg-gray-300/40" />
+            </div>
+          </div>
           <HowItWorks />
         </div>
         <Separator className="max-w-5xl mx-auto" />
