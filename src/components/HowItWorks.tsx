@@ -133,6 +133,22 @@ const HowItWorks = () => {
             <CarouselNext />
           </Carousel>
         </div>
+
+        {/* Progress Tracker */}
+        <div className="flex justify-center mt-8 space-x-2">
+          {videoData.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => api?.scrollTo(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlideIndex
+                  ? 'bg-interview-primary'
+                  : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              aria-label={`Go to video ${index + 1}`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
