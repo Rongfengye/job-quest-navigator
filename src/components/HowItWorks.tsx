@@ -17,18 +17,26 @@ const HowItWorks = () => {
           {/* Step 1: Upload */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="relative h-auto bg-white rounded-xl shadow-md w-[266px] -mt-[1px] pt-[203px] pb-[30px]">
-                <video
-                  className="absolute top-4 left-4 right-4 h-[180px] w-[calc(100%-32px)] object-cover rounded-lg"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                >
-                  <source src="/placeholder-video.mp4" type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-                <span className="text-gray-800 text-xl font-semibold">
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[266px] -mt-[1px] pb-[30px]">
+                <div className="flex flex-col relative mt-5 min-h-[20px] min-w-[20px] w-full">
+                  <div className="relative">
+                    <video
+                      autoPlay
+                      muted
+                      controls={false}
+                      playsInline
+                      loop
+                      className="w-full h-full object-cover object-center rounded-[1px] relative flex flex-col mt-5 min-h-[20px] min-w-[20px]"
+                    >
+                      <source
+                        type="video/mp4"
+                        src="https://cdn.builder.io/o/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F2ce2eb36b6884f168a9e3b27ae824d8a?alt=media&token=af5fdf7d-c8b5-47a5-8864-fdec10c7a867&apiKey=b8e315bfeb1c42d1adbc4bb65543fa63"
+                      />
+                    </video>
+                    <div className="w-full pt-[70.04048582995948%] pointer-events-none text-[0]" />
+                  </div>
+                </div>
+                <span className="text-gray-800 text-xl font-semibold leading-7">
                   Upload your resume and job description
                 </span>
               </div>
