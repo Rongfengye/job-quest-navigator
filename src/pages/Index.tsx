@@ -2,7 +2,7 @@
 import React from 'react';
 import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
-import Features from '@/components/Features';
+import Testimonials from '@/components/Testimonials';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -22,7 +22,7 @@ const Index = () => {
         <Hero />
         <HowItWorks />
         <Separator className="max-w-5xl mx-auto" />
-        <Features />
+        <Testimonials />
       </main>
       
       <footer className="py-8 px-6 bg-gray-50">

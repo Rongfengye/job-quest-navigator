@@ -4,14 +4,14 @@ import { Target, Sparkles, Code, Linkedin, FileText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
 
-const Features = () => {
+const Testimonials = () => {
   return (
     <section className="py-20 px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-interview-text-primary mb-4">
-            How It Works
+            What our users have said
           </h2>
         </div>
 
@@ -23,19 +23,6 @@ const Features = () => {
               <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
                 <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
-                    <video
-                      autoPlay
-                      muted
-                      controls={false}
-                      playsInline
-                      loop
-                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
-                    >
-                      <source
-                        type="video/mp4"
-                        src="/video-assets/CreateBehavioralFlow.mov"
-                      />
-                    </video>
                   </div>
                 </div>
                 <span className="text-gray-800 text-xl font-semibold leading-7">
@@ -51,19 +38,7 @@ const Features = () => {
               <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
                 <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
-                    <video
-                      autoPlay
-                      muted
-                      controls={false}
-                      playsInline
-                      loop
-                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
-                    >
-                      <source
-                        type="video/mp4"
-                        src="/video-assets/Feedbackrecording.mov"
-                      />
-                    </video>
+
                   </div>
                 </div>
                 <span className="text-gray-800 text-xl font-semibold leading-7">
@@ -79,19 +54,6 @@ const Features = () => {
               <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
                 <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
-                    <video
-                      autoPlay
-                      muted
-                      controls={false}
-                      playsInline
-                      loop
-                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
-                    >
-                      <source
-                        type="video/mp4"
-                        src="/video-assets/CreateBehavioralFlow.mov"
-                      />
-                    </video>
                   </div>
                 </div>
                 <span className="text-gray-800 text-xl font-semibold leading-7">
@@ -106,4 +68,4 @@ const Features = () => {
   );
 };
 
-export default Features;
+export default Testimonials;
