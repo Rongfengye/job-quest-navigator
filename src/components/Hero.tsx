@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -100,8 +99,8 @@ const Hero = () => {
               <div
                 className="absolute bg-white p-4 rounded-xl shadow-lg"
                 style={{
-                  left: "158px",
-                  top: "110px",
+                  left: "43px",
+                  top: "54px",
                   width: "243px",
                   zIndex: 10,
                 }}
