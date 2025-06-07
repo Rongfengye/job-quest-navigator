@@ -30,7 +30,7 @@ const HowItWorks = () => {
                     >
                       <source
                         type="video/mp4"
-                        src="https://cdn.builder.io/o/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F2ce2eb36b6884f168a9e3b27ae824d8a?alt=media&token=af5fdf7d-c8b5-47a5-8864-fdec10c7a867&apiKey=b8e315bfeb1c42d1adbc4bb65543fa63"
+                        src="/video-assets/CreateBehavioralFlow.mov"
                       />
                     </video>
                   </div>
@@ -45,25 +45,57 @@ const HowItWorks = () => {
           {/* Step 2: Practice */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="w-24 h-24 bg-white rounded-xl shadow-md flex items-center justify-center">
-                <Monitor className="w-12 h-12 text-interview-primary" />
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
+                <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
+                  <div className="relative">
+                    <video
+                      autoPlay
+                      muted
+                      controls={false}
+                      playsInline
+                      loop
+                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
+                    >
+                      <source
+                        type="video/mp4"
+                        src="/video-assets/Feedbackrecording.mov"
+                      />
+                    </video>
+                  </div>
+                </div>
+                <span className="text-gray-800 text-xl font-semibold leading-7">
+                  Receive Custom Feedback
+                </span>
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-interview-text-primary">
-              Get a tailored practice session
-            </h3>
           </div>
 
           {/* Step 3: Feedback */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="w-24 h-24 bg-white rounded-xl shadow-md flex items-center justify-center">
-                <ChartBar className="w-12 h-12 text-interview-primary" />
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
+                <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
+                  <div className="relative">
+                    <video
+                      autoPlay
+                      muted
+                      controls={false}
+                      playsInline
+                      loop
+                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
+                    >
+                      <source
+                        type="video/mp4"
+                        src="/video-assets/CreateBehavioralFlow.mov"
+                      />
+                    </video>
+                  </div>
+                </div>
+                <span className="text-gray-800 text-xl font-semibold leading-7">
+                  Upload your resume and job description
+                </span>
               </div>
             </div>
-            <h3 className="text-xl font-semibold mb-3 text-interview-text-primary">
-              Receive guided coaching and feedback
-            </h3>
           </div>
         </div>
       </div>
