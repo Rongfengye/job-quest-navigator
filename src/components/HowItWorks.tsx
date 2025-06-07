@@ -80,7 +80,7 @@ const HowItWorks = () => {
   }, [api]);
 
   return (
-    <section className="py-20 px-6 bg-white">
+    <section className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -104,7 +104,7 @@ const HowItWorks = () => {
                 <CarouselItem key={index}>
                   <div className="text-center">
                     <div className="mb-6 flex justify-center">
-                      <div className="relative h-auto bg-white rounded-xl shadow-md w-[95%] pt-[30px] px-6 pb-[30px]">
+                      <div className="relative h-auto bg-white rounded-xl shadow-lg w-[95%] pt-[30px] px-6 pb-[30px]">
                         <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                           <div className="relative mb-5">
                             <video
@@ -137,8 +137,8 @@ const HowItWorks = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            <CarouselPrevious className="bg-white/80 hover:bg-white" />
+            <CarouselNext className="bg-white/80 hover:bg-white" />
           </Carousel>
         </div>
 
@@ -151,7 +151,7 @@ const HowItWorks = () => {
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentSlideIndex
                   ? 'bg-interview-primary'
-                  : 'bg-gray-300 hover:bg-gray-400'
+                  : 'bg-white/60 hover:bg-white/80'
               }`}
               aria-label={`Go to video ${index + 1}`}
             />
