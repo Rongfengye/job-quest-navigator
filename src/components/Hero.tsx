@@ -76,24 +76,23 @@ const Hero = () => {
               </div>
 
               {/* Audio Feedback Card */}
-              <div className="absolute top-0 right-0 bg-white p-4 rounded-xl shadow-lg">
+              <div
+                className="absolute bg-white p-4 rounded-xl shadow-lg"
+                style={{
+                  right: "0px",
+                  top: "64px",
+                  width: "217px",
+                  left: "308px",
+                }}
+              >
                 <h3 className="font-semibold mb-2">Audio Feedback</h3>
-                <div className="flex justify-center">
-                  <svg
-                    width="160"
-                    height="40"
-                    viewBox="0 0 160 40"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M5,20 Q10,5 15,20 Q20,35 25,20 Q30,5 35,20 Q40,35 45,20 Q50,5 55,20 Q60,35 65,20 Q70,5 75,20 Q80,35 85,20 Q90,5 95,20 Q100,35 105,20 Q110,5 115,20 Q120,35 125,20 Q130,5 135,20 Q140,35 145,20 Q150,5 155,20"
-                      stroke="#1877F2"
-                      strokeWidth="3"
-                      fill="none"
-                    />
-                  </svg>
-                </div>
+                <img
+                  loading="lazy"
+                  srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e"
+                  className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
+                  style={{ aspectRatio: "3.33", margin: "15px 0 18px" }}
+                  alt="Audio Feedback visualization"
+                />
               </div>
 
               {/* Guided Response Card */}
