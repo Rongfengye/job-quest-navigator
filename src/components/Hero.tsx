@@ -138,6 +138,30 @@ const Hero = () => {
                 </div>
               </div>
             </div>
+
+            {/* New Guided Responses Card */}
+            <div
+              className="absolute bg-white p-4 rounded-xl shadow-lg"
+              style={{
+                left: "633px",
+                right: "0px",
+                top: "270px",
+                width: "243px",
+              }}
+            >
+              <h3 className="font-semibold mb-2">Guided Responses</h3>
+              <img
+                loading="lazy"
+                src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F4b27bcc81dd148baa177b293c7a50999"
+                className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
+                style={{
+                  aspectRatio: "3.33",
+                  paddingRight: "50px",
+                  margin: "7px 0",
+                }}
+                alt="Guided Responses visualization"
+              />
+            </div>
           </div>
         </div>
       </div>
