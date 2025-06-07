@@ -17,16 +17,16 @@ const Index = () => {
   
   // Show landing page for non-authenticated users
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-blue-300 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
         <Hero />
         <HowItWorks />
-        <Separator className="max-w-5xl mx-auto bg-white/30" />
+        <Separator className="max-w-5xl mx-auto" />
         <Features />
       </main>
       
-      <footer className="py-8 px-6 bg-blue-400/20">
-        <div className="max-w-7xl mx-auto text-center text-interview-text-primary text-sm">
+      <footer className="py-8 px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto text-center text-interview-text-light text-sm">
           <p>© {new Date().getFullYear()} Storyline. All rights reserved.</p>
         </div>
       </footer>
