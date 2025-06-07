@@ -20,7 +20,7 @@ const Index = () => {
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
         {/* Continuous gradient background for Hero and How It Works sections */}
-        <div className="bg-gradient-to-tr from-blue-50 to-blue-300">
+        <div className="bg-gradient-to-br from-white to-blue-400">
           <Hero />
           {/* Subtle separator line between Hero and How It Works */}
           <div className="flex justify-center px-6">
