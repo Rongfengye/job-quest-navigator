@@ -80,7 +80,7 @@ const HowItWorks = () => {
   }, [api]);
 
   return (
-    <section className="py-20 px-6 bg-gray-100">
+    <section className="py-20 px-6">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <div className="text-center mb-16">
@@ -137,8 +137,8 @@ const HowItWorks = () => {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
+            <CarouselPrevious className="bg-white hover:bg-gray-50 border-gray-200 shadow-md" />
+            <CarouselNext className="bg-white hover:bg-gray-50 border-gray-200 shadow-md" />
           </Carousel>
         </div>
 
@@ -150,8 +150,8 @@ const HowItWorks = () => {
               onClick={() => api?.scrollTo(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
                 index === currentSlideIndex
-                  ? 'bg-interview-primary'
-                  : 'bg-gray-300 hover:bg-gray-400'
+                  ? 'bg-interview-primary shadow-md'
+                  : 'bg-white/70 hover:bg-white border border-gray-200'
               }`}
               aria-label={`Go to video ${index + 1}`}
             />

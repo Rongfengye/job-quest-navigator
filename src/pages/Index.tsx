@@ -19,8 +19,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
-        <Hero />
-        <HowItWorks />
+        {/* Continuous gradient background for Hero and How It Works sections */}
+        <div className="bg-gradient-to-tr from-blue-50 to-blue-300">
+          <Hero />
+          <HowItWorks />
+        </div>
         <Separator className="max-w-5xl mx-auto" />
         <Testimonials />
       </main>
