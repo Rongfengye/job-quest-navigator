@@ -96,15 +96,28 @@ const Hero = () => {
               </div>
 
               {/* Performance Analysis Card */}
-              <div className="absolute bottom-0 right-0 bg-white p-4 rounded-xl shadow-lg">
+              <div
+                className="absolute bottom-0 right-0 bg-white rounded-xl shadow-lg"
+                style={{
+                  left: "238px",
+                  top: "81px",
+                  height: "158px",
+                  width: "260px",
+                  padding: "16px 16px 0",
+                }}
+              >
                 <h3 className="font-semibold mb-2">Performance Analysis</h3>
                 <div
                   className="flex items-center"
-                  style={{ gap: "6px", marginLeft: "-3px" }}
+                  style={{
+                    gap: "10px",
+                    paddingLeft: "17px",
+                    margin: "0 -5px 1px -3px",
+                  }}
                 >
                   <div
                     className="flex items-end gap-1 h-12"
-                    style={{ margin: "0 -1px 0 18px" }}
+                    style={{ paddingTop: "26px", margin: "-1px -1px 0 18px" }}
                   >
                     <div className="w-4 h-6 bg-interview-primary rounded-t"></div>
                     <div className="w-4 h-10 bg-interview-primary/70 rounded-t"></div>
@@ -112,12 +125,13 @@ const Hero = () => {
                   </div>
                   <img
                     loading="lazy"
-                    srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0"
-                    className="w-full object-cover object-center min-h-5 min-w-5 overflow-hidden"
+                    src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=2000"
+                    className="w-full object-cover object-center min-w-5 overflow-hidden"
                     style={{
                       aspectRatio: "0.99",
                       maxWidth: "75px",
-                      margin: "0 11px 0 20px",
+                      minHeight: "30px",
+                      margin: "0 9px 0 20px",
                     }}
                     alt="Performance Analysis chart"
                   />
