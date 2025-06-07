@@ -17,8 +17,8 @@ const HowItWorks = () => {
           {/* Step 1: Upload */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] -mt-[5px] -mb-[5px] -ml-[3px] pt-[30px] px-4 pb-[30px]">
-                <div className="flex flex-col relative mt-5 min-h-[20px] min-w-[20px] w-full">
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
+                <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
                     <video
                       autoPlay
@@ -26,7 +26,7 @@ const HowItWorks = () => {
                       controls={false}
                       playsInline
                       loop
-                      className="w-full h-full object-cover object-center rounded-[1px] relative flex flex-col mt-5 min-h-[20px] min-w-[20px]"
+                      className="w-full h-full object-cover object-center rounded-[1px] mb-5"
                     >
                       <source
                         type="video/mp4"
