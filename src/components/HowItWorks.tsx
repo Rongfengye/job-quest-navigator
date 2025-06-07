@@ -17,7 +17,7 @@ const HowItWorks = () => {
           {/* Step 1: Upload */}
           <div className="text-center">
             <div className="mb-6 flex justify-center">
-              <div className="relative h-auto bg-white rounded-xl shadow-md w-[266px] -mt-[1px] pb-[30px] px-4">
+              <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] -mt-[5px] -mb-[5px] -ml-[3px] pt-0 px-4 pb-[30px]">
                 <div className="flex flex-col relative mt-5 min-h-[20px] min-w-[20px] w-full">
                   <div className="relative">
                     <video
