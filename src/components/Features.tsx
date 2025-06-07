@@ -130,7 +130,7 @@ const Features = () => {
           
           {/* Resume Card */}
           <a 
-            href="https://www.nts.live/shows/daria-kolosova/episodes/daria-kolosova-4th-june-2024" 
+            href="https://www.resubuild.tryhireme.com/" 
             target="_blank" 
             rel="noopener noreferrer" 
             className="block"
