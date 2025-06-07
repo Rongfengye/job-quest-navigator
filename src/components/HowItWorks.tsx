@@ -1,3 +1,4 @@
+
 import React from "react";
 import { FileText, Monitor, ChartBar } from "lucide-react";
 
@@ -30,7 +31,7 @@ const HowItWorks = () => {
                     >
                       <source
                         type="video/mp4"
-                        src="https://cdn.builder.io/o/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F2ce2eb36b6884f168a9e3b27ae824d8a?alt=media&token=af5fdf7d-c8b5-47a5-8864-fdec10c7a867&apiKey=b8e315bfeb1c42d1adbc4bb65543fa63"
+                        src="/video-assets/CreateBehavioralFlow.mov"
                       />
                     </video>
                   </div>
