@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Carousel,
@@ -17,15 +16,18 @@ const HowItWorks = () => {
   const videoData = [
     {
       src: "/video-assets/CreateBehavioralFlow.mov",
-      title: "Upload your application info"
+      title: "Upload your application info",
+      description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit."
     },
     {
       src: "/video-assets/Feedbackrecording.mov", 
-      title: "Receive Custom Feedback"
+      title: "Receive Custom Feedback",
+      description: "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Mauris viverra venenenatis lacus. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore."
     },
     {
       src: "/video-assets/CreateBehavioralFlow.mov",
-      title: "Upload your resume and job description"
+      title: "Upload your resume and job description",
+      description: "Nulla facilisi morbi tempus iaculis urna id volutpat lacus laoreet. At varius vel pharetra vel turpis nunc eget lorem dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra convallis posuere morbi leo urna."
     }
   ];
 
@@ -90,7 +92,7 @@ const HowItWorks = () => {
         <div className="flex justify-center">
           <Carousel
             setApi={setApi}
-            className="w-full max-w-md"
+            className="w-full max-w-4xl"
             opts={{
               align: "center",
               loop: true,
@@ -101,16 +103,16 @@ const HowItWorks = () => {
                 <CarouselItem key={index}>
                   <div className="text-center">
                     <div className="mb-6 flex justify-center">
-                      <div className="relative h-auto bg-white rounded-xl shadow-md w-[387px] pt-[30px] px-4 pb-[30px] -ml-[3px]">
+                      <div className="relative h-auto bg-white rounded-xl shadow-md w-[80%] pt-[30px] px-6 pb-[30px]">
                         <div className="flex flex-col relative min-h-[20px] min-w-[20px] w-full">
-                          <div className="relative">
+                          <div className="relative mb-5">
                             <video
                               ref={(el) => (videoRefs.current[index] = el)}
                               muted
                               controls={false}
                               playsInline
                               preload="metadata"
-                              className="w-full h-full object-cover object-center rounded-[1px] mb-5"
+                              className="w-full h-full object-cover object-center rounded-[1px]"
                               onEnded={() => handleVideoEnd(index)}
                             >
                               <source
@@ -119,10 +121,15 @@ const HowItWorks = () => {
                               />
                             </video>
                           </div>
+                          <div className="text-center">
+                            <h3 className="text-gray-800 text-xl font-semibold leading-7 mb-4">
+                              {video.title}
+                            </h3>
+                            <p className="text-gray-600 text-sm leading-relaxed">
+                              {video.description}
+                            </p>
+                          </div>
                         </div>
-                        <span className="text-gray-800 text-xl font-semibold leading-7">
-                          {video.title}
-                        </span>
                       </div>
                     </div>
                   </div>
