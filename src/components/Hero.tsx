@@ -96,14 +96,16 @@ const Hero = () => {
               </div>
 
               {/* Guided Response Card */}
-              <div className="absolute bottom-0 left-0 bg-white p-4 rounded-xl shadow-lg w-64">
-                <h3 className="font-semibold mb-2">Guided Response</h3>
-                <div className="flex flex-col gap-2">
-                  <div className="h-2 bg-interview-light rounded-full w-full"></div>
-                  <div className="h-2 bg-interview-light rounded-full w-3/4"></div>
-                  <div className="h-2 bg-interview-light rounded-full w-full"></div>
-                  <div className="h-2 bg-interview-light rounded-full w-4/5"></div>
-                </div>
+              <div
+                className="absolute bg-white rounded-xl shadow-lg w-64"
+                style={{
+                  bottom: "0px",
+                  left: "0px",
+                  top: "20px",
+                  padding: "16px 16px 64px",
+                }}
+              >
+                Guided Responses
               </div>
 
               {/* Performance Analysis Card */}
