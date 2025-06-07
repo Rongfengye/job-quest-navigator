@@ -25,8 +25,8 @@ const HowItWorks = () => {
       description: "Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Mauris viverra venenenatis lacus. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore."
     },
     {
-      src: "/video-assets/CreateBehavioralFlow.mov",
-      title: "Upload your resume and job description",
+      src: "/video-assets/GenerateMoreIndividualQuestions.mov",
+      title: "Practice more company specific questions",
       description: "Nulla facilisi morbi tempus iaculis urna id volutpat lacus laoreet. At varius vel pharetra vel turpis nunc eget lorem dolor. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Maecenas pharetra convallis posuere morbi leo urna."
     }
   ];
