@@ -33,7 +33,6 @@ const HowItWorks = () => {
                         src="https://cdn.builder.io/o/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F2ce2eb36b6884f168a9e3b27ae824d8a?alt=media&token=af5fdf7d-c8b5-47a5-8864-fdec10c7a867&apiKey=b8e315bfeb1c42d1adbc4bb65543fa63"
                       />
                     </video>
-                    <div className="w-full pt-[70.04048582995948%] pointer-events-none text-[0]" />
                   </div>
                 </div>
                 <span className="text-gray-800 text-xl font-semibold leading-7">
