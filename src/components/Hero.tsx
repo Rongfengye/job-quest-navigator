@@ -21,7 +21,7 @@ const Hero = () => {
   };
 
   return (
-    <section className="relative overflow-hidden py-16 md:py-20 px-6 bg-gradient-to-tr from-blue-50 via-indigo-400">
+    <section className="relative overflow-hidden py-16 md:py-20 px-6 bg-gradient-to-tr from-blue-50 to-blue-300">
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Left Column - Content */}
