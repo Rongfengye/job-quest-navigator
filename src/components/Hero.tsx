@@ -1,5 +1,3 @@
-
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -165,8 +163,8 @@ const Hero = () => {
               Get Started
             </Button>
 
-            {/* Feature Cards below button on sm to md screens */}
-            <div className="hidden sm:block md:hidden mt-12 relative" style={{ height: "400px" }}>
+            {/* Feature Cards below button on sm to md screens - Fixed spacing */}
+            <div className="hidden sm:block md:hidden mt-8 relative" style={{ height: "300px" }}>
               <FeatureCards />
             </div>
           </div>
@@ -188,4 +186,3 @@ const Hero = () => {
 };
 
 export default Hero;
-
