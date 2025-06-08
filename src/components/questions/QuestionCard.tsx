@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, Brain, MessageSquare, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { filterValue } from '@/utils/supabaseTypes';
@@ -12,7 +12,8 @@ export type Question = {
   explanation?: string;
   modelAnswer?: string;
   followUp?: string[];
-  type?: 'technical' | 'behavioral';
+  type?: 'technical' | 'behavioral' | 'original-behavioral';
+  originalIndex?: number;
 };
 
 interface QuestionCardProps {
@@ -29,8 +30,6 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
   useEffect(() => {
     const checkForAnswer = async () => {
       try {
-        // More efficient query - only count if answer exists rather than fetching full record
-        console.log(`🔍 Checking if answer exists for question ${index}`);
         const { count, error } = await supabase
           .from('storyline_job_questions')
           .select('id', { count: 'exact', head: true })
@@ -59,6 +58,50 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
     return index < 9 ? `0${index + 1}` : `${index + 1}`;
   };
 
+  const getQuestionTypeConfig = (type?: string) => {
+    switch (type) {
+      case 'technical':
+        return {
+          icon: Brain,
+          variant: 'secondary' as const,
+          label: 'Technical',
+          bgColor: 'bg-blue-100',
+          textColor: 'text-blue-800',
+          borderColor: 'border-blue-300'
+        };
+      case 'behavioral':
+        return {
+          icon: MessageSquare,
+          variant: 'default' as const,
+          label: 'Behavioral',
+          bgColor: 'bg-green-100',
+          textColor: 'text-green-800',
+          borderColor: 'border-green-300'
+        };
+      case 'original-behavioral':
+        return {
+          icon: Users,
+          variant: 'outline' as const,
+          label: 'From Interview',
+          bgColor: 'bg-purple-100',
+          textColor: 'text-purple-800',
+          borderColor: 'border-purple-300'
+        };
+      default:
+        return {
+          icon: MessageSquare,
+          variant: 'default' as const,
+          label: 'Question',
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-800',
+          borderColor: 'border-gray-300'
+        };
+    }
+  };
+
+  const typeConfig = getQuestionTypeConfig(question.type);
+  const TypeIcon = typeConfig.icon;
+
   return (
     <Card 
       key={index} 
@@ -80,15 +123,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
                 Answered
               </Badge>
             )}
-            {question.type && (
-              <Badge 
-                variant={
-                  question.type === 'technical' ? 'secondary' : 'default'
-                }
-              >
-                {question.type}
-              </Badge>
-            )}
+            <Badge 
+              variant={typeConfig.variant}
+              className={`${typeConfig.bgColor} ${typeConfig.textColor} ${typeConfig.borderColor}`}
+            >
+              <TypeIcon className="w-3 h-3 mr-1" />
+              {typeConfig.label}
+            </Badge>
             <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-interview-primary transition-colors group-hover:translate-x-1 duration-300" />
           </div>
         </div>

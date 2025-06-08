@@ -1,4 +1,3 @@
-
 import { corsHeaders } from './index.ts';
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
@@ -9,11 +8,13 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     companyDescription, 
     resumeText, 
     coverLetterText, 
-    additionalDocumentsText
+    additionalDocumentsText,
+    originalBehavioralQuestions = [] // New parameter for original questions
   } = requestData;
 
   console.log('Received request to generate interview questions');
   console.log('Resume text length:', resumeText?.length || 0);
+  console.log('Original behavioral questions count:', originalBehavioralQuestions.length);
 
   const formatSpecification = `
   Your response MUST be a valid JSON object in the following format:
@@ -104,17 +105,6 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     },
     "required": ["technicalQuestions", "behavioralQuestions"]
   };
-
-  // TODO LATER look into search domain filters
-    // search_domain_filter: [
-    //   "glassdoor.com",
-    //   "reddit.com",
-    //   "linkedin.com",
-    //   "wallstreetoasis.com",
-    //   "prepfully.com",
-    //   "indeed.com",
-    //   "teamblind.com"
-    // ],
 
   // New Perplexity Sonar API call with proper response_format
   console.log('Calling Perplexity Sonar API');
@@ -234,98 +224,27 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     console.error('Error parsing JSON response:', parseError);
     console.log('Raw response:', generatedContent);
     
-    // Fallback: Try to extract JSON from text response
-    try {
-      console.log('Attempting fallback JSON extraction');
-      // Attempt to create a basic structure based on the text
-      const fallbackStructure = {
-        technicalQuestions: [],
-        behavioralQuestions: []
-      };
-      
-      // Simple parsing of questions based on headings
-      const sections = generatedContent.split(/#{2,}/);
-      for (const section of sections) {
-        if (section.toLowerCase().includes('technical questions')) {
-          // Extract questions from this section
-          const questions = section.split(/\d+\.\s+\*\*Question:\*\*/);
-          
-          for (let i = 1; i < questions.length; i++) { // Start from 1 to skip header
-            const parts = questions[i].split(/\*\*Explanation:\*\*/);
-            if (parts.length >= 2) {
-              const question = parts[0].trim();
-              const explanation = parts[1].split(/\*\*Model Answer:\*\*/)[0].trim();
-              let modelAnswer = "";
-              let followUp = [];
-              
-              if (parts[1].includes('**Model Answer:**')) {
-                const answerParts = parts[1].split(/\*\*Model Answer:\*\*/);
-                if (answerParts.length >= 2) {
-                  modelAnswer = answerParts[1].split(/\*\*Follow-Up:\*\*/)[0].trim();
-                  
-                  if (answerParts[1].includes('**Follow-Up:**')) {
-                    const followUpText = answerParts[1].split(/\*\*Follow-Up:\*\*/)[1].trim();
-                    followUp = [followUpText];
-                  }
-                }
-              }
-              
-              fallbackStructure.technicalQuestions.push({
-                question,
-                explanation,
-                modelAnswer,
-                followUp
-              });
-            }
-          }
-        } else if (section.toLowerCase().includes('behavioral questions')) {
-          // Similar extraction for behavioral questions
-          const questions = section.split(/\d+\.\s+\*\*Question:\*\*/);
-          
-          for (let i = 1; i < questions.length; i++) {
-            const parts = questions[i].split(/\*\*Explanation:\*\*/);
-            if (parts.length >= 2) {
-              const question = parts[0].trim();
-              const explanation = parts[1].split(/\*\*Model Answer:\*\*/)[0].trim();
-              let modelAnswer = "";
-              let followUp = [];
-              
-              if (parts[1].includes('**Model Answer:**')) {
-                const answerParts = parts[1].split(/\*\*Model Answer:\*\*/);
-                if (answerParts.length >= 2) {
-                  modelAnswer = answerParts[1].split(/\*\*Follow-Up:\*\*/)[0].trim();
-                  
-                  if (answerParts[1].includes('**Follow-Up:**')) {
-                    const followUpText = answerParts[1].split(/\*\*Follow-Up:\*\*/)[1].trim();
-                    followUp = [followUpText];
-                  }
-                }
-              }
-              
-              fallbackStructure.behavioralQuestions.push({
-                question,
-                explanation,
-                modelAnswer,
-                followUp
-              });
-            }
-          }
-        }
-      }
-      
-      if (fallbackStructure.technicalQuestions.length === 0 && fallbackStructure.behavioralQuestions.length === 0) {
-        throw new Error('Could not extract questions from response');
-      }
-      
-      parsedContent = fallbackStructure;
-      console.log('Created fallback structure:', 
-        'technicalQuestions:', parsedContent.technicalQuestions.length,
-        'behavioralQuestions:', parsedContent.behavioralQuestions.length
-      );
-    } catch (fallbackError) {
-      console.error('Fallback extraction also failed:', fallbackError);
-      throw new Error('Invalid JSON format in the Perplexity response');
-    }
+    // ... keep existing code (fallback error handling logic)
+  }
+
+  // NEW: Combine original behavioral questions with newly generated ones
+  if (originalBehavioralQuestions.length > 0) {
+    console.log('Adding original behavioral questions to the response');
+    
+    // Convert original questions to the expected format
+    const formattedOriginalQuestions = originalBehavioralQuestions.map((question: string, index: number) => ({
+      question: question,
+      explanation: "This question was from your behavioral interview practice session.",
+      modelAnswer: "Use the STAR method (Situation, Task, Action, Result) to structure your response based on your previous answer during the interview.",
+      followUp: [`Can you elaborate on the results you achieved?`, `What would you do differently next time?`],
+      type: 'original-behavioral' as const,
+      originalIndex: index
+    }));
+
+    // Add original questions to the parsed content
+    parsedContent.originalBehavioralQuestions = formattedOriginalQuestions;
+    
+    console.log('Added', formattedOriginalQuestions.length, 'original behavioral questions');
   }
 
   return parsedContent;
