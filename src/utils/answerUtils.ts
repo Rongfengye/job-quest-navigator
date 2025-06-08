@@ -18,7 +18,7 @@ export const transformIterations = (iterations: any[]): AnswerIteration[] => {
 };
 
 /**
- * Parses OpenAI response to extract questions array
+ * Parses OpenAI response to extract questions array including original behavioral questions
  */
 export const parseOpenAIResponse = (response: any): any[] => {
   if (response.questions) {
@@ -35,7 +35,14 @@ export const parseOpenAIResponse = (response: any): any[] => {
       ...q, type: 'behavioral' as const
     }));
     
-    return [...technical, ...behavioral];
+    // Include original behavioral questions if they exist
+    const originalBehavioral = response.originalBehavioralQuestions 
+      ? response.originalBehavioralQuestions.map((q: any) => ({
+          ...q, type: 'original-behavioral' as const
+        }))
+      : [];
+    
+    return [...technical, ...behavioral, ...originalBehavioral];
   }
   return [];
 };
