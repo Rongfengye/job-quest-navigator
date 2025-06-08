@@ -4,7 +4,6 @@ import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
 import Testimonials from '@/components/Testimonials';
 import CallToAction from '@/components/CallToAction';
-import SoftFooter from '@/components/SoftFooter';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -35,12 +34,37 @@ const Index = () => {
         <Separator className="max-w-5xl mx-auto" />
         <Testimonials />
         <CallToAction />
-        <SoftFooter />
       </main>
       
-      <footer className="py-8 px-6 bg-gray-50">
-        <div className="max-w-7xl mx-auto text-center text-interview-text-light text-sm">
-          <p>© {new Date().getFullYear()} Storyline. All rights reserved.</p>
+      <footer className="py-16 px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-interview-text-primary mb-4">
+            Need help with your resume or LinkedIn too?
+          </h2>
+          <p className="text-interview-text-secondary text-lg mb-8">
+            Check out{' '}
+            <a 
+              href="https://www.linkedup.tryhireme.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-interview-primary hover:text-interview-dark font-semibold transition-colors"
+            >
+              LinkedUp
+            </a>
+            {' '}and{' '}
+            <a 
+              href="https://www.resubuild.tryhireme.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-interview-primary hover:text-interview-dark font-semibold transition-colors"
+            >
+              ResuBuild
+            </a>
+            {' '}— designed by the same team.
+          </p>
+          <p className="text-interview-text-light text-sm">
+            © {new Date().getFullYear()} Storyline. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
