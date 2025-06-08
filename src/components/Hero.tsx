@@ -24,12 +24,15 @@ const Hero = () => {
   const MobileFeatureCards = () => (
     <div className="grid grid-cols-2 gap-4 mt-8">
       {/* Behavioral Interview Card */}
-      <div className="bg-white rounded-xl shadow-lg p-4">
+      <div
+        className="bg-white rounded-xl shadow-lg p-4"
+        style={{ "@media (max-width: 991px)": { marginBottom: "-2px" } }}
+      >
         <h3 className="font-semibold mb-2 text-sm">Behavioral Interview</h3>
         <img
           loading="lazy"
           src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=2000"
-          className="w-full object-cover object-center rounded"
+          className="w-full object-cover object-center rounded max-[991px]:pr-[23px]"
           style={{ aspectRatio: "1.48" }}
           alt="Behavioral Interview illustration"
         />
@@ -41,19 +44,19 @@ const Hero = () => {
         <img
           loading="lazy"
           src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=2000"
-          className="w-full object-cover object-center rounded"
+          className="w-full object-cover object-center rounded max-[991px]:mt-[45px]"
           style={{ aspectRatio: "3.33" }}
           alt="Audio Feedback visualization"
         />
       </div>
 
       {/* Guided Responses Card */}
-      <div className="bg-white p-4 rounded-xl shadow-lg">
+      <div className="bg-white p-4 rounded-xl shadow-lg max-[991px]:pb-2">
         <h3 className="font-semibold mb-2 text-sm">Guided Responses</h3>
         <img
           loading="lazy"
           src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F4b27bcc81dd148baa177b293c7a50999"
-          className="w-full object-cover object-center rounded"
+          className="w-full object-cover object-center rounded max-[991px]:pr-[60px] max-[991px]:my-4 max-[991px]:-mr-px max-[991px]:mb-px"
           style={{ aspectRatio: "3.33" }}
           alt="Guided Responses visualization"
         />
@@ -62,16 +65,18 @@ const Hero = () => {
       {/* Performance Analysis Card */}
       <div className="bg-white rounded-xl shadow-lg p-4">
         <h3 className="font-semibold mb-2 text-sm">Performance Analysis</h3>
-        <div className="flex items-center gap-2">
-          <div className="flex items-end gap-1 h-8">
-            <div className="w-2 h-4 bg-interview-primary rounded-t"></div>
-            <div className="w-2 h-6 bg-interview-primary/70 rounded-t"></div>
-            <div className="w-2 h-8 bg-interview-light rounded-t"></div>
-          </div>
+        <div className="flex items-center gap-2 max-[991px]:pr-3 max-[991px]:gap-[6px]">
+          <img
+            loading="lazy"
+            srcSet="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fef39c8d75f614b329e59791ef34898f7"
+            className="w-full ml-5 min-h-5 min-w-5 overflow-hidden object-cover object-center"
+            style={{ aspectRatio: "1.09" }}
+            alt="Chart visualization"
+          />
           <img
             loading="lazy"
             src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=2000"
-            className="w-12 h-8 object-cover object-center rounded"
+            className="w-12 h-8 object-cover object-center rounded max-[991px]:h-[98px] max-[991px]:w-[107px] max-[991px]:pl-px max-[991px]:ml-[33px] max-[991px]:-mb-2"
             alt="Performance Analysis chart"
           />
         </div>
