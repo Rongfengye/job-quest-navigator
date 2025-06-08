@@ -20,7 +20,66 @@ const Hero = () => {
     }
   };
 
-  // Feature Cards Component for reuse
+  // Mobile Feature Cards Component - optimized for sm-md breakpoint
+  const MobileFeatureCards = () => (
+    <div className="grid grid-cols-2 gap-4 mt-8">
+      {/* Behavioral Interview Card */}
+      <div className="bg-white rounded-xl shadow-lg p-4">
+        <h3 className="font-semibold mb-2 text-sm">Behavioral Interview</h3>
+        <img
+          loading="lazy"
+          src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fde75c37dc3ca483194f4d93257fa3615?width=2000"
+          className="w-full object-cover object-center rounded"
+          style={{ aspectRatio: "1.48" }}
+          alt="Behavioral Interview illustration"
+        />
+      </div>
+
+      {/* Audio Feedback Card */}
+      <div className="bg-white p-4 rounded-xl shadow-lg">
+        <h3 className="font-semibold mb-2 text-sm">Audio Feedback</h3>
+        <img
+          loading="lazy"
+          src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F31d2353857b54751897a97285218dc3e?width=2000"
+          className="w-full object-cover object-center rounded"
+          style={{ aspectRatio: "3.33" }}
+          alt="Audio Feedback visualization"
+        />
+      </div>
+
+      {/* Guided Responses Card */}
+      <div className="bg-white p-4 rounded-xl shadow-lg">
+        <h3 className="font-semibold mb-2 text-sm">Guided Responses</h3>
+        <img
+          loading="lazy"
+          src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2F4b27bcc81dd148baa177b293c7a50999"
+          className="w-full object-cover object-center rounded"
+          style={{ aspectRatio: "3.33" }}
+          alt="Guided Responses visualization"
+        />
+      </div>
+
+      {/* Performance Analysis Card */}
+      <div className="bg-white rounded-xl shadow-lg p-4">
+        <h3 className="font-semibold mb-2 text-sm">Performance Analysis</h3>
+        <div className="flex items-center gap-2">
+          <div className="flex items-end gap-1 h-8">
+            <div className="w-2 h-4 bg-interview-primary rounded-t"></div>
+            <div className="w-2 h-6 bg-interview-primary/70 rounded-t"></div>
+            <div className="w-2 h-8 bg-interview-light rounded-t"></div>
+          </div>
+          <img
+            loading="lazy"
+            src="https://cdn.builder.io/api/v1/image/assets%2Fb8e315bfeb1c42d1adbc4bb65543fa63%2Fc682c9fd60a64856ac6a0562519a84b0?width=2000"
+            className="w-12 h-8 object-cover object-center rounded"
+            alt="Performance Analysis chart"
+          />
+        </div>
+      </div>
+    </div>
+  );
+
+  // Feature Cards Component for desktop - unchanged
   const FeatureCards = () => (
     <div className="w-full h-full relative">
       {/* Behavioral Interview Card */}
@@ -163,9 +222,9 @@ const Hero = () => {
               Get Started
             </Button>
 
-            {/* Feature Cards below button on sm to md screens - Fixed spacing */}
-            <div className="hidden sm:block md:hidden mt-8 relative" style={{ height: "300px" }}>
-              <FeatureCards />
+            {/* Mobile Feature Cards below button on sm to md screens */}
+            <div className="hidden sm:block md:hidden">
+              <MobileFeatureCards />
             </div>
           </div>
 
