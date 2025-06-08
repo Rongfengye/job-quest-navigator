@@ -115,7 +115,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'llama-3.1-sonar-small-128k-online',
+      model: 'sonar-small-online',
       messages: [
         { role: 'system', content: sonarSystemPrompt },
         { role: 'user', content: userPrompt }
@@ -224,7 +224,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     console.error('Error parsing JSON response:', parseError);
     console.log('Raw response:', generatedContent);
     
-    // ... keep existing code (fallback error handling logic)
+    throw new Error('Invalid JSON format in the Perplexity response');
   }
 
   // NEW: Combine original behavioral questions with newly generated ones
