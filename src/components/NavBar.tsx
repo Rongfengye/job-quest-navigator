@@ -23,17 +23,14 @@ const NavBar = () => {
   // Check browser storage access
   useEffect(() => {
     try {
-      // Test if localStorage is accessible
       localStorage.setItem('auth_test', 'test');
       localStorage.removeItem('auth_test');
       
-      // Test if sessionStorage is accessible
       sessionStorage.setItem('auth_test', 'test');
       sessionStorage.removeItem('auth_test');
       
       setStorageError(null);
     } catch (error) {
-      console.error('Browser storage not accessible:', error);
       setStorageError('Browser storage is not accessible. This may prevent login from working.');
       setAuthProblemDetected(true);
       toast({
@@ -49,19 +46,11 @@ const NavBar = () => {
     const checkSessionDebug = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
-        console.log('Current session debug:', {
-          hasSession: !!data.session,
-          sessionError: error,
-          localStorage: typeof localStorage !== 'undefined',
-          cookiesEnabled: navigator.cookieEnabled,
-          isPrivateMode: !window.localStorage
-        });
         
         if (error) {
           setAuthProblemDetected(true);
         }
       } catch (e) {
-        console.error('Error checking session:', e);
         setAuthProblemDetected(true);
       }
     };
@@ -69,45 +58,23 @@ const NavBar = () => {
     checkSessionDebug();
   }, []);
 
-  // Add enhanced debugging to see the current auth state, but limit logging to prevent infinite loops
-  useEffect(() => {
-    console.log('NavBar rendering with auth state:', { 
-      isAuthenticated, 
-      user: user ? {
-        id: user.id,
-        firstName: user.firstName,
-        lastName: user.lastName
-      } : null,
-      isLoading,
-      userExists: !!user,
-      tokenCount: tokens,
-      storageError,
-      authProblemDetected
-    });
-  }, [isAuthenticated, user, isLoading, tokens, storageError, authProblemDetected]);
-
   // Track how long loading state has been active
   useEffect(() => {
     let interval: number | undefined;
     
     if (isLoading) {
-      // Start a timer to track loading time
       const startTime = Date.now();
       interval = window.setInterval(() => {
         const elapsed = Math.floor((Date.now() - startTime) / 1000);
         setAuthLoadingTime(elapsed);
         
-        // If loading takes more than 5 seconds, consider it a potential issue
         if (elapsed > 5) {
           setAuthProblemDetected(true);
         }
       }, 1000);
     } else {
-      // Reset timer when loading completes
       setAuthLoadingTime(0);
       
-      // Only reset the problem flag if we successfully loaded and authenticated
-      // or we've clearly determined user is not authenticated
       if (isAuthenticated || (!isLoading && !isAuthenticated)) {
         setAuthProblemDetected(false);
       }
@@ -119,29 +86,21 @@ const NavBar = () => {
   }, [isLoading, isAuthenticated]);
 
   // Refresh tokens when component mounts and subscribe to token updates
-  // Only do this if authentication is complete and user exists
   useEffect(() => {
     if (isAuthenticated && user?.id && !isLoading) {
-      console.log('NavBar: Initial token fetch and subscribing to updates');
       fetchTokens();
       
-      // Subscribe to token updates
       const unsubscribe = subscribeToTokenUpdates();
       
-      // Clean up subscription when component unmounts
       return () => {
-        console.log('NavBar: Cleaning up token subscription');
         unsubscribe();
       };
     }
   }, [isAuthenticated, user?.id, fetchTokens, subscribeToTokenUpdates, isLoading]);
 
   const handleLogout = async () => {
-    console.log('NavBar: Logout button clicked');
     const { success } = await logout();
     if (success) {
-      console.log('NavBar: Logout successful, navigating to home');
-      // Clear any potentially corrupted state
       localStorage.removeItem('supabase.auth.token');
       sessionStorage.removeItem('supabase.auth.token');
       navigate('/');
@@ -151,7 +110,6 @@ const NavBar = () => {
         description: "You have been logged out and local storage has been cleared.",
       });
     } else {
-      console.error('NavBar: Logout failed');
       setAuthProblemDetected(true);
     }
   };
@@ -161,11 +119,9 @@ const NavBar = () => {
   };
 
   const handleResetAuth = () => {
-    // Clear all auth-related storage
     localStorage.clear();
     sessionStorage.clear();
     
-    // Reload the page to reset all state
     window.location.reload();
     
     toast({
