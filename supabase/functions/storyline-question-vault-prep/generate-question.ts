@@ -1,3 +1,4 @@
+
 import { corsHeaders } from './index.ts';
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
@@ -115,7 +116,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'sonar-small-online',
+      model: 'sonar',
       messages: [
         { role: 'system', content: sonarSystemPrompt },
         { role: 'user', content: userPrompt }
