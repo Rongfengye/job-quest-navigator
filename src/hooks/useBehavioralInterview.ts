@@ -41,37 +41,13 @@ export const useBehavioralInterview = () => {
   const location = useLocation();
   const locationState = location.state as LocationState | null;
 
-  // Debug logging for isLoading state changes
-  const setIsLoadingWithLog = (value: boolean) => {
-    console.log('MAY 31 DEBUG - useBehavioralInterview isLoading changing from', isLoading, 'to', value);
-    setIsLoading(value);
-  };
-
-  // Debug logging for isInitialLoading state changes
-  const setIsInitialLoadingWithLog = (value: boolean) => {
-    console.log('MAY 31 DEBUG - useBehavioralInterview isInitialLoading changing from', isInitialLoading, 'to', value);
-    setIsInitialLoading(value);
-  };
-
-  // Debug logging for isTransitionLoading state changes
-  const setIsTransitionLoadingWithLog = (value: boolean) => {
-    console.log('MAY 31 DEBUG - useBehavioralInterview isTransitionLoading changing from', isTransitionLoading, 'to', value);
-    setIsTransitionLoading(value);
-  };
-
   // Debug logging for currentQuestion state changes
   const setCurrentQuestionWithLog = (value: BehavioralQuestionData | null) => {
-    console.log('MAY 31 DEBUG - useBehavioralInterview currentQuestion changing:', {
-      from: currentQuestion ? 'Has question' : 'No question',
-      to: value ? 'Has question' : 'No question',
-      newQuestionText: value?.question ? value.question.substring(0, 50) + '...' : 'No question'
-    });
     setCurrentQuestion(value);
     
     // If this is the first question being set, mark initial loading as complete
     if (value && isInitialLoading) {
-      console.log('MAY 31 DEBUG - First question received, setting isInitialLoading to false');
-      setIsInitialLoadingWithLog(false);
+      setIsInitialLoading(false);
     }
   };
 
@@ -100,7 +76,7 @@ export const useBehavioralInterview = () => {
       const questionTexts = allQuestions.map((q: any) => q.question);
       setQuestions(questionTexts);
       setCurrentQuestionWithLog(formattedQuestion);
-      setIsLoadingWithLog(false);
+      setIsLoading(false);
       
       console.log('Set initial questions:', questionTexts);
     } catch (error) {
@@ -127,12 +103,10 @@ export const useBehavioralInterview = () => {
     coverLetterPath: string = '',
     additionalDocumentsPath: string = ''
   ) => {
-    console.log('MAY 31 DEBUG - generateQuestion called for question index:', currentQuestionIndex);
-    setIsLoadingWithLog(true);
+    setIsLoading(true);
     
     try {
       if (currentQuestionIndex === 0 && !behavioralId) {
-        console.log('MAY 31 DEBUG - Creating new behavioral interview record');
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
           .insert({
@@ -176,16 +150,9 @@ export const useBehavioralInterview = () => {
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
       console.log(`Using resume path: ${resumePath}`);
-      console.log('MAY 31 DEBUG - About to call edge function storyline-create-behavioral-interview');
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
-      });
-      
-      console.log('MAY 31 DEBUG - Edge function response received:', {
-        hasData: !!data,
-        hasError: !!error,
-        hasQuestion: data?.question ? true : false
       });
       
       if (error) {
@@ -198,7 +165,6 @@ export const useBehavioralInterview = () => {
       
       console.log('Question generated:', data.question);
       console.log('Audio data received:', data.audio ? 'Yes' : 'No');
-      console.log('MAY 31 DEBUG - Successfully received question from edge function, setting currentQuestion');
       
       const questionData: BehavioralQuestionData = {
         ...data,
@@ -221,11 +187,9 @@ export const useBehavioralInterview = () => {
           .eq('id', behavioralId);
       }
       
-      console.log('MAY 31 DEBUG - generateQuestion completed successfully');
       return data;
     } catch (error) {
       console.error('Error in generateQuestion:', error);
-      console.log('MAY 31 DEBUG - generateQuestion failed with error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -233,13 +197,12 @@ export const useBehavioralInterview = () => {
       });
       return null;
     } finally {
-      console.log('MAY 31 DEBUG - generateQuestion finally block, setting isLoading to false');
-      setIsLoadingWithLog(false);
+      setIsLoading(false);
     }
   };
 
   const generateFeedback = async (providedAnswers?: string[]) => {
-    setIsLoadingWithLog(true);
+    setIsLoading(true);
     try {
       const answersToUse = providedAnswers || answers;
       
@@ -323,14 +286,12 @@ export const useBehavioralInterview = () => {
       });
       return null;
     } finally {
-      setIsLoadingWithLog(false);
+      setIsLoading(false);
     }
   };
 
   const submitAnswer = async (answer: string) => {
     if (!currentQuestion) return;
-    
-    console.log('MAY 31 DEBUG - submitAnswer called for question index:', currentQuestionIndex);
     
     try {
       const updatedQuestions = [...questions];
@@ -342,13 +303,6 @@ export const useBehavioralInterview = () => {
       
       setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
-      
-      console.log('MAY 31 DEBUG - Answer submitted, updated arrays:', {
-        questionsLength: updatedQuestions.length,
-        answersLength: updatedAnswers.length,
-        currentIndex: currentQuestionIndex,
-        currentQuestion: currentQuestion.question.substring(0, 50) + '...'
-      });
       
       if (behavioralId) {
         // Save both questions and responses to ensure data consistency
@@ -362,15 +316,13 @@ export const useBehavioralInterview = () => {
       }
       
       if (currentQuestionIndex >= 4) {
-        console.log('MAY 31 DEBUG - Final answer submitted, setting interview complete');
         setInterviewComplete(true);
         console.log('Final answer submitted, all questions and answers:', {
           questions: updatedQuestions,
           answers: updatedAnswers
         });
       } else {
-        console.log('MAY 31 DEBUG - Moving to next question index:', currentQuestionIndex + 1);
-        setIsTransitionLoadingWithLog(true);
+        setIsTransitionLoading(true);
         setCurrentQuestionIndex(prev => prev + 1);
       }
     } catch (error) {
@@ -390,8 +342,8 @@ export const useBehavioralInterview = () => {
     setCurrentQuestionWithLog(null);
     setInterviewComplete(false);
     setBehavioralId(null);
-    setIsInitialLoadingWithLog(true);
-    setIsTransitionLoadingWithLog(false);
+    setIsInitialLoading(true);
+    setIsTransitionLoading(false);
   };
 
   return {
@@ -409,7 +361,7 @@ export const useBehavioralInterview = () => {
     setInitialQuestions,
     generateFeedback,
     behavioralId,
-    setIsTransitionLoading: setIsTransitionLoadingWithLog,
+    setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
     setBehavioralId
   };

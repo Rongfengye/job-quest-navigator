@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -56,39 +57,6 @@ const BehavioralInterview = () => {
     setCurrentQuestion,
     setBehavioralId
   } = useBehavioralInterview();
-
-  // Debug logging for key states from useBehavioralInterview hook
-  console.log('MAY 31 DEBUG - Hook states:', {
-    isLoading,
-    isInitialLoading,
-    isTransitionLoading,
-    currentQuestion: currentQuestion ? 'Question exists' : 'No question',
-    currentQuestionIndex
-  });
-
-  // Watch for currentQuestion changes
-  useEffect(() => {
-    console.log('MAY 31 DEBUG - currentQuestion changed:', {
-      hasQuestion: !!currentQuestion,
-      questionText: currentQuestion?.question ? currentQuestion.question.substring(0, 50) + '...' : 'No question',
-      isInitialLoading
-    });
-  }, [currentQuestion, isInitialLoading]);
-
-  // Watch for isLoading changes
-  useEffect(() => {
-    console.log('MAY 31 DEBUG - isLoading changed:', isLoading);
-  }, [isLoading]);
-
-  // Watch for isInitialLoading changes
-  useEffect(() => {
-    console.log('MAY 31 DEBUG - isInitialLoading changed:', isInitialLoading);
-  }, [isInitialLoading]);
-
-  // Watch for isTransitionLoading changes
-  useEffect(() => {
-    console.log('MAY 31 DEBUG - isTransitionLoading changed:', isTransitionLoading);
-  }, [isTransitionLoading]);
 
   const playTransitionAudio = () => {
     // Select a random audio file each time this function is called
@@ -297,15 +265,6 @@ const BehavioralInterview = () => {
       await startRecording();
     }
   };
-
-  // Log the condition that determines Loading vs ProcessingMessages
-  console.log('MAY 31 DEBUG - Rendering condition check:', {
-    isTransitionLoading,
-    showProcessing,
-    hasCurrentQuestion: !!currentQuestion,
-    isLoading,
-    isInitialLoading
-  });
 
   // Only show full-screen Loading for transitions between questions
   if (isTransitionLoading) {
