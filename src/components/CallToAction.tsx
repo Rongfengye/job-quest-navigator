@@ -20,7 +20,7 @@ const CallToAction = () => {
   };
 
   return (
-    <section className="py-20 px-6 bg-gray-100">
+    <section className="py-20 px-6 bg-white">
       <div className="max-w-7xl mx-auto text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-interview-text-primary mb-4">
           Get Your Dream Job with Storyline
