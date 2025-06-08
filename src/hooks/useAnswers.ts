@@ -52,8 +52,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       }
 
       try {
-        await fetchQuestionData();
-        await fetchAnswerData();
+        const questionData = await fetchQuestionData();
+        await fetchAnswerData(questionData);
       } catch (error) {
         console.error('Error fetching question and answer:', error);
         setError(error instanceof Error ? error.message : "Failed to load question");
@@ -71,7 +71,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   }, [storylineId, questionIndex, toast]);
 
   // Fetch question data from storyline_jobs
-  const fetchQuestionData = async () => {
+  const fetchQuestionData = async (): Promise<Question | null> => {
     const { data: storylineData, error: storylineError } = await supabase
       .from('storyline_jobs')
       .select('openai_response')
@@ -92,13 +92,63 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       const questions = parseOpenAIResponse(parsedResponse);
 
       if (questions && questions.length > questionIndex) {
-        setQuestion(questions[questionIndex]);
+        const questionData = questions[questionIndex];
+        setQuestion(questionData);
+        return questionData;
       }
     }
+    return null;
+  };
+
+  // Transform behavioral data to answer iteration format
+  const transformBehavioralDataToIteration = (response: string, feedback: any, timestamp: string): AnswerIteration => {
+    return {
+      answerText: response,
+      timestamp: timestamp,
+      feedback: {
+        pros: feedback.pros || [],
+        cons: feedback.cons || [],
+        guidelines: feedback.guidelines || '',
+        improvementSuggestions: feedback.improvementSuggestions || '',
+        score: feedback.score || 0
+      }
+    };
+  };
+
+  // Fetch behavioral interview data for original behavioral questions
+  const fetchBehavioralData = async (behavioralId: string, behavioralQuestionIndex: number) => {
+    const { data: behavioralData, error: behavioralError } = await supabase
+      .from('storyline_behaviorals')
+      .select('responses, feedback, created_at')
+      .eq('id', filterValue(behavioralId))
+      .single();
+
+    if (behavioralError) {
+      console.error('Error fetching behavioral data:', behavioralError);
+      return null;
+    }
+
+    if (behavioralData) {
+      const safeData = safeDatabaseData(behavioralData);
+      const responses = Array.isArray(safeData.responses) ? safeData.responses : [];
+      const feedbackArray = Array.isArray(safeData.feedback) ? safeData.feedback : [];
+      
+      if (responses[behavioralQuestionIndex] && feedbackArray[behavioralQuestionIndex]) {
+        const iteration = transformBehavioralDataToIteration(
+          responses[behavioralQuestionIndex],
+          feedbackArray[behavioralQuestionIndex],
+          safeData.created_at || new Date().toISOString()
+        );
+        return [iteration];
+      }
+    }
+    
+    return [];
   };
 
   // Fetch answer data from storyline_job_questions
-  const fetchAnswerData = async () => {
+  const fetchAnswerData = async (questionData?: Question | null) => {
+    // First try to get existing answer data
     const { data: answerData, error: answerError } = await supabase
       .from('storyline_job_questions')
       .select('*')
@@ -108,6 +158,36 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
 
     if (answerError && answerError.code !== 'PGRST116') {
       throw answerError;
+    }
+
+    // Check if this is an original behavioral question and if we need to preload data
+    const currentQuestion = questionData || question;
+    if (!answerData && currentQuestion?.type === 'original-behavioral') {
+      // Get the storyline job to find the behavioral_id
+      const { data: storylineJob, error: storylineError } = await supabase
+        .from('storyline_jobs')
+        .select('behavioral_id')
+        .eq('id', filterValue(storylineId))
+        .single();
+
+      if (!storylineError && storylineJob?.behavioral_id) {
+        // Map question vault index to behavioral question index (10-14 -> 0-4)
+        const behavioralQuestionIndex = questionIndex - 10;
+        
+        if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
+          const behavioralIterations = await fetchBehavioralData(
+            storylineJob.behavioral_id, 
+            behavioralQuestionIndex
+          );
+          
+          if (behavioralIterations && behavioralIterations.length > 0) {
+            setIterations(behavioralIterations);
+            setAnswer(behavioralIterations[0].answerText);
+            console.log('Preloaded behavioral data:', behavioralIterations);
+            return;
+          }
+        }
+      }
     }
 
     if (answerData) {
@@ -190,7 +270,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     }
   };
 
-  // Update an existing answer record
   const updateExistingAnswer = async (id: string, answerText: string, currentIterations: AnswerIteration[]) => {
     const { error } = await supabase
       .from('storyline_job_questions')
@@ -210,7 +289,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     });
   };
 
-  // Create a new answer record
   const createNewAnswer = async (answerText: string, currentIterations: AnswerIteration[]) => {
     console.log('🪙 Deducting 1 token for creating a new question record');
     const tokenCheck = await deductTokens(1);
