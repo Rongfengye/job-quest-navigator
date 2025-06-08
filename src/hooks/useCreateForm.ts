@@ -41,7 +41,6 @@ export const useCreateForm = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    console.log(`useCreateForm: Updating field ${name} with value: ${value.substring(0, 30)}...`);
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -49,22 +48,18 @@ export const useCreateForm = () => {
   };
 
   const handleResumeChange = (file: File | null, text: string) => {
-    console.log("Resume text extracted:", text ? text.substring(0, 100) + "..." : "No text");
     setResumeFile({ file, text });
   };
 
   const handleCoverLetterChange = (file: File | null, text: string) => {
-    console.log("Cover letter text extracted:", text ? text.substring(0, 100) + "..." : "No text");
     setCoverLetterFile({ file, text });
   };
 
   const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
-    console.log("Additional documents text extracted:", text ? text.substring(0, 100) + "..." : "No text");
     setAdditionalDocumentsFile({ file, text });
   };
 
   const handleScrapedJobDescription = (scrapedContent: string) => {
-    console.log("useCreateForm: Received scraped job description:", scrapedContent.substring(0, 100) + "...");
     setFormData((prev) => ({
       ...prev,
       jobDescription: scrapedContent,
