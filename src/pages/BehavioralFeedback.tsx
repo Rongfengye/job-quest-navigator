@@ -63,8 +63,7 @@ const BehavioralFeedback = () => {
       emptyFileData,
       emptyFileData,
       emptyFileData,
-      interviewId,
-      questions // Pass the original behavioral questions
+      interviewId
     );
 
   useEffect(() => {
@@ -193,9 +192,17 @@ const BehavioralFeedback = () => {
       return;
     }
 
+    // Use the real data from the interview for creating technical questions
+    const formData = {
+      jobTitle: interviewData.job_title,
+      jobDescription: interviewData.job_description,
+      companyName: interviewData.company_name || '',
+      companyDescription: interviewData.company_description || ''
+    };
+
     try {
       // The actual resumeFile and other files will be used from the behavioral interview
-      // via the behavioralId, and the original questions will be passed via the hook
+      // via the behavioralId, so we can use empty data here
       submitJobPractice();
     } catch (error) {
       console.error("Error generating technical questions:", error);

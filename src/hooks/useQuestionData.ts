@@ -10,14 +10,12 @@ export type Question = {
   explanation?: string;
   modelAnswer?: string;
   followUp?: string[];
-  type?: 'technical' | 'behavioral' | 'original-behavioral';
-  originalIndex?: number;
+  type?: 'technical' | 'behavioral';
 };
 
 export type ParsedResponse = {
   technicalQuestions?: Question[];
   behavioralQuestions?: Question[];
-  originalBehavioralQuestions?: Question[];
   questions?: Question[];
 };
 
@@ -117,7 +115,7 @@ export const useQuestionData = (storylineId: string | null) => {
           let processedQuestions: Question[] = [];
           const parsedResponse = safeJsonParse(safeData.openai_response);
           
-          // Handle format with separate question categories including original behavioral questions
+          // Handle format with separate question categories
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
               parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions)) {
             
@@ -130,16 +128,8 @@ export const useQuestionData = (storylineId: string | null) => {
               ...q, 
               type: 'behavioral' as const
             }));
-
-            // Add original behavioral questions if they exist
-            const originalBehavioral = parsedResponse.originalBehavioralQuestions 
-              ? parsedResponse.originalBehavioralQuestions.map(q => ({
-                  ...q,
-                  type: 'original-behavioral' as const
-                }))
-              : [];
             
-            processedQuestions = [...technical, ...behavioral, ...originalBehavioral];
+            processedQuestions = [...technical, ...behavioral];
           } 
           // Handle format with a single questions array
           else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {

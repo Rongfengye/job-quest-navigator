@@ -24,8 +24,7 @@ export const useJobPracticeSubmission = (
   resumeFile: FileData,
   coverLetterFile: FileData,
   additionalDocumentsFile: FileData,
-  behavioralId?: string, // Optional parameter to link from behavioral interview
-  originalBehavioralQuestions?: string[] // New parameter for original questions
+  behavioralId?: string // Optional parameter to link from behavioral interview
 ) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -68,6 +67,7 @@ export const useJobPracticeSubmission = (
       
       // If coming from behavioral, get the resume path from the behavioral record
       if (behavioralId) {
+        console.log("Getting resume from behavioral interview:", behavioralId);
         const { data: behavioralData, error: behavioralError } = await supabase
           .from('storyline_behaviorals')
           .select('resume_path, cover_letter_path, additional_documents_path, job_title, job_description, company_name, company_description')
@@ -75,8 +75,11 @@ export const useJobPracticeSubmission = (
           .single();
           
         if (behavioralError) {
+          console.error("Error fetching behavioral data:", behavioralError);
           throw new Error(`Error retrieving behavioral interview data: ${behavioralError.message}`);
         }
+        
+        console.log("Behavioral data retrieved:", behavioralData);
         
         if (!behavioralData.resume_path) {
           throw new Error("No resume found in the behavioral interview data");
@@ -106,6 +109,10 @@ export const useJobPracticeSubmission = (
         }
       }
 
+      console.log("Inserting job with user_id:", userId);
+      console.log("Using resume path:", resumePath);
+      console.log("Form data:", formData);
+      
       const { data: storylineData, error: insertError } = await supabase
         .from('storyline_jobs')
         .insert({
@@ -124,10 +131,12 @@ export const useJobPracticeSubmission = (
         .single();
 
       if (insertError) {
+        console.error("Insert error details:", insertError);
         throw new Error(`Error saving your application: ${insertError.message}`);
       }
 
       const storylineId = storylineData.id;
+      console.log("Created storyline job with ID:", storylineId);
 
       // Prepare the request body for the OpenAI function
       const requestBody = {
@@ -143,9 +152,19 @@ export const useJobPracticeSubmission = (
         coverLetterPath: coverLetterPath,
         additionalDocumentsPath: additionalDocumentsPath,
         behavioralId: behavioralId || null,
-        generateFromBehavioral: !!behavioralId,
-        originalBehavioralQuestions: originalBehavioralQuestions || [] // Pass original questions
+        generateFromBehavioral: !!behavioralId
       };
+
+      console.log("Sending data to OpenAI function:");
+      console.log("Resume path:", resumePath);
+      console.log("Resume text length:", resumeFile.text?.length || 0);
+      
+      if (resumeFile.text) {
+        console.log("Resume text preview:", resumeFile.text.substring(0, 200) + "...");
+      }
+      
+      console.log("Cover letter text length:", coverLetterFile.text?.length || 0);
+      console.log("Additional documents text length:", additionalDocumentsFile.text?.length || 0);
 
       const { data, error } = await supabase.functions.invoke('storyline-question-vault-prep', {
         body: requestBody,
@@ -154,6 +173,8 @@ export const useJobPracticeSubmission = (
       if (error) {
         throw new Error(`Error processing your application: ${error.message}`);
       }
+
+      console.log("Received response from OpenAI function:", data ? "Success" : "No data");
 
       const { error: updateError } = await supabase
         .from('storyline_jobs')
