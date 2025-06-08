@@ -4,6 +4,7 @@ import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
 import Testimonials from '@/components/Testimonials';
 import CallToAction from '@/components/CallToAction';
+import SoftFooter from '@/components/SoftFooter';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -34,6 +35,7 @@ const Index = () => {
         <Separator className="max-w-5xl mx-auto" />
         <Testimonials />
         <CallToAction />
+        <SoftFooter />
       </main>
       
       <footer className="py-8 px-6 bg-gray-50">
