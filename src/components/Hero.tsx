@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
@@ -47,8 +48,8 @@ const Hero = () => {
             </Button>
           </div>
 
-          {/* Right Column - Feature Cards */}
-          <div className="relative z-20">
+          {/* Right Column - Feature Cards - Hidden on mobile */}
+          <div className="relative z-20 hidden md:block">
             {/* Main illustration containing all feature cards */}
             <div className="w-full h-full relative">
               {/* Behavioral Interview Card */}
