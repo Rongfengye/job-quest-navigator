@@ -134,6 +134,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
           </div>
         </div>
       </CardHeader>
+      <CardContent className="pt-0">
+        {question.explanation && (
+          <p className="text-gray-600 text-sm line-clamp-2">
+            {question.explanation}
+          </p>
+        )}
+      </CardContent>
     </Card>
   );
 };
