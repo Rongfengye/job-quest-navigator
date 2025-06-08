@@ -174,19 +174,19 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         const behavioralQuestionIndex = questionIndex - 10;
         
         if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
-          // Type assertion to ensure TypeScript recognizes this as a string
-          const behavioralId = storylineJob.behavioral_id as string;
-          
-          const behavioralIterations = await fetchBehavioralData(
-            behavioralId, 
-            behavioralQuestionIndex
-          );
-          
-          if (behavioralIterations && behavioralIterations.length > 0) {
-            setIterations(behavioralIterations);
-            setAnswer(behavioralIterations[0].answerText);
-            console.log('Preloaded behavioral data:', behavioralIterations);
-            return;
+          // Ensure behavioral_id is a string with proper type checking
+          const behavioralId = storylineJob.behavioral_id;
+          if (typeof behavioralId === 'string') {
+            const behavioralIterations = await fetchBehavioralData(
+              behavioralId, 
+              behavioralQuestionIndex
+            );
+            
+            if (behavioralIterations && behavioralIterations.length > 0) {
+              setIterations(behavioralIterations);
+              setAnswer(behavioralIterations[0].answerText);
+              return;
+            }
           }
         }
       }

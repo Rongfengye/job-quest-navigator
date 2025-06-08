@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -188,6 +187,20 @@ const BehavioralInterview = () => {
         description: "Please provide an answer before continuing.",
       });
       return;
+    }
+    
+    // Check if microphone is recording and stop it first
+    if (isRecording) {
+      console.log('Stopping recording before submitting answer');
+      await stopRecording();
+      
+      toast({
+        title: "Recording stopped",
+        description: "Your recording has been processed and added to your answer.",
+      });
+      
+      // Add a small delay to ensure transcription processing completes
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
     // Show processing immediately
