@@ -169,23 +169,13 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         .eq('id', filterValue(storylineId))
         .single();
 
-      console.log('🔍 Supabase query response for storyline_jobs:');
-      console.log('storylineJob:', storylineJob);
-      console.log('storylineJob type:', typeof storylineJob);
-      console.log('storylineJob.behavioral_id:', storylineJob?.behavioral_id);
-      console.log('storylineJob.behavioral_id type:', typeof storylineJob?.behavioral_id);
-      console.log('Is storylineJob.behavioral_id a string?:', typeof storylineJob?.behavioral_id === 'string');
-
       if (!storylineError && storylineJob?.behavioral_id) {
-        console.log('✅ About to call fetchBehavioralData with behavioral_id:', storylineJob.behavioral_id);
-        
         // Map question vault index to behavioral question index (10-14 -> 0-4)
         const behavioralQuestionIndex = questionIndex - 10;
         
         if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
-          // Type assertion for now to fix the build error while we debug
+          // Type assertion to ensure TypeScript recognizes this as a string
           const behavioralId = storylineJob.behavioral_id as string;
-          console.log('🎯 Using type-asserted behavioral_id:', behavioralId, 'type:', typeof behavioralId);
           
           const behavioralIterations = await fetchBehavioralData(
             behavioralId, 
