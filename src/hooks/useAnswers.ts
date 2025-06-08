@@ -119,7 +119,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     const { data: behavioralData, error: behavioralError } = await supabase
       .from('storyline_behaviorals')
       .select('responses, feedback, created_at')
-      .eq('id', filterValue(behavioralId))
+      .eq('id', behavioralId)
       .single();
 
     if (behavioralError) {
