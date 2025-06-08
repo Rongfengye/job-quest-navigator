@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -119,7 +120,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     const { data: behavioralData, error: behavioralError } = await supabase
       .from('storyline_behaviorals')
       .select('responses, feedback, created_at')
-      .eq('id', behavioralId)
+      .eq('id', filterValue(behavioralId))
       .single();
 
     if (behavioralError) {
@@ -174,10 +175,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         const behavioralQuestionIndex = questionIndex - 10;
         
         if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
-          // Safely convert behavioral_id to string
-          const behavioralId = String(storylineJob.behavioral_id);
           const behavioralIterations = await fetchBehavioralData(
-            behavioralId, 
+            storylineJob.behavioral_id, 
             behavioralQuestionIndex
           );
           
