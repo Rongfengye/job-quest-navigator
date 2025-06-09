@@ -83,24 +83,7 @@ const BehavioralFeedback = () => {
       return;
     }
     
-    if (hasFeedbackInState && hasQuestionsInState) {
-      setFeedback(location.state.feedback);
-      setQuestions(location.state.questions.map(String));
-      
-      // Set responses if available in location state
-      if (hasResponsesInState) {
-        setResponses(location.state.answers.map(String));
-      }
-      
-      // Save interview data if it's in location state
-      if (location.state.interviewData) {
-        setInterviewData(location.state.interviewData);
-      }
-      
-      setIsLoading(false);
-      return;
-    }
-    
+    // Always fetch from the database, ignore location.state for questions/answers/feedback
     const fetchInterviewData = async () => {
       if (!interviewId) {
         setError('No interview ID provided');
@@ -153,7 +136,7 @@ const BehavioralFeedback = () => {
     };
 
     fetchInterviewData();
-  }, [interviewId, toast, hasFeedbackInState, hasQuestionsInState, hasResponsesInState, location.state, authLoading, isAuthenticated]);
+  }, [interviewId, toast, authLoading, isAuthenticated]);
 
   // Fetch related practices
   useEffect(() => {
