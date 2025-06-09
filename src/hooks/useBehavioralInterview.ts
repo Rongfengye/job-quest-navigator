@@ -158,35 +158,35 @@ export const useBehavioralInterview = () => {
       existingQuestions[currentQuestionIndex] = data.question;
       setQuestions(existingQuestions);
       
-      if (behavioralId) {
-        // Only update the specific question at the current index
-        const { data: currentData } = await supabase
+      // if (behavioralId) {
+      // Only update the specific question at the current index
+      const { data: currentData } = await supabase
+        .from('storyline_behaviorals')
+        .select('questions')
+        .eq('id', existingBehavioralId)
+        .single();
+        
+      if (currentData) {
+        console.log('Current question index:', currentQuestionIndex);
+        console.log('Current questions in DB:', currentData.questions);
+        const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
+        updatedQuestions[currentQuestionIndex] = data.question;
+        console.log('Updated questions array:', updatedQuestions);
+        
+        const { error: updateError } = await supabase
           .from('storyline_behaviorals')
-          .select('questions')
-          .eq('id', behavioralId)
-          .single();
+          .update({
+            questions: updatedQuestions
+          })
+          .eq('id', existingBehavioralId);
           
-        if (currentData) {
-          console.log('Current question index:', currentQuestionIndex);
-          console.log('Current questions in DB:', currentData.questions);
-          const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
-          updatedQuestions[currentQuestionIndex] = data.question;
-          console.log('Updated questions array:', updatedQuestions);
-          
-          const { error: updateError } = await supabase
-            .from('storyline_behaviorals')
-            .update({
-              questions: updatedQuestions
-            })
-            .eq('id', behavioralId);
-            
-          if (updateError) {
-            console.error('Error updating questions:', updateError);
-          } else {
-            console.log('Successfully updated questions in database');
-          }
+        if (updateError) {
+          console.error('Error updating questions:', updateError);
+        } else {
+          console.log('Successfully updated questions in database');
         }
       }
+      // }
       
       return data;
     } catch (error) {
