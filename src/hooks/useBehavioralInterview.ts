@@ -30,7 +30,7 @@ export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isTransitionLoading, setIsTransitionLoading] = useState(false);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(1);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
