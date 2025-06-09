@@ -158,12 +158,15 @@ export const useBehavioralInterview = () => {
       existingQuestions.push(data.question);
       setQuestions(existingQuestions);
       
-      if (behavioralId) {
+      const BehavioralIdToUse = existingBehavioralId || behavioralId;
+      
+      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
+      if (BehavioralIdToUse) {
         // Append the new question to the questions array in the database
         const { data: currentData } = await supabase
           .from('storyline_behaviorals')
           .select('questions')
-          .eq('id', behavioralId)
+          .eq('id', BehavioralIdToUse)
           .single();
           
         if (currentData) {
@@ -175,7 +178,7 @@ export const useBehavioralInterview = () => {
             .update({
               questions: updatedQuestions
             })
-            .eq('id', behavioralId);
+            .eq('id', BehavioralIdToUse);
             
           if (updateError) {
             console.error('Error updating questions:', updateError);
