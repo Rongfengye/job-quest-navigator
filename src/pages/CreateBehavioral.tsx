@@ -147,7 +147,9 @@ const CreateBehavioral = () => {
           company_description: formData.companyDescription,
           resume_path: resumePath || '',
           cover_letter_path: coverLetterPath || null,
-          additional_documents_path: additionalDocumentsPath || null
+          additional_documents_path: additionalDocumentsPath || null,
+          questions: [],
+          responses: []
         })
         .select('id')
         .single();

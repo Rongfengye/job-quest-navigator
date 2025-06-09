@@ -167,16 +167,24 @@ export const useBehavioralInterview = () => {
           .single();
           
         if (currentData) {
-          console.log('IN current data, CURRENT QUESTION INDEX IS', currentQuestionIndex, 'current data is', currentData)
+          console.log('Current question index:', currentQuestionIndex);
+          console.log('Current questions in DB:', currentData.questions);
           const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
           updatedQuestions[currentQuestionIndex] = data.question;
+          console.log('Updated questions array:', updatedQuestions);
           
-          await supabase
+          const { error: updateError } = await supabase
             .from('storyline_behaviorals')
             .update({
               questions: updatedQuestions
             })
             .eq('id', behavioralId);
+            
+          if (updateError) {
+            console.error('Error updating questions:', updateError);
+          } else {
+            console.log('Successfully updated questions in database');
+          }
         }
       }
       
