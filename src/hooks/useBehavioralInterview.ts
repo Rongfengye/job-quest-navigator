@@ -101,35 +101,15 @@ export const useBehavioralInterview = () => {
     additionalDocumentsText: string = '',
     resumePath: string = '',
     coverLetterPath: string = '',
-    additionalDocumentsPath: string = ''
+    additionalDocumentsPath: string = '',
+    existingBehavioralId?: string
   ) => {
     setIsLoading(true);
     
     try {
-      if (currentQuestionIndex === 0 && !behavioralId) {
-        const { data: behavioralData, error: behavioralError } = await supabase
-          .from('storyline_behaviorals')
-          .insert({
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            job_title: formData.jobTitle,
-            job_description: formData.jobDescription,
-            company_name: formData.companyName,
-            company_description: formData.companyDescription,
-            resume_path: resumePath || '',
-            cover_letter_path: coverLetterPath || null,
-            additional_documents_path: additionalDocumentsPath || null
-          })
-          .select('id')
-          .single();
-          
-        if (behavioralError) {
-          throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
-        }
-        
-        console.log("Created behavioral interview with ID:", behavioralData.id);
-        console.log("Resume path stored:", resumePath);
-        
-        setBehavioralId(behavioralData.id);
+      // If we have an existing behavioralId, use it
+      if (existingBehavioralId) {
+        setBehavioralId(existingBehavioralId);
       }
       
       const requestBody = {

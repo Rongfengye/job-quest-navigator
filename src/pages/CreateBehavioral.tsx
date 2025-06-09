@@ -166,7 +166,8 @@ const CreateBehavioral = () => {
         additionalDocumentsText,
         resumePath,
         coverLetterPath,
-        additionalDocumentsPath
+        additionalDocumentsPath,
+        behavioralData.id
       );
 
       if (!questionData) {
