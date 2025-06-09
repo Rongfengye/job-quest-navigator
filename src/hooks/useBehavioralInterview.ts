@@ -155,40 +155,35 @@ export const useBehavioralInterview = () => {
       
       // Update questions array immediately when question is generated
       const existingQuestions = [...questions];
-      existingQuestions[currentQuestionIndex] = data.question;
+      existingQuestions.push(data.question);
       setQuestions(existingQuestions);
       
-      // if (behavioralId) {
-      // Only update the specific question at the current index
-      const BehavioralIdToUse = existingBehavioralId || behavioralId;
-      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
-      const { data: currentData } = await supabase
-        .from('storyline_behaviorals')
-        .select('questions')
-        .eq('id', BehavioralIdToUse)
-        .single();
-        
-      if (currentData) {
-        console.log('Current question index:', currentQuestionIndex);
-        console.log('Current questions in DB:', currentData.questions);
-        const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
-        updatedQuestions[currentQuestionIndex] = data.question;
-        console.log('Updated questions array:', updatedQuestions);
-        
-        const { error: updateError } = await supabase
+      if (behavioralId) {
+        // Append the new question to the questions array in the database
+        const { data: currentData } = await supabase
           .from('storyline_behaviorals')
-          .update({
-            questions: updatedQuestions
-          })
-          .eq('id', BehavioralIdToUse);
+          .select('questions')
+          .eq('id', behavioralId)
+          .single();
           
-        if (updateError) {
-          console.error('Error updating questions:', updateError);
-        } else {
-          console.log('Successfully updated questions in database');
+        if (currentData) {
+          const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
+          updatedQuestions.push(data.question);
+          
+          const { error: updateError } = await supabase
+            .from('storyline_behaviorals')
+            .update({
+              questions: updatedQuestions
+            })
+            .eq('id', behavioralId);
+            
+          if (updateError) {
+            console.error('Error updating questions:', updateError);
+          } else {
+            console.log('Successfully appended question in database');
+          }
         }
       }
-      // }
       
       return data;
     } catch (error) {
@@ -298,14 +293,11 @@ export const useBehavioralInterview = () => {
     
     try {
       const updatedAnswers = [...answers];
-      
-      // Ensure the current question is saved in the answers array
-      updatedAnswers[currentQuestionIndex] = answer;
-      
+      updatedAnswers.push(answer);
       setAnswers(updatedAnswers);
       
       if (behavioralId) {
-        // Only update the responses array
+        // Append the new answer to the responses array in the database
         const { data: currentData } = await supabase
           .from('storyline_behaviorals')
           .select('responses')
@@ -314,14 +306,20 @@ export const useBehavioralInterview = () => {
           
         if (currentData) {
           const existingResponses = Array.isArray(currentData.responses) ? currentData.responses : [];
-          existingResponses[currentQuestionIndex] = answer;
+          existingResponses.push(answer);
           
-          await supabase
+          const { error: updateError } = await supabase
             .from('storyline_behaviorals')
             .update({
               responses: existingResponses
             })
             .eq('id', behavioralId);
+            
+          if (updateError) {
+            console.error('Error updating responses:', updateError);
+          } else {
+            console.log('Successfully appended response in database');
+          }
         }
       }
       
