@@ -205,7 +205,24 @@ export const useBehavioralInterview = () => {
   const generateFeedback = async (providedAnswers?: string[]) => {
     setIsLoading(true);
     try {
-      const answersToUse = providedAnswers || answers;
+      let questionsToUse = questions;
+      let answersToUse = providedAnswers || answers;
+      
+      // Fetch latest questions and responses from DB for consistency
+      if (behavioralId) {
+        const { data: dbData, error: dbError } = await supabase
+          .from('storyline_behaviorals')
+          .select('questions, responses')
+          .eq('id', behavioralId)
+          .single();
+        if (dbError) {
+          throw new Error(`Error fetching latest questions/responses: ${dbError.message}`);
+        }
+        if (dbData) {
+          questionsToUse = Array.isArray(dbData.questions) ? dbData.questions.filter((q: any) => typeof q === 'string') as string[] : questionsToUse;
+          answersToUse = Array.isArray(dbData.responses) ? dbData.responses.filter((a: any) => typeof a === 'string') as string[] : answersToUse;
+        }
+      }
       
       if (!answersToUse.every(a => a?.trim())) {
         console.error('One or more answers are empty', answersToUse);
@@ -219,13 +236,13 @@ export const useBehavioralInterview = () => {
         companyDescription: '',
       };
 
-      console.log('Generating feedback for questions:', questions);
+      console.log('Generating feedback for questions:', questionsToUse);
       console.log('Generating feedback for answers:', answersToUse);
 
       const { data: response, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: {
           generateFeedback: true,
-          questions,
+          questions: questionsToUse,
           answers: answersToUse,
           jobTitle: jobData.jobTitle,
           jobDescription: jobData.jobDescription,
@@ -251,7 +268,7 @@ export const useBehavioralInterview = () => {
           .from('storyline_behaviorals')
           .update({
             feedback: response.feedback,
-            questions: questions,  // Ensure questions are saved with feedback
+            questions: questionsToUse,  // Ensure questions are saved with feedback
             responses: answersToUse
           })
           .eq('id', behavioralId);
@@ -273,7 +290,7 @@ export const useBehavioralInterview = () => {
           interviewComplete: true,
           behavioralId,
           feedback: response.feedback,
-          questions
+          questions: questionsToUse
         }
       });
       
