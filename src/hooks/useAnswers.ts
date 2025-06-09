@@ -169,6 +169,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         .eq('id', filterValue(storylineId))
         .single();
 
+      console.log('hello')
       if (!storylineError && storylineJob?.behavioral_id) {
         // Map question vault index to behavioral question index (10-14 -> 0-4)
         const behavioralQuestionIndex = questionIndex - 10;
