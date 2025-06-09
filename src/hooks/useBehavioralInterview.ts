@@ -174,17 +174,30 @@ export const useBehavioralInterview = () => {
       setCurrentQuestionWithLog(questionData);
       
       // Update questions array immediately when question is generated
-      const updatedQuestions = [...questions];
-      updatedQuestions[currentQuestionIndex] = data.question;
-      setQuestions(updatedQuestions);
+      const existingQuestions = [...questions];
+      existingQuestions[currentQuestionIndex] = data.question;
+      setQuestions(existingQuestions);
       
       if (behavioralId) {
-        await supabase
+        // Only update the specific question at the current index
+        const { data: currentData } = await supabase
           .from('storyline_behaviorals')
-          .update({
-            questions: updatedQuestions
-          })
-          .eq('id', behavioralId);
+          .select('questions')
+          .eq('id', behavioralId)
+          .single();
+          
+        if (currentData) {
+          console.log('IN current data, CURRENT QUESTION INDEX IS', currentQuestionIndex, 'current data is', currentData)
+          const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
+          updatedQuestions[currentQuestionIndex] = data.question;
+          
+          await supabase
+            .from('storyline_behaviorals')
+            .update({
+              questions: updatedQuestions
+            })
+            .eq('id', behavioralId);
+        }
       }
       
       return data;
@@ -294,31 +307,37 @@ export const useBehavioralInterview = () => {
     if (!currentQuestion) return;
     
     try {
-      const updatedQuestions = [...questions];
       const updatedAnswers = [...answers];
       
-      // Ensure the current question is saved in the questions array
-      updatedQuestions[currentQuestionIndex] = currentQuestion.question;
+      // Ensure the current question is saved in the answers array
       updatedAnswers[currentQuestionIndex] = answer;
       
-      setQuestions(updatedQuestions);
       setAnswers(updatedAnswers);
       
       if (behavioralId) {
-        // Save both questions and responses to ensure data consistency
-        await supabase
+        // Only update the responses array
+        const { data: currentData } = await supabase
           .from('storyline_behaviorals')
-          .update({
-            questions: updatedQuestions,
-            responses: updatedAnswers
-          })
-          .eq('id', behavioralId);
+          .select('responses')
+          .eq('id', behavioralId)
+          .single();
+          
+        if (currentData) {
+          const existingResponses = Array.isArray(currentData.responses) ? currentData.responses : [];
+          existingResponses[currentQuestionIndex] = answer;
+          
+          await supabase
+            .from('storyline_behaviorals')
+            .update({
+              responses: existingResponses
+            })
+            .eq('id', behavioralId);
+        }
       }
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
-        console.log('Final answer submitted, all questions and answers:', {
-          questions: updatedQuestions,
+        console.log('Final answer submitted, all answers:', {
           answers: updatedAnswers
         });
       } else {

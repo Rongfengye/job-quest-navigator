@@ -10,11 +10,13 @@ import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
+import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { deductTokens } = useUserTokens();
+  const { generateQuestion } = useBehavioralInterview();
   const [formData, setFormData] = React.useState({
     jobTitle: '',
     jobDescription: '',
@@ -156,35 +158,19 @@ const CreateBehavioral = () => {
 
       console.log("Created behavioral interview with ID:", behavioralData.id);
 
-      // Generate the first question
-      const requestBody = {
-        jobTitle: formData.jobTitle,
-        jobDescription: formData.jobDescription,
-        companyName: formData.companyName,
-        companyDescription: formData.companyDescription,
+      // Use generateQuestion instead of direct function call
+      const questionData = await generateQuestion(
+        formData,
         resumeText,
         coverLetterText,
         additionalDocumentsText,
-        previousQuestions: [],
-        previousAnswers: [],
-        questionIndex: 0,
-        generateAudio: true,
-        voice: 'alloy',
-        resumePath: resumePath || ''
-      };
+        resumePath,
+        coverLetterPath,
+        additionalDocumentsPath
+      );
 
-      console.log('Generating first question...');
-      
-      const { data: questionData, error: questionError } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-        body: requestBody,
-      });
-
-      if (questionError) {
-        throw new Error(`Error generating question: ${questionError.message}`);
-      }
-
-      if (!questionData || !questionData.question) {
-        throw new Error('No question was generated');
+      if (!questionData) {
+        throw new Error('Failed to generate first question');
       }
 
       console.log('First question generated successfully');
