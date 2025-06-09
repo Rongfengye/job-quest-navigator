@@ -161,6 +161,7 @@ export const useBehavioralInterview = () => {
       // if (behavioralId) {
       // Only update the specific question at the current index
       const BehavioralIdToUse = existingBehavioralId || behavioralId;
+      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
       const { data: currentData } = await supabase
         .from('storyline_behaviorals')
         .select('questions')
