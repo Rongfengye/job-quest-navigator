@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,7 +89,7 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  const generateQuestion = async (
+  const generateQuestion = useCallback(async (
     formData: {
       jobTitle: string;
       jobDescription: string;
@@ -200,7 +200,7 @@ export const useBehavioralInterview = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentQuestionIndex, questions, answers, behavioralId, toast]);
 
   const generateFeedback = async (providedAnswers?: string[]) => {
     setIsLoading(true);

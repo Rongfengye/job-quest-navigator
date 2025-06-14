@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -23,6 +24,7 @@ const BehavioralInterview = () => {
   const [pageLoaded, setPageLoaded] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
   const [shouldGenerateNext, setShouldGenerateNext] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { resumeText } = useResumeText(null);
   
   // Extract data from location state
@@ -133,14 +135,16 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion]);
 
-  // New useEffect to handle question generation based on currentQuestionIndex
+  // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
     const generateNextQuestion = async () => {
-      if (!shouldGenerateNext || currentQuestionIndex === 0 || currentQuestionIndex >= 5) {
+      // Guard conditions - prevent multiple simultaneous generations
+      if (!shouldGenerateNext || currentQuestionIndex === 0 || currentQuestionIndex >= 5 || isGenerating) {
         return;
       }
 
       console.log(`Generating question for index: ${currentQuestionIndex}`);
+      setIsGenerating(true);
       
       try {
         // Play transition audio before loading next question
@@ -157,6 +161,7 @@ const BehavioralInterview = () => {
           setIsTransitionLoading(false);
           setShowProcessing(false);
           setShouldGenerateNext(false);
+          setIsGenerating(false);
           toast({
             variant: "destructive",
             title: "Insufficient tokens",
@@ -191,11 +196,13 @@ const BehavioralInterview = () => {
         });
         setShowProcessing(false);
         setShouldGenerateNext(false);
+      } finally {
+        setIsGenerating(false);
       }
     };
 
     generateNextQuestion();
-  }, [currentQuestionIndex, shouldGenerateNext, formData, location.state, resumeText, resumePath, coverLetterPath, additionalDocumentsPath, deductTokens, generateQuestion, navigate, toast, setIsTransitionLoading]);
+  }, [currentQuestionIndex, shouldGenerateNext]); // Only depend on essential state
 
   // Modified effect to handle feedback generation when interview is complete
   useEffect(() => {
