@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -21,6 +22,7 @@ const BehavioralInterview = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
   const [showProcessing, setShowProcessing] = useState(false);
+  const [shouldGenerateNext, setShouldGenerateNext] = useState(false);
   const { resumeText } = useResumeText(null);
   
   // Extract data from location state
@@ -131,6 +133,70 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion]);
 
+  // New useEffect to handle question generation based on currentQuestionIndex
+  useEffect(() => {
+    const generateNextQuestion = async () => {
+      if (!shouldGenerateNext || currentQuestionIndex === 0 || currentQuestionIndex >= 5) {
+        return;
+      }
+
+      console.log(`Generating question for index: ${currentQuestionIndex}`);
+      
+      try {
+        // Play transition audio before loading next question
+        try {
+          await playTransitionAudio();
+        } catch (error) {
+          console.error('Error playing transition audio:', error);
+          // Continue even if audio fails
+        }
+        
+        const tokenCheck = await deductTokens(1);
+        if (!tokenCheck?.success) {
+          setIsSubmitting(false);
+          setIsTransitionLoading(false);
+          setShowProcessing(false);
+          setShouldGenerateNext(false);
+          toast({
+            variant: "destructive",
+            title: "Insufficient tokens",
+            description: "You need 1 token to continue to the next question.",
+          });
+          navigate('/behavioral');
+          return;
+        }
+        
+        console.log('About to generate next question with correct index:', currentQuestionIndex);
+        await generateQuestion(
+          formData, 
+          location.state?.resumeText || resumeText, 
+          location.state?.coverLetterText || '',
+          location.state?.additionalDocumentsText || '',
+          resumePath,
+          coverLetterPath,
+          additionalDocumentsPath
+        );
+        
+        console.log('Next question generated, clearing states');
+        setAnswer('');
+        setIsTransitionLoading(false);
+        setShowProcessing(false);
+        setShouldGenerateNext(false);
+      } catch (error) {
+        console.error('Error generating next question:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "There was an error generating the next question. Please try again.",
+        });
+        setShowProcessing(false);
+        setShouldGenerateNext(false);
+      }
+    };
+
+    generateNextQuestion();
+  }, [currentQuestionIndex, shouldGenerateNext, formData, location.state, resumeText, resumePath, coverLetterPath, additionalDocumentsPath, deductTokens, generateQuestion, navigate, toast, setIsTransitionLoading]);
+
   // Modified effect to handle feedback generation when interview is complete
   useEffect(() => {
     // Check if we have 5 answers and the interview is complete (this means question 5 was just submitted)
@@ -215,43 +281,8 @@ const BehavioralInterview = () => {
       if (currentQuestionIndex < 4) {
         console.log('Submitting answer for question', currentQuestionIndex + 1, 'of 5');
         
-        // Play transition audio before loading next question
-        try {
-          await playTransitionAudio();
-        } catch (error) {
-          console.error('Error playing transition audio:', error);
-          // Continue even if audio fails
-        }
-        
-        const tokenCheck = await deductTokens(1);
-        if (!tokenCheck?.success) {
-          setIsSubmitting(false);
-          setIsTransitionLoading(false);
-          setShowProcessing(false);
-          toast({
-            variant: "destructive",
-            title: "Insufficient tokens",
-            description: "You need 1 token to continue to the next question.",
-          });
-          navigate('/behavioral');
-          return;
-        }
-        
-        console.log('About to generate next question');
-        await generateQuestion(
-          formData, 
-          location.state?.resumeText || resumeText, 
-          location.state?.coverLetterText || '',
-          location.state?.additionalDocumentsText || '',
-          resumePath,
-          coverLetterPath,
-          additionalDocumentsPath
-        );
-        
-        console.log('Next question generated, clearing states');
-        setAnswer('');
-        setIsTransitionLoading(false);
-        setShowProcessing(false);
+        // Set flag to generate next question - the useEffect will handle it when currentQuestionIndex updates
+        setShouldGenerateNext(true);
       } else {
         setAnswer('');
         setShowFeedbackModal(true);
