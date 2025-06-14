@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -7,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { useResumeText } from '@/hooks/useResumeText';
-import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
@@ -101,7 +99,6 @@ const BehavioralInterview = () => {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackGenerated, setFeedbackGenerated] = useState(false);
   const [feedbackData, setFeedbackData] = useState(null);
-  const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
   useEffect(() => {
     const initializeInterview = async () => {
@@ -218,49 +215,9 @@ const BehavioralInterview = () => {
             setFeedbackData(feedback);
             setFeedbackGenerated(true);
             
-            // Get the most recent behavioral data to pass to feedback page
-            const { data: behavioralData } = await supabase
-              .from('storyline_behaviorals')
-              .select('job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
-              .eq('id', behavioralId)
-              .single();
-            
-            // Wait a bit longer to ensure data is properly saved to database
-            console.log('Waiting for data to be saved before navigation...');
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            
-            // Verify data is actually saved before navigating
-            const { data: verifyData } = await supabase
-              .from('storyline_behaviorals')
-              .select('feedback, questions, responses')
-              .eq('id', behavioralId)
-              .single();
-            
-            if (verifyData?.feedback) {
-              console.log('Data verified in database, navigating to feedback page');
-              navigate(`/behavioralFeedback?id=${behavioralId}`, { 
-                state: { 
-                  questions,
-                  answers,
-                  behavioralId,
-                  feedback,
-                  interviewData: behavioralData // Include the complete interview data
-                } 
-              });
-            } else {
-              console.warn('Data not found in database, retrying...');
-              // Retry once more after a short delay
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              navigate(`/behavioralFeedback?id=${behavioralId}`, { 
-                state: { 
-                  questions,
-                  answers,
-                  behavioralId,
-                  feedback,
-                  interviewData: behavioralData
-                } 
-              });
-            }
+            // Navigate immediately after feedback generation - let the feedback page handle data loading
+            console.log('Feedback generated, navigating to feedback page');
+            navigate(`/behavioralFeedback?id=${behavioralId}`);
           } else {
             throw new Error('Failed to generate feedback');
           }
@@ -277,7 +234,7 @@ const BehavioralInterview = () => {
       
       generateFeedbackWithAnswers();
     }
-  }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, questions, behavioralId, toast]);
+  }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, behavioralId, toast]);
 
   const handleSubmit = async () => {
     if (!answer.trim()) {

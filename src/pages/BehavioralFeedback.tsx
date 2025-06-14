@@ -38,12 +38,8 @@ const BehavioralFeedback = () => {
   const [isLoadingPractices, setIsLoadingPractices] = useState(false);
 
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
-  const hasFeedbackInState = !!location.state?.feedback;
-  const hasQuestionsInState = !!location.state?.questions && Array.isArray(location.state.questions);
-  const hasResponsesInState = !!location.state?.answers && Array.isArray(location.state.answers);
 
   // Empty placeholder data for the useJobPracticeSubmission hook
-  // We'll use the real data from interviewData when calling submitJobPractice
   const emptyFormData = {
     jobTitle: '',
     jobDescription: '',
@@ -64,9 +60,10 @@ const BehavioralFeedback = () => {
       emptyFileData,
       emptyFileData,
       interviewId,
-      questions // Pass the original behavioral questions
+      questions
     );
 
+  // Handle authentication check
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       toast({
@@ -78,56 +75,60 @@ const BehavioralFeedback = () => {
     }
   }, [authLoading, isAuthenticated, navigate, toast]);
 
+  // Main data fetching effect
   useEffect(() => {
     if (authLoading || !isAuthenticated) {
       return;
     }
     
-    // Always fetch from the database, ignore location.state for questions/answers/feedback
     const fetchInterviewData = async () => {
+      console.log('Starting data fetch, isLoading:', true);
+      setIsLoading(true); // Ensure loading is set to true at start
+      
       if (!interviewId) {
-        // Only set error if we're not loading
-        if (!isLoading) {
-          setError('No interview ID provided');
-        }
+        console.log('No interview ID provided');
+        setError('No interview ID provided');
         setIsLoading(false);
         return;
       }
 
       try {
-        const { data, error } = await supabase
+        console.log('Fetching interview data for ID:', interviewId);
+        const { data, error: fetchError } = await supabase
           .from('storyline_behaviorals')
           .select('questions, feedback, responses, job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
           .eq('id', filterValue(interviewId))
           .single();
 
-        if (error) throw error;
+        if (fetchError) {
+          console.error('Database fetch error:', fetchError);
+          throw fetchError;
+        }
         
         if (!data) {
-          // Only set error after loading is complete
+          console.log('No data found for interview ID');
           setError('No interview data found');
           setIsLoading(false);
           return;
         }
 
-        // Check if feedback is still being generated (data exists but no feedback yet)
+        console.log('Data fetched successfully, checking for feedback...');
+        
+        // If we have data but no feedback yet, keep loading
         if (!data.feedback) {
-          console.log('Feedback not yet available, retrying in 2 seconds...');
-          // Retry after a short delay if feedback is missing
-          setTimeout(() => {
-            if (isLoading) { // Only retry if we're still in loading state
-              fetchInterviewData();
-            }
-          }, 2000);
+          console.log('Feedback not yet available, staying in loading state...');
+          // Don't set isLoading to false - keep showing loading spinner
+          // The user will need to refresh or we could add a retry mechanism
           return;
         }
 
+        console.log('Feedback available, processing data...');
+        
         const questionsData = data.questions as any[];
         const processedQuestions = Array.isArray(questionsData) 
           ? questionsData.map(q => String(q)) 
           : [];
           
-        // Also save responses
         const responsesData = data.responses as any[];
         const processedResponses = Array.isArray(responsesData)
           ? responsesData.map(r => String(r))
@@ -137,13 +138,13 @@ const BehavioralFeedback = () => {
         setResponses(processedResponses);
         setFeedback(data.feedback);
         setInterviewData(data);
+        
+        console.log('Data processing complete, setting isLoading to false');
         setIsLoading(false);
+        
       } catch (err) {
         console.error('Error fetching interview data:', err);
-        // Only set error if we're not in initial loading state
-        if (!isLoading) {
-          setError('Failed to load feedback data');
-        }
+        setError('Failed to load feedback data');
         setIsLoading(false);
         
         toast({
@@ -184,8 +185,7 @@ const BehavioralFeedback = () => {
     fetchRelatedPractices();
   }, [interviewId, isAuthenticated]);
 
-  // Define the function to continue to questions
-  function handleContinueToQuestions() {
+  const handleContinueToQuestions = () => {
     if (!interviewData) {
       toast({
         variant: "destructive",
@@ -196,8 +196,6 @@ const BehavioralFeedback = () => {
     }
 
     try {
-      // The actual resumeFile and other files will be used from the behavioral interview
-      // via the behavioralId, and the original questions will be passed via the hook
       submitJobPractice();
     } catch (error) {
       console.error("Error generating technical questions:", error);
@@ -207,27 +205,32 @@ const BehavioralFeedback = () => {
         description: "Failed to generate technical questions. Please try again."
       });
     }
-  }
+  };
 
+  // Early returns following senior engineer's recommendations
+  
+  // 1. Always check authentication loading first
   if (authLoading) {
     return <Loading message="Checking authentication..." />;
   }
 
+  // 2. If not authenticated, return null (will be redirected)
   if (!isAuthenticated) {
     return null;
   }
 
+  // 3. Check if still loading - this is the key fix
   if (isLoading) {
     return <Loading message="Loading feedback data..." />;
   }
 
-  // Only show error after loading is complete AND we have a genuine error
-  if (error && !isLoading) {
+  // 4. Only show error if NOT loading
+  if (error) {
     return (
       <div className="min-h-screen bg-white p-6 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Missing feedback data</h2>
-          <p className="text-gray-500 mb-4">{error || "Could not load feedback. Returning to interview page."}</p>
+          <p className="text-gray-500 mb-4">{error}</p>
           <Button 
             variant="outline" 
             onClick={() => navigate('/behavioral')}
@@ -239,9 +242,22 @@ const BehavioralFeedback = () => {
     );
   }
 
-  // Don't render the main content if we don't have feedback yet (but also not in error state)
-  if (!feedback && !error) {
-    return <Loading message="Generating feedback..." />;
+  // 5. If no feedback but also no error and not loading, something went wrong
+  if (!feedback) {
+    return (
+      <div className="min-h-screen bg-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">No feedback available</h2>
+          <p className="text-gray-500 mb-4">Feedback data is not available for this interview.</p>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/behavioral')}
+          >
+            Return to Interview Page
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   // Check if there's at least one related practice
