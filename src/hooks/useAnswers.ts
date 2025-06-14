@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -134,13 +133,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       const feedbackArray = Array.isArray(safeData.feedback) ? safeData.feedback : [];
       
       if (responses[behavioralQuestionIndex] && feedbackArray[behavioralQuestionIndex]) {
-        // Ensure we're passing strings to the function
-        const responseText = typeof responses[behavioralQuestionIndex] === 'string' 
-          ? responses[behavioralQuestionIndex] 
-          : String(responses[behavioralQuestionIndex]);
-        
         const iteration = transformBehavioralDataToIteration(
-          responseText,
+          responses[behavioralQuestionIndex],
           feedbackArray[behavioralQuestionIndex],
           safeData.created_at || new Date().toISOString()
         );
