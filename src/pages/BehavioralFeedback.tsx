@@ -86,7 +86,10 @@ const BehavioralFeedback = () => {
     // Always fetch from the database, ignore location.state for questions/answers/feedback
     const fetchInterviewData = async () => {
       if (!interviewId) {
-        setError('No interview ID provided');
+        // Only set error if we're not loading
+        if (!isLoading) {
+          setError('No interview ID provided');
+        }
         setIsLoading(false);
         return;
       }
@@ -100,9 +103,22 @@ const BehavioralFeedback = () => {
 
         if (error) throw error;
         
-        if (!data || !data.questions || !data.feedback) {
-          setError('No feedback data found for this interview');
+        if (!data) {
+          // Only set error after loading is complete
+          setError('No interview data found');
           setIsLoading(false);
+          return;
+        }
+
+        // Check if feedback is still being generated (data exists but no feedback yet)
+        if (!data.feedback) {
+          console.log('Feedback not yet available, retrying in 2 seconds...');
+          // Retry after a short delay if feedback is missing
+          setTimeout(() => {
+            if (isLoading) { // Only retry if we're still in loading state
+              fetchInterviewData();
+            }
+          }, 2000);
           return;
         }
 
@@ -124,7 +140,10 @@ const BehavioralFeedback = () => {
         setIsLoading(false);
       } catch (err) {
         console.error('Error fetching interview data:', err);
-        setError('Failed to load feedback data');
+        // Only set error if we're not in initial loading state
+        if (!isLoading) {
+          setError('Failed to load feedback data');
+        }
         setIsLoading(false);
         
         toast({
@@ -202,7 +221,8 @@ const BehavioralFeedback = () => {
     return <Loading message="Loading feedback data..." />;
   }
 
-  if (error || !feedback) {
+  // Only show error after loading is complete AND we have a genuine error
+  if (error && !isLoading) {
     return (
       <div className="min-h-screen bg-white p-6 flex items-center justify-center">
         <div className="text-center">
@@ -217,6 +237,11 @@ const BehavioralFeedback = () => {
         </div>
       </div>
     );
+  }
+
+  // Don't render the main content if we don't have feedback yet (but also not in error state)
+  if (!feedback && !error) {
+    return <Loading message="Generating feedback..." />;
   }
 
   // Check if there's at least one related practice

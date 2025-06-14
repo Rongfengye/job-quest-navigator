@@ -224,16 +224,43 @@ const BehavioralInterview = () => {
               .select('job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
               .eq('id', behavioralId)
               .single();
-              
-            navigate(`/behavioralFeedback?id=${behavioralId}`, { 
-              state: { 
-                questions,
-                answers,
-                behavioralId,
-                feedback,
-                interviewData: behavioralData // Include the complete interview data
-              } 
-            });
+            
+            // Wait a bit longer to ensure data is properly saved to database
+            console.log('Waiting for data to be saved before navigation...');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            // Verify data is actually saved before navigating
+            const { data: verifyData } = await supabase
+              .from('storyline_behaviorals')
+              .select('feedback, questions, responses')
+              .eq('id', behavioralId)
+              .single();
+            
+            if (verifyData?.feedback) {
+              console.log('Data verified in database, navigating to feedback page');
+              navigate(`/behavioralFeedback?id=${behavioralId}`, { 
+                state: { 
+                  questions,
+                  answers,
+                  behavioralId,
+                  feedback,
+                  interviewData: behavioralData // Include the complete interview data
+                } 
+              });
+            } else {
+              console.warn('Data not found in database, retrying...');
+              // Retry once more after a short delay
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              navigate(`/behavioralFeedback?id=${behavioralId}`, { 
+                state: { 
+                  questions,
+                  answers,
+                  behavioralId,
+                  feedback,
+                  interviewData: behavioralData
+                } 
+              });
+            }
           } else {
             throw new Error('Failed to generate feedback');
           }
