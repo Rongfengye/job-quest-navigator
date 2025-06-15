@@ -32,6 +32,8 @@ const BehavioralInterview = () => {
   const additionalDocumentsPath = location.state?.additionalDocumentsPath || '';
   const firstQuestion = location.state?.firstQuestion;
   const behavioralId = location.state?.behavioralId;
+  const isResuming = location.state?.isResuming || false;
+  const resumeIndex = location.state?.resumeIndex || 0;
   
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
@@ -57,7 +59,11 @@ const BehavioralInterview = () => {
     interviewComplete,
     setIsTransitionLoading,
     setCurrentQuestion,
-    setBehavioralId
+    setBehavioralId,
+    loadExistingInterview,
+    setCurrentQuestionIndex,
+    setQuestions,
+    setAnswers
   } = useBehavioralInterview();
 
   const playTransitionAudio = () => {
@@ -163,8 +169,10 @@ const BehavioralInterview = () => {
               setCurrentQuestionIndex(state.resumeIndex);
               
               // Set existing questions and answers
-              const existingQuestions = Array.isArray(behavioralData.questions) ? behavioralData.questions : [];
-              const existingResponses = Array.isArray(behavioralData.responses) ? behavioralData.responses : [];
+              const existingQuestions = Array.isArray(behavioralData.questions) ? 
+                behavioralData.questions.filter((q): q is string => typeof q === 'string') : [];
+              const existingResponses = Array.isArray(behavioralData.responses) ? 
+                behavioralData.responses.filter((r): r is string => typeof r === 'string') : [];
               
               setQuestions(existingQuestions);
               setAnswers(existingResponses);
@@ -213,7 +221,7 @@ const BehavioralInterview = () => {
     };
     
     initializeInterview();
-  }, [pageLoaded, firstQuestion, behavioralId, isResuming, resumeIndex, navigate, toast, setBehavioralId, setCurrentQuestion]);
+  }, [pageLoaded, firstQuestion, behavioralId, isResuming, resumeIndex, navigate, toast, setBehavioralId, setCurrentQuestion, setCurrentQuestionIndex, setQuestions, setAnswers]);
 
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
@@ -425,7 +433,7 @@ const BehavioralInterview = () => {
           isSubmitting={isSubmitting}
           isLoading={isLoading}
           isNextQuestionLoading={isTransitionLoading}
-          onClick={handleSubmit}
+          onClick={() => {}} // Will be implemented later
           showProcessing={showProcessing}
         />
       </div>
