@@ -1,358 +1,215 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Question } from '@/hooks/useQuestionData';
-import { Json } from '@/integrations/supabase/types';
-import { useUserTokens } from '@/hooks/useUserTokens';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
-import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
-import { transformIterations, parseOpenAIResponse } from '@/utils/answerUtils';
 
-export interface AnswerIteration {
-  answerText: string;
-  timestamp: string;
-  feedback?: {
-    pros: string[];
-    cons: string[];
-    guidelines: string;
-    improvementSuggestions: string;
-    score: number;
-  };
-  [key: string]: any;
+interface Answer {
+  id: string;
+  response: string;
+  feedback: any;
+  created_at: string;
+  updated_at: string;
+  question_id: string;
+  user_id: string;
 }
 
-interface AnswerData {
-  id?: string;
-  storyline_id: string;
-  question_index: number;
+interface Question {
+  id: string;
   question: string;
-  answer: string | null;
-  iterations: AnswerIteration[];
-  type?: 'technical' | 'behavioral';
+  type: string;
+  difficulty: string;
+  category: string;
+  job_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export const useAnswers = (storylineId: string, questionIndex: number) => {
+export const useAnswers = (questionId: string) => {
+  const [currentAnswer, setCurrentAnswer] = useState('');
   const { toast } = useToast();
-  const { deductTokens, fetchTokens } = useUserTokens();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [answer, setAnswer] = useState<string>('');
-  const [question, setQuestion] = useState<Question | null>(null);
-  const [answerRecord, setAnswerRecord] = useState<AnswerData | null>(null);
-  const [iterations, setIterations] = useState<AnswerIteration[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  // Fetch question and answer data on initial load
-  useEffect(() => {
-    const fetchQuestionAndAnswer = async () => {
-      if (!storylineId) {
-        setIsLoading(false);
-        return;
-      }
+  // Fetch answers for this question
+  const { data: answers, isLoading: answersLoading, error: answersError } = useQuery({
+    queryKey: ['answers', questionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('storyline_answers')
+        .select('*')
+        .eq('question_id', questionId)
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      return data as Answer[];
+    },
+    enabled: !!questionId
+  });
 
-      try {
-        const questionData = await fetchQuestionData();
-        await fetchAnswerData(questionData);
-      } catch (error) {
-        console.error('Error fetching question and answer:', error);
-        setError(error instanceof Error ? error.message : "Failed to load question");
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load question",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchQuestionAndAnswer();
-  }, [storylineId, questionIndex, toast]);
-
-  // Fetch question data from storyline_jobs
-  const fetchQuestionData = async (): Promise<Question | null> => {
-    const { data: storylineData, error: storylineError } = await supabase
-      .from('storyline_jobs')
-      .select('openai_response')
-      .eq('id', filterValue(storylineId))
-      .single();
-
-    if (storylineError) throw storylineError;
-
-    if (storylineData?.openai_response) {
-      const safeStorylineData = safeDatabaseData(storylineData);
-      let parsedResponse;
-      if (typeof safeStorylineData.openai_response === 'string') {
-        parsedResponse = JSON.parse(safeStorylineData.openai_response);
-      } else {
-        parsedResponse = safeStorylineData.openai_response;
-      }
-
-      const questions = parseOpenAIResponse(parsedResponse);
-
-      if (questions && questions.length > questionIndex) {
-        const questionData = questions[questionIndex];
-        setQuestion(questionData);
-        return questionData;
-      }
-    }
-    return null;
-  };
-
-  // Transform behavioral data to answer iteration format
-  const transformBehavioralDataToIteration = (response: string, feedback: any, timestamp: string): AnswerIteration => {
-    return {
-      answerText: response,
-      timestamp: timestamp,
-      feedback: {
-        pros: feedback.pros || [],
-        cons: feedback.cons || [],
-        guidelines: feedback.guidelines || '',
-        improvementSuggestions: feedback.improvementSuggestions || '',
-        score: feedback.score || 0
-      }
-    };
-  };
-
-  // Fetch behavioral interview data for original behavioral questions
-  const fetchBehavioralData = async (behavioralId: string, behavioralQuestionIndex: number) => {
-    const { data: behavioralData, error: behavioralError } = await supabase
-      .from('storyline_behaviorals')
-      .select('responses, feedback, created_at')
-      .eq('id', filterValue(behavioralId))
-      .single();
-
-    if (behavioralError) {
-      console.error('Error fetching behavioral data:', behavioralError);
-      return null;
-    }
-
-    if (behavioralData) {
-      const safeData = safeDatabaseData(behavioralData);
-      const responses = Array.isArray(safeData.responses) ? safeData.responses : [];
-      const feedbackArray = Array.isArray(safeData.feedback) ? safeData.feedback : [];
-      
-      if (responses[behavioralQuestionIndex] && feedbackArray[behavioralQuestionIndex]) {
-        const iteration = transformBehavioralDataToIteration(
-          responses[behavioralQuestionIndex],
-          feedbackArray[behavioralQuestionIndex],
-          safeData.created_at || new Date().toISOString()
-        );
-        return [iteration];
-      }
-    }
-    
-    return [];
-  };
-
-  // Fetch answer data from storyline_job_questions
-  const fetchAnswerData = async (questionData?: Question | null) => {
-    // First try to get existing answer data
-    const { data: answerData, error: answerError } = await supabase
-      .from('storyline_job_questions')
-      .select('*')
-      .eq('storyline_id', filterValue(storylineId))
-      .eq('question_index', questionIndex)
-      .single();
-
-    if (answerError && answerError.code !== 'PGRST116') {
-      throw answerError;
-    }
-
-    // Check if this is an original behavioral question and if we need to preload data
-    const currentQuestion = questionData || question;
-    if (!answerData && currentQuestion?.type === 'original-behavioral') {
-      // Get the storyline job to find the behavioral_id
-      const { data: storylineJob, error: storylineError } = await supabase
-        .from('storyline_jobs')
-        .select('behavioral_id')
-        .eq('id', filterValue(storylineId))
+  // Fetch question details
+  const { data: question, isLoading: questionLoading, error: questionError } = useQuery({
+    queryKey: ['question', questionId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('storyline_questions')
+        .select('*')
+        .eq('id', questionId)
         .single();
+        
+      if (error) throw error;
+      return data as Question;
+    },
+    enabled: !!questionId
+  });
 
-      if (!storylineError && storylineJob?.behavioral_id) {
-        // Map question vault index to behavioral question index (10-14 -> 0-4)
-        const behavioralQuestionIndex = questionIndex - 10;
+  // Submit answer mutation
+  const submitAnswerMutation = useMutation({
+    mutationFn: async (answerText: string) => {
+      const { data, error } = await supabase
+        .from('storyline_answers')
+        .insert({
+          question_id: questionId,
+          response: answerText
+        })
+        .select()
+        .single();
         
-        if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
-          // Ensure behavioral_id is a string with proper type checking
-          const behavioralId = storylineJob.behavioral_id;
-          if (typeof behavioralId === 'string') {
-            const behavioralIterations = await fetchBehavioralData(
-              behavioralId, 
-              behavioralQuestionIndex
-            );
-            
-            if (behavioralIterations && behavioralIterations.length > 0) {
-              setIterations(behavioralIterations);
-              setAnswer(behavioralIterations[0].answerText);
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    if (answerData) {
-      const safeAnswerData = safeDatabaseData(answerData);
-      const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
-        ? safeAnswerData.iterations 
-        : typeof safeAnswerData.iterations === 'string' 
-          ? JSON.parse(safeAnswerData.iterations)
-          : (safeAnswerData.iterations as any)?.length 
-            ? (safeAnswerData.iterations as any)
-            : [];
-      
-      const transformedIterations = transformIterations(parsedIterations);
-            
-      setIterations(transformedIterations);
-      setAnswerRecord({
-        id: safeAnswerData.id,
-        storyline_id: safeAnswerData.storyline_id,
-        question_index: safeAnswerData.question_index,
-        question: safeAnswerData.question,
-        answer: safeAnswerData.answer,
-        iterations: transformedIterations,
-        type: safeAnswerData.type as 'technical' | 'behavioral' | undefined
-      });
-      
-      setAnswer(safeAnswerData.answer || '');
-    }
-  };
-
-  // Save answer to database
-  const saveAnswer = async (answerText: string, feedback?: FeedbackData | null) => {
-    if (!storylineId || !question) return;
-    
-    setIsSaving(true);
-    
-    try {
-      const now = new Date().toISOString();
-      let currentIterations = [...iterations];
-      
-      if (answerText.trim() !== '') {
-        console.log('Creating new iteration with feedback:', feedback);
-        const newIteration: AnswerIteration = { 
-          answerText: answerText, 
-          timestamp: now,
-        };
-        
-        if (feedback) {
-          newIteration.feedback = feedback;
-        }
-        
-        currentIterations = [...currentIterations, newIteration];
-        
-        setIterations(currentIterations);
-        console.log('Updated iterations with new entry:', currentIterations);
-      }
-      
-      // Update existing record
-      if (answerRecord?.id) {
-        await updateExistingAnswer(answerRecord.id, answerText, currentIterations);
-      } else {
-        // Create a new record
-        await createNewAnswer(answerText, currentIterations);
-      }
-      
-      setAnswer(answerText);
-      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answers', questionId] });
+      setCurrentAnswer('');
       toast({
-        title: "Success",
-        description: "Your answer has been saved",
+        title: "Answer submitted",
+        description: "Your answer has been saved successfully.",
       });
-    } catch (error) {
-      console.error('Error saving answer:', error);
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to save your answer",
+        description: "Failed to submit answer. Please try again.",
       });
-    } finally {
-      setIsSaving(false);
+      console.error('Error submitting answer:', error);
     }
-  };
+  });
 
-  const updateExistingAnswer = async (id: string, answerText: string, currentIterations: AnswerIteration[]) => {
-    const { error } = await supabase
-      .from('storyline_job_questions')
-      .update({
-        answer: answerText,
-        iterations: JSON.stringify(currentIterations),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', filterValue(id));
+  // Generate feedback mutation
+  const generateFeedbackMutation = useMutation({
+    mutationFn: async (answerId: string) => {
+      const { data, error } = await supabase.functions.invoke('storyline-guided-response-generator', {
+        body: {
+          type: 'generate-feedback',
+          answerId: answerId
+        }
+      });
       
-    if (error) throw error;
-    
-    setAnswerRecord({
-      ...answerRecord!,
-      answer: answerText,
-      iterations: currentIterations
-    });
-  };
-
-  const createNewAnswer = async (answerText: string, currentIterations: AnswerIteration[]) => {
-    console.log('🪙 Deducting 1 token for creating a new question record');
-    const tokenCheck = await deductTokens(1);
-    
-    if (!tokenCheck?.success) {
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, answerId) => {
+      queryClient.invalidateQueries({ queryKey: ['answers', questionId] });
+      
+      // Update the specific answer with feedback
+      const updatedAnswers = answers?.map(answer => 
+        answer.id === answerId 
+          ? { ...answer, feedback: data.feedback }
+          : answer
+      );
+      
+      if (updatedAnswers) {
+        queryClient.setQueryData(['answers', questionId], updatedAnswers);
+      }
+      
+      toast({
+        title: "Feedback generated",
+        description: "Your answer feedback has been generated.",
+      });
+    },
+    onError: (error) => {
       toast({
         variant: "destructive",
-        title: "Insufficient tokens",
-        description: "You don't have enough tokens to save a new answer."
+        title: "Error",
+        description: "Failed to generate feedback. Please try again.",
+      });
+      console.error('Error generating feedback:', error);
+    }
+  });
+
+  // Delete answer mutation
+  const deleteAnswerMutation = useMutation({
+    mutationFn: async (answerId: string) => {
+      const { error } = await supabase
+        .from('storyline_answers')
+        .delete()
+        .eq('id', answerId);
+        
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answers', questionId] });
+      toast({
+        title: "Answer deleted",
+        description: "Your answer has been deleted successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete answer. Please try again.",
+      });
+      console.error('Error deleting answer:', error);
+    }
+  });
+
+  const submitAnswer = () => {
+    if (!currentAnswer.trim()) {
+      toast({
+        variant: "destructive",
+        title: "Empty answer",
+        description: "Please provide an answer before submitting.",
       });
       return;
     }
     
-    const { data, error } = await supabase
-      .from('storyline_job_questions')
-      .insert({
-        storyline_id: storylineId,
-        question_index: questionIndex,
-        question: question!.question,
-        answer: answerText,
-        iterations: currentIterations.length ? (currentIterations as unknown as Json) : [],
-        type: question!.type
-      })
-      .select()
-      .single();
-      
-    if (error) throw error;
-    
-    fetchTokens();
-    
-    if (data) {
-      const safeData = safeDatabaseData(data);
-      const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
-        ? safeData.iterations 
-        : typeof safeData.iterations === 'string' 
-          ? JSON.parse(safeData.iterations)
-          : (safeData.iterations as any)?.length 
-            ? (safeData.iterations as any)
-            : [];
-      
-      setIterations(parsedIterations);      
-      setAnswerRecord({
-        id: safeData.id,
-        storyline_id: safeData.storyline_id,
-        question_index: safeData.question_index,
-        question: safeData.question,
-        answer: safeData.answer,
-        iterations: parsedIterations,
-        type: safeData.type as 'technical' | 'behavioral' | undefined
-      });
-    }
+    submitAnswerMutation.mutate(currentAnswer);
   };
 
-  return { 
-    isLoading, 
-    isSaving, 
-    question, 
-    answer, 
-    answerRecord,
-    iterations,
-    setAnswer, 
-    saveAnswer, 
-    error 
+  const generateFeedback = (answerId: string) => {
+    generateFeedbackMutation.mutate(answerId);
+  };
+
+  const deleteAnswer = (answerId: string) => {
+    deleteAnswerMutation.mutate(answerId);
+  };
+
+  const isLoading = answersLoading || questionLoading;
+  const error = answersError || questionError;
+
+  // Get the most recent answer for auto-population
+  const mostRecentAnswer = answers && answers.length > 0 ? answers[0] : null;
+
+  // Auto-populate current answer with most recent if exists and current is empty
+  useEffect(() => {
+    if (mostRecentAnswer && !currentAnswer) {
+      setCurrentAnswer(mostRecentAnswer.response);
+    }
+  }, [mostRecentAnswer, currentAnswer]);
+
+  return {
+    answers: answers || [],
+    question,
+    currentAnswer,
+    setCurrentAnswer,
+    submitAnswer,
+    generateFeedback,
+    deleteAnswer,
+    isLoading,
+    error,
+    isSubmitting: submitAnswerMutation.isPending,
+    isGeneratingFeedback: generateFeedbackMutation.isPending,
+    isDeletingAnswer: deleteAnswerMutation.isPending,
+    mostRecentAnswer
   };
 };
