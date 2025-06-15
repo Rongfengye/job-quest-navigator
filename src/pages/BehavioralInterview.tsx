@@ -33,8 +33,14 @@ const BehavioralInterview = () => {
   const firstQuestion = location.state?.firstQuestion;
   const behavioralId = location.state?.behavioralId;
   
+  // Add missing variables for resume functionality
+  const isResuming = location.state?.isResuming || false;
+  const resumeIndex = location.state?.resumeIndex || 0;
+  
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
+  console.log("BehavioralInterview - Is resuming:", isResuming);
+  console.log("BehavioralInterview - Resume index:", resumeIndex);
   
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
@@ -160,16 +166,9 @@ const BehavioralInterview = () => {
               
               // Set up resume state
               setBehavioralId(behavioralId);
-              setCurrentQuestionIndex(state.resumeIndex);
-              
-              // Set existing questions and answers
-              const existingQuestions = Array.isArray(behavioralData.questions) ? behavioralData.questions : [];
-              const existingResponses = Array.isArray(behavioralData.responses) ? behavioralData.responses : [];
-              
-              setQuestions(existingQuestions);
-              setAnswers(existingResponses);
               
               // If we have a question at the resume index, set it
+              const existingQuestions = Array.isArray(behavioralData.questions) ? behavioralData.questions : [];
               if (existingQuestions[state.resumeIndex]) {
                 setCurrentQuestion({
                   question: existingQuestions[state.resumeIndex],
@@ -215,6 +214,7 @@ const BehavioralInterview = () => {
     initializeInterview();
   }, [pageLoaded, firstQuestion, behavioralId, isResuming, resumeIndex, navigate, toast, setBehavioralId, setCurrentQuestion]);
 
+  
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
     const generateNextQuestion = async () => {
