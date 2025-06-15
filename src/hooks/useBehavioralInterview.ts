@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -104,10 +103,8 @@ export const useBehavioralInterview = () => {
       if (error) throw error;
       
       if (data) {
-        const existingQuestions = Array.isArray(data.questions) ? 
-          data.questions.filter((q): q is string => typeof q === 'string') : [];
-        const existingResponses = Array.isArray(data.responses) ? 
-          data.responses.filter((r): r is string => typeof r === 'string') : [];
+        const existingQuestions = Array.isArray(data.questions) ? data.questions : [];
+        const existingResponses = Array.isArray(data.responses) ? data.responses : [];
         
         setQuestions(existingQuestions);
         setAnswers(existingResponses);
@@ -412,117 +409,6 @@ export const useBehavioralInterview = () => {
     setIsTransitionLoading(false);
   };
 
-  const generateQuestion = useCallback(async (
-    formData: {
-      jobTitle: string;
-      jobDescription: string;
-      companyName: string;
-      companyDescription: string;
-    },
-    resumeText: string,
-    coverLetterText: string = '',
-    additionalDocumentsText: string = '',
-    resumePath: string = '',
-    coverLetterPath: string = '',
-    additionalDocumentsPath: string = '',
-    existingBehavioralId?: string
-  ) => {
-    setIsLoading(true);
-    
-    try {
-      // If we have an existing behavioralId, use it
-      if (existingBehavioralId) {
-        setBehavioralId(existingBehavioralId);
-      }
-      
-      const requestBody = {
-        jobTitle: formData.jobTitle,
-        jobDescription: formData.jobDescription,
-        companyName: formData.companyName,
-        companyDescription: formData.companyDescription,
-        resumeText,
-        coverLetterText,
-        additionalDocumentsText,
-        previousQuestions: questions,
-        previousAnswers: answers,
-        questionIndex: currentQuestionIndex,
-        generateAudio: true,
-        voice: 'alloy',
-        resumePath: resumePath || ''
-      };
-      
-      console.log(`Generating question at index: ${currentQuestionIndex}`);
-      console.log(`Using behavioral ID: ${existingBehavioralId || behavioralId}`);
-      
-      const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
-        body: requestBody,
-      });
-      
-      if (error) {
-        throw new Error(`Error generating question: ${error.message}`);
-      }
-      
-      if (!data || !data.question) {
-        throw new Error('No question was generated');
-      }
-      
-      console.log('Question generated:', data.question);
-      
-      const questionData: BehavioralQuestionData = {
-        ...data,
-        storylineId: existingBehavioralId || behavioralId || undefined
-      };
-      
-      setCurrentQuestionWithLog(questionData);
-      
-      // Update questions array immediately when question is generated
-      const existingQuestions = [...questions];
-      existingQuestions.push(data.question);
-      setQuestions(existingQuestions);
-      
-      const behavioralIdToUse = existingBehavioralId || behavioralId;
-      
-      if (behavioralIdToUse) {
-        // Append the new question to the questions array in the database
-        const { data: currentData } = await supabase
-          .from('storyline_behaviorals')
-          .select('questions')
-          .eq('id', behavioralIdToUse)
-          .single();
-          
-        if (currentData) {
-          const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
-          updatedQuestions.push(data.question);
-          
-          const { error: updateError } = await supabase
-            .from('storyline_behaviorals')
-            .update({
-              questions: updatedQuestions
-            })
-            .eq('id', behavioralIdToUse);
-            
-          if (updateError) {
-            console.error('Error updating questions:', updateError);
-          } else {
-            console.log('Successfully appended question in database');
-          }
-        }
-      }
-      
-      return data;
-    } catch (error) {
-      console.error('Error in generateQuestion:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to generate interview question",
-      });
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentQuestionIndex, questions, answers, behavioralId, toast]);
-
   return {
     isLoading,
     isInitialLoading,
@@ -541,9 +427,6 @@ export const useBehavioralInterview = () => {
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
     setBehavioralId,
-    loadExistingInterview,
-    setCurrentQuestionIndex,
-    setQuestions,
-    setAnswers
+    loadExistingInterview
   };
 };

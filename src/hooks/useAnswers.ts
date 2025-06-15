@@ -133,12 +133,8 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       const feedbackArray = Array.isArray(safeData.feedback) ? safeData.feedback : [];
       
       if (responses[behavioralQuestionIndex] && feedbackArray[behavioralQuestionIndex]) {
-        const responseText = typeof responses[behavioralQuestionIndex] === 'string' 
-          ? responses[behavioralQuestionIndex] as string
-          : '';
-        
         const iteration = transformBehavioralDataToIteration(
-          responseText,
+          responses[behavioralQuestionIndex],
           feedbackArray[behavioralQuestionIndex],
           safeData.created_at || new Date().toISOString()
         );
@@ -356,9 +352,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     answerRecord,
     iterations,
     setAnswer, 
-    saveAnswer: async (answerText: string, feedback?: FeedbackData | null) => {
-      // Implementation will be kept the same
-    }, 
+    saveAnswer, 
     error 
   };
 };
