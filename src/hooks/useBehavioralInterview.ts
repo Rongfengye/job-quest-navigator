@@ -103,13 +103,8 @@ export const useBehavioralInterview = () => {
       if (error) throw error;
       
       if (data) {
-        // Properly cast Json arrays to string arrays with type filtering
-        const existingQuestions = Array.isArray(data.questions) 
-          ? data.questions.filter((q): q is string => typeof q === 'string')
-          : [];
-        const existingResponses = Array.isArray(data.responses) 
-          ? data.responses.filter((r): r is string => typeof r === 'string')
-          : [];
+        const existingQuestions = Array.isArray(data.questions) ? data.questions : [];
+        const existingResponses = Array.isArray(data.responses) ? data.responses : [];
         
         setQuestions(existingQuestions);
         setAnswers(existingResponses);
@@ -432,9 +427,6 @@ export const useBehavioralInterview = () => {
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
     setBehavioralId,
-    loadExistingInterview,
-    setCurrentQuestionIndex,
-    setQuestions,
-    setAnswers
+    loadExistingInterview
   };
 };
