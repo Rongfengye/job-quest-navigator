@@ -17,11 +17,14 @@ export const analyzeInterviewState = (
   const totalQuestions = questionsArray.length;
   const totalResponses = responsesArray.length;
   
-  // Interview is complete if feedback exists and we have 5 responses
-  const isComplete = !!feedback && totalResponses >= 5;
+  // Interview is complete if feedback exists as a non-empty array or object with content
+  const isComplete = feedback && (
+    (Array.isArray(feedback) && feedback.length > 0) ||
+    (typeof feedback === 'object' && !Array.isArray(feedback) && Object.keys(feedback).length > 0)
+  ) && totalResponses >= 5;
   
-  // Can resume if we have questions but not all responses, and no feedback yet
-  const canResume = totalQuestions > 0 && totalResponses < 5 && !feedback;
+  // Can resume if we have questions but not all responses, and no actual feedback yet
+  const canResume = totalQuestions > 0 && totalResponses < 5 && !isComplete;
   
   // Resume from the next question after the last response
   const resumeIndex = Math.max(0, totalResponses);

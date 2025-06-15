@@ -168,8 +168,10 @@ const BehavioralInterview = () => {
               setBehavioralId(behavioralId);
               
               // If we have a question at the resume index, set it
-              const existingQuestions = Array.isArray(behavioralData.questions) ? behavioralData.questions : [];
-              if (existingQuestions[state.resumeIndex]) {
+              const existingQuestions = Array.isArray(behavioralData.questions) 
+                ? behavioralData.questions.filter((q): q is string => typeof q === 'string')
+                : [];
+              if (existingQuestions[state.resumeIndex] && typeof existingQuestions[state.resumeIndex] === 'string') {
                 setCurrentQuestion({
                   question: existingQuestions[state.resumeIndex],
                   questionIndex: state.resumeIndex,

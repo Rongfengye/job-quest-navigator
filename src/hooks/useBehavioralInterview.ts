@@ -103,8 +103,13 @@ export const useBehavioralInterview = () => {
       if (error) throw error;
       
       if (data) {
-        const existingQuestions = Array.isArray(data.questions) ? data.questions : [];
-        const existingResponses = Array.isArray(data.responses) ? data.responses : [];
+        // Properly type cast the JSON arrays to string arrays
+        const existingQuestions = Array.isArray(data.questions) 
+          ? data.questions.filter((q): q is string => typeof q === 'string')
+          : [];
+        const existingResponses = Array.isArray(data.responses) 
+          ? data.responses.filter((r): r is string => typeof r === 'string')
+          : [];
         
         setQuestions(existingQuestions);
         setAnswers(existingResponses);
@@ -264,8 +269,13 @@ export const useBehavioralInterview = () => {
           throw new Error(`Error fetching latest questions/responses: ${dbError.message}`);
         }
         if (dbData) {
-          questionsToUse = Array.isArray(dbData.questions) ? dbData.questions.filter((q: any) => typeof q === 'string') as string[] : questionsToUse;
-          answersToUse = Array.isArray(dbData.responses) ? dbData.responses.filter((a: any) => typeof a === 'string') as string[] : answersToUse;
+          // Properly filter and type cast JSON arrays
+          questionsToUse = Array.isArray(dbData.questions) 
+            ? dbData.questions.filter((q): q is string => typeof q === 'string')
+            : questionsToUse;
+          answersToUse = Array.isArray(dbData.responses) 
+            ? dbData.responses.filter((a): a is string => typeof a === 'string')
+            : answersToUse;
         }
       }
       
