@@ -284,15 +284,6 @@ export const useBehavioralInterview = () => {
         title: "Feedback Generated",
         description: "Your interview responses have been evaluated.",
       });
-
-      navigate('/behavioral-feedback', { 
-        state: { 
-          interviewComplete: true,
-          behavioralId,
-          feedback: response.feedback,
-          questions: questionsToUse
-        }
-      });
       
       return response.feedback;
     } catch (error) {
