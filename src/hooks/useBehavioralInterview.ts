@@ -89,6 +89,53 @@ export const useBehavioralInterview = () => {
     }
   };
 
+  // Add method to load existing interview data
+  const loadExistingInterview = useCallback(async (behavioralId: string) => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('storyline_behaviorals')
+        .select('*')
+        .eq('id', behavioralId)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data) {
+        const existingQuestions = Array.isArray(data.questions) ? data.questions : [];
+        const existingResponses = Array.isArray(data.responses) ? data.responses : [];
+        
+        setQuestions(existingQuestions);
+        setAnswers(existingResponses);
+        setBehavioralId(behavioralId);
+        
+        console.log('Loaded existing interview data:', {
+          questions: existingQuestions.length,
+          responses: existingResponses.length
+        });
+        
+        return {
+          questions: existingQuestions,
+          responses: existingResponses,
+          questionsCount: existingQuestions.length,
+          responsesCount: existingResponses.length
+        };
+      }
+    } catch (error) {
+      console.error('Error loading existing interview:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load interview data",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+    
+    return null;
+  }, [toast]);
+
   const generateQuestion = useCallback(async (
     formData: {
       jobTitle: string;
@@ -129,7 +176,7 @@ export const useBehavioralInterview = () => {
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
-      console.log(`Using resume path: ${resumePath}`);
+      console.log(`Using behavioral ID: ${existingBehavioralId || behavioralId}`);
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
@@ -144,11 +191,10 @@ export const useBehavioralInterview = () => {
       }
       
       console.log('Question generated:', data.question);
-      console.log('Audio data received:', data.audio ? 'Yes' : 'No');
       
       const questionData: BehavioralQuestionData = {
         ...data,
-        storylineId: behavioralId || undefined
+        storylineId: existingBehavioralId || behavioralId || undefined
       };
       
       setCurrentQuestionWithLog(questionData);
@@ -158,15 +204,14 @@ export const useBehavioralInterview = () => {
       existingQuestions.push(data.question);
       setQuestions(existingQuestions);
       
-      const BehavioralIdToUse = existingBehavioralId || behavioralId;
+      const behavioralIdToUse = existingBehavioralId || behavioralId;
       
-      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
-      if (BehavioralIdToUse) {
+      if (behavioralIdToUse) {
         // Append the new question to the questions array in the database
         const { data: currentData } = await supabase
           .from('storyline_behaviorals')
           .select('questions')
-          .eq('id', BehavioralIdToUse)
+          .eq('id', behavioralIdToUse)
           .single();
           
         if (currentData) {
@@ -178,7 +223,7 @@ export const useBehavioralInterview = () => {
             .update({
               questions: updatedQuestions
             })
-            .eq('id', BehavioralIdToUse);
+            .eq('id', behavioralIdToUse);
             
           if (updateError) {
             console.error('Error updating questions:', updateError);
@@ -381,6 +426,7 @@ export const useBehavioralInterview = () => {
     behavioralId,
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
-    setBehavioralId
+    setBehavioralId,
+    loadExistingInterview
   };
 };
