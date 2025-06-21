@@ -27,20 +27,21 @@ const BehavioralInterview = () => {
   const [resumedFormData, setResumedFormData] = useState<any>(null);
   const { resumeText } = useResumeText(null);
   
-  // Extract data from location state
-  const isResuming = location.state?.isResuming || false;
-  const resumePath = location.state?.resumePath || '';
-  const coverLetterPath = location.state?.coverLetterPath || '';
-  const additionalDocumentsPath = location.state?.additionalDocumentsPath || '';
-  const firstQuestion = location.state?.firstQuestion;
-  const behavioralId = location.state?.behavioralId;
+  // Extract data from location state with error handling
+  const locationState = location.state || {};
+  const isResuming = locationState.isResuming || false;
+  const resumePath = locationState.resumePath || '';
+  const coverLetterPath = locationState.coverLetterPath || '';
+  const additionalDocumentsPath = locationState.additionalDocumentsPath || '';
+  const firstQuestion = locationState.firstQuestion;
+  const behavioralId = locationState.behavioralId;
   
   console.log("BehavioralInterview - Is resuming:", isResuming);
   console.log("BehavioralInterview - Behavioral ID:", behavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
   
-  const formData = location.state?.formData || resumedFormData || {
+  const formData = locationState.formData || resumedFormData || {
     jobTitle: 'Software Developer',
     jobDescription: 'A position requiring strong technical and interpersonal skills.',
     companyName: 'Tech Company',
@@ -107,14 +108,26 @@ const BehavioralInterview = () => {
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
+  // Validation and initialization effect
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
         console.log('Initializing interview - isResuming:', isResuming);
         setPageLoaded(true);
         
+        // Validate behavioral ID for resuming interviews
+        if (isResuming && !behavioralId) {
+          toast({
+            variant: "destructive",
+            title: "Invalid resume attempt",
+            description: "Cannot resume interview without valid ID. Starting fresh.",
+          });
+          navigate('/behavioral/create');
+          return;
+        }
+        
         if (isResuming && behavioralId) {
-          // Resume existing interview
+          // Resume existing interview with error handling
           try {
             console.log('Resuming interview with ID:', behavioralId);
             const loadedData = await loadExistingInterview(behavioralId);
@@ -125,13 +138,13 @@ const BehavioralInterview = () => {
             toast({
               variant: "destructive",
               title: "Failed to resume interview",
-              description: "We couldn't load your previous interview. Starting fresh.",
+              description: "We couldn't load your previous interview. Please try again from the dashboard.",
             });
-            navigate('/behavioral/create');
+            navigate('/behavioral');
             return;
           }
         } else if (!isResuming) {
-          // New interview flow
+          // New interview flow - validate required data
           if (!firstQuestion || !behavioralId) {
             toast({
               variant: "destructive",
@@ -152,7 +165,7 @@ const BehavioralInterview = () => {
 
           console.log('New interview initialized with first question');
         } else {
-          // Invalid state - no behavioral ID for resuming
+          // Invalid state - fallback to create
           toast({
             variant: "destructive",
             title: "Invalid interview state",
@@ -206,9 +219,9 @@ const BehavioralInterview = () => {
         console.log('About to generate next question with correct index:', currentQuestionIndex);
         await generateQuestion(
           formData, 
-          location.state?.resumeText || resumeText, 
-          location.state?.coverLetterText || '',
-          location.state?.additionalDocumentsText || '',
+          locationState.resumeText || resumeText, 
+          locationState.coverLetterText || '',
+          locationState.additionalDocumentsText || '',
           resumePath,
           coverLetterPath,
           additionalDocumentsPath

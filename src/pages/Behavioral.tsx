@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Briefcase, Calendar, FileText, Plus } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 
@@ -85,6 +85,56 @@ const Behavioral = () => {
     }
   };
 
+  const handleInterviewCardClick = (interview: BehavioralInterview) => {
+    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
+    
+    if (state.status === 'complete') {
+      // Navigate to feedback page for completed interviews
+      navigate(`/behavioralFeedback?id=${interview.id}`);
+    } else if (state.status === 'in-progress' && state.canResume) {
+      // Navigate to resume interview for in-progress interviews
+      navigate('/behavioral/interview', {
+        state: {
+          isResuming: true,
+          behavioralId: interview.id,
+          resumePath: interview.resume_path,
+          coverLetterPath: interview.cover_letter_path,
+          additionalDocumentsPath: interview.additional_documents_path,
+          formData: {
+            jobTitle: interview.job_title,
+            jobDescription: interview.job_description,
+            companyName: interview.company_name || '',
+            companyDescription: interview.company_description || ''
+          }
+        }
+      });
+    } else {
+      // For not started interviews, navigate to feedback (current behavior)
+      navigate(`/behavioralFeedback?id=${interview.id}`);
+    }
+  };
+
+  const getCardButtonText = (interview: BehavioralInterview) => {
+    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
+    
+    if (state.status === 'complete') {
+      return {
+        icon: FileText,
+        text: 'View Feedback'
+      };
+    } else if (state.status === 'in-progress' && state.canResume) {
+      return {
+        icon: Play,
+        text: 'Resume Interview'
+      };
+    } else {
+      return {
+        icon: FileText,
+        text: 'View Details'
+      };
+    }
+  };
+
   const hasData = (interviews && interviews.length > 0);
   const hasError = false;
 
@@ -110,7 +160,7 @@ const Behavioral = () => {
               className="w-full max-w-xs" 
               onClick={() => navigate('/behavioral/create')}
             >
-              Start
+              Start New Practice
             </Button>
           </CardContent>
         </Card>
@@ -147,9 +197,14 @@ const Behavioral = () => {
             </Card>
           ) : hasData ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {interviews.map(interview => (
-                <Link to={`/behavioralFeedback?id=${interview.id}`} key={interview.id}>
-                  <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+              {interviews.map(interview => {
+                const ButtonComponent = getCardButtonText(interview);
+                return (
+                  <Card 
+                    key={interview.id} 
+                    className="h-full transition-all hover:shadow-md feature-card-shadow cursor-pointer"
+                    onClick={() => handleInterviewCardClick(interview)}
+                  >
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -176,13 +231,13 @@ const Behavioral = () => {
                     </CardContent>
                     <CardFooter className="border-t pt-4">
                       <Button variant="ghost" className="w-full" size="sm">
-                        <FileText className="h-4 w-4 mr-2" />
-                        View Feedback
+                        <ButtonComponent.icon className="h-4 w-4 mr-2" />
+                        {ButtonComponent.text}
                       </Button>
                     </CardFooter>
                   </Card>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="w-full flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
