@@ -252,34 +252,29 @@ const Behavioral = () => {
               </div>
             </>
           ) : (
-            // Empty State View
-            <div className="text-center pt-8">
-              <div className="mb-12">
-                <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                  Behavioral Interview Dashboard
-                </h1>
-                <p className="text-xl text-gray-600 mb-8">
-                  Master your interview skills with personalized practice sessions
-                </p>
+            // Empty State View from previous design
+            <>
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">Behavioral Interview Dashboard</h1>
+                  <p className="text-muted-foreground mt-1">Manage your interview preparation</p>
+                </div>
               </div>
-              
-              <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 max-w-md mx-auto">
-                <h2 className="text-2xl font-bold text-gray-900 mb-3">
-                  Ready to Practice?
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Answer 5 tailored questions and get detailed feedback
+              <div className="bg-white rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
+                <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No practice sessions yet</h3>
+                <p className="text-gray-500 mb-6 max-w-sm">
+                  Create your first behavioral practice to receive personalized feedback.
                 </p>
                 <Button 
-                  size="lg"
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 text-lg font-medium"
-                  onClick={() => navigate('/behavioral/create')}
+                    onClick={() => navigate('/behavioral/create')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  <Plus className="h-5 w-5 mr-2" />
-                  Start New Practice
+                    <Plus className="h-4 w-4 mr-2" />
+                    Start Practice
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
