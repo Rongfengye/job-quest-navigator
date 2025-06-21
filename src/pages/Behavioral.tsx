@@ -184,10 +184,11 @@ const Behavioral = () => {
                   <p className="text-muted-foreground mt-2">Manage your interview preparation</p>
                 </div>
                 <Button 
+                  size="lg"
                   onClick={() => navigate('/behavioral/create')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-5 w-5 mr-2" />
                   New Practice
                 </Button>
               </div>
