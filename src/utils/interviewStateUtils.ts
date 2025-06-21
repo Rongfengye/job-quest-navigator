@@ -16,7 +16,7 @@ export const analyzeInterviewState = (
   const feedbackArray = Array.isArray(feedback) ? feedback : [];
   
   // Check if interview is complete (has actual feedback content)
-  const isComplete = feedbackArray.length > 0 && feedbackArray.some(item => item && Object.keys(item).length > 0);
+  const isComplete = feedbackArray.length > 0 && responsesArray.length >= 5;
   
   // Check if interview has started (has questions)
   const hasStarted = questionsArray.length > 0;

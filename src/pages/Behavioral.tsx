@@ -73,7 +73,7 @@ const Behavioral = () => {
     } else if (state.status === 'in-progress') {
       return (
         <Badge variant="outline" className="border-orange-300 text-orange-700">
-          Question {state.currentQuestionIndex + 1} of {state.totalQuestions}
+          Question {state.currentQuestionIndex + 1} of 5
         </Badge>
       );
     } else {
