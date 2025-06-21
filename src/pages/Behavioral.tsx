@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface BehavioralInterview {
   id: string;
@@ -200,43 +201,30 @@ const Behavioral = () => {
                   Previous Practice Sessions
                 </h2>
                 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {interviews.map(interview => {
                     const ButtonComponent = getCardButtonText(interview);
-                    return (
+                    const hasTechnicalPractices = interview._technical_count && interview._technical_count > 0;
+
+                    const practiceRow = (
                       <div 
-                        key={interview.id} 
                         className="bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer"
                         onClick={() => handleInterviewCardClick(interview)}
                       >
-                        <div className="p-6">
-                          <div className="flex justify-between items-start mb-4">
-                            <div className="flex-1">
-                              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                        <div className="p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="flex-1 mr-4">
+                              <h3 className="text-lg font-bold text-gray-900 truncate">
                                 {interview.job_title}
                               </h3>
                               {interview.company_name && (
-                                <p className="text-lg text-gray-600 mb-3">
+                                <p className="text-base text-gray-600">
                                   {interview.company_name}
                                 </p>
                               )}
-                              
-                              <div className="flex items-center gap-6 text-sm text-gray-500">
-                                <div className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-2" />
-                                  <span>Created {formatDate(interview.created_at)}</span>
-                                </div>
-                                
-                                {interview._technical_count > 0 && (
-                                  <div className="flex items-center text-blue-600">
-                                    <Book className="h-4 w-4 mr-2" />
-                                    <span>{interview._technical_count} related technical {interview._technical_count === 1 ? 'practice' : 'practices'}</span>
-                                  </div>
-                                )}
-                              </div>
                             </div>
                             
-                            <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-4 shrink-0">
                               {getInterviewBadge(interview)}
                               <Button variant="outline" size="sm" className="shrink-0">
                                 <ButtonComponent.icon className="h-4 w-4 mr-2" />
@@ -245,6 +233,30 @@ const Behavioral = () => {
                             </div>
                           </div>
                         </div>
+                      </div>
+                    );
+
+                    if (hasTechnicalPractices) {
+                      return (
+                        <Tooltip key={interview.id} delayDuration={100}>
+                          <TooltipTrigger asChild>
+                            {practiceRow}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="flex items-center">
+                              <Book className="h-4 w-4 mr-2" />
+                              <p>
+                                {interview._technical_count} related {interview._technical_count === 1 ? 'practice' : 'practices'}
+                              </p>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
+
+                    return (
+                      <div key={interview.id}>
+                        {practiceRow}
                       </div>
                     );
                   })}
