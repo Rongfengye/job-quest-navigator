@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Book, Briefcase, Calendar, FileText, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 
 interface BehavioralInterview {
   id: string;
@@ -17,6 +18,8 @@ interface BehavioralInterview {
   company_name: string | null;
   created_at: string;
   feedback: any;
+  questions: any;
+  responses: any;
   _technical_count?: number;
 }
 
@@ -56,6 +59,30 @@ const Behavioral = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return format(date, 'MMM d, yyyy');
+  };
+
+  const getInterviewBadge = (interview: BehavioralInterview) => {
+    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
+    
+    if (state.status === 'complete') {
+      return (
+        <Badge variant="outline" className="border-green-300 text-green-700">
+          Complete
+        </Badge>
+      );
+    } else if (state.status === 'in-progress') {
+      return (
+        <Badge variant="outline" className="border-orange-300 text-orange-700">
+          Question {state.currentQuestionIndex + 1} of {state.totalQuestions}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="border-gray-300 text-gray-700">
+          Not Started
+        </Badge>
+      );
+    }
   };
 
   const hasData = (interviews && interviews.length > 0);
@@ -131,9 +158,7 @@ const Behavioral = () => {
                             <CardDescription>{interview.company_name}</CardDescription>
                           )}
                         </div>
-                        <Badge variant="outline" className="border-green-300 text-green-700">
-                          completed
-                        </Badge>
+                        {getInterviewBadge(interview)}
                       </div>
                     </CardHeader>
                     <CardContent>
