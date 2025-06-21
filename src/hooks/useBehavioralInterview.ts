@@ -77,8 +77,8 @@ export const useBehavioralInterview = () => {
       console.log('Loaded interview data:', interviewData);
       
       // Extract and validate data
-      const existingQuestions = Array.isArray(interviewData.questions) ? interviewData.questions : [];
-      const existingResponses = Array.isArray(interviewData.responses) ? interviewData.responses : [];
+      const existingQuestions = (Array.isArray(interviewData.questions) ? interviewData.questions : []) as string[];
+      const existingResponses = (Array.isArray(interviewData.responses) ? interviewData.responses : []) as string[];
       
       // Calculate where to resume
       const resumeQuestionIndex = existingResponses.length;
@@ -91,18 +91,30 @@ export const useBehavioralInterview = () => {
       setCurrentQuestionIndex(resumeQuestionIndex);
       setBehavioralId(behavioralId);
       
-      // If we have questions to resume from
-      if (existingQuestions.length > resumeQuestionIndex) {
+      // If we have a question to display immediately
+      if (resumeQuestionIndex < existingQuestions.length) {
         const currentQuestionText = existingQuestions[resumeQuestionIndex];
         setCurrentQuestionWithLog({
           question: currentQuestionText,
           questionIndex: resumeQuestionIndex,
           audio: null // We don't store audio for resumed questions
         });
-      } else {
+        console.log('Resuming with an existing question.');
+      } 
+      // If we have answered all fetched questions and there are more to come
+      else if (resumeQuestionIndex === existingQuestions.length && resumeQuestionIndex < 5) {
+        // We don't have the next question text yet, but we are in a state to generate it.
+        // Set currentQuestion to null, and the interview page will trigger generation.
+        setCurrentQuestionWithLog(null);
+        console.log('Ready to generate next question on resume.');
+      }
+      // If we have answered 5 or more, or some other invalid state.
+      else {
+        console.error(`Invalid resume state: resumeIndex=${resumeQuestionIndex}, questions=${existingQuestions.length}`);
         throw new Error('No more questions to resume from');
       }
       
+      // Return the loaded form data so it can be set in the component
       return {
         formData: {
           jobTitle: interviewData.job_title,

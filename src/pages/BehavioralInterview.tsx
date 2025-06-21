@@ -297,6 +297,30 @@ const BehavioralInterview = () => {
     }
   }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, questions, behavioralId, toast]);
 
+  // This effect triggers question generation when resuming an interview
+  // where the next question needs to be created.
+  useEffect(() => {
+    if (
+      isResuming &&
+      pageLoaded &&
+      !currentQuestion &&
+      !isGenerating &&
+      !isInitialLoading &&
+      currentQuestionIndex > 0 &&
+      currentQuestionIndex < 5
+    ) {
+      console.log('Triggering next question generation on resume.');
+      setShouldGenerateNext(true);
+    }
+  }, [
+    isResuming,
+    pageLoaded,
+    currentQuestion,
+    isGenerating,
+    isInitialLoading,
+    currentQuestionIndex,
+  ]);
+
   const handleSubmit = async () => {
     if (!answer.trim()) {
       toast({
