@@ -25,6 +25,7 @@ const BehavioralInterview = () => {
   const [shouldGenerateNext, setShouldGenerateNext] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [resumedFormData, setResumedFormData] = useState<any>(null);
+  const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
   
   // Extract data from location state with error handling
@@ -232,6 +233,7 @@ const BehavioralInterview = () => {
         setIsTransitionLoading(false);
         setShowProcessing(false);
         setShouldGenerateNext(false);
+        setIsResumingAndLoading(false); // Hide loader after question is generated
       } catch (error) {
         console.error('Error generating next question:', error);
         toast({
@@ -241,6 +243,7 @@ const BehavioralInterview = () => {
         });
         setShowProcessing(false);
         setShouldGenerateNext(false);
+        setIsResumingAndLoading(false); // Also hide loader on error
       } finally {
         setIsGenerating(false);
       }
@@ -310,6 +313,7 @@ const BehavioralInterview = () => {
       currentQuestionIndex < 5
     ) {
       console.log('Triggering next question generation on resume.');
+      setIsResumingAndLoading(true); // Show loader when resuming and needing a question
       setShouldGenerateNext(true);
     }
   }, [
@@ -387,7 +391,7 @@ const BehavioralInterview = () => {
   };
 
   // Only show full-screen Loading for transitions between questions
-  if (isTransitionLoading) {
+  if (isTransitionLoading || isResumingAndLoading) {
     console.log('Rendering full-screen Loading component for question transition');
     return <Loading />;
   }
