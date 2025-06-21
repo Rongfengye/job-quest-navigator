@@ -260,7 +260,7 @@ const Behavioral = () => {
                   <p className="text-muted-foreground mt-1">Manage your interview preparation</p>
                 </div>
               </div>
-              <div className="bg-white rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
+              <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
                 <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">No practice sessions yet</h3>
                 <p className="text-gray-500 mb-6 max-w-sm">
