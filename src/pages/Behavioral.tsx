@@ -15,11 +15,16 @@ import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 interface BehavioralInterview {
   id: string;
   job_title: string;
+  job_description: string;
   company_name: string | null;
+  company_description: string | null;
   created_at: string;
   feedback: any;
   questions: any;
   responses: any;
+  resume_path: string;
+  cover_letter_path: string | null;
+  additional_documents_path: string | null;
   _technical_count?: number;
 }
 
@@ -32,7 +37,7 @@ const Behavioral = () => {
       // First fetch behavioral interviews
       const { data: behaviorals, error } = await supabase
         .from('storyline_behaviorals')
-        .select('*')
+        .select('*') // This includes ALL fields: resume_path, job_description, etc.
         .order('created_at', { ascending: false });
         
       if (error) throw error;
