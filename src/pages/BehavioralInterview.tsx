@@ -11,7 +11,6 @@ import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
-import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -33,14 +32,8 @@ const BehavioralInterview = () => {
   const firstQuestion = location.state?.firstQuestion;
   const behavioralId = location.state?.behavioralId;
   
-  // Add missing variables for resume functionality
-  const isResuming = location.state?.isResuming || false;
-  const resumeIndex = location.state?.resumeIndex || 0;
-  
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
-  console.log("BehavioralInterview - Is resuming:", isResuming);
-  console.log("BehavioralInterview - Resume index:", resumeIndex);
   
   const formData = location.state?.formData || {
     jobTitle: 'Software Developer',
@@ -111,112 +104,35 @@ const BehavioralInterview = () => {
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
-        console.log('Initializing interview - Resume mode:', isResuming);
+        console.log('Initializing interview with pre-loaded question');
         setPageLoaded(true);
         
-        if (isResuming && behavioralId) {
-          // Handle resume scenario
-          console.log('Resuming interview from index:', resumeIndex);
-          
-          try {
-            // Fetch existing behavioral data
-            const { data: behavioralData, error } = await supabase
-              .from('storyline_behaviorals')
-              .select('*')
-              .eq('id', behavioralId)
-              .single();
-              
-            if (error) {
-              console.error('Error fetching behavioral data:', error);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to load interview data. Starting fresh.",
-              });
-              navigate('/behavioral/create');
-              return;
-            }
-            
-            if (behavioralData) {
-              // Analyze the current state
-              const state = analyzeInterviewState(
-                behavioralData.questions,
-                behavioralData.responses,
-                behavioralData.feedback
-              );
-              
-              console.log('Interview state:', state);
-              
-              if (state.isComplete) {
-                // Interview is already complete, redirect to feedback
-                navigate(`/behavioralFeedback?id=${behavioralId}`);
-                return;
-              }
-              
-              if (!state.canResume) {
-                // Can't resume, redirect to create new
-                toast({
-                  variant: "destructive",
-                  title: "Cannot resume",
-                  description: "This interview cannot be resumed. Starting fresh.",
-                });
-                navigate('/behavioral/create');
-                return;
-              }
-              
-              // Set up resume state
-              setBehavioralId(behavioralId);
-              
-              // If we have a question at the resume index, set it
-              const existingQuestions = Array.isArray(behavioralData.questions) 
-                ? behavioralData.questions.filter((q): q is string => typeof q === 'string')
-                : [];
-              if (existingQuestions[state.resumeIndex] && typeof existingQuestions[state.resumeIndex] === 'string') {
-                setCurrentQuestion({
-                  question: existingQuestions[state.resumeIndex],
-                  questionIndex: state.resumeIndex,
-                  audio: null
-                });
-              } else {
-                // Need to generate the next question
-                setShouldGenerateNext(true);
-              }
-              
-              console.log('Resume setup complete');
-              toast({
-                title: "Interview resumed",
-                description: `Continuing from question ${state.resumeIndex + 1} of 5`,
-              });
-            }
-          } catch (error) {
-            console.error('Error in resume initialization:', error);
-            navigate('/behavioral/create');
-          }
-        } else if (firstQuestion && behavioralId) {
-          // Handle new interview scenario (existing logic)
-          setBehavioralId(behavioralId);
-          setCurrentQuestion({
-            question: firstQuestion.question,
-            questionIndex: 0,
-            audio: firstQuestion.audio || null
-          });
-          console.log('New interview initialized');
-        } else {
-          // Redirect if missing required data
+        // If we don't have the first question, redirect back
+        if (!firstQuestion || !behavioralId) {
           toast({
             variant: "destructive",
             title: "Interview setup incomplete",
             description: "Please go through the setup process again.",
           });
           navigate('/behavioral/create');
+          return;
         }
+
+        // Set the behavioral ID and first question
+        setBehavioralId(behavioralId);
+        setCurrentQuestion({
+          question: firstQuestion.question,
+          questionIndex: 0,
+          audio: firstQuestion.audio || null
+        });
+
+        console.log('Interview initialized with first question');
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, firstQuestion, behavioralId, isResuming, resumeIndex, navigate, toast, setBehavioralId, setCurrentQuestion]);
+  }, [pageLoaded, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion]);
 
-  
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
     const generateNextQuestion = async () => {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -7,21 +8,15 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Briefcase, Calendar, FileText, Plus, Play, RotateCcw } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { isInterviewComplete, canResumeInterview, getResumePoint } from '@/utils/interviewStateUtils';
 
 interface BehavioralInterview {
   id: string;
   job_title: string;
-  job_description: string;
   company_name: string | null;
-  company_description: string | null;
   created_at: string;
   feedback: any;
-  resume_path: string | null;
-  cover_letter_path: string | null;
-  additional_documents_path: string | null;
   _technical_count?: number;
 }
 
@@ -63,73 +58,6 @@ const Behavioral = () => {
     return format(date, 'MMM d, yyyy');
   };
 
-  const handleResumeInterview = (interview: BehavioralInterview) => {
-    const resumeIndex = getResumePoint(interview);
-    
-    // Navigate to interview with resume state
-    navigate('/behavioral/interview', {
-      state: {
-        behavioralId: interview.id,
-        isResuming: true,
-        resumeIndex,
-        formData: {
-          jobTitle: interview.job_title,
-          jobDescription: interview.job_description,
-          companyName: interview.company_name || '',
-          companyDescription: interview.company_description || ''
-        },
-        resumePath: interview.resume_path,
-        cover_letter_path: interview.cover_letter_path,
-        additional_documents_path: interview.additional_documents_path
-      }
-    });
-  };
-
-  const getInterviewStatusBadge = (interview: BehavioralInterview) => {
-    if (isInterviewComplete(interview)) {
-      return <Badge variant="outline" className="border-green-300 text-green-700">completed</Badge>;
-    } else if (canResumeInterview(interview)) {
-      const resumeIndex = getResumePoint(interview);
-      return <Badge variant="outline" className="border-amber-300 text-amber-700">
-        question {resumeIndex + 1} of 5
-      </Badge>;
-    } else {
-      return <Badge variant="outline" className="border-gray-300 text-gray-700">pending</Badge>;
-    }
-  };
-
-  const getActionButton = (interview: BehavioralInterview) => {
-    if (isInterviewComplete(interview)) {
-      return (
-        <Link to={`/behavioralFeedback?id=${interview.id}`}>
-          <Button variant="ghost" className="w-full" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            View Feedback
-          </Button>
-        </Link>
-      );
-    } else if (canResumeInterview(interview)) {
-      return (
-        <Button 
-          variant="ghost" 
-          className="w-full" 
-          size="sm"
-          onClick={() => handleResumeInterview(interview)}
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Resume Interview
-        </Button>
-      );
-    } else {
-      return (
-        <Button variant="ghost" className="w-full" size="sm" disabled>
-          <Play className="h-4 w-4 mr-2" />
-          Starting...
-        </Button>
-      );
-    }
-  };
-
   const hasData = (interviews && interviews.length > 0);
   const hasError = false;
 
@@ -155,7 +83,7 @@ const Behavioral = () => {
               className="w-full max-w-xs" 
               onClick={() => navigate('/behavioral/create')}
             >
-              Start New Practice
+              Start
             </Button>
           </CardContent>
         </Card>
@@ -166,7 +94,7 @@ const Behavioral = () => {
           {hasData && (
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Briefcase className="h-5 w-5" />
-              Practice Sessions
+              Previous Practice Sessions
             </h2>
           )}
           
@@ -193,35 +121,42 @@ const Behavioral = () => {
           ) : hasData ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {interviews.map(interview => (
-                <Card key={interview.id} className="h-full transition-all hover:shadow-md feature-card-shadow">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-xl">{interview.job_title}</CardTitle>
-                        {interview.company_name && (
-                          <CardDescription>{interview.company_name}</CardDescription>
-                        )}
+                <Link to={`/behavioralFeedback?id=${interview.id}`} key={interview.id}>
+                  <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-xl">{interview.job_title}</CardTitle>
+                          {interview.company_name && (
+                            <CardDescription>{interview.company_name}</CardDescription>
+                          )}
+                        </div>
+                        <Badge variant="outline" className="border-green-300 text-green-700">
+                          completed
+                        </Badge>
                       </div>
-                      {getInterviewStatusBadge(interview)}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center text-muted-foreground text-sm mb-4">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>Created on {formatDate(interview.created_at)}</span>
-                    </div>
-                    
-                    {interview._technical_count > 0 && (
-                      <div className="flex items-center text-sm text-blue-600">
-                        <Book className="h-4 w-4 mr-2" />
-                        <span>{interview._technical_count} related technical {interview._technical_count === 1 ? 'practice' : 'practices'}</span>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center text-muted-foreground text-sm mb-4">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>Created on {formatDate(interview.created_at)}</span>
                       </div>
-                    )}
-                  </CardContent>
-                  <CardFooter className="border-t pt-4">
-                    {getActionButton(interview)}
-                  </CardFooter>
-                </Card>
+                      
+                      {interview._technical_count > 0 && (
+                        <div className="flex items-center text-sm text-blue-600">
+                          <Book className="h-4 w-4 mr-2" />
+                          <span>{interview._technical_count} related technical {interview._technical_count === 1 ? 'practice' : 'practices'}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter className="border-t pt-4">
+                      <Button variant="ghost" className="w-full" size="sm">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Feedback
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : (

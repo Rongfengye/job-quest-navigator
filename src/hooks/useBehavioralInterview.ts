@@ -89,58 +89,6 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  // Add method to load existing interview data
-  const loadExistingInterview = useCallback(async (behavioralId: string) => {
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase
-        .from('storyline_behaviorals')
-        .select('*')
-        .eq('id', behavioralId)
-        .single();
-        
-      if (error) throw error;
-      
-      if (data) {
-        // Properly type cast the JSON arrays to string arrays
-        const existingQuestions = Array.isArray(data.questions) 
-          ? data.questions.filter((q): q is string => typeof q === 'string')
-          : [];
-        const existingResponses = Array.isArray(data.responses) 
-          ? data.responses.filter((r): r is string => typeof r === 'string')
-          : [];
-        
-        setQuestions(existingQuestions);
-        setAnswers(existingResponses);
-        setBehavioralId(behavioralId);
-        
-        console.log('Loaded existing interview data:', {
-          questions: existingQuestions.length,
-          responses: existingResponses.length
-        });
-        
-        return {
-          questions: existingQuestions,
-          responses: existingResponses,
-          questionsCount: existingQuestions.length,
-          responsesCount: existingResponses.length
-        };
-      }
-    } catch (error) {
-      console.error('Error loading existing interview:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load interview data",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-    
-    return null;
-  }, [toast]);
-
   const generateQuestion = useCallback(async (
     formData: {
       jobTitle: string;
@@ -181,7 +129,7 @@ export const useBehavioralInterview = () => {
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
-      console.log(`Using behavioral ID: ${existingBehavioralId || behavioralId}`);
+      console.log(`Using resume path: ${resumePath}`);
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
@@ -196,10 +144,11 @@ export const useBehavioralInterview = () => {
       }
       
       console.log('Question generated:', data.question);
+      console.log('Audio data received:', data.audio ? 'Yes' : 'No');
       
       const questionData: BehavioralQuestionData = {
         ...data,
-        storylineId: existingBehavioralId || behavioralId || undefined
+        storylineId: behavioralId || undefined
       };
       
       setCurrentQuestionWithLog(questionData);
@@ -209,14 +158,15 @@ export const useBehavioralInterview = () => {
       existingQuestions.push(data.question);
       setQuestions(existingQuestions);
       
-      const behavioralIdToUse = existingBehavioralId || behavioralId;
+      const BehavioralIdToUse = existingBehavioralId || behavioralId;
       
-      if (behavioralIdToUse) {
+      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
+      if (BehavioralIdToUse) {
         // Append the new question to the questions array in the database
         const { data: currentData } = await supabase
           .from('storyline_behaviorals')
           .select('questions')
-          .eq('id', behavioralIdToUse)
+          .eq('id', BehavioralIdToUse)
           .single();
           
         if (currentData) {
@@ -228,7 +178,7 @@ export const useBehavioralInterview = () => {
             .update({
               questions: updatedQuestions
             })
-            .eq('id', behavioralIdToUse);
+            .eq('id', BehavioralIdToUse);
             
           if (updateError) {
             console.error('Error updating questions:', updateError);
@@ -269,13 +219,8 @@ export const useBehavioralInterview = () => {
           throw new Error(`Error fetching latest questions/responses: ${dbError.message}`);
         }
         if (dbData) {
-          // Properly filter and type cast JSON arrays
-          questionsToUse = Array.isArray(dbData.questions) 
-            ? dbData.questions.filter((q): q is string => typeof q === 'string')
-            : questionsToUse;
-          answersToUse = Array.isArray(dbData.responses) 
-            ? dbData.responses.filter((a): a is string => typeof a === 'string')
-            : answersToUse;
+          questionsToUse = Array.isArray(dbData.questions) ? dbData.questions.filter((q: any) => typeof q === 'string') as string[] : questionsToUse;
+          answersToUse = Array.isArray(dbData.responses) ? dbData.responses.filter((a: any) => typeof a === 'string') as string[] : answersToUse;
         }
       }
       
@@ -436,7 +381,6 @@ export const useBehavioralInterview = () => {
     behavioralId,
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
-    setBehavioralId,
-    loadExistingInterview
+    setBehavioralId
   };
 };
