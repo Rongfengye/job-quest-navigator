@@ -76,6 +76,13 @@ const Behavioral = () => {
         </Badge>
       );
     } else if (state.status === 'in-progress') {
+      if (state.currentQuestionIndex >= 5) {
+        return (
+          <Badge variant="outline" className="border-blue-300 text-blue-700">
+            Processing
+          </Badge>
+        );
+      }
       return (
         <Badge variant="outline" className="border-orange-300 text-orange-700">
           Question {state.currentQuestionIndex + 1} of 5
@@ -94,27 +101,32 @@ const Behavioral = () => {
     const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
     
     if (state.status === 'complete') {
-      // Navigate to feedback page for completed interviews
       navigate(`/behavioralFeedback?id=${interview.id}`);
-    } else if (state.status === 'in-progress' && state.canResume) {
-      // Navigate to resume interview for in-progress interviews
-      navigate('/behavioral/interview', {
-        state: {
-          isResuming: true,
-          behavioralId: interview.id,
-          resumePath: interview.resume_path,
-          coverLetterPath: interview.cover_letter_path,
-          additionalDocumentsPath: interview.additional_documents_path,
-          formData: {
-            jobTitle: interview.job_title,
-            jobDescription: interview.job_description,
-            companyName: interview.company_name || '',
-            companyDescription: interview.company_description || ''
+    } else if (state.status === 'in-progress') {
+      // If it's in progress, clicking should try to resume the interview,
+      // unless all questions are answered and it's just waiting for feedback.
+      if (state.currentQuestionIndex >= 5) {
+        navigate(`/behavioralFeedback?id=${interview.id}`);
+      } else {
+        navigate('/behavioral/interview', {
+          state: {
+            isResuming: true,
+            behavioralId: interview.id,
+            resumePath: interview.resume_path,
+            coverLetterPath: interview.cover_letter_path,
+            additionalDocumentsPath: interview.additional_documents_path,
+            formData: {
+              jobTitle: interview.job_title,
+              jobDescription: interview.job_description,
+              companyName: interview.company_name || '',
+              companyDescription: interview.company_description || ''
+            }
           }
-        }
-      });
+        });
+      }
     } else {
-      // For not started interviews, navigate to feedback (current behavior)
+      // For 'not-started' interviews, navigate to the feedback page,
+      // which will show a "No feedback" message.
       navigate(`/behavioralFeedback?id=${interview.id}`);
     }
   };
@@ -127,17 +139,28 @@ const Behavioral = () => {
         icon: FileText,
         text: 'View Feedback'
       };
-    } else if (state.status === 'in-progress' && state.canResume) {
+    } 
+    
+    if (state.status === 'in-progress') {
+      // If the interview is in-progress and not all questions are answered, show 'Resume'.
+      // Otherwise, it's processing the final feedback.
+      if (state.currentQuestionIndex >= 5) {
+        return {
+          icon: FileText,
+          text: 'Processing Feedback'
+        };
+      }
       return {
         icon: Play,
         text: 'Resume Interview'
       };
-    } else {
-      return {
-        icon: FileText,
-        text: 'View Details'
-      };
-    }
+    } 
+    
+    // Default for 'not-started'
+    return {
+      icon: FileText,
+      text: 'View Details'
+    };
   };
 
   const hasData = (interviews && interviews.length > 0);
