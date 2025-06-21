@@ -1,5 +1,5 @@
-
 import type { Config } from "tailwindcss";
+const colors = require("tailwindcss/colors");
 
 export default {
 	darkMode: ["class"],
@@ -20,6 +20,7 @@ export default {
 		},
 		extend: {
 			colors: {
+				slate: colors.slate,
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
