@@ -24,6 +24,8 @@ interface LocationState {
   coverLetterPath?: string;
   additionalDocumentsText?: string;
   additionalDocumentsPath?: string;
+  isResuming?: boolean;
+  behavioralId?: string;
 }
 
 export const useBehavioralInterview = () => {
@@ -50,6 +52,81 @@ export const useBehavioralInterview = () => {
       setIsInitialLoading(false);
     }
   };
+
+  // New function to load existing interview data for resuming
+  const loadExistingInterview = useCallback(async (behavioralId: string) => {
+    setIsLoading(true);
+    
+    try {
+      console.log('Loading existing interview:', behavioralId);
+      
+      const { data: interviewData, error } = await supabase
+        .from('storyline_behaviorals')
+        .select('*')
+        .eq('id', behavioralId)
+        .single();
+      
+      if (error) {
+        throw new Error(`Failed to load interview: ${error.message}`);
+      }
+      
+      if (!interviewData) {
+        throw new Error('Interview not found');
+      }
+      
+      console.log('Loaded interview data:', interviewData);
+      
+      // Extract and validate data
+      const existingQuestions = Array.isArray(interviewData.questions) ? interviewData.questions : [];
+      const existingResponses = Array.isArray(interviewData.responses) ? interviewData.responses : [];
+      
+      // Calculate where to resume
+      const resumeQuestionIndex = existingResponses.length;
+      
+      console.log(`Resuming at question ${resumeQuestionIndex + 1} of ${existingQuestions.length}`);
+      
+      // Set the state
+      setQuestions(existingQuestions);
+      setAnswers(existingResponses);
+      setCurrentQuestionIndex(resumeQuestionIndex);
+      setBehavioralId(behavioralId);
+      
+      // If we have questions to resume from
+      if (existingQuestions.length > resumeQuestionIndex) {
+        const currentQuestionText = existingQuestions[resumeQuestionIndex];
+        setCurrentQuestionWithLog({
+          question: currentQuestionText,
+          questionIndex: resumeQuestionIndex,
+          audio: null // We don't store audio for resumed questions
+        });
+      } else {
+        throw new Error('No more questions to resume from');
+      }
+      
+      return {
+        formData: {
+          jobTitle: interviewData.job_title,
+          jobDescription: interviewData.job_description,
+          companyName: interviewData.company_name || '',
+          companyDescription: interviewData.company_description || ''
+        },
+        resumePath: interviewData.resume_path,
+        coverLetterPath: interviewData.cover_letter_path,
+        additionalDocumentsPath: interviewData.additional_documents_path
+      };
+      
+    } catch (error) {
+      console.error('Error loading existing interview:', error);
+      toast({
+        variant: "destructive",
+        title: "Error loading interview",
+        description: error instanceof Error ? error.message : "Failed to load existing interview",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   // Keep this for backward compatibility but it won't be used in the new flow
   const setInitialQuestions = async (generatedData: any) => {
@@ -381,6 +458,7 @@ export const useBehavioralInterview = () => {
     behavioralId,
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
-    setBehavioralId
+    setBehavioralId,
+    loadExistingInterview
   };
 };

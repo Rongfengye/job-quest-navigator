@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
@@ -23,19 +24,23 @@ const BehavioralInterview = () => {
   const [showProcessing, setShowProcessing] = useState(false);
   const [shouldGenerateNext, setShouldGenerateNext] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [resumedFormData, setResumedFormData] = useState<any>(null);
   const { resumeText } = useResumeText(null);
   
   // Extract data from location state
+  const isResuming = location.state?.isResuming || false;
   const resumePath = location.state?.resumePath || '';
   const coverLetterPath = location.state?.coverLetterPath || '';
   const additionalDocumentsPath = location.state?.additionalDocumentsPath || '';
   const firstQuestion = location.state?.firstQuestion;
   const behavioralId = location.state?.behavioralId;
   
+  console.log("BehavioralInterview - Is resuming:", isResuming);
+  console.log("BehavioralInterview - Behavioral ID:", behavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
   
-  const formData = location.state?.formData || {
+  const formData = location.state?.formData || resumedFormData || {
     jobTitle: 'Software Developer',
     jobDescription: 'A position requiring strong technical and interpersonal skills.',
     companyName: 'Tech Company',
@@ -56,7 +61,8 @@ const BehavioralInterview = () => {
     interviewComplete,
     setIsTransitionLoading,
     setCurrentQuestion,
-    setBehavioralId
+    setBehavioralId,
+    loadExistingInterview
   } = useBehavioralInterview();
 
   const playTransitionAudio = () => {
@@ -104,34 +110,62 @@ const BehavioralInterview = () => {
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
-        console.log('Initializing interview with pre-loaded question');
+        console.log('Initializing interview - isResuming:', isResuming);
         setPageLoaded(true);
         
-        // If we don't have the first question, redirect back
-        if (!firstQuestion || !behavioralId) {
+        if (isResuming && behavioralId) {
+          // Resume existing interview
+          try {
+            console.log('Resuming interview with ID:', behavioralId);
+            const loadedData = await loadExistingInterview(behavioralId);
+            setResumedFormData(loadedData.formData);
+            console.log('Interview resumed successfully');
+          } catch (error) {
+            console.error('Failed to resume interview:', error);
+            toast({
+              variant: "destructive",
+              title: "Failed to resume interview",
+              description: "We couldn't load your previous interview. Starting fresh.",
+            });
+            navigate('/behavioral/create');
+            return;
+          }
+        } else if (!isResuming) {
+          // New interview flow
+          if (!firstQuestion || !behavioralId) {
+            toast({
+              variant: "destructive",
+              title: "Interview setup incomplete",
+              description: "Please go through the setup process again.",
+            });
+            navigate('/behavioral/create');
+            return;
+          }
+
+          // Set the behavioral ID and first question
+          setBehavioralId(behavioralId);
+          setCurrentQuestion({
+            question: firstQuestion.question,
+            questionIndex: 0,
+            audio: firstQuestion.audio || null
+          });
+
+          console.log('New interview initialized with first question');
+        } else {
+          // Invalid state - no behavioral ID for resuming
           toast({
             variant: "destructive",
-            title: "Interview setup incomplete",
-            description: "Please go through the setup process again.",
+            title: "Invalid interview state",
+            description: "Please start a new interview.",
           });
           navigate('/behavioral/create');
           return;
         }
-
-        // Set the behavioral ID and first question
-        setBehavioralId(behavioralId);
-        setCurrentQuestion({
-          question: firstQuestion.question,
-          questionIndex: 0,
-          audio: firstQuestion.audio || null
-        });
-
-        console.log('Interview initialized with first question');
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion]);
+  }, [pageLoaded, isResuming, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion, loadExistingInterview]);
 
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
