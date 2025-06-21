@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
@@ -31,7 +30,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
       <div className="min-h-screen flex w-full">
         <DashboardSidebar />
         <main className="flex-1 overflow-auto">
-          <div className="p-6">
+          <div className="p-0">
             {children}
           </div>
         </main>
