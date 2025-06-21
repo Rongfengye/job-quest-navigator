@@ -158,7 +158,7 @@ const Behavioral = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-sky-50 p-6">
+      <div className="min-h-screen p-6">
         <div className="w-full max-w-6xl mx-auto">
           {isLoading ? (
             <div className="space-y-4">
