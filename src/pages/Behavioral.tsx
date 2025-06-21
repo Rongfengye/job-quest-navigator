@@ -8,7 +8,8 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 
 interface BehavioralInterview {
@@ -84,53 +85,6 @@ const Behavioral = () => {
     }
   };
 
-  const handleInterviewCardClick = (interview: BehavioralInterview) => {
-    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
-    
-    if (state.status === 'complete') {
-      // Navigate to feedback page for completed interviews
-      navigate(`/behavioralFeedback?id=${interview.id}`);
-    } else if (state.status === 'in-progress' && state.canResume) {
-      // Navigate to interview page with resume state for in-progress interviews
-      navigate('/behavioral/interview', {
-        state: {
-          isResuming: true,
-          behavioralId: interview.id
-        }
-      });
-    } else {
-      // For not started interviews, navigate to feedback (might be empty but allows viewing)
-      navigate(`/behavioralFeedback?id=${interview.id}`);
-    }
-  };
-
-  const getCardButtonText = (interview: BehavioralInterview) => {
-    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
-    
-    if (state.status === 'complete') {
-      return (
-        <>
-          <FileText className="h-4 w-4 mr-2" />
-          View Feedback
-        </>
-      );
-    } else if (state.status === 'in-progress' && state.canResume) {
-      return (
-        <>
-          <Play className="h-4 w-4 mr-2" />
-          Resume Interview
-        </>
-      );
-    } else {
-      return (
-        <>
-          <FileText className="h-4 w-4 mr-2" />
-          View Details
-        </>
-      );
-    }
-  };
-
   const hasData = (interviews && interviews.length > 0);
   const hasError = false;
 
@@ -194,8 +148,8 @@ const Behavioral = () => {
           ) : hasData ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {interviews.map(interview => (
-                <div key={interview.id} onClick={() => handleInterviewCardClick(interview)}>
-                  <Card className="h-full transition-all hover:shadow-md feature-card-shadow cursor-pointer">
+                <Link to={`/behavioralFeedback?id=${interview.id}`} key={interview.id}>
+                  <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
                     <CardHeader>
                       <div className="flex justify-between items-start">
                         <div>
@@ -222,11 +176,12 @@ const Behavioral = () => {
                     </CardContent>
                     <CardFooter className="border-t pt-4">
                       <Button variant="ghost" className="w-full" size="sm">
-                        {getCardButtonText(interview)}
+                        <FileText className="h-4 w-4 mr-2" />
+                        View Feedback
                       </Button>
                     </CardFooter>
                   </Card>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

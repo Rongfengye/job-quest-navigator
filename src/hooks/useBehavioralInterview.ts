@@ -28,20 +28,6 @@ interface LocationState {
   behavioralId?: string;
 }
 
-// Type guard to safely convert Json arrays to string arrays
-const toStringArray = (jsonArray: any): string[] => {
-  if (!Array.isArray(jsonArray)) return [];
-  return jsonArray.filter((item): item is string => typeof item === 'string');
-};
-
-// Type guard to safely convert Json to string
-const toString = (jsonValue: any): string => {
-  if (typeof jsonValue === 'string') return jsonValue;
-  if (typeof jsonValue === 'number') return String(jsonValue);
-  if (typeof jsonValue === 'boolean') return String(jsonValue);
-  return '';
-};
-
 export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
@@ -90,9 +76,9 @@ export const useBehavioralInterview = () => {
       
       console.log('Loaded interview data:', interviewData);
       
-      // Extract and validate data with proper type safety
-      const existingQuestions = toStringArray(interviewData.questions);
-      const existingResponses = toStringArray(interviewData.responses);
+      // Extract and validate data
+      const existingQuestions = Array.isArray(interviewData.questions) ? interviewData.questions : [];
+      const existingResponses = Array.isArray(interviewData.responses) ? interviewData.responses : [];
       
       // Calculate where to resume
       const resumeQuestionIndex = existingResponses.length;
@@ -261,7 +247,7 @@ export const useBehavioralInterview = () => {
           .single();
           
         if (currentData) {
-          const updatedQuestions = toStringArray(currentData.questions);
+          const updatedQuestions = Array.isArray(currentData.questions) ? currentData.questions : [];
           updatedQuestions.push(data.question);
           
           const { error: updateError } = await supabase
@@ -310,8 +296,8 @@ export const useBehavioralInterview = () => {
           throw new Error(`Error fetching latest questions/responses: ${dbError.message}`);
         }
         if (dbData) {
-          questionsToUse = toStringArray(dbData.questions);
-          answersToUse = toStringArray(dbData.responses);
+          questionsToUse = Array.isArray(dbData.questions) ? dbData.questions.filter((q: any) => typeof q === 'string') as string[] : questionsToUse;
+          answersToUse = Array.isArray(dbData.responses) ? dbData.responses.filter((a: any) => typeof a === 'string') as string[] : answersToUse;
         }
       }
       
@@ -407,7 +393,7 @@ export const useBehavioralInterview = () => {
           .single();
           
         if (currentData) {
-          const existingResponses = toStringArray(currentData.responses);
+          const existingResponses = Array.isArray(currentData.responses) ? currentData.responses : [];
           existingResponses.push(answer);
           
           const { error: updateError } = await supabase
