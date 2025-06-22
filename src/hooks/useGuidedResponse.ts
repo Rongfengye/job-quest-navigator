@@ -17,7 +17,6 @@ export const useGuidedResponse = (
   const [processingThoughts, setProcessingThoughts] = useState(false);
   const { deductTokens } = useUserTokens();
   
-  // Use the storylineId parameter directly instead of extracting from question
   const { iterations } = useAnswers(storylineId, questionIndex);
 
   useEffect(() => {
@@ -39,26 +38,23 @@ export const useGuidedResponse = (
       setProcessingThoughts(true);
       
       try {
-        // Get the most recent response and feedback from iterations if available
         let previousResponse = null;
         let latestFeedback = previousFeedback || null;
         
         if (iterations.length > 0) {
           const latestIteration = [...iterations].sort((a, b) => 
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
           )[0];
           
-          previousResponse = latestIteration?.answer || null;
+          previousResponse = latestIteration?.answerText || null;
           console.log(`Found previous response (${previousResponse ? previousResponse.length : 0} chars)`);
           
-          // Use the feedback from the latest iteration if available, otherwise use the provided previousFeedback
           if (latestIteration?.feedback && !latestFeedback) {
             latestFeedback = latestIteration.feedback;
             console.log('Found feedback in latest iteration:', latestFeedback ? 'Yes' : 'No');
           }
         }
         
-        // Create the request payload
         const requestPayload = {
           questionIndex,
           questionType: question.type,
