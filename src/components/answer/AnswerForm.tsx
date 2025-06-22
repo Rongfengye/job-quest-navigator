@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -221,24 +220,33 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         </CardContent>
       </Card>
 
-      {/* Feedback Section - Moved higher in layout */}
+      {/* Feedback Section - Collapsible Accordion */}
       {(isFeedbackLoading || feedback) && (
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Lightbulb className="w-5 h-5 text-blue-500" />
-                Answer Feedback
-              </CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <AnswerFeedback 
-              feedback={feedback}
-              isLoading={isFeedbackLoading}
-              error={feedbackError} 
-            />
-          </CardContent>
+        <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
+          <Accordion type="single" collapsible className="w-full" defaultValue="feedback">
+            <AccordionItem value="feedback" className="border-none">
+              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-green-50/50">
+                <div className="flex items-center gap-3 text-left">
+                  <Lightbulb className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <div>
+                    <div className="font-semibold text-gray-900">Answer Feedback</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Review your score and improvement suggestions
+                    </div>
+                  </div>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="border-t border-green-200 pt-6">
+                  <AnswerFeedback 
+                    feedback={feedback}
+                    isLoading={isFeedbackLoading}
+                    error={feedbackError} 
+                  />
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </Card>
       )}
 
