@@ -118,6 +118,10 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
       setThoughts('');
       setHasUnsavedDraft(true); // Mark as draft since it's generated content
       
+      // Close the guided tool and clear questions for fresh start
+      setIsGuidedToolOpen(false);
+      setGuidingQuestions(null);
+      
       // Show toast notification
       toast({
         title: "✨ Structured response generated",
