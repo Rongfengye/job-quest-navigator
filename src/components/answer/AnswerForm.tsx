@@ -73,7 +73,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   useEffect(() => {
     const pulseTimer = setTimeout(() => {
       setShowPulse(false);
-    }, 2500); // Animation duration is 2.5s
+    }, 5000); // Animation duration is 3s * 2 = 6s
 
     return () => clearTimeout(pulseTimer);
   }, []);
