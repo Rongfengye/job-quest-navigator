@@ -50,6 +50,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [thoughts, setThoughts] = useState('');
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');
+  const [isGuidedToolOpen, setIsGuidedToolOpen] = useState(false);
 
   // Track original answer to detect changes
   useEffect(() => {
@@ -101,6 +102,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   useEffect(() => {
     const handleGuidanceReceived = (event: CustomEvent) => {
       setGuidingQuestions(event.detail.guidingQuestions);
+      setIsGuidedToolOpen(true); // Auto-open when questions are received
     };
 
     window.addEventListener('guidanceReceived' as any, handleGuidanceReceived);
@@ -140,7 +142,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   };
 
   const handleSubmitThoughts = async () => {
-    if (!thoughts.trim() || processingThoughts) return;
+    if (!thoughts.trim() || processingThoughts || !guidingQuestions) return;
     
     const thoughtsEvent = new CustomEvent('thoughtsSubmitted', {
       detail: { thoughts }
@@ -157,6 +159,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     
     // Call the original submit handler
     handleSubmit(e);
+  };
+
+  const handleGuidedToolToggle = (value: string) => {
+    const isOpening = value === 'guided-tool';
+    setIsGuidedToolOpen(isOpening);
+    
+    // If opening and no questions exist, trigger generation
+    if (isOpening && !guidingQuestions && !generatingAnswer) {
+      handleGenerateAnswer();
+    }
   };
 
   const isAnswerValid = inputAnswer.trim().length > 0;
@@ -314,9 +326,15 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         </Card>
       )}
 
-      {/* Guided Response Tool - Improved Accordion Style */}
+      {/* Guided Response Tool - Controlled Flow */}
       <Card className="border-2 border-dashed border-blue-200 bg-blue-50/30">
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion 
+          type="single" 
+          collapsible 
+          className="w-full" 
+          value={isGuidedToolOpen ? 'guided-tool' : ''}
+          onValueChange={handleGuidedToolToggle}
+        >
           <AccordionItem value="guided-tool" className="border-none">
             <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-blue-50/50">
               <div className="flex items-center gap-3 text-left">
@@ -324,7 +342,12 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                 <div>
                   <div className="font-semibold text-gray-900">Guided Response Tool</div>
                   <div className="text-sm text-gray-600 mt-1">
-                    Get help brainstorming and structuring your response
+                    {guidingQuestions 
+                      ? "Get help brainstorming and structuring your response"
+                      : generatingAnswer 
+                        ? "Generating guiding questions..."
+                        : "Click to generate guiding questions"
+                    }
                   </div>
                 </div>
               </div>
@@ -352,40 +375,62 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                   </div>
                 )}
 
-                {/* Unified Thoughts Input */}
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-semibold mb-2">Build Your Response</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Jot your thoughts here and I'll shape them into a structured answer.
-                  </p>
-                  
-                  <Textarea
-                    value={thoughts}
-                    onChange={(e) => setThoughts(e.target.value)}
-                    placeholder="Type your thoughts about these questions here..."
-                    className="min-h-[120px] resize-y mb-4"
-                  />
-                  
-                  <div className="flex justify-end">
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            onClick={handleSubmitThoughts}
-                            disabled={!thoughts.trim() || processingThoughts || generatingAnswer}
-                            className="flex items-center gap-2"
-                          >
-                            <Sparkles className="h-4 w-4" />
-                            {processingThoughts ? 'Processing...' : 'Generate Structured Response'}
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>This will autofill your answer box. Remember to click "Save Answer" to keep this version.</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                {/* Unified Thoughts Input - Only enabled when questions exist */}
+                {guidingQuestions && guidingQuestions.length > 0 && (
+                  <div className="bg-white p-4 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-semibold mb-2">Build Your Response</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Jot your thoughts here and I'll shape them into a structured answer.
+                    </p>
+                    
+                    <Textarea
+                      value={thoughts}
+                      onChange={(e) => setThoughts(e.target.value)}
+                      placeholder="Type your thoughts about these questions here..."
+                      className="min-h-[120px] resize-y mb-4"
+                      disabled={processingThoughts}
+                    />
+                    
+                    <div className="flex justify-end">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              onClick={handleSubmitThoughts}
+                              disabled={!thoughts.trim() || processingThoughts || generatingAnswer}
+                              className="flex items-center gap-2"
+                            >
+                              <Sparkles className="h-4 w-4" />
+                              {processingThoughts ? 'Processing...' : 'Generate Structured Response'}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>This will autofill your answer box. Remember to click "Save Answer" to keep this version.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Loading State when generating questions */}
+                {generatingAnswer && !guidingQuestions && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                      <span className="text-blue-700">Generating guiding questions...</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State when no questions */}
+                {!guidingQuestions && !generatingAnswer && (
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                    <p className="text-gray-600 text-sm">
+                      Click the "Get Guided Help" button above or expand this section to generate guiding questions.
+                    </p>
+                  </div>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
