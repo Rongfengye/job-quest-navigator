@@ -83,21 +83,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
           return prev;
         });
       }, 300);
-    } else if (feedback || guidingQuestions) {
-      setProgressValue(100);
-      
-      const timeout = setTimeout(() => {
-        setProgressValue(0);
-      }, 1000);
-      
-      return () => clearTimeout(timeout);
+    } else {
+      // If no longer loading, reset progress
+      setProgressValue(0);
     }
     
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isFeedbackLoading, feedback, generatingAnswer, guidingQuestions, processingThoughts]);
-
+  }, [isFeedbackLoading, generatingAnswer, processingThoughts]);
+  
   // Update guidingQuestions based on a custom event
   useEffect(() => {
     const handleGuidanceReceived = (event: CustomEvent) => {
@@ -115,10 +110,9 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   // Listen for response received event to clear thoughts and show toast
   useEffect(() => {
     const handleResponseReceived = () => {
-      setThoughts('');
       setHasUnsavedDraft(true); // Mark as draft since it's generated content
       
-      // Close the guided tool and clear questions for fresh start
+      // Close the guided tool and clear questions for a fresh start
       setIsGuidedToolOpen(false);
       setGuidingQuestions(null);
       
