@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
@@ -28,6 +27,8 @@ export const useAnswerFeedback = (
   
   const { toast } = useToast();
   const { deductTokens } = useUserTokens();
+
+  const questionString = useMemo(() => JSON.stringify(question), [question]);
 
   useEffect(() => {
     const loadExistingFeedback = async () => {
@@ -58,7 +59,7 @@ export const useAnswerFeedback = (
               console.error('Error parsing iterations JSON:', e);
             }
           } else if (Array.isArray(data.iterations)) {
-            iterations = data.iterations as AnswerIteration[];
+            iterations = data.iterations as unknown as AnswerIteration[];
           }
           
           if (iterations.length > 0) {
@@ -67,7 +68,6 @@ export const useAnswerFeedback = (
               .find(iteration => iteration.feedback);
             
             if (lastIterationWithFeedback?.feedback) {
-              console.log('Found existing feedback:', lastIterationWithFeedback.feedback);
               setFeedback(lastIterationWithFeedback.feedback);
             }
           }
@@ -78,7 +78,7 @@ export const useAnswerFeedback = (
     };
 
     loadExistingFeedback();
-  }, [storylineId, question, questionIndex]);
+  }, [storylineId, questionString, questionIndex]);
 
   const generateFeedback = async (answerText: string) => {
     if (!answerText.trim() || !question) {
