@@ -5,10 +5,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Save, Sparkles, Mic, HelpCircle, Lightbulb } from 'lucide-react';
+import { Save, Sparkles, Mic, HelpCircle, Lightbulb, AlertCircle } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { useToast } from '@/hooks/use-toast';
 import AnswerFeedback from './AnswerFeedback';
 import ProgressIndicator from './ProgressIndicator';
 
@@ -39,6 +40,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   feedbackError,
   processingThoughts
 }) => {
+  const { toast } = useToast();
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
   });
@@ -46,6 +48,24 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [progressValue, setProgressValue] = useState(0);
   const [guidingQuestions, setGuidingQuestions] = useState<string[] | null>(null);
   const [thoughts, setThoughts] = useState('');
+  const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
+  const [originalAnswer, setOriginalAnswer] = useState('');
+
+  // Track original answer to detect changes
+  useEffect(() => {
+    if (inputAnswer && !originalAnswer) {
+      setOriginalAnswer(inputAnswer);
+    }
+  }, [inputAnswer, originalAnswer]);
+
+  // Detect if there are unsaved changes
+  useEffect(() => {
+    if (inputAnswer !== originalAnswer && inputAnswer.trim().length > 0) {
+      setHasUnsavedDraft(true);
+    } else {
+      setHasUnsavedDraft(false);
+    }
+  }, [inputAnswer, originalAnswer]);
 
   // Simulate progress when feedback is loading or when generating answer
   useEffect(() => {
@@ -90,10 +110,18 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     };
   }, []);
 
-  // Listen for response received event to clear thoughts
+  // Listen for response received event to clear thoughts and show toast
   useEffect(() => {
     const handleResponseReceived = () => {
       setThoughts('');
+      setHasUnsavedDraft(true); // Mark as draft since it's generated content
+      
+      // Show toast notification
+      toast({
+        title: "✨ Structured response generated",
+        description: "Don't forget to click 'Save Answer' to log this version.",
+        duration: 4000,
+      });
     };
 
     window.addEventListener('responseReceived' as any, handleResponseReceived);
@@ -101,7 +129,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     return () => {
       window.removeEventListener('responseReceived' as any, handleResponseReceived);
     };
-  }, []);
+  }, [toast]);
 
   const handleMicClick = () => {
     if (isRecording) {
@@ -120,6 +148,15 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     window.dispatchEvent(thoughtsEvent);
     
     setThoughts('');
+  };
+
+  const handleSaveAnswer = (e: React.FormEvent<HTMLFormElement>) => {
+    // Reset draft state when saving
+    setHasUnsavedDraft(false);
+    setOriginalAnswer(inputAnswer);
+    
+    // Call the original submit handler
+    handleSubmit(e);
   };
 
   const isAnswerValid = inputAnswer.trim().length > 0;
@@ -155,13 +192,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
               {feedback && (
                 <Badge variant="outline" className="text-xs">
                   Iteration {feedback ? '2' : '1'}
+                  {hasUnsavedDraft && (
+                    <span className="ml-1 text-gray-500">(Draft)</span>
+                  )}
                 </Badge>
               )}
             </div>
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSaveAnswer} className="space-y-4">
             <div className="relative">
               <Textarea 
                 value={inputAnswer}
@@ -179,6 +219,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                 <Mic className={`h-4 w-4 ${isRecording ? 'text-white animate-pulse' : ''}`} />
               </Button>
             </div>
+            
+            {/* Draft Warning */}
+            {hasUnsavedDraft && (
+              <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+                <span className="text-sm text-yellow-800">
+                  You have unsaved changes. Click "Save Answer" to preserve this version.
+                </span>
+              </div>
+            )}
             
             <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
               <TooltipProvider>
@@ -201,14 +251,28 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                 </Tooltip>
               </TooltipProvider>
               
-              <Button 
-                type="submit" 
-                disabled={isSaving || !isAnswerValid}
-                className="flex items-center gap-2"
-              >
-                <Save className="w-4 h-4" />
-                {isSaving ? 'Saving...' : 'Save Answer'}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      type="submit" 
+                      disabled={isSaving || !isAnswerValid}
+                      className="flex items-center gap-2"
+                    >
+                      <Save className="w-4 h-4" />
+                      {isSaving ? 'Saving...' : 'Save Answer'}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {hasUnsavedDraft 
+                        ? "Save this version to your iteration history" 
+                        : "Your answer is already saved"
+                      }
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </form>
           
@@ -303,14 +367,23 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                   />
                   
                   <div className="flex justify-end">
-                    <Button
-                      onClick={handleSubmitThoughts}
-                      disabled={!thoughts.trim() || processingThoughts || generatingAnswer}
-                      className="flex items-center gap-2"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                      {processingThoughts ? 'Processing...' : 'Generate Structured Response'}
-                    </Button>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            onClick={handleSubmitThoughts}
+                            disabled={!thoughts.trim() || processingThoughts || generatingAnswer}
+                            className="flex items-center gap-2"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            {processingThoughts ? 'Processing...' : 'Generate Structured Response'}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>This will autofill your answer box. Remember to click "Save Answer" to keep this version.</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               </div>
