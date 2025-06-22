@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -22,104 +22,33 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [answerRecord, setAnswerRecord] = useState<any>(null);
 
   const queryKey = ['answer', storylineId, questionIndex];
 
-  useEffect(() => {
-    const fetchAndEnsureQuestionExists = async () => {
-      if (!storylineId) {
-        setIsLoading(false);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      // 1. Try to fetch the existing question record
-      const { data: existingRecord, error: fetchError } = await supabase
+  const { data: answerRecord, isLoading, error } = useQuery({
+    queryKey: queryKey,
+    queryFn: async () => {
+      if (!storylineId) return null;
+      
+      const { data, error } = await supabase
         .from('storyline_job_questions')
         .select('*')
         .eq('storyline_id', filterValue(storylineId))
         .eq('question_index', questionIndex)
-        .maybeSingle();
+        .single();
 
-      if (fetchError) {
-        console.error('Error fetching question record:', fetchError);
-        setError('Failed to load question data.');
-        setIsLoading(false);
-        return;
-      }
-
-      if (existingRecord) {
-        // 2. If it exists, use it
-        setAnswerRecord(existingRecord);
-        setIsLoading(false);
-        queryClient.setQueryData(queryKey, existingRecord);
-        return;
-      }
-
-      // 3. If it does not exist, create it
-      try {
-        // First, get the job data which contains all questions
-        const { data: jobData, error: jobError } = await supabase
-          .from('storyline_jobs')
-          .select('openai_response, user_id')
-          .eq('id', filterValue(storylineId))
-          .single();
-
-        if (jobError || !jobData) {
-          throw new Error(jobError?.message || 'Job not found.');
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('No answer record found, which is fine.');
+          return null;
         }
-
-        const response = jobData.openai_response as any;
-        const allQuestions = [
-          ...(response?.technicalQuestions || []),
-          ...(response?.behavioralQuestions || []),
-          ...(response?.originalBehavioralQuestions || []),
-        ];
-        
-        const targetQuestion = allQuestions[questionIndex];
-
-        if (!targetQuestion) {
-          throw new Error('Question index is out of bounds.');
-        }
-
-        // Now, create the new record in storyline_job_questions
-        const { data: newRecord, error: insertError } = await supabase
-          .from('storyline_job_questions')
-          .insert({
-            storyline_id: storylineId,
-            user_id: jobData.user_id,
-            question_index: questionIndex,
-            question: targetQuestion.question,
-            explanation: targetQuestion.explanation,
-            type: targetQuestion.type,
-            answer: '',
-            iterations: [],
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          throw new Error(insertError.message || 'Could not create question record.');
-        }
-
-        setAnswerRecord(newRecord);
-        queryClient.setQueryData(queryKey, newRecord);
-
-      } catch (e: any) {
-        console.error('Error ensuring question exists:', e);
-        setError(e.message || 'An unexpected error occurred.');
-      } finally {
-        setIsLoading(false);
+        console.error('Error fetching answer:', error);
+        throw error;
       }
-    };
-
-    fetchAndEnsureQuestionExists();
-  }, [storylineId, questionIndex, queryClient, toast]);
+      return data;
+    },
+    enabled: !!storylineId,
+  });
 
   const question: Question | null = answerRecord ? {
     question: answerRecord.question,
@@ -209,6 +138,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     iterations,
     answerRecord,
     saveAnswer,
-    error,
+    error: error ? error.message : null,
   };
 };
