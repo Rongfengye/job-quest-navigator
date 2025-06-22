@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Lightbulb } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,7 +24,7 @@ const AnswerFeedback: React.FC<AnswerFeedbackProps> = ({ feedback, isLoading, er
 
   if (error) {
     return (
-      <div className="p-4 border border-red-200 rounded-md bg-red-50 mt-4">
+      <div className="p-4 border border-red-200 rounded-md bg-red-50">
         <div className="flex items-center gap-2 text-red-600 font-medium mb-2">
           <AlertTriangle className="h-5 w-5" />
           Error Generating Feedback
@@ -40,7 +39,7 @@ const AnswerFeedback: React.FC<AnswerFeedbackProps> = ({ feedback, isLoading, er
 
   if (isLoading) {
     return (
-      <div className="space-y-4 mt-4">
+      <div className="space-y-4">
         <Skeleton className="h-8 w-48" />
         <div className="space-y-2">
           <Skeleton className="h-6 w-40" />
@@ -60,72 +59,69 @@ const AnswerFeedback: React.FC<AnswerFeedbackProps> = ({ feedback, isLoading, er
     return null;
   }
 
-  // Calculate score color
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
-  };
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-lg">Feedback</h3>
-        <Badge 
-          className={`text-white text-base px-2 py-1 ${getScoreColor(feedback.score)}`}
-        >
-          Score: {feedback.score}/100
-        </Badge>
-      </div>
-
-      {/* Strengths Section */}
+    <div className="space-y-6">
+      {/* Strengths Section with Pill Tags */}
       <div>
-        <h4 className="font-semibold text-md flex items-center gap-2 mb-2 text-green-700">
-          <CheckCircle className="h-4 w-4" /> Strengths
+        <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-green-700">
+          <CheckCircle className="h-4 w-4" /> 
+          Strengths
         </h4>
-        <ul className="space-y-2 pl-6 list-disc">
+        <div className="flex flex-wrap gap-2">
           {feedback.pros.map((pro, index) => (
-            <li key={`pro-${index}`} className="text-green-800">
+            <Badge 
+              key={`pro-${index}`} 
+              variant="secondary" 
+              className="bg-green-100 text-green-800 border-green-300 text-sm px-3 py-1"
+            >
               {pro}
-            </li>
+            </Badge>
           ))}
-        </ul>
+        </div>
       </div>
 
-      {/* Areas for Improvement Section */}
-      <div className="mt-4">
-        <h4 className="font-semibold text-md flex items-center gap-2 mb-2 text-red-700">
-          <XCircle className="h-4 w-4" /> Areas for Improvement
+      {/* Areas for Improvement Section with Pill Tags */}
+      <div>
+        <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-red-700">
+          <XCircle className="h-4 w-4" /> 
+          Areas for Improvement
         </h4>
-        <ul className="space-y-2 pl-6 list-disc">
+        <div className="flex flex-wrap gap-2">
           {feedback.cons.map((con, index) => (
-            <li key={`con-${index}`} className="text-red-800">
+            <Badge 
+              key={`con-${index}`} 
+              variant="secondary" 
+              className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1"
+            >
               {con}
-            </li>
+            </Badge>
           ))}
-        </ul>
+        </div>
       </div>
 
       {/* Improvement Suggestions */}
-      <div className="mt-4">
-        <h4 className="font-semibold text-md mb-2">Suggestions</h4>
-        <p className="text-gray-700">{feedback.improvementSuggestions}</p>
+      <div className="bg-blue-50 p-4 rounded-md">
+        <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-blue-800">
+          <Lightbulb className="h-4 w-4" />
+          Suggestions
+        </h4>
+        <p className="text-blue-700 text-sm">{feedback.improvementSuggestions}</p>
       </div>
 
       {/* Guidelines (Collapsible) */}
       <Collapsible
         open={isGuidelinesOpen}
         onOpenChange={setIsGuidelinesOpen}
-        className="border rounded-md p-2 mt-4"
+        className="border border-gray-200 rounded-md"
       >
         <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="flex w-full justify-between p-2">
-            Answer Guidelines
-            <span className="text-xs">{isGuidelinesOpen ? "Hide" : "Show"}</span>
+          <Button variant="ghost" className="flex w-full justify-between p-3 hover:bg-gray-50">
+            <span className="font-medium">Answer Guidelines</span>
+            <span className="text-xs text-gray-500">{isGuidelinesOpen ? "Hide" : "Show"}</span>
           </Button>
         </CollapsibleTrigger>
-        <CollapsibleContent className="p-2">
-          <p className="text-gray-700 text-sm">{feedback.guidelines}</p>
+        <CollapsibleContent className="p-3 border-t bg-gray-50">
+          <p className="text-gray-700 text-sm leading-relaxed">{feedback.guidelines}</p>
         </CollapsibleContent>
       </Collapsible>
     </div>
