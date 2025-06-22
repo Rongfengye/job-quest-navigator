@@ -1,143 +1,196 @@
-import { useState, useCallback } from 'react';
+
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Question } from '@/hooks/useQuestionData';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
-import { filterValue } from '@/utils/supabaseTypes';
 
-export interface AnswerIteration {
-  answerText: string;
-  feedback?: FeedbackData | null;
-  timestamp: string;
-}
-
-type QuestionType = 'technical' | 'behavioral' | 'original-behavioral';
-
-function isQuestionType(type: string): type is QuestionType {
-  return ['technical', 'behavioral', 'original-behavioral'].includes(type);
-}
-
-export const useAnswers = (storylineId: string, questionIndex: number) => {
+export const useAnswers = (jobId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const queryKey = ['answer', storylineId, questionIndex];
-
-  const { data: answerRecord, isLoading, error } = useQuery({
-    queryKey: queryKey,
+  const { data: answers, isLoading } = useQuery({
+    queryKey: ['answers', jobId],
     queryFn: async () => {
-      if (!storylineId) return null;
+      if (!jobId) return [];
       
       const { data, error } = await supabase
-        .from('storyline_job_questions')
+        .from('storyline_answers')
         .select('*')
-        .eq('storyline_id', filterValue(storylineId))
-        .eq('question_index', questionIndex)
-        .single();
+        .eq('job_id', jobId)
+        .order('created_at', { ascending: true });
 
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log('No answer record found, which is fine.');
-          return null;
-        }
-        console.error('Error fetching answer:', error);
-        throw error;
-      }
-      return data;
+      if (error) throw error;
+      return data || [];
     },
-    enabled: !!storylineId,
+    enabled: !!jobId
   });
 
-  const question: Question | null = answerRecord ? {
-    question: answerRecord.question,
-    type: isQuestionType(answerRecord.type) ? answerRecord.type : undefined,
-  } : null;
-
-  const answer: string | null = answerRecord?.answer ?? null;
-  
-  let iterations: AnswerIteration[] = [];
-  if (answerRecord && answerRecord.iterations) {
-    if (typeof answerRecord.iterations === 'string') {
-      try {
-        iterations = JSON.parse(answerRecord.iterations);
-      } catch (e) {
-        console.error("Failed to parse iterations", e);
-      }
-    } else if (Array.isArray(answerRecord.iterations)) {
-      iterations = answerRecord.iterations as any;
-    }
-  }
-
-  const saveAnswerMutation = useMutation({
-    mutationFn: async ({ answerText, feedback }: { answerText: string; feedback?: FeedbackData | null }) => {
-      if (!storylineId) throw new Error("Storyline ID is missing");
-
-      setIsSaving(true);
-      
-      const newIteration: AnswerIteration = {
-        answerText,
-        feedback: feedback || null,
-        timestamp: new Date().toISOString(),
-      };
-      
-      const updatedIterations = [...iterations, newIteration];
-
+  const createAnswerMutation = useMutation({
+    mutationFn: async ({ jobId, questionId, answer }: { 
+      jobId: string; 
+      questionId: string; 
+      answer: string; 
+    }) => {
       const { data, error } = await supabase
-        .from('storyline_job_questions')
-        .update({
-          answer: answerText,
-          iterations: updatedIterations as any,
-          updated_at: new Date().toISOString(),
+        .from('storyline_answers')
+        .insert({
+          job_id: jobId,
+          question_id: questionId,
+          answer: answer
         })
-        .eq('storyline_id', filterValue(storylineId))
-        .eq('question_index', questionIndex)
         .select()
         .single();
 
-      if (error) {
-        console.error('Error saving answer:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, data);
-      queryClient.invalidateQueries({ queryKey: ['storyline', storylineId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answers', jobId] });
       toast({
-        title: "Success",
-        description: "Your answer has been saved.",
+        title: "Answer saved",
+        description: "Your answer has been saved successfully.",
       });
     },
     onError: (error) => {
+      console.error('Error saving answer:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to save answer: ${error.message}`,
+        description: "Failed to save your answer. Please try again.",
       });
-    },
-    onSettled: () => {
-      setIsSaving(false);
-    },
+    }
   });
 
-  const saveAnswer = useCallback(
-    async (answerText: string, feedback?: FeedbackData | null) => {
-      await saveAnswerMutation.mutateAsync({ answerText, feedback });
+  const updateAnswerMutation = useMutation({
+    mutationFn: async ({ answerId, answer }: { answerId: string; answer: string }) => {
+      const { data, error } = await supabase
+        .from('storyline_answers')
+        .update({ answer: answer })
+        .eq('id', answerId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
     },
-    [saveAnswerMutation]
-  );
-  
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answers', jobId] });
+      toast({
+        title: "Answer updated",
+        description: "Your answer has been updated successfully.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error updating answer:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update your answer. Please try again.",
+      });
+    }
+  });
+
+  const deleteAnswerMutation = useMutation({
+    mutationFn: async (answerId: string) => {
+      const { error } = await supabase
+        .from('storyline_answers')
+        .delete()
+        .eq('id', answerId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['answers', jobId] });
+      toast({
+        title: "Answer deleted",
+        description: "Your answer has been deleted.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting answer:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete your answer. Please try again.",
+      });
+    }
+  });
+
+  const submitAnswer = async (questionId: string, answer: string) => {
+    if (!jobId) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No job selected",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Check if answer already exists
+      const existingAnswer = answers?.find(a => a.question_id === questionId);
+      
+      if (existingAnswer) {
+        await updateAnswerMutation.mutateAsync({
+          answerId: existingAnswer.id,
+          answer: answer
+        });
+      } else {
+        await createAnswerMutation.mutateAsync({
+          jobId,
+          questionId,
+          answer
+        });
+      }
+    } catch (error) {
+      console.error('Error in submitAnswer:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const deleteAnswer = async (answerId: string) => {
+    await deleteAnswerMutation.mutateAsync(answerId);
+  };
+
+  const getAnswerForQuestion = (questionId: string) => {
+    return answers?.find(answer => answer.question_id === questionId);
+  };
+
+  // Get feedback data safely
+  const getFeedbackData = () => {
+    if (!answers || answers.length === 0) return null;
+    
+    const answerWithFeedback = answers.find(answer => 
+      answer.feedback && 
+      typeof answer.feedback === 'object' && 
+      answer.feedback !== null
+    );
+    
+    if (!answerWithFeedback?.feedback) return null;
+    
+    try {
+      // Handle both string and object feedback
+      const feedback = typeof answerWithFeedback.feedback === 'string' 
+        ? JSON.parse(answerWithFeedback.feedback)
+        : answerWithFeedback.feedback;
+      
+      return feedback;
+    } catch (error) {
+      console.error('Error parsing feedback:', error);
+      return null;
+    }
+  };
+
   return {
+    answers: answers || [],
     isLoading,
-    isSaving,
-    question,
-    answer,
-    iterations,
-    answerRecord,
-    saveAnswer,
-    error: error ? error.message : null,
+    isSubmitting,
+    submitAnswer,
+    deleteAnswer,
+    getAnswerForQuestion,
+    getFeedbackData
   };
 };
