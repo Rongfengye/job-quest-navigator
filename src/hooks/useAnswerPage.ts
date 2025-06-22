@@ -57,10 +57,6 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
   );
 
   useEffect(() => {
-    console.log('AnswerPage: iterations updated from useAnswers', iterations);
-  }, [iterations]);
-
-  useEffect(() => {
     if (answer && answer !== inputAnswer) {
       setInputAnswer(answer);
     }
