@@ -6,8 +6,9 @@ import { useAnswers } from '@/hooks/useAnswers';
 import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 import { useResumeText } from '@/hooks/useResumeText';
 import { useGuidedResponse } from '@/hooks/useGuidedResponse';
+import { Question } from '@/hooks/useQuestionData';
 
-export const useAnswerPage = (storylineId: string | null, questionIndex: number) => {
+export const useAnswerPage = (storylineId: string | null, questionIndex: number, initialQuestion?: Question) => {
   const { toast } = useToast();
   const [inputAnswer, setInputAnswer] = useState<string>('');
   const [activeTab, setActiveTab] = useState<string>('current');
@@ -23,7 +24,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number)
     answerRecord,
     saveAnswer,
     error 
-  } = useAnswers(storylineId || '', questionIndex);
+  } = useAnswers(storylineId || '', questionIndex, initialQuestion);
 
   const {
     feedback,

@@ -51,7 +51,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
   }, [storylineId, index]);
 
   const handleQuestionClick = () => {
-    navigate(`/answer?id=${storylineId}&questionIndex=${index}`);
+    // Pass question data through navigation state
+    navigate(`/answer?id=${storylineId}&questionIndex=${index}`, {
+      state: { question }
+    });
   };
 
   const formatIndex = (index: number) => {

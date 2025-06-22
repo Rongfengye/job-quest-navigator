@@ -7,6 +7,7 @@ import QuestionDisplay from '@/components/answer/QuestionDisplay';
 import AnswerPageHeader from '@/components/answer/AnswerPageHeader';
 import AnswerTabs from '@/components/answer/AnswerTabs';
 import { useAnswerPage } from '@/hooks/useAnswerPage';
+import { Question } from '@/hooks/useQuestionData';
 
 const AnswerPage = () => {
   const location = useLocation();
@@ -14,6 +15,9 @@ const AnswerPage = () => {
   const storylineId = queryParams.get('id');
   const questionIndexStr = queryParams.get('questionIndex');
   const questionIndex = questionIndexStr ? parseInt(questionIndexStr, 10) : 0;
+  
+  // Get question data from navigation state
+  const initialQuestion = (location.state as { question?: Question })?.question;
   
   const {
     inputAnswer,
@@ -32,7 +36,7 @@ const AnswerPage = () => {
     feedbackError,
     handleSubmit,
     handleGenerateAnswer
-  } = useAnswerPage(storylineId, questionIndex);
+  } = useAnswerPage(storylineId, questionIndex, initialQuestion);
 
   if (isLoading) {
     return <Loading message="Loading question..." />;

@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,7 +19,7 @@ function isQuestionType(type: string): type is QuestionType {
   return ['technical', 'behavioral', 'original-behavioral'].includes(type);
 }
 
-export const useAnswers = (storylineId: string, questionIndex: number) => {
+export const useAnswers = (storylineId: string, questionIndex: number, initialQuestion?: Question) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +54,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
   const question: Question | null = answerRecord ? {
     question: answerRecord.question,
     type: isQuestionType(answerRecord.type) ? answerRecord.type : undefined,
-  } : null;
+  } : initialQuestion || null;
 
   const answer: string | null = answerRecord?.answer ?? null;
   
@@ -70,11 +71,53 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     }
   }
 
+  const initializeQuestionMutation = useMutation({
+    mutationFn: async (questionData: Question) => {
+      if (!storylineId) throw new Error("Storyline ID is missing");
+
+      console.log('Initializing question record for:', questionData);
+      
+      const { data, error } = await supabase
+        .from('storyline_job_questions')
+        .insert({
+          storyline_id: filterValue(storylineId),
+          question_index: questionIndex,
+          question: questionData.question,
+          type: questionData.type || null,
+          answer: null,
+          iterations: [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error initializing question:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKey, data);
+    },
+    onError: (error) => {
+      console.error('Failed to initialize question:', error);
+    },
+  });
+
   const saveAnswerMutation = useMutation({
     mutationFn: async ({ answerText, feedback }: { answerText: string; feedback?: FeedbackData | null }) => {
       if (!storylineId) throw new Error("Storyline ID is missing");
+      if (!question) throw new Error("Question data is missing");
 
       setIsSaving(true);
+      
+      // If no record exists, create one first
+      if (!answerRecord) {
+        await initializeQuestionMutation.mutateAsync(question);
+      }
       
       const newIteration: AnswerIteration = {
         answerText,
