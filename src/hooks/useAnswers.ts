@@ -1,186 +1,327 @@
-
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
+import { Json } from '@/integrations/supabase/types';
+import { useUserTokens } from '@/hooks/useUserTokens';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
-import { filterValue } from '@/utils/supabaseTypes';
+import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
+import { transformIterations, parseOpenAIResponse } from '@/utils/answerUtils';
 
 export interface AnswerIteration {
   answerText: string;
-  feedback?: FeedbackData | null;
   timestamp: string;
+  feedback?: {
+    pros: string[];
+    cons: string[];
+    guidelines: string;
+    improvementSuggestions: string;
+    score: number;
+  };
+  [key: string]: any;
 }
 
-type QuestionType = 'technical' | 'behavioral' | 'original-behavioral';
-
-function isQuestionType(type: string): type is QuestionType {
-  return ['technical', 'behavioral', 'original-behavioral'].includes(type);
+interface AnswerData {
+  id?: string;
+  storyline_id: string;
+  question_index: number;
+  question: string;
+  answer: string | null;
+  iterations: AnswerIteration[];
+  type?: 'technical' | 'behavioral';
 }
 
-export const useAnswers = (storylineId: string, questionIndex: number, initialQuestion?: Question) => {
+export const useAnswers = (storylineId: string, questionIndex: number) => {
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const { deductTokens, fetchTokens } = useUserTokens();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [answer, setAnswer] = useState<string>('');
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [answerRecord, setAnswerRecord] = useState<AnswerData | null>(null);
+  const [iterations, setIterations] = useState<AnswerIteration[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const queryKey = ['answer', storylineId, questionIndex];
+  // Fetch question data from storyline_jobs
+  const fetchQuestionData = async (): Promise<Question | null> => {
+    const { data: storylineData, error: storylineError } = await supabase
+      .from('storyline_jobs')
+      .select('openai_response')
+      .eq('id', filterValue(storylineId))
+      .single();
 
-  const { data: answerRecord, isLoading, error } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      if (!storylineId) return null;
-      
-      const { data, error } = await supabase
-        .from('storyline_job_questions')
-        .select('*')
-        .eq('storyline_id', filterValue(storylineId))
-        .eq('question_index', questionIndex)
-        .single();
-
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log('No answer record found, which is fine.');
-          return null;
-        }
-        console.error('Error fetching answer:', error);
-        throw error;
-      }
-      return data;
-    },
-    enabled: !!storylineId,
-  });
-
-  const question: Question | null = answerRecord ? {
-    question: answerRecord.question,
-    type: isQuestionType(answerRecord.type) ? answerRecord.type : undefined,
-  } : initialQuestion || null;
-
-  const answer: string | null = answerRecord?.answer ?? null;
-  
-  let iterations: AnswerIteration[] = [];
-  if (answerRecord && answerRecord.iterations) {
-    if (typeof answerRecord.iterations === 'string') {
-      try {
-        iterations = JSON.parse(answerRecord.iterations);
-      } catch (e) {
-        console.error("Failed to parse iterations", e);
-      }
-    } else if (Array.isArray(answerRecord.iterations)) {
-      iterations = answerRecord.iterations as any;
+    if (storylineError) {
+      console.error('Error fetching storyline data:', storylineError);
+      setError("Failed to load question data.");
+      return null;
     }
-  }
 
-  const initializeQuestionMutation = useMutation({
-    mutationFn: async (questionData: Question) => {
-      if (!storylineId) throw new Error("Storyline ID is missing");
+    if (storylineData?.openai_response) {
+      const parsedResponse =
+        typeof storylineData.openai_response === 'string'
+          ? JSON.parse(storylineData.openai_response)
+          : storylineData.openai_response;
+      const questions = parseOpenAIResponse(parsedResponse);
 
-      console.log('Initializing question record for:', questionData);
-      
-      const { data, error } = await supabase
-        .from('storyline_job_questions')
-        .insert({
-          storyline_id: filterValue(storylineId),
-          question_index: questionIndex,
-          question: questionData.question,
-          type: questionData.type || null,
-          answer: null,
-          iterations: [],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
+      if (questions && questions.length > questionIndex) {
+        const questionData = questions[questionIndex];
+        setQuestion(questionData);
+        return questionData;
+      }
+    }
+    return null;
+  };
+
+  // Fetch answer data from storyline_job_questions
+  const fetchAnswerData = async (questionData?: Question | null) => {
+    const { data: answerData, error: answerError } = await supabase
+      .from('storyline_job_questions')
+      .select('*')
+      .eq('storyline_id', filterValue(storylineId))
+      .eq('question_index', questionIndex)
+      .single();
+
+    if (answerError && answerError.code !== 'PGRST116') { // Ignore no rows found error
+      console.error('Error fetching answer data:', answerError);
+      setError('Failed to load answer data.');
+      return;
+    }
+
+    const currentQuestion = questionData || question;
+    if (!answerData && currentQuestion?.type === 'original-behavioral') {
+      const { data: storylineJob, error: storylineError } = await supabase
+        .from('storyline_jobs')
+        .select('behavioral_id')
+        .eq('id', filterValue(storylineId))
         .single();
 
-      if (error) {
-        console.error('Error initializing question:', error);
-        throw error;
+      if (!storylineError && storylineJob?.behavioral_id) {
+        const behavioralQuestionIndex = questionIndex - 10;
+        
+        if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
+          const behavioralIterations = await fetchBehavioralData(
+            storylineJob.behavioral_id, 
+            behavioralQuestionIndex
+          );
+          
+          if (behavioralIterations && behavioralIterations.length > 0) {
+            setIterations(behavioralIterations);
+            setAnswer(behavioralIterations[0].answerText);
+            console.log('Preloaded behavioral data:', behavioralIterations);
+            return;
+          }
+        }
+      }
+    }
+
+    if (answerData) {
+      const safeAnswerData = safeDatabaseData(answerData);
+      const parsedIterations: AnswerIteration[] = Array.isArray(safeAnswerData.iterations) 
+        ? safeAnswerData.iterations as unknown as AnswerIteration[]
+        : typeof safeAnswerData.iterations === 'string' 
+          ? JSON.parse(safeAnswerData.iterations)
+          : [];
+
+      setIterations(parsedIterations);
+      setAnswer(safeAnswerData.answer || '');
+      setAnswerRecord(safeAnswerData as unknown as AnswerData);
+    }
+  };
+
+  // Fetch question and answer data on initial load
+  useEffect(() => {
+    const fetchAllData = async () => {
+      if (!storylineId) {
+        setIsLoading(false);
+        return;
       }
 
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, data);
-    },
-    onError: (error) => {
-      console.error('Failed to initialize question:', error);
-    },
-  });
+      setIsLoading(true);
+      setError(null);
 
-  const saveAnswerMutation = useMutation({
-    mutationFn: async ({ answerText, feedback }: { answerText: string; feedback?: FeedbackData | null }) => {
-      if (!storylineId) throw new Error("Storyline ID is missing");
-      if (!question) throw new Error("Question data is missing");
-
-      setIsSaving(true);
-      
-      // If no record exists, create one first
-      if (!answerRecord) {
-        await initializeQuestionMutation.mutateAsync(question);
+      try {
+        const questionData = await fetchQuestionData();
+        await fetchAnswerData(questionData);
+      } catch (error) {
+        console.error('Error fetching question and answer:', error);
+        setError(error instanceof Error ? error.message : "Failed to load question");
+      } finally {
+        setIsLoading(false);
       }
-      
-      const newIteration: AnswerIteration = {
-        answerText,
-        feedback: feedback || null,
-        timestamp: new Date().toISOString(),
-      };
-      
-      const updatedIterations = [...iterations, newIteration];
+    };
+    
+    fetchAllData();
+  }, [storylineId, questionIndex]);
 
-      const { data, error } = await supabase
-        .from('storyline_job_questions')
-        .update({
-          answer: answerText,
-          iterations: updatedIterations as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('storyline_id', filterValue(storylineId))
-        .eq('question_index', questionIndex)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error saving answer:', error);
-        throw error;
+  // Transform behavioral data to answer iteration format
+  const transformBehavioralDataToIteration = (response: string, feedback: any, timestamp: string): AnswerIteration => {
+    return {
+      answerText: response,
+      timestamp: timestamp,
+      feedback: {
+        pros: feedback.pros || [],
+        cons: feedback.cons || [],
+        guidelines: feedback.guidelines || '',
+        improvementSuggestions: feedback.improvementSuggestions || '',
+        score: feedback.score || 0
       }
+    };
+  };
 
-      return data;
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(queryKey, data);
-      queryClient.invalidateQueries({ queryKey: ['storyline', storylineId] });
+  // Fetch behavioral interview data for original behavioral questions
+  const fetchBehavioralData = async (behavioralId: string, behavioralQuestionIndex: number) => {
+    const { data: behavioralData, error: behavioralError } = await supabase
+      .from('storyline_behaviorals')
+      .select('responses, feedback, created_at')
+      .eq('id', filterValue(behavioralId))
+      .single();
+
+    if (behavioralError) {
+      console.error('Error fetching behavioral data:', behavioralError);
+      return null;
+    }
+
+    if (behavioralData) {
+      const safeData = safeDatabaseData(behavioralData);
+      const responses = Array.isArray(safeData.responses) ? safeData.responses : [];
+      const feedbackArray = Array.isArray(safeData.feedback) ? safeData.feedback : [];
+      
+      if (responses[behavioralQuestionIndex] && feedbackArray[behavioralQuestionIndex]) {
+        const iteration = transformBehavioralDataToIteration(
+          responses[behavioralQuestionIndex] as string,
+          feedbackArray[behavioralQuestionIndex],
+          safeData.created_at || new Date().toISOString()
+        );
+        return [iteration];
+      }
+    }
+    
+    return [];
+  };
+
+  const saveAnswer = async (answerText: string, feedbackData: FeedbackData | null) => {
+    if (!question) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Question not loaded yet.",
+      });
+      return;
+    }
+  
+    setIsSaving(true);
+    setError(null);
+  
+    const newIteration: AnswerIteration = {
+      answerText,
+      timestamp: new Date().toISOString(),
+      feedback: feedbackData || undefined,
+    };
+  
+    const updatedIterations = [...iterations, newIteration];
+    setIterations(updatedIterations);
+    setAnswer(answerText);
+  
+    try {
+      if (answerRecord && answerRecord.id) {
+        await updateExistingAnswer(answerRecord.id, answerText, updatedIterations);
+      } else {
+        await createNewAnswer(answerText, updatedIterations);
+      }
       toast({
         title: "Success",
         description: "Your answer has been saved.",
       });
-    },
-    onError: (error) => {
+    } catch (error) {
+      console.error('Error saving answer:', error);
+      setError(error instanceof Error ? error.message : 'Failed to save answer');
+      setIterations(iterations); // Revert to old iterations on error
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to save answer: ${error.message}`,
+        description: "Failed to save your answer. Please try again.",
       });
-    },
-    onSettled: () => {
+    } finally {
       setIsSaving(false);
-    },
-  });
-
-  const saveAnswer = useCallback(
-    async (answerText: string, feedback?: FeedbackData | null) => {
-      await saveAnswerMutation.mutateAsync({ answerText, feedback });
-    },
-    [saveAnswerMutation]
-  );
+    }
+  };
   
-  return {
-    isLoading,
-    isSaving,
-    question,
-    answer,
-    iterations,
+  // Update an existing answer record
+  const updateExistingAnswer = async (id: string, answerText: string, currentIterations: AnswerIteration[]) => {
+    const { error } = await supabase
+      .from('storyline_job_questions')
+      .update({
+        answer: answerText,
+        iterations: currentIterations as unknown as Json,
+      })
+      .eq('id', filterValue(id));
+  
+    if (error) throw error;
+  };
+
+  // Create a new answer record
+  const createNewAnswer = async (answerText: string, currentIterations: AnswerIteration[]) => {
+    console.log('🪙 Deducting 1 token for creating a new question record');
+    const tokenCheck = await deductTokens(1);
+
+    if (!tokenCheck?.success) {
+      toast({
+        variant: "destructive",
+        title: "Insufficient tokens",
+        description: "You don't have enough tokens to save a new answer."
+      });
+      return;
+    }
+
+    const { data, error } = await supabase
+      .from('storyline_job_questions')
+      .insert({
+        storyline_id: storylineId,
+        question_index: questionIndex,
+        question: question!.question,
+        answer: answerText,
+        iterations: currentIterations.length ? (currentIterations as unknown as Json) : [],
+        type: question!.type
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    fetchTokens();
+
+    if (data) {
+      const safeData = safeDatabaseData(data);
+      const parsedIterations: AnswerIteration[] = Array.isArray(safeData.iterations) 
+        ? safeData.iterations 
+        : typeof safeData.iterations === 'string' 
+          ? JSON.parse(safeData.iterations)
+          : (safeData.iterations as any)?.length 
+            ? (safeData.iterations as any)
+            : [];
+
+      setIterations(parsedIterations);      
+      setAnswerRecord({
+        id: safeData.id,
+        storyline_id: safeData.storyline_id,
+        question_index: safeData.question_index,
+        question: safeData.question,
+        answer: safeData.answer,
+        iterations: parsedIterations,
+        type: safeData.type as 'technical' | 'behavioral' | undefined
+      });
+    }
+  };
+
+  return { 
+    isLoading, 
+    isSaving, 
+    question, 
+    answer, 
     answerRecord,
-    saveAnswer,
-    error: error ? error.message : null,
+    iterations,
+    setAnswer, 
+    saveAnswer, 
+    error 
   };
 };
