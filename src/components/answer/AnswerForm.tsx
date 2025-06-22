@@ -51,6 +51,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');
   const [isGuidedToolOpen, setIsGuidedToolOpen] = useState(false);
+  const [showPulse, setShowPulse] = useState(true);
 
   // Track original answer to detect changes
   useEffect(() => {
@@ -67,6 +68,15 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
       setHasUnsavedDraft(false);
     }
   }, [inputAnswer, originalAnswer]);
+
+  // Add a one-time pulse effect on mount to draw attention
+  useEffect(() => {
+    const pulseTimer = setTimeout(() => {
+      setShowPulse(false);
+    }, 2500); // Animation duration is 2.5s
+
+    return () => clearTimeout(pulseTimer);
+  }, []);
 
   // Simulate progress when feedback is loading or when generating answer
   useEffect(() => {
@@ -249,7 +259,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                       variant="outline"
                       onClick={handleGenerateAnswer}
                       disabled={generatingAnswer}
-                      className="flex items-center gap-2"
+                      className={`flex items-center gap-2 ${showPulse ? 'animate-pulse-glow' : ''}`}
                     >
                       <Sparkles className="w-4 h-4" />
                       {generatingAnswer ? 'Generating...' : 'Get Guided Help'}
@@ -325,7 +335,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
       )}
 
       {/* Guided Response Tool - Controlled Flow */}
-      <Card className="border-2 border-dashed border-blue-200 bg-blue-50/30">
+      <Card className={`border-2 border-dashed bg-blue-50/30 ${showPulse ? 'border-blue-400' : 'border-blue-200'}`}>
         <Accordion 
           type="single" 
           collapsible 
