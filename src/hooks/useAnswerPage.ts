@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -116,7 +115,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
         });
       } else {
         // If feedback generation failed, still save the answer without feedback
-        await saveAnswer(inputAnswer);
+        await saveAnswer(inputAnswer, null);
       }
     }
   };

@@ -52,6 +52,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [originalAnswer, setOriginalAnswer] = useState('');
   const [isGuidedToolOpen, setIsGuidedToolOpen] = useState(false);
   const [showPulse, setShowPulse] = useState(true);
+  const [showResponseGeneratedWarning, setShowResponseGeneratedWarning] = useState(false);
 
   // Track original answer to detect changes
   useEffect(() => {
@@ -117,21 +118,23 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     };
   }, []);
 
-  // Listen for response received event to clear thoughts and show toast
+  // Listen for response received event to clear thoughts and show warning
   useEffect(() => {
     const handleResponseReceived = () => {
-      setHasUnsavedDraft(true); // Mark as draft since it's generated content
+      // Mark as draft since it's generated content that hasn't been saved yet
+      setHasUnsavedDraft(true);
       
       // Close the guided tool and clear questions for a fresh start
       setIsGuidedToolOpen(false);
       setGuidingQuestions(null);
       
-      // Show toast notification
-      toast({
-        title: "✨ Structured response generated",
-        description: "Don't forget to click 'Save Answer' to log this version.",
-        duration: 4000,
-      });
+      // Show soft yellow warning instead of toast
+      setShowResponseGeneratedWarning(true);
+      
+      // Auto-hide the warning after 8 seconds
+      setTimeout(() => {
+        setShowResponseGeneratedWarning(false);
+      }, 8000);
     };
 
     window.addEventListener('responseReceived' as any, handleResponseReceived);
@@ -139,7 +142,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     return () => {
       window.removeEventListener('responseReceived' as any, handleResponseReceived);
     };
-  }, [toast]);
+  }, []);
 
   const handleMicClick = () => {
     if (isRecording) {
@@ -246,6 +249,16 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                 <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
                 <span className="text-sm text-yellow-800">
                   You have unsaved changes. Click "Save Answer" to preserve this version.
+                </span>
+              </div>
+            )}
+            
+            {/* Response Generated Warning */}
+            {showResponseGeneratedWarning && (
+              <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+                <span className="text-sm text-yellow-800">
+                  ✨ Structured response generated! Don't forget to click "Save Answer" to log this version.
                 </span>
               </div>
             )}
