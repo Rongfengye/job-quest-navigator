@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from "react";
 import {
   Carousel,
@@ -19,6 +18,11 @@ const HowItWorks = () => {
       src: "/video-assets/CreateBehavioralFlow.mov",
       title: "Upload your application info",
       description: "Start by uploading your resume, job description, and any other relevant documents. Our AI analyzes your background and the role requirements to create personalized interview questions that match your experience and the position you're applying for."
+    },
+    {
+      src: "/video-assets/BehavioralInterviewFlow.mov",
+      title: "Practice Behavioral Interviews",
+      description: "Engage in realistic behavioral interview simulations with our AI-powered system. Answer questions using the STAR method, receive real-time guidance, and practice your responses in a safe environment that mimics actual interview conditions."
     },
     {
       src: "/video-assets/Feedbackrecording.mov", 
