@@ -33,6 +33,11 @@ const HowItWorks = () => {
       src: "/video-assets/GenerateMoreIndividualQuestions.mov",
       title: "Practice more company specific questions",
       description: "Access an unlimited library of company-specific behavioral questions tailored to your target role. Practice with questions that are commonly asked at your dream company and refine your answers until you feel confident and prepared."
+    },
+    {
+      src: "/video-assets/GuidedResponseTool.mov",
+      title: "Get Guided Response Assistance",
+      description: "Receive intelligent guidance and suggestions while crafting your interview responses. Our AI helps you structure your answers, suggests relevant examples from your experience, and ensures you're highlighting the most impactful aspects of your background."
     }
   ];
 
