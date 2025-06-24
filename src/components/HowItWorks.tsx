@@ -22,7 +22,7 @@ const HowItWorks = () => {
     {
       src: "/video-assets/BehavioralInterviewFlow.mov",
       title: "Practice Behavioral Interviews",
-      description: "Engage in realistic behavioral interview simulations with our AI-powered system. Answer questions using the STAR method, receive real-time guidance, and practice your responses in a safe environment that mimics actual interview conditions."
+      description: "Transform your interview skills through immersive behavioral practice sessions. Answer real interview questions, learn to articulate your achievements effectively, and develop the confidence to showcase your experience in ways that resonate with Interviewers."
     },
     {
       src: "/video-assets/Feedbackrecording.mov", 
