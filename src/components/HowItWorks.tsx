@@ -32,7 +32,7 @@ const HowItWorks = () => {
     {
       src: "/video-assets/GenerateMoreIndividualQuestions.mov",
       title: "Practice more company specific questions",
-      description: "Access an unlimited library of company-specific behavioral questions tailored to your target role. Practice with questions that are commonly asked at your dream company and refine your answers until you feel confident and prepared."
+      description: "Our AI curates and finds behavioral questions based on your target company, role, and culture—drawing from real interview questions used by hiring managers. Practice unlimited scenarios tailored to the challenges you'll actually face, so you can build confidence, refine your responses, and walk into your interview fully prepared."
     },
     {
       src: "/video-assets/GuidedResponseTool.mov",
