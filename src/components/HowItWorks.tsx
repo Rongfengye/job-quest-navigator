@@ -37,7 +37,7 @@ const HowItWorks = () => {
     {
       src: "/video-assets/GuidedResponseTool.mov",
       title: "Get Guided Response Assistance",
-      description: "Receive intelligent guidance and suggestions while crafting your interview responses. Our AI helps you structure your answers, suggests relevant examples from your experience, and ensures you're highlighting the most impactful aspects of your background."
+      description: "Get personalized coaching as you craft each response with our guided assistance tool. Our AI analyzes your background to help you brainstorm relevant examples and structure compelling narratives—walking you through every step to create interview answers that make a lasting impression."
     }
   ];
 
