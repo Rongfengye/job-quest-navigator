@@ -27,7 +27,7 @@ const HowItWorks = () => {
     {
       src: "/video-assets/Feedbackrecording.mov", 
       title: "Receive Custom Feedback",
-      description: "Practice answering behavioral questions and receive detailed, personalized feedback on your responses. Our AI evaluates your storytelling structure, relevance to the question, and overall delivery to help you improve your interview performance."
+      description: "Practice answering behavioral questions and receive detailed, personalized feedback on your responses. Our AI evaluates your storytelling structure, relevance to the question, and overall delivery to help you improve your behavioal responses."
     },
     {
       src: "/video-assets/GenerateMoreIndividualQuestions.mov",
