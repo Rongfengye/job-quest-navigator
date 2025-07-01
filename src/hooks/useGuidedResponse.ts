@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -15,7 +16,6 @@ export const useGuidedResponse = (
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
   const [processingThoughts, setProcessingThoughts] = useState(false);
-  const { deductTokens } = useUserTokens();
   
   const { iterations } = useAnswers(storylineId, questionIndex);
 
@@ -24,16 +24,6 @@ export const useGuidedResponse = (
       if (!question) return;
       
       const { thoughts } = event.detail;
-      
-      const tokenCheck = await deductTokens(1);
-      if (!tokenCheck?.success) {
-        toast({
-          variant: "destructive",
-          title: "Insufficient tokens",
-          description: "You need 1 token to process your thoughts into a response.",
-        });
-        return;
-      }
       
       setProcessingThoughts(true);
       
@@ -112,7 +102,6 @@ export const useGuidedResponse = (
           description: `Failed to process thoughts: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
         
-        await deductTokens(-1);
         return false;
       } finally {
         setProcessingThoughts(false);
@@ -124,7 +113,7 @@ export const useGuidedResponse = (
     return () => {
       window.removeEventListener('thoughtsSubmitted' as any, handleThoughtsSubmitted);
     };
-  }, [questionIndex, question, deductTokens, toast, iterations, previousFeedback]);
+  }, [questionIndex, question, toast, iterations, previousFeedback]);
 
   useEffect(() => {
     const handleResponseGenerated = (event: CustomEvent) => {
@@ -145,16 +134,6 @@ export const useGuidedResponse = (
 
   const generateGuidedResponse = async (inputAnswer: string, resumeText: string) => {
     if (!question) return;
-    
-    const tokenCheck = await deductTokens(1);
-    if (!tokenCheck?.success) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient tokens",
-        description: "You need 1 token to generate guided response.",
-      });
-      return;
-    }
     
     setGeneratingAnswer(true);
     
@@ -235,7 +214,6 @@ export const useGuidedResponse = (
         description: `Failed to generate guided response: ${error instanceof Error ? error.message : 'Unknown error'}`,
       });
       
-      await deductTokens(-1);
       return false;
     } finally {
       setGeneratingAnswer(false);

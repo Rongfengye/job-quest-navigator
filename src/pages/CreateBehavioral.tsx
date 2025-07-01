@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,6 @@ import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { deductTokens } = useUserTokens();
   const { generateQuestion } = useBehavioralInterview();
   const [formData, setFormData] = React.useState({
     jobTitle: '',
@@ -102,18 +102,6 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
-      // Check tokens first
-      const tokenCheck = await deductTokens(1);
-      if (!tokenCheck?.success) {
-        toast({
-          variant: "destructive",
-          title: "Insufficient tokens",
-          description: "You need at least 1 token to start a behavioral interview.",
-        });
-        setIsProcessing(false);
-        return;
-      }
-
       // Upload files to Supabase storage
       let resumePath = '';
       let coverLetterPath = '';

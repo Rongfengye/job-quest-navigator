@@ -29,7 +29,7 @@ export const useJobPracticeSubmission = (
 ) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { deductTokens, fetchTokens } = useUserTokens();
+  const { fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(false);
   const [processingModal, setProcessingModal] = useState(false);
 
@@ -41,16 +41,6 @@ export const useJobPracticeSubmission = (
         description: "Please sign in to create a job practice."
       });
       return;
-    }
-    
-    // Skip token deduction if coming from a behavioral interview
-    // since tokens were already deducted for the behavioral interview
-    if (!behavioralId) {
-      const tokenCheck = await deductTokens(5);
-      if (!tokenCheck?.success) {
-        return;
-      }
-      fetchTokens();
     }
     
     setIsLoading(true);
@@ -181,12 +171,6 @@ export const useJobPracticeSubmission = (
         title: "Error",
         description: "There was an error creating your job practice. Please try again."
       });
-      
-      // Only refund tokens if we deducted them (not from behavioral)
-      if (!behavioralId) {
-        await deductTokens(-5);
-        fetchTokens();
-      }
     } finally {
       setIsLoading(false);
       setProcessingModal(false);
