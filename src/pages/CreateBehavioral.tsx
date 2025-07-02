@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,6 @@ import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
-import { useUserTokens } from '@/hooks/useUserTokens';
 import { supabase } from '@/integrations/supabase/client';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 

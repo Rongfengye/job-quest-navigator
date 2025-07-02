@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
-import { useUserTokens } from '@/hooks/useUserTokens';
 import { AnswerIteration } from '@/hooks/useAnswers';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
@@ -26,7 +25,6 @@ export const useAnswerFeedback = (
   const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
-  const { deductTokens } = useUserTokens();
 
   const questionString = useMemo(() => JSON.stringify(question), [question]);
 
@@ -99,16 +97,6 @@ export const useAnswerFeedback = (
       return null;
     }
 
-    const tokenCheck = await deductTokens(2);
-    if (!tokenCheck?.success) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient tokens",
-        description: "You need at least 2 tokens to get feedback on your answer.",
-      });
-      return null;
-    }
-
     setIsLoading(true);
     setError(null);
 
@@ -128,13 +116,11 @@ export const useAnswerFeedback = (
       if (error) {
         console.error('Error generating feedback:', error);
         setError(error.message || 'Failed to generate feedback');
-        await deductTokens(-2);
         return null;
       }
 
       if (!data || !data.pros || !data.cons) {
         setError('Invalid feedback data received');
-        await deductTokens(-2);
         return null;
       }
 
@@ -144,7 +130,6 @@ export const useAnswerFeedback = (
     } catch (err) {
       console.error('Error in feedback generation:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      await deductTokens(-2);
       return null;
     } finally {
       setIsLoading(false);

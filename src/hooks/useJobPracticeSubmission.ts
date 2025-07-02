@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { useUserTokens } from '@/hooks/useUserTokens';
 import { uploadFile } from './useFileUpload';
 
 interface FileData {
@@ -29,7 +27,6 @@ export const useJobPracticeSubmission = (
 ) => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(false);
   const [processingModal, setProcessingModal] = useState(false);
 

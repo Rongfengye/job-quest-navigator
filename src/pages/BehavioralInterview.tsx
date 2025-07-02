@@ -1,13 +1,14 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useResumeText } from '@/hooks/useResumeText';
 import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
+import { Mic, MicOff, Send } from 'lucide-react';
 import ProcessingModal from '@/components/ProcessingModal';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
@@ -17,7 +18,6 @@ const BehavioralInterview = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { deductTokens } = useUserTokens();
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -199,22 +199,6 @@ const BehavioralInterview = () => {
         } catch (error) {
           console.error('Error playing transition audio:', error);
           // Continue even if audio fails
-        }
-        
-        const tokenCheck = await deductTokens(1);
-        if (!tokenCheck?.success) {
-          setIsSubmitting(false);
-          setIsTransitionLoading(false);
-          setShowProcessing(false);
-          setShouldGenerateNext(false);
-          setIsGenerating(false);
-          toast({
-            variant: "destructive",
-            title: "Insufficient tokens",
-            description: "You need 1 token to continue to the next question.",
-          });
-          navigate('/behavioral');
-          return;
         }
         
         console.log('About to generate next question with correct index:', currentQuestionIndex);

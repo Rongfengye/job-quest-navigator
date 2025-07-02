@@ -1,7 +1,5 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useUserTokens } from '@/hooks/useUserTokens';
 import { Question } from '@/hooks/useQuestionData';
 import { supabase } from '@/integrations/supabase/client';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';

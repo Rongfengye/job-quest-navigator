@@ -3,7 +3,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
-import { useUserTokens } from '@/hooks/useUserTokens';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 import { transformIterations, parseOpenAIResponse } from '@/utils/answerUtils';
@@ -33,7 +32,6 @@ interface AnswerData {
 
 export const useAnswers = (storylineId: string, questionIndex: number) => {
   const { toast } = useToast();
-  const { deductTokens, fetchTokens } = useUserTokens();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [answer, setAnswer] = useState<string>('');
@@ -261,18 +259,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
 
   // Create a new answer record
   const createNewAnswer = async (answerText: string, currentIterations: AnswerIteration[]) => {
-    console.log('🪙 Deducting 1 token for creating a new question record');
-    const tokenCheck = await deductTokens(1);
-
-    if (!tokenCheck?.success) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient tokens",
-        description: "You don't have enough tokens to save a new answer."
-      });
-      return;
-    }
-
     const { data, error } = await supabase
       .from('storyline_job_questions')
       .insert({
@@ -287,8 +273,6 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
       .single();
 
     if (error) throw error;
-
-    fetchTokens();
 
     if (data) {
       const safeData = safeDatabaseData(data);
