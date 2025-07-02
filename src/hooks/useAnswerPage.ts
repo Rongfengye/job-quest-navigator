@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -24,7 +23,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
     answerRecord,
     saveAnswer,
     error 
-  } = useAnswers(storylineId || '', questionIndex, initialQuestion);
+  } = useAnswers(storylineId || '', questionIndex);
 
   const {
     feedback,
