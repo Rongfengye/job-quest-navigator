@@ -5,17 +5,17 @@ import { useAuthContext } from '@/context/AuthContext';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
 // Create a simple event emitter for token updates
-type TokenUpdateListener = (tokens: number | null) => void;
+type TokenUpdateListener = (planStatus: number | null) => void;
 const tokenListeners: Set<TokenUpdateListener> = new Set();
 
-const notifyTokenListeners = (tokens: number | null) => {
-  console.log('🔔 Notifying all token listeners of new token balance:', tokens);
-  tokenListeners.forEach(listener => listener(tokens));
+const notifyTokenListeners = (planStatus: number | null) => {
+  console.log('🔔 Notifying all token listeners of new plan status:', planStatus);
+  tokenListeners.forEach(listener => listener(planStatus));
 };
 
-// Helper function to check if user is premium (backward compatible: any non-zero tokens = premium)
-const checkIsPremium = (tokens: number | null): boolean => {
-  return tokens != null && tokens !== 0;
+// Helper function to check if user is premium (1 = premium, 0 = basic)
+const checkIsPremium = (planStatus: number | null): boolean => {
+  return planStatus === 1;
 };
 
 export const useUserTokens = () => {
@@ -25,10 +25,10 @@ export const useUserTokens = () => {
   const { user, isAuthenticated } = useAuthContext();
 
   // Update local state and notify all listeners
-  const updateTokenState = useCallback((newTokens: number | null) => {
-    console.log('✅ Updating token state to:', newTokens);
-    setTokens(newTokens);
-    notifyTokenListeners(newTokens);
+  const updateTokenState = useCallback((newPlanStatus: number | null) => {
+    console.log('✅ Updating plan status to:', newPlanStatus);
+    setTokens(newPlanStatus);
+    notifyTokenListeners(newPlanStatus);
   }, []);
 
   const fetchTokens = useCallback(async () => {
@@ -38,20 +38,20 @@ export const useUserTokens = () => {
     try {
       const { data, error } = await supabase
         .from('storyline_user_tokens')
-        .select('tokens_remaining')
+        .select('user_plan_status')
         .eq('user_id', filterValue(user.id))
         .maybeSingle();
       
       if (error) throw error;
       
-      console.log('📊 Tokens fetched from database:', data?.tokens_remaining);
-      updateTokenState(data?.tokens_remaining ?? null);
+      console.log('📊 Plan status fetched from database:', data?.user_plan_status);
+      updateTokenState(data?.user_plan_status ?? null);
     } catch (error) {
-      console.error('Error fetching user tokens:', error);
+      console.error('Error fetching user plan status:', error);
       toast({
         variant: "destructive",
-        title: "Error fetching tokens",
-        description: "Could not retrieve your token balance."
+        title: "Error fetching plan status",
+        description: "Could not retrieve your subscription status."
       });
     } finally {
       setIsLoading(false);
@@ -174,9 +174,9 @@ export const useUserTokens = () => {
     console.log('🔔 Component subscribing to token updates');
     
     // Create a listener that will update this component's state
-    const listener = (newTokens: number | null) => {
-      console.log('🔄 Token listener called with new balance:', newTokens);
-      setTokens(newTokens);
+    const listener = (newPlanStatus: number | null) => {
+      console.log('🔄 Token listener called with new plan status:', newPlanStatus);
+      setTokens(newPlanStatus);
     };
     
     // Add the listener to our set

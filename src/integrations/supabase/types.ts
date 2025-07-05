@@ -296,23 +296,23 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          tokens_remaining: number
           updated_at: string | null
           user_id: string
+          user_plan_status: number
         }
         Insert: {
           created_at?: string | null
           id?: string
-          tokens_remaining?: number
           updated_at?: string | null
           user_id: string
+          user_plan_status?: number
         }
         Update: {
           created_at?: string | null
           id?: string
-          tokens_remaining?: number
           updated_at?: string | null
           user_id?: string
+          user_plan_status?: number
         }
         Relationships: []
       }
