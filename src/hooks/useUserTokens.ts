@@ -13,6 +13,11 @@ const notifyTokenListeners = (tokens: number | null) => {
   tokenListeners.forEach(listener => listener(tokens));
 };
 
+// Helper function to check if user is premium (backward compatible: any non-zero tokens = premium)
+const checkIsPremium = (tokens: number | null): boolean => {
+  return tokens != null && tokens !== 0;
+};
+
 export const useUserTokens = () => {
   const [tokens, setTokens] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +71,7 @@ export const useUserTokens = () => {
       if (error) throw error;
       
       updateTokenState(data ?? 0);
-      const isPremium = data != 0;
+      const isPremium = checkIsPremium(data);
       console.log(`✅ Successfully toggled to ${isPremium ? 'premium' : 'basic'}. New status: ${data}`);
       
       toast({
@@ -103,7 +108,7 @@ export const useUserTokens = () => {
       if (error) throw error;
       
       updateTokenState(data ?? 0);
-      const isPremium = data === 1;
+      const isPremium = checkIsPremium(data);
       console.log(`✅ Successfully set status to ${isPremium ? 'premium' : 'basic'}. New balance: ${data}`);
       
       toast({
@@ -216,8 +221,8 @@ export const useUserTokens = () => {
   }, [isAuthenticated, user?.id, fetchTokens]);
 
   // Helper function to check if user is premium
-  const isPremium = tokens === 1;
-  const isBasic = tokens === 0;
+  const isPremium = checkIsPremium(tokens);
+  const isBasic = !isPremium;
 
   return {
     tokens,
