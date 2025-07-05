@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Coins } from 'lucide-react';
+import { Crown, User } from 'lucide-react';
 
 const Settings = () => {
   const { logout } = useAuthContext();
@@ -23,8 +25,8 @@ const Settings = () => {
     confirm: ''
   });
   
-  const { tokens, isLoading: tokensLoading, addTokens } = useUserTokens();
-  const [isAddingTokens, setIsAddingTokens] = useState(false);
+  const { isPremium, isBasic, isLoading: tokensLoading, togglePremium } = useUserTokens();
+  const [isTogglingPlan, setIsTogglingPlan] = useState(false);
   
   const handleLogout = async () => {
     const { success } = await logout();
@@ -95,12 +97,12 @@ const Settings = () => {
     }
   };
   
-  const handleAddTokens = async () => {
-    setIsAddingTokens(true);
+  const handleTogglePlan = async () => {
+    setIsTogglingPlan(true);
     try {
-      await addTokens(10);
+      await togglePremium();
     } finally {
-      setIsAddingTokens(false);
+      setIsTogglingPlan(false);
     }
   };
 
@@ -114,25 +116,61 @@ const Settings = () => {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Token Balance</CardTitle>
+            <CardTitle>Subscription Plan</CardTitle>
             <CardDescription>
-              Manage your interview practice tokens
+              Manage your account plan and access level
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Coins className="h-6 w-6 text-yellow-500" />
-              <span className="text-xl font-semibold">
-                {tokensLoading ? '—' : tokens ?? 0} tokens
-              </span>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isPremium ? (
+                  <>
+                    <Crown className="h-6 w-6 text-yellow-500" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-semibold">Premium Plan</span>
+                        <Badge variant="default" className="bg-yellow-500 text-white">
+                          Premium
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Full access to all features
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <User className="h-6 w-6 text-gray-500" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl font-semibold">Free Plan</span>
+                        <Badge variant="secondary">
+                          Basic
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Limited access to features
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="plan-toggle" className="text-sm font-medium">
+                    {isBasic ? 'Upgrade to Premium' : 'Downgrade to Free'}
+                  </Label>
+                  <Switch
+                    id="plan-toggle"
+                    checked={isPremium}
+                    onCheckedChange={handleTogglePlan}
+                    disabled={isTogglingPlan || tokensLoading}
+                  />
+                </div>
+              </div>
             </div>
-            <Button 
-              onClick={handleAddTokens}
-              disabled={isAddingTokens}
-              className="ml-4"
-            >
-              {isAddingTokens ? 'Adding...' : 'Add 10 Tokens'}
-            </Button>
           </CardContent>
         </Card>
 
