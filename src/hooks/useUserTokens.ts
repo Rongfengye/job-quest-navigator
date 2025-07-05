@@ -66,7 +66,7 @@ export const useUserTokens = () => {
       if (error) throw error;
       
       updateTokenState(data ?? 0);
-      const isPremium = data === 1;
+      const isPremium = data != 0;
       console.log(`✅ Successfully toggled to ${isPremium ? 'premium' : 'basic'}. New status: ${data}`);
       
       toast({
