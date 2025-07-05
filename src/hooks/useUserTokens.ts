@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -37,7 +38,7 @@ export const useUserTokens = () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('storyline_user_tokens')
+        .from('hireme_user_status')
         .select('user_plan_status')
         .eq('user_id', filterValue(user.id))
         .maybeSingle();
@@ -204,7 +205,7 @@ export const useUserTokens = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'storyline_user_tokens',
+          table: 'hireme_user_status',
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {

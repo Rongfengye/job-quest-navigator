@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      hireme_user_status: {
+        Row: {
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+          user_plan_status: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+          user_plan_status?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+          user_plan_status?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
@@ -292,30 +316,6 @@ export type Database = {
           },
         ]
       }
-      storyline_user_tokens: {
-        Row: {
-          created_at: string | null
-          id: string
-          updated_at: string | null
-          user_id: string
-          user_plan_status: number
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          user_id: string
-          user_plan_status?: number
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          updated_at?: string | null
-          user_id?: string
-          user_plan_status?: number
-        }
-        Relationships: []
-      }
       user_metrics: {
         Row: {
           analyze_clicks: number | null
@@ -398,6 +398,14 @@ export type Database = {
       }
       deduct_user_tokens: {
         Args: { user_id: string; amount: number }
+        Returns: number
+      }
+      make_user_basic: {
+        Args: { user_id: string; amount?: number }
+        Returns: number
+      }
+      make_user_premium: {
+        Args: { user_id: string; amount?: number }
         Returns: number
       }
       toggle_user_premium: {
