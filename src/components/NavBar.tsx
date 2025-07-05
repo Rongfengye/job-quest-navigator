@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
-import { LogOut, User, Loader2, LogIn, Coins, AlertTriangle } from 'lucide-react';
+import { LogOut, User, Loader2, LogIn, Crown, AlertTriangle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
 import { useUserTokens } from '@/hooks/useUserTokens';
@@ -12,7 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
+  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -183,8 +182,17 @@ const NavBar = () => {
                 <>
                   <Separator orientation="vertical" className="mx-2 h-4" />
                   <div className="flex items-center">
-                    <Coins className="h-4 w-4 mr-1 text-yellow-500" />
-                    <span className="font-medium">{tokens ?? '—'} tokens</span>
+                    {isPremium ? (
+                      <>
+                        <Crown className="h-4 w-4 mr-1 text-yellow-500" />
+                        <span className="font-medium text-yellow-600">Premium Plan</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="h-4 w-4 mr-1 rounded-full bg-gray-400" />
+                        <span className="font-medium text-gray-600">Free Plan</span>
+                      </>
+                    )}
                   </div>
                 </>
               )}

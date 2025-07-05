@@ -53,10 +53,46 @@ export const useUserTokens = () => {
     }
   }, [user?.id, toast, updateTokenState]);
 
+  const togglePremium = async () => {
+    if (!user?.id) return;
+    
+    console.log('🪙 Toggling premium status');
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.rpc('toggle_user_premium', {
+        user_id: user.id
+      });
+      
+      if (error) throw error;
+      
+      updateTokenState(data ?? 0);
+      const isPremium = data === 1;
+      console.log(`✅ Successfully toggled to ${isPremium ? 'premium' : 'basic'}. New status: ${data}`);
+      
+      toast({
+        title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
+        description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
+      });
+      
+      return { success: true, isPremium, balance: data };
+    } catch (error) {
+      console.error('Error toggling premium status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error updating plan",
+        description: "Could not update your subscription plan."
+      });
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Keep legacy addTokens function for backward compatibility
   const addTokens = async (amount: number = 10) => {
     if (!user?.id) return;
     
-    console.log(`🪙 Adding ${amount} tokens`);
+    console.log(`🪙 Adding ${amount} tokens (legacy function)`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('add_user_tokens', {
@@ -67,10 +103,12 @@ export const useUserTokens = () => {
       if (error) throw error;
       
       updateTokenState(data ?? 0);
-      console.log(`✅ Successfully added ${amount} tokens. New balance: ${data}`);
+      const isPremium = data === 1;
+      console.log(`✅ Successfully set status to ${isPremium ? 'premium' : 'basic'}. New balance: ${data}`);
+      
       toast({
-        title: "Tokens added",
-        description: `${amount} tokens have been added to your account.`
+        title: isPremium ? "Premium activated" : "Plan updated",
+        description: isPremium ? "Premium features are now available." : "Your plan has been updated.",
       });
       
       return { success: true, balance: data };
@@ -94,7 +132,7 @@ export const useUserTokens = () => {
     const action = amount < 0 ? 'Refunding' : 'Deducting';
     const absAmount = Math.abs(amount);
     
-    console.log(`🪙 ${action} ${absAmount} tokens`);
+    console.log(`🪙 ${action} ${absAmount} tokens (setting to basic)`);
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('deduct_user_tokens', {
@@ -106,7 +144,7 @@ export const useUserTokens = () => {
       
       // Immediately update the local token state and notify listeners
       updateTokenState(data ?? 0);
-      console.log(`✅ Successfully ${action.toLowerCase()} ${absAmount} tokens. New balance: ${data}`);
+      console.log(`✅ Successfully set to basic plan. New balance: ${data}`);
       return { success: true, balance: data };
     } catch (error: any) {
       console.error(`Error ${action.toLowerCase()} tokens:`, error);
@@ -115,8 +153,8 @@ export const useUserTokens = () => {
       if (error.message?.includes('Insufficient tokens')) {
         toast({
           variant: "destructive",
-          title: "Insufficient tokens",
-          description: "You don't have enough tokens for this action."
+          title: "Operation failed",
+          description: "Could not complete the requested action."
         });
       }
       
@@ -177,11 +215,18 @@ export const useUserTokens = () => {
     };
   }, [isAuthenticated, user?.id, fetchTokens]);
 
+  // Helper function to check if user is premium
+  const isPremium = tokens === 1;
+  const isBasic = tokens === 0;
+
   return {
     tokens,
+    isPremium,
+    isBasic,
     isLoading,
     fetchTokens,
-    addTokens,
+    togglePremium,
+    addTokens, // Legacy function for backward compatibility
     deductTokens,
     subscribeToTokenUpdates
   };

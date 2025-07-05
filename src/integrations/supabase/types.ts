@@ -400,6 +400,10 @@ export type Database = {
         Args: { user_id: string; amount: number }
         Returns: number
       }
+      toggle_user_premium: {
+        Args: { user_id: string }
+        Returns: number
+      }
     }
     Enums: {
       auth_provider:
