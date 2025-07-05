@@ -160,7 +160,7 @@ const Settings = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="plan-toggle" className="text-sm font-medium">
-                    {isBasic ? 'Upgrade to Premium' : 'Downgrade to Free'}
+                    {isBasic ? 'Upgrade to Premium' : 'Downgrade to Basic'}
                   </Label>
                   <Switch
                     id="plan-toggle"
