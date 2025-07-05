@@ -1,8 +1,8 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
-import { filterValue } from '@/utils/supabaseTypes';
 
 interface AuthContextType {
   user: UserData | null;
@@ -21,46 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
   const { toast } = useToast();
-
-  const ensureUserTokens = async (userId: string) => {
-    try {
-      console.log('Checking if user has tokens record...');
-      
-      const { data: tokensRecord, error: tokensError } = await supabase
-        .from('storyline_user_tokens')
-        .select('*')
-        .eq('user_id', filterValue(userId))
-        .maybeSingle();
-      
-      if (tokensError) {
-        console.error('Error checking tokens record:', tokensError);
-        return;
-      }
-      
-      if (!tokensRecord) {
-        console.log('No tokens record found, creating new one...');
-        
-        const { data: newRecord, error: insertError } = await supabase
-          .from('storyline_user_tokens')
-          .insert({ 
-            user_id: userId, 
-            tokens_remaining: 100 
-          })
-          .select()
-          .single();
-        
-        if (insertError) {
-          console.error('Error creating tokens record:', insertError);
-        } else {
-          console.log('Created new tokens record:', newRecord);
-        }
-      } else {
-        console.log('Existing tokens record found:', tokensRecord);
-      }
-    } catch (error) {
-      console.error('Error in ensureUserTokens:', error);
-    }
-  };
 
   const checkSession = async () => {
     try {
@@ -109,10 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           firstName,
           lastName
         });
-        
-        setTimeout(() => {
-          ensureUserTokens(data.session.user.id);
-        }, 0);
       } else {
         console.log('No session found, user is not authenticated');
         auth.setUser(null);
@@ -175,10 +131,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               firstName,
               lastName
             });
-            
-            setTimeout(() => {
-              ensureUserTokens(session.user.id);
-            }, 0);
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out, clearing auth state');
