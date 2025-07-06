@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -258,12 +257,54 @@ export const useAuth = () => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    console.log('Reset password function called with email:', email);
+    setIsLoading(true);
+    
+    try {
+      const redirectUrl = `${window.location.origin}/reset-password`;
+      console.log('Sending password reset email with redirect URL:', redirectUrl);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: redirectUrl,
+      });
+
+      console.log('Supabase resetPasswordForEmail response:', { 
+        success: !error, 
+        error: error ? error.message : null
+      });
+
+      if (error) throw error;
+
+      console.log('Showing success toast');
+      toast({
+        title: "Password reset email sent",
+        description: "Check your email for instructions to reset your password.",
+      });
+      
+      console.log('Reset password function completed successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Reset password error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error sending password reset email",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      });
+      return { success: false, error };
+    } finally {
+      console.log('Setting isLoading to false');
+      setIsLoading(false);
+    }
+  };
+
   return {
     user,
     isLoading,
     signup,
     login,
     logout,
+    resetPassword,
     syncUserData,
     setUser: setUserSafely
   };

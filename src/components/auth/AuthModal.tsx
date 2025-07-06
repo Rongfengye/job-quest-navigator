@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { Separator } from '@/components/ui/separator';
-import { Linkedin, Github, Mail } from 'lucide-react';
+import { Linkedin, Github, Mail, ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -28,10 +28,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isLinkedinLoading, setIsLinkedinLoading] = useState(false);
   const [isGithubLoading, setIsGithubLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const { login, signup, isLoading } = useAuth();
+  const { login, signup, resetPassword, isLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -40,7 +42,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const result = await login(email, password);
     if (result.success) {
       onClose();
-      navigate('/behavioral'); // Changed from '/dashboard' to '/behavioral'
+      navigate('/behavioral');
     }
   };
 
@@ -49,8 +51,22 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     const result = await signup(email, password, firstName, lastName);
     if (result.success) {
       onClose();
-      navigate('/behavioral'); // Changed from '/dashboard' to '/behavioral'
+      navigate('/behavioral');
     }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const result = await resetPassword(resetEmail);
+    if (result.success) {
+      setShowForgotPassword(false);
+      setResetEmail('');
+    }
+  };
+
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+    setResetEmail('');
   };
 
   const handleLinkedInSignIn = async () => {
@@ -171,204 +187,255 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Welcome to Storyline</DialogTitle>
+          <DialogTitle>
+            {showForgotPassword ? 'Reset Password' : 'Welcome to Storyline'}
+          </DialogTitle>
           <DialogDescription>
-            Get started with your interview preparation
+            {showForgotPassword 
+              ? 'Enter your email to receive password reset instructions'
+              : 'Get started with your interview preparation'
+            }
           </DialogDescription>
         </DialogHeader>
         
-        <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="login">
-            <form onSubmit={handleLogin} className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="login-email">Email</Label>
-                <Input 
-                  id="login-email" 
-                  type="email" 
-                  placeholder="you@example.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="login-password">Password</Label>
-                <Input 
-                  id="login-password" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Logging in...' : 'Login'}
+        {showForgotPassword ? (
+          <form onSubmit={handleForgotPassword} className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input 
+                id="reset-email" 
+                type="email" 
+                placeholder="you@example.com" 
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                required
+              />
+            </div>
+            
+            <div className="flex gap-3 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleBackToLogin}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Login
               </Button>
-              
-              <div className="flex items-center gap-2 my-4">
-                <Separator className="flex-1" />
-                <span className="text-sm text-muted-foreground">or continue with</span>
-                <Separator className="flex-1" />
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleGoogleSignIn}
-                  disabled={isGoogleLoading}
-                >
-                  <Mail className="h-4 w-4" />
-                  {isGoogleLoading ? 'Connecting...' : 'Google'}
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleLinkedInSignIn}
-                  disabled={isLinkedinLoading}
-                >
-                  <Linkedin className="h-4 w-4" />
-                  {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
-                </Button>
-                
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleGithubSignIn}
-                  disabled={isGithubLoading}
-                >
-                  <Github className="h-4 w-4" />
-                  {isGithubLoading ? 'Connecting...' : 'GitHub'}
-                </Button>
-              </div>
-              
-              <div className="text-center text-sm text-interview-text-light">
-                Don't have an account?{' '}
-                <button
-                  type="button"
-                  className="text-interview-primary hover:underline"
-                  onClick={() => setActiveTab('signup')}
-                >
-                  Sign up
-                </button>
-              </div>
-            </form>
-          </TabsContent>
-          
-          <TabsContent value="signup">
-            <form onSubmit={handleSignup} className="space-y-4 pt-4">
-              <div className="grid grid-cols-2 gap-4">
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading ? 'Sending...' : 'Send Reset Email'}
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <form onSubmit={handleLogin} className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first-name">First Name</Label>
+                  <Label htmlFor="login-email">Email</Label>
                   <Input 
-                    id="first-name" 
-                    placeholder="John" 
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
+                    id="login-email" 
+                    type="email" 
+                    placeholder="you@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last-name">Last Name</Label>
+                  <Label htmlFor="login-password">Password</Label>
                   <Input 
-                    id="last-name" 
-                    placeholder="Doe" 
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
+                    id="login-password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-email">Email</Label>
-                <Input 
-                  id="signup-email" 
-                  type="email" 
-                  placeholder="you@example.com" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="signup-password">Password</Label>
-                <Input 
-                  id="signup-password" 
-                  type="password" 
-                  placeholder="••••••••" 
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating account...' : 'Create account'}
-              </Button>
-              
-              <div className="flex items-center gap-2 my-4">
-                <Separator className="flex-1" />
-                <span className="text-sm text-muted-foreground">or continue with</span>
-                <Separator className="flex-1" />
-              </div>
-              
-              <div className="flex flex-col gap-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleGoogleSignIn}
-                  disabled={isGoogleLoading}
-                >
-                  <Mail className="h-4 w-4" />
-                  {isGoogleLoading ? 'Connecting...' : 'Google'}
+                
+                <div className="text-right">
+                  <button
+                    type="button"
+                    className="text-sm text-interview-primary hover:underline"
+                    onClick={() => setShowForgotPassword(true)}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Logging in...' : 'Login'}
                 </Button>
                 
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleLinkedInSignIn}
-                  disabled={isLinkedinLoading}
-                >
-                  <Linkedin className="h-4 w-4" />
-                  {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
+                <div className="flex items-center gap-2 my-4">
+                  <Separator className="flex-1" />
+                  <span className="text-sm text-muted-foreground">or continue with</span>
+                  <Separator className="flex-1" />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading}
+                  >
+                    <Mail className="h-4 w-4" />
+                    {isGoogleLoading ? 'Connecting...' : 'Google'}
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleLinkedInSignIn}
+                    disabled={isLinkedinLoading}
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleGithubSignIn}
+                    disabled={isGithubLoading}
+                  >
+                    <Github className="h-4 w-4" />
+                    {isGithubLoading ? 'Connecting...' : 'GitHub'}
+                  </Button>
+                </div>
+                
+                <div className="text-center text-sm text-interview-text-light">
+                  Don't have an account?{' '}
+                  <button
+                    type="button"
+                    className="text-interview-primary hover:underline"
+                    onClick={() => setActiveTab('signup')}
+                  >
+                    Sign up
+                  </button>
+                </div>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="signup">
+              <form onSubmit={handleSignup} className="space-y-4 pt-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first-name">First Name</Label>
+                    <Input 
+                      id="first-name" 
+                      placeholder="John" 
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="last-name">Last Name</Label>
+                    <Input 
+                      id="last-name" 
+                      placeholder="Doe" 
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input 
+                    id="signup-email" 
+                    type="email" 
+                    placeholder="you@example.com" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input 
+                    id="signup-password" 
+                    type="password" 
+                    placeholder="••••••••" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? 'Creating account...' : 'Create account'}
                 </Button>
                 
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  className="w-full flex items-center gap-2"
-                  onClick={handleGithubSignIn}
-                  disabled={isGithubLoading}
-                >
-                  <Github className="h-4 w-4" />
-                  {isGithubLoading ? 'Connecting...' : 'GitHub'}
-                </Button>
-              </div>
-              
-              <div className="text-center text-sm text-interview-text-light">
-                Already have an account?{' '}
-                <button
-                  type="button"
-                  className="text-interview-primary hover:underline"
-                  onClick={() => setActiveTab('login')}
-                >
-                  Login
-                </button>
-              </div>
-            </form>
-          </TabsContent>
-        </Tabs>
+                <div className="flex items-center gap-2 my-4">
+                  <Separator className="flex-1" />
+                  <span className="text-sm text-muted-foreground">or continue with</span>
+                  <Separator className="flex-1" />
+                </div>
+                
+                <div className="flex flex-col gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleGoogleSignIn}
+                    disabled={isGoogleLoading}
+                  >
+                    <Mail className="h-4 w-4" />
+                    {isGoogleLoading ? 'Connecting...' : 'Google'}
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleLinkedInSignIn}
+                    disabled={isLinkedinLoading}
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    {isLinkedinLoading ? 'Connecting...' : 'LinkedIn'}
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full flex items-center gap-2"
+                    onClick={handleGithubSignIn}
+                    disabled={isGithubLoading}
+                  >
+                    <Github className="h-4 w-4" />
+                    {isGithubLoading ? 'Connecting...' : 'GitHub'}
+                  </Button>
+                </div>
+                
+                <div className="text-center text-sm text-interview-text-light">
+                  Already have an account?{' '}
+                  <button
+                    type="button"
+                    className="text-interview-primary hover:underline"
+                    onClick={() => setActiveTab('login')}
+                  >
+                    Login
+                  </button>
+                </div>
+              </form>
+            </TabsContent>
+          </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );
