@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -33,28 +34,33 @@ const Behavioral = () => {
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['behavioral-interviews'],
     queryFn: async () => {
-      // First fetch behavioral interviews
-      const { data: behaviorals, error } = await supabase
+      // Single optimized query with LEFT JOIN to get behavioral interviews and their technical practice counts
+      const { data, error } = await supabase
         .from('storyline_behaviorals')
-        .select('*')
+        .select(`
+          id,
+          job_title,
+          job_description,
+          company_name,
+          company_description,
+          created_at,
+          feedback,
+          questions,
+          responses,
+          resume_path,
+          cover_letter_path,
+          additional_documents_path,
+          storyline_jobs!storyline_jobs_behavioral_id_fkey(id)
+        `)
         .order('created_at', { ascending: false });
         
       if (error) throw error;
       
-      // Then fetch counts of technical questions for each behavioral
-      const enhancedBehaviorals = await Promise.all(
-        (behaviorals || []).map(async (behavioral) => {
-          const { count, error: countError } = await supabase
-            .from('storyline_jobs')
-            .select('id', { count: 'exact', head: true })
-            .eq('behavioral_id', behavioral.id);
-          
-          return {
-            ...behavioral,
-            _technical_count: count || 0
-          };
-        })
-      );
+      // Transform the data to match the expected interface
+      const enhancedBehaviorals = (data || []).map(behavioral => ({
+        ...behavioral,
+        _technical_count: behavioral.storyline_jobs?.length || 0
+      }));
       
       return enhancedBehaviorals as BehavioralInterview[];
     }
