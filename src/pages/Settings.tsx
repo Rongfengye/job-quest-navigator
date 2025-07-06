@@ -230,22 +230,6 @@ const Settings = () => {
           </CardContent>
         </Card>
         
-        <Card className="border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-600">Danger Zone</CardTitle>
-            <CardDescription>
-              Actions that may affect your account data
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button 
-              variant="destructive" 
-              onClick={handleLogout}
-            >
-              Sign Out
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );
