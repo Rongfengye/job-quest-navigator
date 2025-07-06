@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
@@ -13,8 +14,6 @@ interface PlanStatusContextType {
   connectionHealth: 'healthy' | 'degraded' | 'disconnected';
   fetchTokens: () => Promise<void>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
-  addTokens: (amount?: number) => Promise<{ success: boolean; balance?: number; error?: any }>;
-  deductTokens: (amount: number) => Promise<{ success: boolean; balance?: number; error?: any }>;
 }
 
 const PlanStatusContext = createContext<PlanStatusContextType | undefined>(undefined);
@@ -267,84 +266,6 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
   };
 
-  // Keep legacy addTokens function for backward compatibility
-  const addTokens = async (amount: number = 10) => {
-    if (!user?.id) return { success: false, error: 'Not authenticated' };
-    
-    console.log(`🪙 Adding ${amount} tokens (legacy function - context)`);
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('add_user_tokens', {
-        user_id: user.id,
-        amount: amount
-      });
-      
-      if (error) throw error;
-      
-      updateTokenState(data ?? 0);
-      const isPremium = checkIsPremium(data);
-      console.log(`✅ Successfully set status to ${isPremium ? 'premium' : 'basic'}. New balance: ${data}`);
-      
-      toast({
-        title: isPremium ? "Premium activated" : "Plan updated",
-        description: isPremium ? "Premium features are now available." : "Your plan has been updated.",
-      });
-      
-      return { success: true, balance: data };
-    } catch (error) {
-      console.error('Error adding tokens:', error);
-      setConnectionHealth('degraded');
-      toast({
-        variant: "destructive",
-        title: "Error adding tokens",
-        description: "Could not add tokens to your account."
-      });
-      return { success: false, error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deductTokens = async (amount: number) => {
-    if (!user?.id) return { success: false, error: 'Not authenticated' };
-    
-    // If amount is negative, we're refunding tokens
-    const action = amount < 0 ? 'Refunding' : 'Deducting';
-    const absAmount = Math.abs(amount);
-    
-    console.log(`🪙 ${action} ${absAmount} tokens (setting to basic - context)`);
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.rpc('deduct_user_tokens', {
-        user_id: user.id,
-        amount: amount
-      });
-      
-      if (error) throw error;
-      
-      // Immediately update the local token state
-      updateTokenState(data ?? 0);
-      console.log(`✅ Successfully set to basic plan. New balance: ${data}`);
-      return { success: true, balance: data };
-    } catch (error: any) {
-      console.error(`Error ${action.toLowerCase()} tokens:`, error);
-      setConnectionHealth('degraded');
-      
-      // Only show toast for specific token deduction
-      if (error.message?.includes('Insufficient tokens')) {
-        toast({
-          variant: "destructive",
-          title: "Operation failed",
-          description: "Could not complete the requested action."
-        });
-      }
-      
-      return { success: false, error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Helper function to check if user is premium
   const isPremium = checkIsPremium(tokens);
   const isBasic = !isPremium;
@@ -357,9 +278,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     isConnected,
     connectionHealth,
     fetchTokens,
-    togglePremium,
-    addTokens,
-    deductTokens
+    togglePremium
   };
 
   return (

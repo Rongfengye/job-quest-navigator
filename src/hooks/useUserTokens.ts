@@ -1,12 +1,12 @@
 
 import { usePlanStatus } from '@/context/PlanStatusContext';
 
-// Legacy hook that now consumes the centralized context
-// This maintains backward compatibility while using the new centralized system
+// Simplified hook that now purely consumes the centralized context
+// All WebSocket management and connection handling is done in the context
 export const useUserTokens = () => {
   const planStatusContext = usePlanStatus();
   
-  // Return the same interface as before for backward compatibility, plus new connection health info
+  // Return a clean interface for backward compatibility
   return {
     tokens: planStatusContext.tokens,
     isPremium: planStatusContext.isPremium,
@@ -16,13 +16,7 @@ export const useUserTokens = () => {
     connectionHealth: planStatusContext.connectionHealth,
     fetchTokens: planStatusContext.fetchTokens,
     togglePremium: planStatusContext.togglePremium,
-    addTokens: planStatusContext.addTokens,
-    deductTokens: planStatusContext.deductTokens,
-    // Keep the legacy subscribeToTokenUpdates function as a no-op for now
-    // We'll remove this in Phase 3 when we clean up redundant mechanisms
-    subscribeToTokenUpdates: () => {
-      console.log('📢 subscribeToTokenUpdates called - now handled by context');
-      return () => {}; // Return empty unsubscribe function
-    }
+    // Legacy subscribeToTokenUpdates removed - now handled entirely by context
+    // Components no longer need to manually subscribe since context handles all updates
   };
 };

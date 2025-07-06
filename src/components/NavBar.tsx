@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/context/AuthContext';
@@ -11,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchTokens, subscribeToTokenUpdates } = useUserTokens();
+  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchTokens } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -84,18 +85,13 @@ const NavBar = () => {
     };
   }, [isLoading, isAuthenticated]);
 
-  // Refresh tokens when component mounts and subscribe to token updates
+  // Simplified token refresh - no more manual WebSocket subscription needed
+  // The context handles all WebSocket management automatically
   useEffect(() => {
     if (isAuthenticated && user?.id && !isLoading) {
       fetchTokens();
-      
-      const unsubscribe = subscribeToTokenUpdates();
-      
-      return () => {
-        unsubscribe();
-      };
     }
-  }, [isAuthenticated, user?.id, fetchTokens, subscribeToTokenUpdates, isLoading]);
+  }, [isAuthenticated, user?.id, fetchTokens, isLoading]);
 
   const handleLogout = async () => {
     const { success } = await logout();
