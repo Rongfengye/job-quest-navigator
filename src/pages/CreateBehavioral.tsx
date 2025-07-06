@@ -100,6 +100,13 @@ const CreateBehavioral = () => {
     setIsProcessing(true);
 
     try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('Authentication required');
+      }
+
       // Upload files to Supabase storage
       let resumePath = '';
       let coverLetterPath = '';
@@ -126,7 +133,7 @@ const CreateBehavioral = () => {
       const { data: behavioralData, error: behavioralError } = await supabase
         .from('storyline_behaviorals')
         .insert({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
           job_title: formData.jobTitle,
           job_description: formData.jobDescription,
           company_name: formData.companyName,
@@ -146,7 +153,7 @@ const CreateBehavioral = () => {
 
       console.log("Created behavioral interview with ID:", behavioralData.id);
 
-      // Use generateQuestion instead of direct function call
+      // Use generateQuestion instead of direct function call with usage validation
       const questionData = await generateQuestion(
         formData,
         resumeText,
@@ -155,7 +162,8 @@ const CreateBehavioral = () => {
         resumePath,
         coverLetterPath,
         additionalDocumentsPath,
-        behavioralData.id
+        behavioralData.id,
+        user.id // Pass userId for usage tracking
       );
 
       if (!questionData) {
@@ -180,11 +188,21 @@ const CreateBehavioral = () => {
       });
     } catch (error) {
       console.error('Error during interview creation:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: error instanceof Error ? error.message : "An error occurred while creating your interview.",
-      });
+      
+      // Handle usage limit errors specifically
+      if (error instanceof Error && error.message.includes('Usage limit exceeded')) {
+        toast({
+          variant: "destructive",
+          title: "Monthly Limit Reached",
+          description: "You've reached your monthly limit for behavioral interviews. Upgrade to premium for unlimited access.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error instanceof Error ? error.message : "An error occurred while creating your interview.",
+        });
+      }
     } finally {
       setIsProcessing(false);
     }

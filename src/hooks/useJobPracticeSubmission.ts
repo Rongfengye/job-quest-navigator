@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
@@ -131,7 +132,8 @@ export const useJobPracticeSubmission = (
         additionalDocumentsPath: additionalDocumentsPath,
         behavioralId: behavioralId || null,
         generateFromBehavioral: !!behavioralId,
-        originalBehavioralQuestions: originalBehavioralQuestions || [] // Pass original questions
+        originalBehavioralQuestions: originalBehavioralQuestions || [], // Pass original questions
+        userId: userId // Add userId for usage tracking
       };
 
       const { data, error } = await supabase.functions.invoke('storyline-question-vault-prep', {
@@ -139,7 +141,27 @@ export const useJobPracticeSubmission = (
       });
 
       if (error) {
+        // Handle usage limit errors specifically
+        if (error.message?.includes('Usage limit exceeded') || error.message?.includes('429')) {
+          toast({
+            variant: "destructive",
+            title: "Monthly Limit Reached",
+            description: "You've reached your monthly limit for question vault generation. Upgrade to premium for unlimited access."
+          });
+          return;
+        }
+        
         throw new Error(`Error processing your application: ${error.message}`);
+      }
+
+      // Check if the response contains usage limit error
+      if (data?.error === 'Usage limit exceeded') {
+        toast({
+          variant: "destructive",
+          title: "Monthly Limit Reached",
+          description: data.message || "You've reached your monthly limit for question vault generation."
+        });
+        return;
       }
 
       const { error: updateError } = await supabase
