@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarFooter
 } from "@/components/ui/sidebar";
-import { Vault, User, Settings, BookOpen, LogOut } from 'lucide-react';
+import { Vault, User, Settings, BookOpen, LogOut, Crown } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 import { usePlanStatus } from '@/context/PlanStatusContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -84,12 +84,18 @@ const DashboardSidebar = () => {
             <div className="text-sm font-medium">{user.firstName} {user.lastName}</div>
             <div className="text-xs text-muted-foreground truncate mb-2">{user.email}</div>
             <div className="flex items-center">
-              <Badge 
-                variant={isPremium ? "default" : "secondary"}
-                className={isPremium ? "bg-interview-accent hover:bg-interview-accent/80 text-black" : ""}
-              >
-                {isPremium ? "Premium" : "Basic"}
-              </Badge>
+              {isPremium ? (
+                <div className="flex items-center">
+                  <Crown className="h-4 w-4 mr-1 text-yellow-500" />
+                  <Badge className="bg-yellow-500 hover:bg-yellow-500/80 text-white">
+                    Premium
+                  </Badge>
+                </div>
+              ) : (
+                <Badge variant="secondary">
+                  Basic
+                </Badge>
+              )}
             </div>
           </div>
         )}
@@ -114,17 +120,25 @@ const DashboardSidebar = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        
+        {/* Sign Out button moved here, right after the menu */}
+        <div className="px-4 mt-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton 
+                onClick={handleSignOut} 
+                className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                <span>Sign Out</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="text-gray-600 hover:text-gray-700 hover:bg-gray-50">
-              <LogOut className="h-4 w-4 mr-2" />
-              <span>Sign Out</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        {/* Footer can remain empty or have other content */}
       </SidebarFooter>
     </Sidebar>
   );
