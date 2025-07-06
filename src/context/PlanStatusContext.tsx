@@ -48,19 +48,36 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const isUserActive = useRef<boolean>(true);
   const activityCheckInterval = useRef<number | undefined>(undefined);
   
+  // Debouncing refs
+  const updateDebounceTimeout = useRef<number | undefined>(undefined);
+  const isUnmounting = useRef<boolean>(false);
+  
   // Polling configuration
   const POLLING_INTERVAL_ACTIVE = 5 * 60 * 1000; // 5 minutes when active
   const POLLING_INTERVAL_INACTIVE = 10 * 60 * 1000; // 10 minutes when inactive
   const ACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes of inactivity
-  
-  // Update local state
+  const UPDATE_DEBOUNCE_DELAY = 300; // 300ms debounce delay
+
+  // Debounced update local state to prevent UI flicker
   const updateTokenState = useCallback((newPlanStatus: number | null) => {
-    console.log('✅ Plan status context updating to:', newPlanStatus);
-    setTokens(newPlanStatus);
+    if (isUnmounting.current) return;
+    
+    // Clear any existing debounce timeout
+    if (updateDebounceTimeout.current) {
+      clearTimeout(updateDebounceTimeout.current);
+    }
+    
+    // Debounce the update to prevent rapid-fire changes
+    updateDebounceTimeout.current = window.setTimeout(() => {
+      if (!isUnmounting.current) {
+        console.log('✅ Plan status context updating to:', newPlanStatus);
+        setTokens(newPlanStatus);
+      }
+    }, UPDATE_DEBOUNCE_DELAY);
   }, []);
 
   const fetchTokens = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || isUnmounting.current) return;
     
     setIsLoading(true);
     try {
@@ -76,19 +93,25 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       updateTokenState(data?.user_plan_status ?? null);
     } catch (error) {
       console.error('Error fetching user plan status:', error);
-      setConnectionHealth('degraded');
-      toast({
-        variant: "destructive",
-        title: "Error fetching plan status",
-        description: "Could not retrieve your subscription status."
-      });
+      if (!isUnmounting.current) {
+        setConnectionHealth('degraded');
+        toast({
+          variant: "destructive",
+          title: "Error fetching plan status",
+          description: "Could not retrieve your subscription status."
+        });
+      }
     } finally {
-      setIsLoading(false);
+      if (!isUnmounting.current) {
+        setIsLoading(false);
+      }
     }
   }, [user?.id, toast, updateTokenState]);
 
   // User activity detection
   const updateUserActivity = useCallback(() => {
+    if (isUnmounting.current) return;
+    
     lastActivity.current = Date.now();
     if (!isUserActive.current) {
       isUserActive.current = true;
@@ -98,15 +121,21 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   }, []);
 
   const startActivityMonitoring = useCallback(() => {
+    if (isUnmounting.current) return;
+    
     // Track user activity events
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
     
+    const handleActivity = () => updateUserActivity();
+    
     events.forEach(event => {
-      document.addEventListener(event, updateUserActivity, { passive: true });
+      document.addEventListener(event, handleActivity, { passive: true });
     });
     
     // Check activity status periodically
     activityCheckInterval.current = window.setInterval(() => {
+      if (isUnmounting.current) return;
+      
       const timeSinceLastActivity = Date.now() - lastActivity.current;
       const wasActive = isUserActive.current;
       isUserActive.current = timeSinceLastActivity < ACTIVITY_TIMEOUT;
@@ -119,7 +148,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     return () => {
       events.forEach(event => {
-        document.removeEventListener(event, updateUserActivity);
+        document.removeEventListener(event, handleActivity);
       });
       if (activityCheckInterval.current) {
         clearInterval(activityCheckInterval.current);
@@ -130,7 +159,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
 
   // Fallback polling implementation
   const startFallbackPolling = useCallback(() => {
-    if (!isAuthenticated || !user?.id) return;
+    if (!isAuthenticated || !user?.id || isUnmounting.current) return;
     
     // Clear existing polling
     if (pollingInterval.current) {
@@ -148,8 +177,10 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     console.log(`🔄 Starting fallback polling (${isUserActive.current ? 'active' : 'inactive'}: ${interval / 1000}s intervals)`);
     
     pollingInterval.current = window.setInterval(() => {
-      console.log('📡 Fallback polling - fetching plan status');
-      fetchTokens();
+      if (!isUnmounting.current) {
+        console.log('📡 Fallback polling - fetching plan status');
+        fetchTokens();
+      }
     }, interval);
   }, [isAuthenticated, user?.id, connectionHealth, fetchTokens]);
 
@@ -163,9 +194,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
 
   // Connection health monitoring
   const startHealthCheck = useCallback(() => {
-    if (healthCheckInterval.current) return;
+    if (healthCheckInterval.current || isUnmounting.current) return;
     
     healthCheckInterval.current = window.setInterval(() => {
+      if (isUnmounting.current) return;
+      
       if (channelRef.current) {
         const channelState = channelRef.current.state;
         console.log('🔍 WebSocket health check - Channel state:', channelState);
@@ -227,8 +260,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
 
   // Enhanced WebSocket connection setup with error handling
   const setupWebSocketConnection = useCallback(() => {
-    if (!isAuthenticated || !user?.id) {
-      console.log('🚫 Skipping WebSocket setup - user not authenticated');
+    if (!isAuthenticated || !user?.id || isUnmounting.current) {
+      console.log('🚫 Skipping WebSocket setup - user not authenticated or component unmounting');
       return;
     }
 
@@ -258,6 +291,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
           filter: `user_id=eq.${user.id}`
         },
         (payload) => {
+          if (isUnmounting.current) return;
+          
           console.log('🔄 Realtime update received for plan status (context):', payload);
           // Set connection as healthy when receiving updates
           setConnectionHealth('healthy');
@@ -269,6 +304,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         }
       )
       .subscribe((status) => {
+        if (isUnmounting.current) return;
+        
         console.log('📡 WebSocket subscription status:', status);
         
         if (status === 'SUBSCRIBED') {
@@ -298,7 +335,13 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     channelRef.current = channel;
     
     // Set connection timeout
+    if (connectionTimeout.current) {
+      clearTimeout(connectionTimeout.current);
+    }
+    
     connectionTimeout.current = window.setTimeout(() => {
+      if (isUnmounting.current) return;
+      
       if (connectionHealth === 'disconnected') {
         console.log('⏰ Connection timeout - falling back to polling');
         setConnectionHealth('degraded');
@@ -308,15 +351,28 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
   }, [isAuthenticated, user?.id, fetchTokens, startHealthCheck, startFallbackPolling, stopFallbackPolling, connectionHealth]);
 
-  // Clean up connections
+  // Comprehensive cleanup function
   const cleanupConnections = useCallback(() => {
     console.log('🧹 Cleaning up WebSocket connections and timers');
+    isUnmounting.current = true;
     
+    // Clear debounce timeout
+    if (updateDebounceTimeout.current) {
+      clearTimeout(updateDebounceTimeout.current);
+      updateDebounceTimeout.current = undefined;
+    }
+    
+    // Clean up WebSocket connection
     if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
+      try {
+        supabase.removeChannel(channelRef.current);
+      } catch (error) {
+        console.warn('Error removing channel:', error);
+      }
       channelRef.current = null;
     }
     
+    // Stop all intervals and timeouts
     stopHealthCheck();
     stopFallbackPolling();
     
@@ -330,6 +386,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       activityCheckInterval.current = undefined;
     }
     
+    // Reset connection state
     setIsConnected(false);
     setConnectionHealth('disconnected');
     reconnectAttempts.current = 0;
@@ -337,6 +394,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
 
   // Main effect for conditional WebSocket activation
   useEffect(() => {
+    isUnmounting.current = false;
+    
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - cleaning up connections');
       cleanupConnections();
@@ -354,12 +413,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     return () => {
       cleanupConnections();
-      cleanupActivity();
+      if (cleanupActivity) {
+        cleanupActivity();
+      }
     };
   }, [isAuthenticated, user?.id, fetchTokens, setupWebSocketConnection, cleanupConnections, startActivityMonitoring]);
 
   const togglePremium = async () => {
-    if (!user?.id) return { success: false, error: 'Not authenticated' };
+    if (!user?.id || isUnmounting.current) return { success: false, error: 'Not authenticated' };
     
     console.log('🪙 Toggling premium status (context)');
     setIsLoading(true);
@@ -374,23 +435,29 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       const isPremium = checkIsPremium(data);
       console.log(`✅ Successfully toggled to ${isPremium ? 'premium' : 'basic'}. New status: ${data}`);
       
-      toast({
-        title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
-        description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
-      });
+      if (!isUnmounting.current) {
+        toast({
+          title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
+          description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
+        });
+      }
       
       return { success: true, isPremium, balance: data };
     } catch (error) {
       console.error('Error toggling premium status:', error);
-      setConnectionHealth('degraded');
-      toast({
-        variant: "destructive",
-        title: "Error updating plan",
-        description: "Could not update your subscription plan."
-      });
+      if (!isUnmounting.current) {
+        setConnectionHealth('degraded');
+        toast({
+          variant: "destructive",
+          title: "Error updating plan",
+          description: "Could not update your subscription plan."
+        });
+      }
       return { success: false, error };
     } finally {
-      setIsLoading(false);
+      if (!isUnmounting.current) {
+        setIsLoading(false);
+      }
     }
   };
 
