@@ -11,7 +11,7 @@ export const useUserTokens = () => {
     isPremium: planStatusContext.isPremium,
     isBasic: planStatusContext.isBasic,
     isLoading: planStatusContext.isLoading,
-    fetchTokens: planStatusContext.fetchTokens,
+    fetchUserStatus: planStatusContext.fetchUserStatus,
     togglePremium: planStatusContext.togglePremium,
   };
 };

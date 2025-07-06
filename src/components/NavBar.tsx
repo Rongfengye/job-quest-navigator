@@ -12,7 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchTokens } = useUserTokens();
+  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus } = useUserTokens();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -89,9 +89,9 @@ const NavBar = () => {
   // The context handles all WebSocket management automatically
   useEffect(() => {
     if (isAuthenticated && user?.id && !isLoading) {
-      fetchTokens();
+      fetchUserStatus();
     }
-  }, [isAuthenticated, user?.id, fetchTokens, isLoading]);
+  }, [isAuthenticated, user?.id, fetchUserStatus, isLoading]);
 
   const handleLogout = async () => {
     const { success } = await logout();

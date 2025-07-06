@@ -10,7 +10,7 @@ interface PlanStatusContextType {
   isPremium: boolean;
   isBasic: boolean;
   isLoading: boolean;
-  fetchTokens: () => Promise<void>;
+  fetchUserStatus: () => Promise<void>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
 }
 
@@ -31,7 +31,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
 
-  const fetchTokens = useCallback(async () => {
+  const fetchUserStatus = useCallback(async () => {
     if (!user?.id) return;
     
     setIsLoading(true);
@@ -68,8 +68,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     // Initial fetch when user is authenticated
     console.log('👤 User authenticated - fetching initial plan status');
-    fetchTokens();
-  }, [isAuthenticated, user?.id, fetchTokens]);
+    fetchUserStatus();
+  }, [isAuthenticated, user?.id, fetchUserStatus]);
 
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
@@ -130,7 +130,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     isPremium,
     isBasic,
     isLoading,
-    fetchTokens,
+    fetchUserStatus,
     togglePremium
   };
 
