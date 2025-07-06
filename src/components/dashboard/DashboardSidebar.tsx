@@ -11,15 +11,21 @@ import {
   SidebarMenu, 
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarTrigger
+  SidebarFooter
 } from "@/components/ui/sidebar";
-import { Vault, User, Settings, BookOpen } from 'lucide-react';
+import { Vault, User, Settings, BookOpen, LogOut } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
+import { usePlanStatus } from '@/context/PlanStatusContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const DashboardSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuthContext();
+  const { isPremium, isBasic } = usePlanStatus();
+  const { toast } = useToast();
   
   const menuItems = [
     // {
@@ -45,18 +51,46 @@ const DashboardSidebar = () => {
   ];
   
   const isActive = (path: string) => location.pathname === path;
+
+  const handleSignOut = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast({
+        title: "Signed out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast({
+        variant: "destructive",
+        title: "Error signing out",
+        description: "There was a problem signing you out. Please try again.",
+      });
+    }
+  };
   
   return (
     <Sidebar>
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <span className="text-xl font-bold storyline-logo">Storyline</span>
-          <SidebarTrigger className="ml-auto" />
         </div>
         {user && (
-          <div className="mt-4 p-2 bg-sidebar-accent rounded-md">
+          <div className="mt-4 p-3 bg-sidebar-accent rounded-md">
             <div className="text-sm font-medium">{user.firstName} {user.lastName}</div>
-            <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+            <div className="text-xs text-muted-foreground truncate mb-2">{user.email}</div>
+            <div className="flex items-center">
+              <Badge 
+                variant={isPremium ? "default" : "secondary"}
+                className={isPremium ? "bg-green-600 hover:bg-green-700" : ""}
+              >
+                {isPremium ? "Premium" : "Basic"}
+              </Badge>
+            </div>
           </div>
         )}
       </SidebarHeader>
@@ -81,6 +115,17 @@ const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="p-4">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleSignOut} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+              <LogOut className="h-4 w-4 mr-2" />
+              <span>Sign Out</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 };
