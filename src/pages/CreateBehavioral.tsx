@@ -163,7 +163,6 @@ const CreateBehavioral = () => {
         coverLetterPath,
         additionalDocumentsPath,
         behavioralData.id,
-        user.id // Pass userId for usage tracking
       );
 
       if (!questionData) {
