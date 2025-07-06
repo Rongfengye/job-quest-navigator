@@ -1,8 +1,7 @@
 
 import { usePlanStatus } from '@/context/PlanStatusContext';
 
-// Simplified hook that now purely consumes the centralized context
-// All polling and connection management has been removed
+// Simplified hook that purely consumes the centralized context
 export const useUserTokens = () => {
   const planStatusContext = usePlanStatus();
   
