@@ -108,128 +108,130 @@ const Settings = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-interview-primary">Settings</h1>
-        <p className="text-muted-foreground mt-1">Manage your account settings</p>
-      </div>
-      
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Subscription Plan</CardTitle>
-            <CardDescription>
-              Manage your account plan and access level
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {isPremium ? (
-                  <>
-                    <Crown className="h-6 w-6 text-yellow-500" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl font-semibold">Premium Plan</span>
-                        <Badge variant="default" className="bg-yellow-500 text-white">
-                          Premium
-                        </Badge>
+      <div className="p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-interview-primary">Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your account settings</p>
+        </div>
+        
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Plan</CardTitle>
+              <CardDescription>
+                Manage your account plan and access level
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {isPremium ? (
+                    <>
+                      <Crown className="h-6 w-6 text-yellow-500" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-semibold">Premium Plan</span>
+                          <Badge variant="default" className="bg-yellow-500 text-white">
+                            Premium
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Full access to all features
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Full access to all features
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <User className="h-6 w-6 text-gray-500" />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl font-semibold">Free Plan</span>
-                        <Badge variant="secondary">
-                          Basic
-                        </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <User className="h-6 w-6 text-gray-500" />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl font-semibold">Free Plan</span>
+                          <Badge variant="secondary">
+                            Basic
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          Limited access to features
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Limited access to features
-                      </p>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              <div className="flex items-center gap-4">
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="plan-toggle" className="text-sm font-medium">
-                    {isBasic ? 'Upgrade to Premium' : 'Downgrade to Basic'}
-                  </Label>
-                  <Switch
-                    id="plan-toggle"
-                    checked={isPremium}
-                    onCheckedChange={handleTogglePlan}
-                    disabled={isTogglingPlan || tokensLoading}
-                  />
+                    </>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="plan-toggle" className="text-sm font-medium">
+                      {isBasic ? 'Upgrade to Premium' : 'Downgrade to Basic'}
+                    </Label>
+                    <Switch
+                      id="plan-toggle"
+                      checked={isPremium}
+                      onCheckedChange={handleTogglePlan}
+                      disabled={isTogglingPlan || tokensLoading}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Password Settings</CardTitle>
-            <CardDescription>
-              Update your account password
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdatePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current">Current Password</Label>
-                <Input 
-                  id="current"
-                  name="current"
-                  type="password"
-                  value={passwords.current}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="new">New Password</Label>
-                <Input 
-                  id="new"
-                  name="new"
-                  type="password"
-                  value={passwords.new}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="confirm">Confirm New Password</Label>
-                <Input 
-                  id="confirm"
-                  name="confirm"
-                  type="password"
-                  value={passwords.confirm}
-                  onChange={handlePasswordChange}
-                  required
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="mt-4"
-                disabled={isUpdatingPassword}
-              >
-                {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        
+          <Card>
+            <CardHeader>
+              <CardTitle>Password Settings</CardTitle>
+              <CardDescription>
+                Update your account password
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="current">Current Password</Label>
+                  <Input 
+                    id="current"
+                    name="current"
+                    type="password"
+                    value={passwords.current}
+                    onChange={handlePasswordChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="new">New Password</Label>
+                  <Input 
+                    id="new"
+                    name="new"
+                    type="password"
+                    value={passwords.new}
+                    onChange={handlePasswordChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm">Confirm New Password</Label>
+                  <Input 
+                    id="confirm"
+                    name="confirm"
+                    type="password"
+                    value={passwords.confirm}
+                    onChange={handlePasswordChange}
+                    required
+                  />
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="mt-4"
+                  disabled={isUpdatingPassword}
+                >
+                  {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+          
+        </div>
       </div>
     </DashboardLayout>
   );
