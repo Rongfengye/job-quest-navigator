@@ -41,7 +41,18 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const maxReconnectAttempts = 3;
   const healthCheckInterval = useRef<number | undefined>(undefined);
   const connectionTimeout = useRef<number | undefined>(undefined);
-
+  
+  // Fallback polling refs
+  const pollingInterval = useRef<number | undefined>(undefined);
+  const lastActivity = useRef<number>(Date.now());
+  const isUserActive = useRef<boolean>(true);
+  const activityCheckInterval = useRef<number | undefined>(undefined);
+  
+  // Polling configuration
+  const POLLING_INTERVAL_ACTIVE = 5 * 60 * 1000; // 5 minutes when active
+  const POLLING_INTERVAL_INACTIVE = 10 * 60 * 1000; // 10 minutes when inactive
+  const ACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes of inactivity
+  
   // Update local state
   const updateTokenState = useCallback((newPlanStatus: number | null) => {
     console.log('✅ Plan status context updating to:', newPlanStatus);
@@ -76,6 +87,80 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
   }, [user?.id, toast, updateTokenState]);
 
+  // User activity detection
+  const updateUserActivity = useCallback(() => {
+    lastActivity.current = Date.now();
+    if (!isUserActive.current) {
+      isUserActive.current = true;
+      console.log('👤 User became active - adjusting polling interval');
+      startFallbackPolling(); // Restart with active interval
+    }
+  }, []);
+
+  const startActivityMonitoring = useCallback(() => {
+    // Track user activity events
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+    
+    events.forEach(event => {
+      document.addEventListener(event, updateUserActivity, { passive: true });
+    });
+    
+    // Check activity status periodically
+    activityCheckInterval.current = window.setInterval(() => {
+      const timeSinceLastActivity = Date.now() - lastActivity.current;
+      const wasActive = isUserActive.current;
+      isUserActive.current = timeSinceLastActivity < ACTIVITY_TIMEOUT;
+      
+      if (wasActive && !isUserActive.current) {
+        console.log('😴 User became inactive - adjusting polling interval');
+        startFallbackPolling(); // Restart with inactive interval
+      }
+    }, 60000); // Check every minute
+    
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, updateUserActivity);
+      });
+      if (activityCheckInterval.current) {
+        clearInterval(activityCheckInterval.current);
+        activityCheckInterval.current = undefined;
+      }
+    };
+  }, [updateUserActivity]);
+
+  // Fallback polling implementation
+  const startFallbackPolling = useCallback(() => {
+    if (!isAuthenticated || !user?.id) return;
+    
+    // Clear existing polling
+    if (pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = undefined;
+    }
+    
+    // Only start polling if WebSocket is not healthy
+    if (connectionHealth === 'healthy') {
+      console.log('🔗 WebSocket healthy - skipping fallback polling');
+      return;
+    }
+    
+    const interval = isUserActive.current ? POLLING_INTERVAL_ACTIVE : POLLING_INTERVAL_INACTIVE;
+    console.log(`🔄 Starting fallback polling (${isUserActive.current ? 'active' : 'inactive'}: ${interval / 1000}s intervals)`);
+    
+    pollingInterval.current = window.setInterval(() => {
+      console.log('📡 Fallback polling - fetching plan status');
+      fetchTokens();
+    }, interval);
+  }, [isAuthenticated, user?.id, connectionHealth, fetchTokens]);
+
+  const stopFallbackPolling = useCallback(() => {
+    if (pollingInterval.current) {
+      console.log('⏹️ Stopping fallback polling');
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = undefined;
+    }
+  }, []);
+
   // Connection health monitoring
   const startHealthCheck = useCallback(() => {
     if (healthCheckInterval.current) return;
@@ -85,16 +170,33 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         const channelState = channelRef.current.state;
         console.log('🔍 WebSocket health check - Channel state:', channelState);
         
+        const previousHealth = connectionHealth;
+        
         if (channelState === 'joined') {
           setConnectionHealth('healthy');
           setIsConnected(true);
           reconnectAttempts.current = 0;
+          
+          // Stop fallback polling when WebSocket is healthy
+          if (previousHealth !== 'healthy') {
+            stopFallbackPolling();
+          }
         } else if (channelState === 'joining') {
           setConnectionHealth('degraded');
           setIsConnected(false);
+          
+          // Start fallback polling when connection is degraded
+          if (previousHealth === 'healthy') {
+            startFallbackPolling();
+          }
         } else {
           setConnectionHealth('disconnected');
           setIsConnected(false);
+          
+          // Start fallback polling when disconnected
+          if (previousHealth !== 'disconnected') {
+            startFallbackPolling();
+          }
           
           // Attempt reconnection if we haven't exceeded max attempts
           if (reconnectAttempts.current < maxReconnectAttempts) {
@@ -104,11 +206,17 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
           }
         }
       } else {
+        const previousHealth = connectionHealth;
         setConnectionHealth('disconnected');
         setIsConnected(false);
+        
+        // Start fallback polling when no WebSocket connection
+        if (previousHealth !== 'disconnected') {
+          startFallbackPolling();
+        }
       }
     }, 10000); // Check every 10 seconds
-  }, []);
+  }, [connectionHealth, startFallbackPolling, stopFallbackPolling]);
 
   const stopHealthCheck = useCallback(() => {
     if (healthCheckInterval.current) {
@@ -154,6 +262,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
           // Set connection as healthy when receiving updates
           setConnectionHealth('healthy');
           setIsConnected(true);
+          // Stop fallback polling when getting real-time updates
+          stopFallbackPolling();
           // Refresh tokens whenever there's a change
           fetchTokens();
         }
@@ -167,16 +277,21 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
           reconnectAttempts.current = 0;
           console.log('✅ WebSocket successfully connected');
           
+          // Stop fallback polling when successfully connected
+          stopFallbackPolling();
+          
           // Start health monitoring
           startHealthCheck();
         } else if (status === 'CHANNEL_ERROR') {
           setConnectionHealth('degraded');
           setIsConnected(false);
           console.error('❌ WebSocket connection error');
+          startFallbackPolling();
         } else if (status === 'TIMED_OUT') {
           setConnectionHealth('disconnected');
           setIsConnected(false);
           console.error('⏰ WebSocket connection timed out');
+          startFallbackPolling();
         }
       });
     
@@ -187,10 +302,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (connectionHealth === 'disconnected') {
         console.log('⏰ Connection timeout - falling back to polling');
         setConnectionHealth('degraded');
+        startFallbackPolling();
       }
     }, 15000); // 15 second timeout
     
-  }, [isAuthenticated, user?.id, fetchTokens, startHealthCheck]);
+  }, [isAuthenticated, user?.id, fetchTokens, startHealthCheck, startFallbackPolling, stopFallbackPolling, connectionHealth]);
 
   // Clean up connections
   const cleanupConnections = useCallback(() => {
@@ -202,16 +318,22 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
     
     stopHealthCheck();
+    stopFallbackPolling();
     
     if (connectionTimeout.current) {
       clearTimeout(connectionTimeout.current);
       connectionTimeout.current = undefined;
     }
     
+    if (activityCheckInterval.current) {
+      clearInterval(activityCheckInterval.current);
+      activityCheckInterval.current = undefined;
+    }
+    
     setIsConnected(false);
     setConnectionHealth('disconnected');
     reconnectAttempts.current = 0;
-  }, [stopHealthCheck]);
+  }, [stopHealthCheck, stopFallbackPolling]);
 
   // Main effect for conditional WebSocket activation
   useEffect(() => {
@@ -227,8 +349,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     // Set up WebSocket connection with smart activation
     setupWebSocketConnection();
     
-    return cleanupConnections;
-  }, [isAuthenticated, user?.id, fetchTokens, setupWebSocketConnection, cleanupConnections]);
+    // Start activity monitoring
+    const cleanupActivity = startActivityMonitoring();
+    
+    return () => {
+      cleanupConnections();
+      cleanupActivity();
+    };
+  }, [isAuthenticated, user?.id, fetchTokens, setupWebSocketConnection, cleanupConnections, startActivityMonitoring]);
 
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
