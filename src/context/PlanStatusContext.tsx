@@ -31,30 +31,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
   
-  // Debouncing refs
-  const updateDebounceTimeout = useRef<number | undefined>(undefined);
+  // Cleanup ref
   const isUnmounting = useRef<boolean>(false);
-  
-  // Debounce configuration
-  const UPDATE_DEBOUNCE_DELAY = 300; // 300ms debounce delay
-
-  // Debounced update local state to prevent UI flicker
-  const updateTokenState = useCallback((newPlanStatus: number | null) => {
-    if (isUnmounting.current) return;
-    
-    // Clear any existing debounce timeout
-    if (updateDebounceTimeout.current) {
-      clearTimeout(updateDebounceTimeout.current);
-    }
-    
-    // Debounce the update to prevent rapid-fire changes
-    updateDebounceTimeout.current = window.setTimeout(() => {
-      if (!isUnmounting.current) {
-        console.log('✅ Plan status context updating to:', newPlanStatus);
-        setTokens(newPlanStatus);
-      }
-    }, UPDATE_DEBOUNCE_DELAY);
-  }, []);
 
   const fetchTokens = useCallback(async () => {
     if (!user?.id || isUnmounting.current) return;
@@ -69,8 +47,10 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      console.log('📊 Plan status fetched from database (context):', data?.user_plan_status);
-      updateTokenState(data?.user_plan_status ?? null);
+      console.log('📊 Plan status fetched from database:', data?.user_plan_status);
+      if (!isUnmounting.current) {
+        setTokens(data?.user_plan_status ?? null);
+      }
     } catch (error) {
       console.error('Error fetching user plan status:', error);
       if (!isUnmounting.current) {
@@ -85,26 +65,20 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         setIsLoading(false);
       }
     }
-  }, [user?.id, toast, updateTokenState]);
+  }, [user?.id, toast]);
 
   // Cleanup function
   const cleanup = useCallback(() => {
     console.log('🧹 Cleaning up plan status context');
     isUnmounting.current = true;
-    
-    // Clear debounce timeout
-    if (updateDebounceTimeout.current) {
-      clearTimeout(updateDebounceTimeout.current);
-      updateDebounceTimeout.current = undefined;
-    }
   }, []);
 
-  // Simple effect for initial token fetch on authentication
+  // Only fetch tokens on initial authentication - no continuous polling
   useEffect(() => {
     isUnmounting.current = false;
     
     if (!isAuthenticated || !user?.id) {
-      console.log('🚫 User not authenticated - skipping token fetch');
+      console.log('🚫 User not authenticated - clearing token state');
       setTokens(null);
       return;
     }
@@ -119,7 +93,24 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const togglePremium = async () => {
     if (!user?.id || isUnmounting.current) return { success: false, error: 'Not authenticated' };
     
-    console.log('🪙 Toggling premium status (context)');
+    console.log('🪙 Toggling premium status with optimistic update');
+    
+    // Store current state for potential rollback
+    const previousTokens = tokens;
+    
+    // Optimistically update UI immediately - toggle between 0 and 1
+    const optimisticNewStatus = tokens === 1 ? 0 : 1;
+    setTokens(optimisticNewStatus);
+    
+    // Show optimistic toast immediately
+    const isPremium = checkIsPremium(optimisticNewStatus);
+    if (!isUnmounting.current) {
+      toast({
+        title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
+        description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
+      });
+    }
+    
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('toggle_user_premium', {
@@ -128,26 +119,25 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      // Optimistically update the UI immediately
-      updateTokenState(data ?? 0);
-      const isPremium = checkIsPremium(data);
-      console.log(`✅ Successfully toggled to ${isPremium ? 'premium' : 'basic'}. New status: ${data}`);
-      
+      // Update with actual server response
       if (!isUnmounting.current) {
-        toast({
-          title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
-          description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
-        });
+        setTokens(data ?? 0);
       }
       
-      return { success: true, isPremium, balance: data };
+      const actualIsPremium = checkIsPremium(data);
+      console.log(`✅ Successfully toggled to ${actualIsPremium ? 'premium' : 'basic'}. Server status: ${data}`);
+      
+      return { success: true, isPremium: actualIsPremium, balance: data };
     } catch (error) {
       console.error('Error toggling premium status:', error);
+      
+      // Rollback optimistic update on error
       if (!isUnmounting.current) {
+        setTokens(previousTokens);
         toast({
           variant: "destructive",
           title: "Error updating plan",
-          description: "Could not update your subscription plan."
+          description: "Could not update your subscription plan. Changes have been reverted."
         });
       }
       return { success: false, error };
