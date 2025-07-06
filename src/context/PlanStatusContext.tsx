@@ -17,6 +17,15 @@ interface UsageSummary {
   questionVault: UsageData;
 }
 
+interface UsageCheckResult {
+  canProceed: boolean;
+  isPremium: boolean;
+  currentCount: number;
+  limit: number;
+  remaining: number;
+  message?: string;
+}
+
 interface PlanStatusContextType {
   tokens: number | null;
   isPremium: boolean;
@@ -88,7 +97,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (error) throw error;
       
       console.log('📈 Usage summary fetched:', data);
-      setUsageSummary(data);
+      setUsageSummary(data as UsageSummary);
     } catch (error) {
       console.error('Error fetching usage summary:', error);
       toast({
@@ -114,11 +123,13 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      if (!data.canProceed) {
+      const result = data as UsageCheckResult;
+      
+      if (!result.canProceed) {
         const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
-        const message = data.isPremium 
+        const message = result.isPremium 
           ? 'An error occurred while checking your usage limits.'
-          : `You've reached your monthly limit of ${data.limit} ${usageTypeLabel}. Upgrade to Premium for unlimited access.`;
+          : `You've reached your monthly limit of ${result.limit} ${usageTypeLabel}. Upgrade to Premium for unlimited access.`;
         
         return { canProceed: false, message };
       }
