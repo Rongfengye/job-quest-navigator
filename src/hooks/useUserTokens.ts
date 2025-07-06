@@ -1,3 +1,4 @@
+
 import { usePlanStatus } from '@/context/PlanStatusContext';
 
 // Legacy hook that now consumes the centralized context
@@ -5,12 +6,14 @@ import { usePlanStatus } from '@/context/PlanStatusContext';
 export const useUserTokens = () => {
   const planStatusContext = usePlanStatus();
   
-  // Return the same interface as before for backward compatibility
+  // Return the same interface as before for backward compatibility, plus new connection health info
   return {
     tokens: planStatusContext.tokens,
     isPremium: planStatusContext.isPremium,
     isBasic: planStatusContext.isBasic,
     isLoading: planStatusContext.isLoading,
+    isConnected: planStatusContext.isConnected,
+    connectionHealth: planStatusContext.connectionHealth,
     fetchTokens: planStatusContext.fetchTokens,
     togglePremium: planStatusContext.togglePremium,
     addTokens: planStatusContext.addTokens,
