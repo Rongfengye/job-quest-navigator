@@ -97,7 +97,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (error) throw error;
       
       console.log('📈 Usage summary fetched:', data);
-      setUsageSummary(data as UsageSummary);
+      setUsageSummary(data as unknown as UsageSummary);
     } catch (error) {
       console.error('Error fetching usage summary:', error);
       toast({
@@ -123,7 +123,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      const result = data as UsageCheckResult;
+      const result = data as unknown as UsageCheckResult;
       
       if (!result.canProceed) {
         const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
