@@ -86,7 +86,7 @@ const DashboardSidebar = () => {
             <div className="flex items-center">
               <Badge 
                 variant={isPremium ? "default" : "secondary"}
-                className={isPremium ? "bg-green-600 hover:bg-green-700" : ""}
+                className={isPremium ? "bg-interview-accent hover:bg-interview-accent/80 text-black" : ""}
               >
                 {isPremium ? "Premium" : "Basic"}
               </Badge>
@@ -119,7 +119,7 @@ const DashboardSidebar = () => {
       <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleSignOut} className="text-red-600 hover:text-red-700 hover:bg-red-50">
+            <SidebarMenuButton onClick={handleSignOut} className="text-gray-600 hover:text-gray-700 hover:bg-gray-50">
               <LogOut className="h-4 w-4 mr-2" />
               <span>Sign Out</span>
             </SidebarMenuButton>
