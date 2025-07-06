@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useAuthContext } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BehavioralQuestionData {
@@ -39,6 +40,7 @@ export const useBehavioralInterview = () => {
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { user } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
@@ -53,7 +55,6 @@ export const useBehavioralInterview = () => {
     }
   };
 
-  // New function to load existing interview data for resuming
   const loadExistingInterview = useCallback(async (behavioralId: string) => {
     setIsLoading(true);
     
@@ -140,7 +141,6 @@ export const useBehavioralInterview = () => {
     }
   }, [toast]);
 
-  // Keep this for backward compatibility but it won't be used in the new flow
   const setInitialQuestions = async (generatedData: any) => {
     if (!generatedData) return;
     
@@ -214,7 +214,10 @@ export const useBehavioralInterview = () => {
         questionIndex: currentQuestionIndex,
         generateAudio: true,
         voice: 'alloy',
-        resumePath: resumePath || ''
+        resumePath: resumePath || '',
+        // Add usage limit check parameters
+        userId: user?.id,
+        isFirstQuestion: currentQuestionIndex === 0
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
@@ -225,6 +228,16 @@ export const useBehavioralInterview = () => {
       });
       
       if (error) {
+        // Handle usage limit exceeded error
+        if (error.message && error.message.includes('Usage limit exceeded')) {
+          toast({
+            variant: "destructive",
+            title: "Monthly limit reached",
+            description: "You've reached your monthly limit for behavioral interview practices. Upgrade to Premium for unlimited access.",
+          });
+          navigate('/behavioral');
+          return null;
+        }
         throw new Error(`Error generating question: ${error.message}`);
       }
       
@@ -289,7 +302,7 @@ export const useBehavioralInterview = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentQuestionIndex, questions, answers, behavioralId, toast]);
+  }, [currentQuestionIndex, questions, answers, behavioralId, toast, user?.id, navigate]);
 
   const generateFeedback = async (providedAnswers?: string[]) => {
     setIsLoading(true);
