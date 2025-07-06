@@ -2,7 +2,7 @@
 import { usePlanStatus } from '@/context/PlanStatusContext';
 
 // Simplified hook that now purely consumes the centralized context
-// All WebSocket management and connection handling is done in the context
+// All polling and connection management has been removed
 export const useUserTokens = () => {
   const planStatusContext = usePlanStatus();
   
@@ -12,11 +12,7 @@ export const useUserTokens = () => {
     isPremium: planStatusContext.isPremium,
     isBasic: planStatusContext.isBasic,
     isLoading: planStatusContext.isLoading,
-    isConnected: planStatusContext.isConnected,
-    connectionHealth: planStatusContext.connectionHealth,
     fetchTokens: planStatusContext.fetchTokens,
     togglePremium: planStatusContext.togglePremium,
-    // Legacy subscribeToTokenUpdates removed - now handled entirely by context
-    // Components no longer need to manually subscribe since context handles all updates
   };
 };
