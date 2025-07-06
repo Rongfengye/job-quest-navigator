@@ -5,12 +5,28 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { filterValue } from '@/utils/supabaseTypes';
 
+interface UsageData {
+  current: number;
+  limit: number;
+  remaining: number;
+}
+
+interface UsageSummary {
+  isPremium: boolean;
+  behavioral: UsageData;
+  questionVault: UsageData;
+}
+
 interface PlanStatusContextType {
   tokens: number | null;
   isPremium: boolean;
   isBasic: boolean;
   isLoading: boolean;
+  usageSummary: UsageSummary | null;
+  isLoadingUsage: boolean;
   fetchUserStatus: () => Promise<void>;
+  fetchUsageSummary: () => Promise<void>;
+  checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string }>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
 }
 
@@ -28,6 +44,8 @@ interface PlanStatusProviderProps {
 export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children }) => {
   const [tokens, setTokens] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
+  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
 
@@ -58,18 +76,74 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
   }, [user?.id, toast]);
 
+  const fetchUsageSummary = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingUsage(true);
+    try {
+      const { data, error } = await supabase.rpc('get_user_monthly_usage_summary', {
+        user_id: user.id
+      });
+      
+      if (error) throw error;
+      
+      console.log('📈 Usage summary fetched:', data);
+      setUsageSummary(data);
+    } catch (error) {
+      console.error('Error fetching usage summary:', error);
+      toast({
+        variant: "destructive",
+        title: "Error fetching usage data",
+        description: "Could not retrieve your usage information."
+      });
+    } finally {
+      setIsLoadingUsage(false);
+    }
+  }, [user?.id, toast]);
+
+  const checkUsageLimit = useCallback(async (usageType: 'behavioral' | 'question_vault') => {
+    if (!user?.id) {
+      return { canProceed: false, message: 'Authentication required' };
+    }
+    
+    try {
+      const { data, error } = await supabase.rpc('check_user_monthly_usage', {
+        user_id: user.id,
+        usage_type: usageType
+      });
+      
+      if (error) throw error;
+      
+      if (!data.canProceed) {
+        const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
+        const message = data.isPremium 
+          ? 'An error occurred while checking your usage limits.'
+          : `You've reached your monthly limit of ${data.limit} ${usageTypeLabel}. Upgrade to Premium for unlimited access.`;
+        
+        return { canProceed: false, message };
+      }
+      
+      return { canProceed: true };
+    } catch (error) {
+      console.error('Error checking usage limit:', error);
+      return { canProceed: false, message: 'Failed to check usage limits. Please try again.' };
+    }
+  }, [user?.id]);
+
   // Only fetch tokens on initial authentication - no continuous polling
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - clearing token state');
       setTokens(null);
+      setUsageSummary(null);
       return;
     }
     
     // Initial fetch when user is authenticated
-    console.log('👤 User authenticated - fetching initial plan status');
+    console.log('👤 User authenticated - fetching initial plan status and usage');
     fetchUserStatus();
-  }, [isAuthenticated, user?.id, fetchUserStatus]);
+    fetchUsageSummary();
+  }, [isAuthenticated, user?.id, fetchUserStatus, fetchUsageSummary]);
 
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
@@ -101,6 +175,9 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       // Update with actual server response
       setTokens(data ?? 0);
       
+      // Refresh usage summary after plan change
+      await fetchUsageSummary();
+      
       const actualIsPremium = checkIsPremium(data);
       console.log(`✅ Successfully toggled to ${actualIsPremium ? 'premium' : 'basic'}. Server status: ${data}`);
       
@@ -130,7 +207,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     isPremium,
     isBasic,
     isLoading,
+    usageSummary,
+    isLoadingUsage,
     fetchUserStatus,
+    fetchUsageSummary,
+    checkUsageLimit,
     togglePremium
   };
 

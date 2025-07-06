@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Crown, User } from 'lucide-react';
+import UsageDisplay from '@/components/UsageDisplay';
 
 const Settings = () => {
   const { logout } = useAuthContext();
@@ -115,6 +115,9 @@ const Settings = () => {
         </div>
         
         <div className="grid gap-6">
+          {/* Usage Display Card */}
+          <UsageDisplay />
+
           <Card>
             <CardHeader>
               <CardTitle>Subscription Plan</CardTitle>

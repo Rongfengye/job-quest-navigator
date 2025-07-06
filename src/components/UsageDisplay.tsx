@@ -1,0 +1,151 @@
+
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { useUserTokens } from '@/hooks/useUserTokens';
+import { Crown, User, TrendingUp, MessageSquare } from 'lucide-react';
+
+const UsageDisplay = () => {
+  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
+
+  if (isLoadingUsage) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Usage</CardTitle>
+          <CardDescription>Loading your usage information...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse space-y-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!usageSummary) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Monthly Usage</CardTitle>
+          <CardDescription>Unable to load usage information</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const getBadgeVariant = (remaining: number, limit: number) => {
+    if (limit === -1) return 'default'; // Premium
+    const percentage = (remaining / limit) * 100;
+    if (percentage <= 10) return 'destructive';
+    if (percentage <= 30) return 'secondary';
+    return 'default';
+  };
+
+  const formatUsageText = (current: number, limit: number) => {
+    if (limit === -1) return 'Unlimited';
+    return `${current} / ${limit}`;
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Monthly Usage
+            </CardTitle>
+            <CardDescription>
+              Your usage resets on the 1st of each month
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            {isPremium ? (
+              <>
+                <Crown className="h-4 w-4 text-yellow-500" />
+                <Badge variant="default" className="bg-yellow-500 text-white">
+                  Premium
+                </Badge>
+              </>
+            ) : (
+              <>
+                <User className="h-4 w-4 text-gray-500" />
+                <Badge variant="secondary">
+                  Basic
+                </Badge>
+              </>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Behavioral Interview Practices */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4 text-blue-500" />
+              <span className="font-medium">Behavioral Interview Practices</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {formatUsageText(usageSummary.behavioral.current, usageSummary.behavioral.limit)}
+              </span>
+              <Badge variant={getBadgeVariant(usageSummary.behavioral.remaining, usageSummary.behavioral.limit)}>
+                {usageSummary.behavioral.limit === -1 ? 'Unlimited' : `${usageSummary.behavioral.remaining} left`}
+              </Badge>
+            </div>
+          </div>
+          {usageSummary.behavioral.limit !== -1 && (
+            <Progress 
+              value={(usageSummary.behavioral.current / usageSummary.behavioral.limit) * 100} 
+              className="h-2"
+            />
+          )}
+        </div>
+
+        {/* Question Vault Generations */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-green-500" />
+              <span className="font-medium">Question Vault Generations</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">
+                {formatUsageText(usageSummary.questionVault.current, usageSummary.questionVault.limit)}
+              </span>
+              <Badge variant={getBadgeVariant(usageSummary.questionVault.remaining, usageSummary.questionVault.limit)}>
+                {usageSummary.questionVault.limit === -1 ? 'Unlimited' : `${usageSummary.questionVault.remaining} left`}
+              </Badge>
+            </div>
+          </div>
+          {usageSummary.questionVault.limit !== -1 && (
+            <Progress 
+              value={(usageSummary.questionVault.current / usageSummary.questionVault.limit) * 100} 
+              className="h-2"
+            />
+          )}
+        </div>
+
+        {/* Upgrade Notice for Basic Users */}
+        {isBasic && (usageSummary.behavioral.remaining <= 2 || usageSummary.questionVault.remaining === 0) && (
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 text-blue-800">
+              <Crown className="h-4 w-4" />
+              <span className="font-medium">Approaching Usage Limits</span>
+            </div>
+            <p className="text-sm text-blue-700 mt-1">
+              Upgrade to Premium for unlimited access to all features. No monthly limits, no restrictions.
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
+export default UsageDisplay;

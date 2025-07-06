@@ -10,11 +10,14 @@ import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
+import { useUserTokens } from '@/hooks/useUserTokens';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { generateQuestion } = useBehavioralInterview();
+  const { checkUsageLimit, usageSummary } = useUserTokens();
+  
   const [formData, setFormData] = React.useState({
     jobTitle: '',
     jobDescription: '',
@@ -93,6 +96,19 @@ const CreateBehavioral = () => {
         variant: "destructive",
         title: "Resume Text Extraction Failed",
         description: "We couldn't extract text from your resume. Please try a different file.",
+      });
+      return;
+    }
+
+    // Pre-submission usage validation
+    console.log('🔍 Checking usage limits before behavioral interview creation...');
+    const usageCheck = await checkUsageLimit('behavioral');
+    
+    if (!usageCheck.canProceed) {
+      toast({
+        variant: "destructive",
+        title: "Usage Limit Reached",
+        description: usageCheck.message || "You've reached your monthly limit for behavioral interviews.",
       });
       return;
     }
@@ -224,6 +240,29 @@ const CreateBehavioral = () => {
           Create Behavioral Interview Prep
         </h1>
 
+        {/* Usage Status Display */}
+        {usageSummary && !usageSummary.isPremium && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-800">
+                  Behavioral Interview Practices
+                </p>
+                <p className="text-sm text-blue-600">
+                  {usageSummary.behavioral.remaining} of {usageSummary.behavioral.limit} remaining this month
+                </p>
+              </div>
+              {usageSummary.behavioral.remaining <= 2 && (
+                <Link to="/settings">
+                  <Button variant="outline" size="sm">
+                    Upgrade to Premium
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
           <FormField
             id="companyName"
@@ -263,21 +302,7 @@ const CreateBehavioral = () => {
             }
           />
 
-          {/* Company Description field is now hidden */}
-          {/*
-          <FormField
-            id="companyDescription"
-            name="companyDescription"
-            label="Company Description (Optional)"
-            value={formData.companyDescription}
-            onChange={handleInputChange}
-            placeholder="Enter company description"
-            isTextarea
-          />
-          */}
-
           <div className="pt-4">
-            {/* <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p> */}
             
             <div className="space-y-4">
               <FileUpload
@@ -307,8 +332,12 @@ const CreateBehavioral = () => {
           <Button 
             type="submit" 
             className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
+            disabled={usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0}
           >
-            Submit
+            {usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0 
+              ? 'Monthly Limit Reached - Upgrade to Continue'
+              : 'Submit'
+            }
           </Button>
         </form>
       </div>
