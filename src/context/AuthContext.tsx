@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
@@ -8,6 +7,8 @@ interface AuthContextType {
   user: UserData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isPasswordRecovery: boolean;
+  setPasswordRecoveryMode: (mode: boolean) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
   signup: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: any }>;
   logout: () => Promise<{ success: boolean; error?: any }>;
@@ -20,7 +21,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const { toast } = useToast();
+
+  const setPasswordRecoveryMode = (mode: boolean) => {
+    console.log('Setting password recovery mode:', mode);
+    setIsPasswordRecovery(mode);
+  };
 
   const checkSession = async () => {
     try {
@@ -132,9 +139,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               lastName
             });
           }
+        } else if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery event detected');
+          if (session) {
+            console.log('User authenticated via password recovery, setting recovery mode');
+            
+            const metadata = session.user.user_metadata || {};
+            let firstName = metadata.first_name || '';
+            let lastName = metadata.last_name || '';
+            
+            if ((!firstName || !lastName) && metadata.full_name) {
+              const nameParts = metadata.full_name.split(' ');
+              firstName = firstName || nameParts[0] || '';
+              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+            } else if ((!firstName || !lastName) && metadata.name) {
+              const nameParts = metadata.name.split(' ');
+              firstName = firstName || nameParts[0] || '';
+              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+            }
+            
+            const provider = session.user.app_metadata?.provider;
+            if ((!firstName || !lastName)) {
+              if (provider === 'github') {
+                firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+              } else if (provider === 'google') {
+                firstName = metadata.given_name || firstName;
+                lastName = metadata.family_name || lastName;
+              }
+            }
+            
+            auth.setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              firstName,
+              lastName
+            });
+            
+            setPasswordRecoveryMode(true);
+            
+            toast({
+              title: "Password Recovery",
+              description: "Please set your new password to continue.",
+            });
+          }
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out, clearing auth state');
           auth.setUser(null);
+          setPasswordRecoveryMode(false);
         }
       });
       
@@ -166,6 +217,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: auth.user,
     isLoading: isLoading,
     isAuthenticated: !!auth.user,
+    isPasswordRecovery,
+    setPasswordRecoveryMode,
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout
@@ -174,7 +227,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   console.log('AuthContext value updated:', { 
     isAuthenticated: value.isAuthenticated, 
     userExists: !!value.user,
-    isLoading: value.isLoading
+    isLoading: value.isLoading,
+    isPasswordRecovery: value.isPasswordRecovery
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
