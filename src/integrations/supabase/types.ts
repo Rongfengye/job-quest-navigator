@@ -316,6 +316,36 @@ export type Database = {
           },
         ]
       }
+      storyline_user_monthly_usage: {
+        Row: {
+          behavioral_practices_count: number
+          created_at: string
+          id: string
+          month_year: string
+          question_vaults_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          behavioral_practices_count?: number
+          created_at?: string
+          id?: string
+          month_year: string
+          question_vaults_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          behavioral_practices_count?: number
+          created_at?: string
+          id?: string
+          month_year?: string
+          question_vaults_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_metrics: {
         Row: {
           analyze_clicks: number | null
@@ -396,9 +426,21 @@ export type Database = {
         Args: { user_id: string; amount: number }
         Returns: number
       }
+      check_user_monthly_usage: {
+        Args: { user_id: string; usage_type: string }
+        Returns: Json
+      }
       deduct_user_tokens: {
         Args: { user_id: string; amount: number }
         Returns: number
+      }
+      get_user_monthly_usage_summary: {
+        Args: { user_id: string }
+        Returns: Json
+      }
+      increment_user_monthly_usage: {
+        Args: { user_id: string; usage_type: string }
+        Returns: Json
       }
       make_user_basic: {
         Args: { user_id: string; amount?: number }
