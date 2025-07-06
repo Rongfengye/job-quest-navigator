@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import FormField from '@/components/FormField';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Crown } from 'lucide-react';
 import JobScraper from '@/components/JobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
@@ -223,6 +223,9 @@ const CreateBehavioral = () => {
     }
   };
 
+  // Check if user has reached their behavioral limit
+  const hasReachedLimit = usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0;
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
       <ProcessingModal isOpen={isProcessing} processingMessage="Setting up your interview experience…" />
@@ -329,16 +332,31 @@ const CreateBehavioral = () => {
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
-            disabled={usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0}
-          >
-            {usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0 
-              ? 'Monthly Limit Reached - Upgrade to Continue'
-              : 'Submit'
-            }
-          </Button>
+          {hasReachedLimit ? (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
+              <div className="flex items-center justify-center gap-2 text-orange-800 mb-3">
+                <Crown className="h-5 w-5" />
+                <span className="text-lg font-semibold">Usage Limit Reached</span>
+              </div>
+              <p className="text-orange-700 mb-4">
+                You've reached your monthly limit of {usageSummary?.behavioral.limit} behavioral interview practices. Upgrade to Premium for unlimited access.
+              </p>
+              <Button
+                onClick={() => navigate('/settings')}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                Upgrade to Premium
+              </Button>
+            </div>
+          ) : (
+            <Button 
+              type="submit" 
+              className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
+            >
+              Submit
+            </Button>
+          )}
         </form>
       </div>
     </div>
