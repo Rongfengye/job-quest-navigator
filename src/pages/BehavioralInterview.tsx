@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import { Mic, MicOff, Send } from 'lucide-react';
 import ProcessingModal from '@/components/ProcessingModal';
+import NavBar from '@/components/NavBar';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
@@ -382,36 +383,39 @@ const BehavioralInterview = () => {
 
   console.log('Rendering main interview layout');
   return (
-    <div className="min-h-screen bg-white flex flex-col p-6">
-      <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">
-        <InterviewHeader />
-        
-        <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
-          <QuestionContent
+    <>
+      <NavBar />
+      <div className="min-h-screen bg-white flex flex-col p-6">
+        <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">
+          <InterviewHeader />
+          
+          <div className="bg-white border border-gray-200 rounded-lg p-6 mb-6 flex-1 flex flex-col">
+            <QuestionContent
+              currentQuestionIndex={currentQuestionIndex}
+              currentQuestion={currentQuestion}
+              answer={answer}
+              setAnswer={setAnswer}
+              isRecording={isRecording}
+              toggleRecording={toggleRecording}
+            />
+          </div>
+          
+          <SubmitButton
             currentQuestionIndex={currentQuestionIndex}
-            currentQuestion={currentQuestion}
-            answer={answer}
-            setAnswer={setAnswer}
-            isRecording={isRecording}
-            toggleRecording={toggleRecording}
+            isSubmitting={isSubmitting}
+            isLoading={isLoading}
+            isNextQuestionLoading={isTransitionLoading}
+            onClick={handleSubmit}
+            showProcessing={showProcessing}
           />
         </div>
         
-        <SubmitButton
-          currentQuestionIndex={currentQuestionIndex}
-          isSubmitting={isSubmitting}
-          isLoading={isLoading}
-          isNextQuestionLoading={isTransitionLoading}
-          onClick={handleSubmit}
-          showProcessing={showProcessing}
+        <ProcessingModal 
+          isOpen={showFeedbackModal} 
+          processingMessage="Generating Interview Feedback" 
         />
       </div>
-      
-      <ProcessingModal 
-        isOpen={showFeedbackModal} 
-        processingMessage="Generating Interview Feedback" 
-      />
-    </div>
+    </>
   );
 };
 
