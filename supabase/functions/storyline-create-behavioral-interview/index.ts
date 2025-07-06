@@ -83,6 +83,23 @@ serve(async (req) => {
           status: 429, // Too Many Requests
         });
       }
+
+      // Increment usage count after successful behavioral interview initialization
+      if (userId) {
+        console.log('Incrementing behavioral usage count for user:', userId);
+        
+        const { data: incrementResult, error: incrementError } = await supabase.rpc('increment_user_monthly_usage', {
+          user_id: userId,
+          usage_type: 'behavioral'
+        });
+
+        if (incrementError) {
+          console.error('Error incrementing usage count:', incrementError);
+          // Don't fail the request, but log the error
+        } else {
+          console.log('Usage incremented successfully:', incrementResult);
+        }
+      }
     }
 
     // Upon the submission of the last question, we actually turn this flag on and feedback is prompted for instead
@@ -99,23 +116,6 @@ serve(async (req) => {
         jobDescription,
         resumeText
       );
-
-      // Increment usage count after successful behavioral interview completion
-      if (userId) {
-        console.log('Incrementing behavioral usage count for user:', userId);
-        
-        const { data: incrementResult, error: incrementError } = await supabase.rpc('increment_user_monthly_usage', {
-          user_id: userId,
-          usage_type: 'behavioral'
-        });
-
-        if (incrementError) {
-          console.error('Error incrementing usage count:', incrementError);
-          // Don't fail the request, but log the error
-        } else {
-          console.log('Usage incremented successfully:', incrementResult);
-        }
-      }
 
       return new Response(JSON.stringify({ feedback: feedbackResults }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
