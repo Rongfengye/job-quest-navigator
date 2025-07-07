@@ -15,34 +15,85 @@ const Index = () => {
   const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const navigate = useNavigate();
   
-  // Check for password recovery mode when component mounts or auth state changes
+  // Debug logging - log all state changes
   useEffect(() => {
-    if (isAuthenticated && isPasswordRecovery && !isLoading) {
-      console.log('User is authenticated and in password recovery mode, showing modal');
+    console.log('🔍 Index state debug:', { 
+      isAuthenticated, 
+      isPasswordRecovery, 
+      isLoading,
+      showPasswordResetModal,
+      currentUrl: window.location.href
+    });
+  }, [isAuthenticated, isPasswordRecovery, isLoading, showPasswordResetModal]);
+  
+  // Handle password recovery modal - separate effect without isLoading dependency
+  useEffect(() => {
+    console.log('🔄 Password recovery effect triggered:', { 
+      isAuthenticated, 
+      isPasswordRecovery,
+      showPasswordResetModal 
+    });
+    
+    if (isAuthenticated && isPasswordRecovery && !showPasswordResetModal) {
+      console.log('✅ Showing password reset modal - conditions met');
       setShowPasswordResetModal(true);
     }
-  }, [isAuthenticated, isPasswordRecovery, isLoading]);
+  }, [isAuthenticated, isPasswordRecovery]); // Removed isLoading dependency
+  
+  // Fallback: Check URL parameters for recovery code
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const hasRecoveryCode = urlParams.has('code') || window.location.hash.includes('access_token');
+    
+    console.log('🔗 URL parameter check:', { 
+      hasRecoveryCode, 
+      urlParams: urlParams.toString(),
+      hash: window.location.hash 
+    });
+    
+    if (hasRecoveryCode && isAuthenticated && !isPasswordRecovery) {
+      console.log('🚨 Fallback: Setting password recovery mode from URL');
+      setPasswordRecoveryMode(true);
+    }
+  }, [isAuthenticated, isPasswordRecovery, setPasswordRecoveryMode]);
   
   // If authenticated and NOT in password recovery mode, redirect to behavioral
   if (isAuthenticated && !isPasswordRecovery && !isLoading) {
+    console.log('🔄 Redirecting to behavioral - user authenticated and not in recovery');
     return <Navigate to="/behavioral" replace />;
   }
 
   const handlePasswordResetSuccess = () => {
-    console.log('Password reset successful, clearing recovery mode and redirecting');
+    console.log('✅ Password reset successful, clearing recovery mode and redirecting');
     setPasswordRecoveryMode(false);
     setShowPasswordResetModal(false);
+    
+    // Clear URL parameters
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.hash = '';
+    window.history.replaceState({}, document.title, url.pathname);
+    
     navigate('/behavioral');
   };
 
   const handlePasswordResetModalClose = (open: boolean) => {
+    console.log('🔄 Password reset modal close handler:', { open });
     if (!open) {
-      console.log('Password reset modal closed');
+      console.log('❌ Password reset modal closed by user');
       setShowPasswordResetModal(false);
       // If user cancels password reset, we should still clear recovery mode
       setPasswordRecoveryMode(false);
+      
+      // Clear URL parameters
+      const url = new URL(window.location.href);
+      url.search = '';
+      url.hash = '';
+      window.history.replaceState({}, document.title, url.pathname);
     }
   };
+  
+  console.log('🎨 Rendering Index page - landing page mode');
   
   // Show landing page for non-authenticated users or users in password recovery mode
   return (
