@@ -183,7 +183,7 @@ const Behavioral = () => {
               {/* Header for users with data */}
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
-                  <h1 className="text-5xl font-bold text-slate-900 leading-tight">
+                  <h1 className="text-5xl font-bold text-interview-primary leading-tight">
                     Behavioral Interview
                     <br />
                     Dashboard
