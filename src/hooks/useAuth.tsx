@@ -263,7 +263,7 @@ export const useAuth = () => {
     setIsLoading(true);
     
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/recover-password`;
       console.log('Sending password reset email with redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {

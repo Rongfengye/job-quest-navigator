@@ -20,6 +20,7 @@ import Behavioral from "./pages/Behavioral";
 import BehavioralInterview from "./pages/BehavioralInterview";
 import CreateBehavioral from "./pages/CreateBehavioral";
 import BehavioralFeedback from "./pages/BehavioralFeedback";
+import PasswordRecovery from "./pages/PasswordRecovery";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,6 +52,7 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/behavioralFeedback" element={<BehavioralFeedback />} />
+              <Route path="/recover-password" element={<PasswordRecovery />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

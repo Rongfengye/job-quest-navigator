@@ -26,36 +26,23 @@ const Index = () => {
     });
   }, [isAuthenticated, isPasswordRecovery, isLoading, showPasswordResetModal]);
   
-  // Handle password recovery modal - separate effect without isLoading dependency
-  useEffect(() => {
-    console.log('🔄 Password recovery effect triggered:', { 
-      isAuthenticated, 
-      isPasswordRecovery,
-      showPasswordResetModal 
-    });
-    
-    if (isAuthenticated && isPasswordRecovery && !showPasswordResetModal) {
-      console.log('✅ Showing password reset modal - conditions met');
-      setShowPasswordResetModal(true);
-    }
-  }, [isAuthenticated, isPasswordRecovery]); // Removed isLoading dependency
-  
-  // Fallback: Check URL parameters for recovery code
+  // Check for recovery URL parameters and redirect to dedicated page
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const hasRecoveryCode = urlParams.has('code') || window.location.hash.includes('access_token');
     
-    console.log('🔗 URL parameter check:', { 
+    console.log('🔗 URL parameter check on Index:', { 
       hasRecoveryCode, 
       urlParams: urlParams.toString(),
       hash: window.location.hash 
     });
     
-    if (hasRecoveryCode && isAuthenticated && !isPasswordRecovery) {
-      console.log('🚨 Fallback: Setting password recovery mode from URL');
-      setPasswordRecoveryMode(true);
+    if (hasRecoveryCode) {
+      console.log('🚨 Recovery code detected on Index, redirecting to recovery page');
+      navigate('/recover-password', { replace: true });
+      return;
     }
-  }, [isAuthenticated, isPasswordRecovery, setPasswordRecoveryMode]);
+  }, [navigate]);
   
   // If authenticated and NOT in password recovery mode, redirect to behavioral
   if (isAuthenticated && !isPasswordRecovery && !isLoading) {
