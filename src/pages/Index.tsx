@@ -1,22 +1,50 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
 import Testimonials from '@/components/Testimonials';
 import CallToAction from '@/components/CallToAction';
+import PasswordResetModal from '@/components/PasswordResetModal';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 const Index = () => {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading, isPasswordRecovery, setPasswordRecoveryMode } = useAuthContext();
+  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const navigate = useNavigate();
   
-  // If authenticated, redirect to behavioral instead of dashboard
-  if (isAuthenticated && !isLoading) {
+  // Check for password recovery mode when component mounts or auth state changes
+  useEffect(() => {
+    if (isAuthenticated && isPasswordRecovery && !isLoading) {
+      console.log('User is authenticated and in password recovery mode, showing modal');
+      setShowPasswordResetModal(true);
+    }
+  }, [isAuthenticated, isPasswordRecovery, isLoading]);
+  
+  // If authenticated and NOT in password recovery mode, redirect to behavioral
+  if (isAuthenticated && !isPasswordRecovery && !isLoading) {
     return <Navigate to="/behavioral" replace />;
   }
+
+  const handlePasswordResetSuccess = () => {
+    console.log('Password reset successful, clearing recovery mode and redirecting');
+    setPasswordRecoveryMode(false);
+    setShowPasswordResetModal(false);
+    navigate('/behavioral');
+  };
+
+  const handlePasswordResetModalClose = (open: boolean) => {
+    if (!open) {
+      console.log('Password reset modal closed');
+      setShowPasswordResetModal(false);
+      // If user cancels password reset, we should still clear recovery mode
+      setPasswordRecoveryMode(false);
+    }
+  };
   
-  // Show landing page for non-authenticated users
+  // Show landing page for non-authenticated users or users in password recovery mode
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <main className="flex-1">
@@ -67,6 +95,13 @@ const Index = () => {
           </p>
         </div>
       </footer>
+
+      {/* Password Reset Modal - shown when user is in password recovery mode */}
+      <PasswordResetModal
+        open={showPasswordResetModal}
+        onOpenChange={handlePasswordResetModalClose}
+        onSuccess={handlePasswordResetSuccess}
+      />
     </div>
   );
 };

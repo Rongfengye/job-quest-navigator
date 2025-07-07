@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -298,6 +299,45 @@ export const useAuth = () => {
     }
   };
 
+  const updatePassword = async (newPassword: string) => {
+    console.log('Update password function called');
+    setIsLoading(true);
+    
+    try {
+      console.log('Updating password with Supabase...');
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      console.log('Supabase updateUser response:', { 
+        success: !error, 
+        error: error ? error.message : null
+      });
+
+      if (error) throw error;
+
+      console.log('Password updated successfully');
+      toast({
+        title: "Password updated successfully",
+        description: "Your password has been changed successfully.",
+      });
+      
+      console.log('Update password function completed successfully');
+      return { success: true };
+    } catch (error) {
+      console.error('Update password error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error updating password",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+      });
+      return { success: false, error };
+    } finally {
+      console.log('Setting isLoading to false');
+      setIsLoading(false);
+    }
+  };
+
   return {
     user,
     isLoading,
@@ -305,6 +345,7 @@ export const useAuth = () => {
     login,
     logout,
     resetPassword,
+    updatePassword,
     syncUserData,
     setUser: setUserSafely
   };
