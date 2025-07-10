@@ -1,6 +1,9 @@
 
 import { corsHeaders } from './index.ts';
 
+// Feature flag to control technical question generation
+const ENABLE_TECHNICAL_QUESTIONS = false;
+
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
   const { 
     jobTitle, 
@@ -16,18 +19,19 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   console.log('Received request to generate interview questions');
   console.log('Resume text length:', resumeText?.length || 0);
   console.log('Original behavioral questions count:', originalBehavioralQuestions.length);
+  console.log('Technical questions enabled:', ENABLE_TECHNICAL_QUESTIONS);
 
   const formatSpecification = `
   Your response MUST be a valid JSON object in the following format:
   {
-    "technicalQuestions": [
+    ${ENABLE_TECHNICAL_QUESTIONS ? `"technicalQuestions": [
       {
         "question": "string",
         "explanation": "string",
         "modelAnswer": "string (STAR format)",
         "followUp": ["string"]
       }
-    ],
+    ],` : ''}
     "behavioralQuestions": [
       {
         "question": "string",
@@ -51,42 +55,49 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   If you find such questions, prioritize them in the list of returned questions. 
   If not, generate questions based on the job description and candidate profile.`
 
-  // Create the user prompt with all the relevant information
+  // Create the user prompt with conditional question generation
+  const questionCount = ENABLE_TECHNICAL_QUESTIONS ? 10 : 5;
+  const questionTypes = ENABLE_TECHNICAL_QUESTIONS 
+    ? `- 5 technical questions focused on entry-level technical skills and problem-solving
+    - 5 behavioral questions focused on teamwork, learning, and project experience`
+    : `- 5 behavioral questions focused on teamwork, learning, and project experience`;
+
   const userPrompt = `
   Candidate Documents and Context:
   ${resumeText ? `Resume content: "${resumeText}"` : ''}
   ${coverLetterText ? `Cover Letter content: "${coverLetterText}"` : ''}
   ${additionalDocumentsText ? `Additional Documents content: "${additionalDocumentsText}"` : ''}
 
-  Based on the provided information, generate 10 interview questions:
-  - 5 technical questions focused on entry-level technical skills and problem-solving
-  - 5 behavioral questions focused on teamwork, learning, and project experience
+  Based on the provided information, generate ${questionCount} interview questions:
+  ${questionTypes}
 
   ${searchSpecification}
 
   ${formatSpecification}
   `;
 
-  // Define the JSON schema for response format
+  // Define the JSON schema for response format with conditional technical questions
   const responseSchema = {
     "type": "object",
     "properties": {
-      "technicalQuestions": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "question": { "type": "string" },
-            "explanation": { "type": "string" },
-            "modelAnswer": { "type": "string" },
-            "followUp": { 
-              "type": "array",
-              "items": { "type": "string" }
-            }
-          },
-          "required": ["question", "explanation", "modelAnswer", "followUp"]
+      ...(ENABLE_TECHNICAL_QUESTIONS && {
+        "technicalQuestions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "explanation": { "type": "string" },
+              "modelAnswer": { "type": "string" },
+              "followUp": { 
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            },
+            "required": ["question", "explanation", "modelAnswer", "followUp"]
+          }
         }
-      },
+      }),
       "behavioralQuestions": {
         "type": "array",
         "items": {
@@ -104,7 +115,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
         }
       }
     },
-    "required": ["technicalQuestions", "behavioralQuestions"]
+    "required": ENABLE_TECHNICAL_QUESTIONS ? ["technicalQuestions", "behavioralQuestions"] : ["behavioralQuestions"]
   };
 
   // New Perplexity Sonar API call with proper response_format
@@ -172,41 +183,49 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     
     // Validate the expected structure
     console.log('Parsed content structure check:', 
-      'technicalQuestions' in parsedContent ? 'has technicalQuestions' : 'no technicalQuestions',
+      ENABLE_TECHNICAL_QUESTIONS ? (
+        'technicalQuestions' in parsedContent ? 'has technicalQuestions' : 'no technicalQuestions'
+      ) : 'technical questions disabled',
       'behavioralQuestions' in parsedContent ? 'has behavioralQuestions' : 'no behavioralQuestions',
       'questions' in parsedContent ? 'has questions' : 'no questions'
     );
     
-    if (!parsedContent.technicalQuestions && !parsedContent.behavioralQuestions && !parsedContent.questions) {
+    // Check if the response structure is valid based on feature flag
+    const hasRequiredStructure = ENABLE_TECHNICAL_QUESTIONS 
+      ? (parsedContent.technicalQuestions && parsedContent.behavioralQuestions)
+      : parsedContent.behavioralQuestions;
+
+    if (!hasRequiredStructure && !parsedContent.questions) {
       console.error('Invalid response structure:', JSON.stringify(parsedContent).substring(0, 200));
       throw new Error('Perplexity did not return the expected data structure');
     }
     
     // Transform if the response doesn't match our expected structure
-    if ((!parsedContent.technicalQuestions || !parsedContent.behavioralQuestions) && parsedContent.questions) {
+    if (!hasRequiredStructure && parsedContent.questions) {
       console.log('Transforming questions array to separate technical and behavioral arrays');
       
       const transformedContent = {
-        technicalQuestions: [],
+        ...(ENABLE_TECHNICAL_QUESTIONS && { technicalQuestions: [] }),
         behavioralQuestions: []
       };
       
       parsedContent.questions.forEach((q: any) => {
         const questionLower = q.question.toLowerCase();
         
-        if (questionLower.includes('technical') || 
+        if (ENABLE_TECHNICAL_QUESTIONS && (
+            questionLower.includes('technical') || 
             questionLower.includes('tool') || 
             questionLower.includes('skill') ||
-            questionLower.includes('technology')) {
-          transformedContent.technicalQuestions.push(q);
+            questionLower.includes('technology'))) {
+          transformedContent.technicalQuestions!.push(q);
         } else {
           transformedContent.behavioralQuestions.push(q);
         }
       });
       
       // Ensure we have at least some questions
-      if (transformedContent.technicalQuestions.length === 0 && parsedContent.questions.length > 0) {
-        transformedContent.technicalQuestions.push(parsedContent.questions[0]);
+      if (ENABLE_TECHNICAL_QUESTIONS && transformedContent.technicalQuestions!.length === 0 && parsedContent.questions.length > 0) {
+        transformedContent.technicalQuestions!.push(parsedContent.questions[0]);
       }
       if (transformedContent.behavioralQuestions.length === 0 && parsedContent.questions.length > 1) {
         transformedContent.behavioralQuestions.push(parsedContent.questions[1]);
@@ -217,7 +236,9 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     }
     
     console.log('Final structure:', 
-      'technicalQuestions count:', parsedContent.technicalQuestions?.length || 0,
+      ENABLE_TECHNICAL_QUESTIONS ? (
+        'technicalQuestions count:', parsedContent.technicalQuestions?.length || 0
+      ) : 'technical questions disabled',
       'behavioralQuestions count:', parsedContent.behavioralQuestions?.length || 0
     );
     
@@ -226,6 +247,11 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     console.log('Raw response:', generatedContent);
     
     throw new Error('Invalid JSON format in the Perplexity response');
+  }
+
+  // Initialize technical questions as empty array if disabled (to maintain structure)
+  if (!ENABLE_TECHNICAL_QUESTIONS && !parsedContent.technicalQuestions) {
+    parsedContent.technicalQuestions = [];
   }
 
   // NEW: Combine original behavioral questions with newly generated ones
