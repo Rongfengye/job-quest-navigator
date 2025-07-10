@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -207,11 +206,11 @@ const BehavioralFeedback = () => {
       // via the behavioralId, and the original questions will be passed via the hook
       submitJobPractice();
     } catch (error) {
-      console.error("Error generating practice questions:", error);
+      console.error("Error generating technical questions:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate practice questions. Please try again."
+        description: "Failed to generate technical questions. Please try again."
       });
     }
   }
@@ -255,7 +254,7 @@ const BehavioralFeedback = () => {
         <ProcessingModal 
           isOpen={processingModal}
           title="Generating Practice Questions" 
-          processingMessage="We're creating 10 behavioral practice questions based on your interview responses and job details..." 
+          processingMessage="We're creating practice interview questions based on your behavioral interview responses..." 
         />
       )}
       <div className="min-h-screen bg-white p-6">
@@ -297,7 +296,7 @@ const BehavioralFeedback = () => {
                     disabled={isCreatingQuestions}
                   >
                     <BookOpen className="w-4 h-4" />
-                    {isCreatingQuestions ? 'Generating Questions...' : 'Generate 10 behavioral practice questions'}
+                    {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual practice questions'}
                   </Button>
                 ) : (
                   <div className="w-full max-w-md">
