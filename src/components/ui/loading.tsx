@@ -18,7 +18,7 @@ const Loading: React.FC<LoadingProps> = ({
     "Reviewing your last response…",
     "Summarizing key points…",
     "Shaping the next question…",
-    "Crafting the next challenge…",
+    "Crafting your next behavioral challenge…",
     "Preparing the next step for you…"
   ];
   

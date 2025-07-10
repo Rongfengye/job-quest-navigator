@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -206,11 +207,11 @@ const BehavioralFeedback = () => {
       // via the behavioralId, and the original questions will be passed via the hook
       submitJobPractice();
     } catch (error) {
-      console.error("Error generating technical questions:", error);
+      console.error("Error generating practice questions:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate technical questions. Please try again."
+        description: "Failed to generate practice questions. Please try again."
       });
     }
   }
@@ -254,7 +255,7 @@ const BehavioralFeedback = () => {
         <ProcessingModal 
           isOpen={processingModal}
           title="Generating Practice Questions" 
-          processingMessage="We're creating practice interview questions based on your behavioral interview responses..." 
+          processingMessage="We're creating 10 behavioral practice questions based on your interview responses and job details..." 
         />
       )}
       <div className="min-h-screen bg-white p-6">
@@ -296,7 +297,7 @@ const BehavioralFeedback = () => {
                     disabled={isCreatingQuestions}
                   >
                     <BookOpen className="w-4 h-4" />
-                    {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual practice questions'}
+                    {isCreatingQuestions ? 'Generating Questions...' : 'Generate 10 behavioral practice questions'}
                   </Button>
                 ) : (
                   <div className="w-full max-w-md">
@@ -324,7 +325,7 @@ const BehavioralFeedback = () => {
                 <div className="w-full max-w-md text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
                     <InfoIcon className="w-4 h-4" />
-                    <p className="text-sm">Technical questions have already been generated for this interview</p>
+                    <p className="text-sm">Practice questions have already been generated for this interview</p>
                   </div>
                   <p className="text-xs text-muted-foreground italic">
                     You can view them in the related practices section above

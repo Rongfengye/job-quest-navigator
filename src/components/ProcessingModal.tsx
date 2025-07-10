@@ -57,13 +57,13 @@ const ProcessingModal: React.FC<ProcessingModalProps> = ({
         <p className="mb-6 text-gray-600">
           {processingMessage}
         </p>
-        <p className="text-gray-600 mb-4">Please don't close this window while we process your feedback.</p>
+        <p className="text-gray-600 mb-4">Please don't close this window while we generate your behavioral practice questions.</p>
         
         <div className="mb-2">
           <Progress value={displayProgress} className="h-2" />
         </div>
         <div className="flex justify-between text-sm text-gray-500">
-          <span>Processing your interview...</span>
+          <span>Generating your questions...</span>
           <span>{displayProgress}%</span>
         </div>
       </div>

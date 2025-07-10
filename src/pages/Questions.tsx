@@ -16,7 +16,7 @@ const Questions = () => {
   const { isLoading, questions, jobDetails, error } = useQuestionData(storylineId);
 
   if (isLoading) {
-    return <Loading message="Loading your interview questions..." />;
+    return <Loading message="Loading your behavioral practice questions..." />;
   }
 
   return (
@@ -32,7 +32,7 @@ const Questions = () => {
             <p className="text-gray-600 mb-4">{jobDetails.companyName}</p>
           )}
           <p className="text-gray-700">
-            Here are your personalized interview questions based on the job description and your resume.
+            Here are your personalized behavioral interview questions based on the job description and your resume.
             Review them carefully and prepare your answers to make a great impression.
           </p>
         </div>
