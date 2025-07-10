@@ -1,6 +1,9 @@
 
 import { AnswerIteration } from '@/hooks/useAnswers';
 
+// Feature flag to control technical questions processing (matches backend and frontend)
+const ENABLE_TECHNICAL_QUESTIONS = false;
+
 /**
  * Transforms iterations data ensuring consistent format
  */
@@ -19,17 +22,24 @@ export const transformIterations = (iterations: any[]): AnswerIteration[] => {
 
 /**
  * Parses OpenAI response to extract questions array including original behavioral questions
+ * Filters out technical questions based on feature flag
  */
 export const parseOpenAIResponse = (response: any): any[] => {
   if (response.questions) {
-    return response.questions;
+    // Filter out technical questions if feature flag is disabled
+    return ENABLE_TECHNICAL_QUESTIONS 
+      ? response.questions
+      : response.questions.filter((q: any) => q.type !== 'technical');
   } else if (
     response.technicalQuestions && 
     response.behavioralQuestions
   ) {
-    const technical = response.technicalQuestions.map((q: any) => ({
-      ...q, type: 'technical' as const
-    }));
+    // Only include technical questions if feature flag is enabled
+    const technical = ENABLE_TECHNICAL_QUESTIONS 
+      ? response.technicalQuestions.map((q: any) => ({
+          ...q, type: 'technical' as const
+        }))
+      : [];
     
     const behavioral = response.behavioralQuestions.map((q: any) => ({
       ...q, type: 'behavioral' as const

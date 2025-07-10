@@ -5,6 +5,9 @@ import { useToast } from '@/components/ui/use-toast';
 import { Json } from '@/integrations/supabase/types';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 
+// Feature flag to control technical questions processing (matches backend and frontend)
+const ENABLE_TECHNICAL_QUESTIONS = false;
+
 export type Question = {
   question: string;
   explanation?: string;
@@ -121,10 +124,13 @@ export const useQuestionData = (storylineId: string | null) => {
           if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
               parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions)) {
             
-            const technical = parsedResponse.technicalQuestions.map(q => ({
-              ...q, 
-              type: 'technical' as const
-            }));
+            // Only process technical questions if feature flag is enabled
+            const technical = ENABLE_TECHNICAL_QUESTIONS 
+              ? parsedResponse.technicalQuestions.map(q => ({
+                  ...q, 
+                  type: 'technical' as const
+                }))
+              : [];
               
             const behavioral = parsedResponse.behavioralQuestions.map(q => ({
               ...q, 
@@ -143,10 +149,13 @@ export const useQuestionData = (storylineId: string | null) => {
           } 
           // Handle format with a single questions array
           else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
-            processedQuestions = parsedResponse.questions.map(q => ({
-              ...q,
-              type: q.type || categorizeQuestion(q.question)
-            }));
+            processedQuestions = parsedResponse.questions
+              .map(q => ({
+                ...q,
+                type: q.type || categorizeQuestion(q.question)
+              }))
+              // Filter out technical questions if feature flag is disabled
+              .filter(q => ENABLE_TECHNICAL_QUESTIONS || q.type !== 'technical');
           }
           
           setQuestions(processedQuestions);
