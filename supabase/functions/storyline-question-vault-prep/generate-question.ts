@@ -1,8 +1,7 @@
-
 import { corsHeaders } from './index.ts';
 
 // Feature flag to control technical question generation
-const ENABLE_TECHNICAL_QUESTIONS = true;
+const ENABLE_TECHNICAL_QUESTIONS = false;
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
   const { 

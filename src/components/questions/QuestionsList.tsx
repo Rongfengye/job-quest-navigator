@@ -3,6 +3,9 @@ import React from 'react';
 import { FileText, Brain, MessageSquare, Users } from 'lucide-react';
 import QuestionCard, { Question } from './QuestionCard';
 
+// Feature flag to control technical questions display (matches backend)
+const ENABLE_TECHNICAL_QUESTIONS = false;
+
 interface QuestionsListProps {
   questions: Question[];
   storylineId: string;
@@ -18,12 +21,18 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
   }
 
   // Group questions by type
-  const technicalQuestions = questions.filter(q => q.type === 'technical');
+  const technicalQuestions = ENABLE_TECHNICAL_QUESTIONS 
+    ? questions.filter(q => q.type === 'technical')
+    : [];
   const behavioralQuestions = questions.filter(q => q.type === 'behavioral');
   const originalBehavioralQuestions = questions.filter(q => q.type === 'original-behavioral');
 
   const hasOriginalQuestions = originalBehavioralQuestions.length > 0;
-  const totalCount = technicalQuestions.length + behavioralQuestions.length + originalBehavioralQuestions.length;
+  
+  // Update total count calculation to exclude technical questions when disabled
+  const totalCount = ENABLE_TECHNICAL_QUESTIONS 
+    ? technicalQuestions.length + behavioralQuestions.length + originalBehavioralQuestions.length
+    : behavioralQuestions.length + originalBehavioralQuestions.length;
 
   return (
     <div className="pt-2">
@@ -37,8 +46,8 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
         </div>
       </div>
 
-      {/* Technical Questions Section */}
-      {technicalQuestions.length > 0 && (
+      {/* Technical Questions Section - Conditionally rendered */}
+      {ENABLE_TECHNICAL_QUESTIONS && technicalQuestions.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
             <Brain className="w-4 h-4 mr-2 text-blue-600" />
