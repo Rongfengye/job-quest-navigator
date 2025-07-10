@@ -40,6 +40,11 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       }
     ]
   }
+
+  and for each of the strings values, please ensure they are formatted as follows:
+  - Use standard sentence case (capitalize only the first letter and proper nouns).
+  - Ensure there are spaces between all words.
+  - Do not use all capital letters or run words together.
   `
 
   const suggestedWebsiteList = 'Glassdoor, Reddit, Blind, Wall Street Oasis, OneClass, Fishbowl, PrepLounge, Quora, LeetCode Discuss, Indeed'
