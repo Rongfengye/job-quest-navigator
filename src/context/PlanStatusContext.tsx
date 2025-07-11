@@ -33,11 +33,14 @@ interface PlanStatusContextType {
   isLoading: boolean;
   usageSummary: UsageSummary | null;
   isLoadingUsage: boolean;
+  lastSyncTime: Date | null;
+  syncError: string | null;
   fetchUserStatus: () => Promise<void>;
   fetchUsageSummary: () => Promise<void>;
   checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string }>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
   syncSubscriptionStatus: () => Promise<void>;
+  clearSyncError: () => void;
 }
 
 const PlanStatusContext = createContext<PlanStatusContextType | undefined>(undefined);
@@ -56,8 +59,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const [isLoading, setIsLoading] = useState(false);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
+
+  const clearSyncError = useCallback(() => {
+    setSyncError(null);
+  }, []);
 
   const fetchUserStatus = useCallback(async () => {
     if (!user?.id) return;
@@ -74,12 +83,15 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       console.log('📊 Plan status fetched from database:', data?.user_plan_status);
       setTokens(data?.user_plan_status ?? null);
+      setSyncError(null);
     } catch (error) {
       console.error('Error fetching user plan status:', error);
+      const errorMessage = "Could not retrieve your subscription status.";
+      setSyncError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error fetching plan status",
-        description: "Could not retrieve your subscription status."
+        description: errorMessage
       });
     } finally {
       setIsLoading(false);
@@ -91,6 +103,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     console.log('🔄 Syncing subscription status with Stripe...');
     setIsLoading(true);
+    setSyncError(null);
     
     try {
       const { data, error } = await supabase.functions.invoke('stripe-subscription-manager', {
@@ -100,6 +113,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (error) throw error;
       
       console.log('✅ Stripe sync completed:', data);
+      setLastSyncTime(new Date());
       
       // Refresh local status after sync
       await fetchUserStatus();
@@ -107,11 +121,17 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
     } catch (error) {
       console.error('Error syncing subscription status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error syncing subscription",
-        description: "Could not verify your subscription status with Stripe."
-      });
+      const errorMessage = "Could not verify your subscription status with Stripe.";
+      setSyncError(errorMessage);
+      
+      // Only show toast for manual syncs, not automatic ones
+      if (error instanceof Error && !error.message.includes('automatic')) {
+        toast({
+          variant: "destructive",
+          title: "Error syncing subscription",
+          description: errorMessage
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -130,12 +150,15 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       console.log('📈 Usage summary fetched:', data);
       setUsageSummary(data as unknown as UsageSummary);
+      setSyncError(null);
     } catch (error) {
       console.error('Error fetching usage summary:', error);
+      const errorMessage = "Could not retrieve your usage information.";
+      setSyncError(errorMessage);
       toast({
         variant: "destructive",
         title: "Error fetching usage data",
-        description: "Could not retrieve your usage information."
+        description: errorMessage
       });
     } finally {
       setIsLoadingUsage(false);
@@ -151,7 +174,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     try {
       // First sync with Stripe to ensure we have the latest subscription status
-      await syncSubscriptionStatus();
+      // Mark as automatic to avoid showing error toasts
+      const syncError = new Error('automatic sync');
+      try {
+        await syncSubscriptionStatus();
+      } catch (error) {
+        // If sync fails, continue with current status but log the error
+        console.warn('Stripe sync failed during usage check, using cached status:', error);
+      }
       
       // Then check usage limits with the updated status
       const { data, error } = await supabase.rpc('check_user_monthly_usage', {
@@ -186,6 +216,8 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       console.log('🚫 User not authenticated - clearing token state');
       setTokens(null);
       setUsageSummary(null);
+      setLastSyncTime(null);
+      setSyncError(null);
       return;
     }
     
@@ -262,11 +294,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     isLoading,
     usageSummary,
     isLoadingUsage,
+    lastSyncTime,
+    syncError,
     fetchUserStatus,
     fetchUsageSummary,
     checkUsageLimit,
     togglePremium,
-    syncSubscriptionStatus
+    syncSubscriptionStatus,
+    clearSyncError
   };
 
   return (
