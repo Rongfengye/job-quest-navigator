@@ -95,7 +95,9 @@ export type Database = {
           tailoring_timestamp: string | null
           title: string | null
           updated_at: string
+          user_feedback_text: string | null
           user_id: string | null
+          user_resume_feedback: number | null
         }
         Insert: {
           analysis_results: Json
@@ -114,7 +116,9 @@ export type Database = {
           tailoring_timestamp?: string | null
           title?: string | null
           updated_at?: string
+          user_feedback_text?: string | null
           user_id?: string | null
+          user_resume_feedback?: number | null
         }
         Update: {
           analysis_results?: Json
@@ -133,7 +137,9 @@ export type Database = {
           tailoring_timestamp?: string | null
           title?: string | null
           updated_at?: string
+          user_feedback_text?: string | null
           user_id?: string | null
+          user_resume_feedback?: number | null
         }
         Relationships: []
       }
@@ -346,6 +352,45 @@ export type Database = {
           id?: string
           month_year?: string
           question_vaults_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      stripe_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          stripe_customer_id: string
+          stripe_subscription_id: string | null
+          subscription_status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          stripe_customer_id: string
+          stripe_subscription_id?: string | null
+          subscription_status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          stripe_customer_id?: string
+          stripe_subscription_id?: string | null
+          subscription_status?: string
           updated_at?: string
           user_id?: string
         }
