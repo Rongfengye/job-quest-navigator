@@ -16,7 +16,7 @@ const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { generateQuestion } = useBehavioralInterview();
-  const { checkUsageLimit, usageSummary } = useUserTokens();
+  const { checkUsageLimit, usageSummary, syncSubscriptionStatus, isLoading: isLoadingStatus } = useUserTokens();
   
   const [formData, setFormData] = React.useState({
     jobTitle: '',
@@ -100,22 +100,22 @@ const CreateBehavioral = () => {
       return;
     }
 
-    // Pre-submission usage validation
-    console.log('🔍 Checking usage limits before behavioral interview creation...');
-    const usageCheck = await checkUsageLimit('behavioral');
-    
-    if (!usageCheck.canProceed) {
-      toast({
-        variant: "destructive",
-        title: "Usage Limit Reached",
-        description: usageCheck.message || "You've reached your monthly limit for behavioral interviews.",
-      });
-      return;
-    }
-
+    // Enhanced pre-submission usage validation with Stripe sync
+    console.log('🔍 Checking usage limits with Stripe verification before behavioral interview creation...');
     setIsProcessing(true);
-
+    
     try {
+      const usageCheck = await checkUsageLimit('behavioral');
+      
+      if (!usageCheck.canProceed) {
+        toast({
+          variant: "destructive",
+          title: "Usage Limit Reached",
+          description: usageCheck.message || "You've reached your monthly limit for behavioral interviews.",
+        });
+        return;
+      }
+
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
@@ -223,6 +223,12 @@ const CreateBehavioral = () => {
     }
   };
 
+  // Enhanced subscription sync on component mount
+  React.useEffect(() => {
+    console.log('🔄 Syncing subscription status on CreateBehavioral page load...');
+    syncSubscriptionStatus();
+  }, [syncSubscriptionStatus]);
+
   // Check if user has reached their behavioral limit
   const hasReachedLimit = usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0;
 
@@ -243,7 +249,7 @@ const CreateBehavioral = () => {
           Create Behavioral Interview Prep
         </h1>
 
-        {/* Usage Status Display */}
+        {/* Enhanced Usage Status Display with Stripe sync indicator */}
         {usageSummary && !usageSummary.isPremium && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
             <div className="flex items-center justify-between">
@@ -254,10 +260,16 @@ const CreateBehavioral = () => {
                 <p className="text-sm text-blue-600">
                   {usageSummary.behavioral.remaining} of {usageSummary.behavioral.limit} remaining this month
                 </p>
+                {isLoadingStatus && (
+                  <p className="text-xs text-blue-500 mt-1">
+                    Verifying subscription status...
+                  </p>
+                )}
               </div>
               {usageSummary.behavioral.remaining <= 2 && (
                 <Link to="/settings">
                   <Button variant="outline" size="sm">
+                    <Crown className="w-4 h-4 mr-2" />
                     Upgrade to Premium
                   </Button>
                 </Link>
@@ -353,8 +365,9 @@ const CreateBehavioral = () => {
             <Button 
               type="submit" 
               className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
+              disabled={isProcessing || isLoadingStatus}
             >
-              Submit
+              {isProcessing ? 'Creating Interview...' : isLoadingStatus ? 'Verifying Status...' : 'Submit'}
             </Button>
           )}
         </form>
