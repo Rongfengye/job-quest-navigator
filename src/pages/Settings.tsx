@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +35,6 @@ const Settings = () => {
     }
   };
 
-  // Verify subscription status on page load
   useEffect(() => {
     const verifySubscription = async () => {
       setIsVerifyingSubscription(true);
@@ -219,7 +217,7 @@ const Settings = () => {
                     ) : (
                       <>
                         <Crown className="h-4 w-4 mr-2" />
-                        Upgrade to Premium - $10/month
+                        Upgrade to Premium - $0.50/month
                       </>
                     )}
                   </Button>
