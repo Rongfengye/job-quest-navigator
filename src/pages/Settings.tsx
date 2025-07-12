@@ -14,7 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
 const Settings = () => {
-  const { logout } = useAuthContext();
+  const { logout, user } = useAuthContext();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -264,33 +264,35 @@ const Settings = () => {
           </Card>
 
           {/* Password Settings Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Password Settings</CardTitle>
-              <CardDescription>
-                Update your account security
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Key className="h-5 w-5 text-gray-500" />
-                  <div>
-                    <p className="font-medium">Account Password</p>
-                    <p className="text-sm text-muted-foreground">
-                      Change your password to keep your account secure
-                    </p>
+          {user?.provider === 'email' && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Password Settings</CardTitle>
+                <CardDescription>
+                  Update your account security
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Key className="h-5 w-5 text-gray-500" />
+                    <div>
+                      <p className="font-medium">Account Password</p>
+                      <p className="text-sm text-muted-foreground">
+                        Change your password to keep your account secure
+                      </p>
+                    </div>
                   </div>
+                  <Button 
+                    onClick={() => setIsPasswordModalOpen(true)}
+                    variant="outline"
+                  >
+                    Change Password
+                  </Button>
                 </div>
-                <Button 
-                  onClick={() => setIsPasswordModalOpen(true)}
-                  variant="outline"
-                >
-                  Change Password
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
 

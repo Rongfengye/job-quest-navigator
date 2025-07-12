@@ -8,6 +8,7 @@ export interface UserData {
   email: string;
   firstName: string;
   lastName: string;
+  provider?: string;
 }
 
 export const useAuth = () => {
@@ -83,6 +84,7 @@ export const useAuth = () => {
       }
       
       const userId = sessionData.session.user.id;
+      const provider = sessionData.session.user.app_metadata?.provider;
       console.log('Found active session for user ID:', userId);
       console.log('User metadata:', sessionData.session.user.user_metadata);
       console.log('App metadata:', sessionData.session.user.app_metadata);
@@ -95,7 +97,8 @@ export const useAuth = () => {
         id: userId,
         email: sessionData.session.user.email || '',
         firstName,
-        lastName
+        lastName,
+        provider
       });
       
       return { success: true, user: sessionData.session.user };
@@ -133,14 +136,13 @@ export const useAuth = () => {
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
-
-      console.log('Setting user state after signup');
-      // Set user in state
+      const provider = authData.user.app_metadata?.provider;
       setUserSafely({
         id: authData.user.id,
         email: authData.user.email || email,
         firstName,
-        lastName
+        lastName,
+        provider
       });
 
       console.log('Showing success toast');
@@ -186,6 +188,7 @@ export const useAuth = () => {
       
       // Get name data using the helper
       const { firstName, lastName } = extractUserNames(data.user);
+      const provider = data.user.app_metadata?.provider;
       
       // Set user directly from session data
       console.log('Setting user with session data');
@@ -193,7 +196,8 @@ export const useAuth = () => {
         id: data.user.id,
         email: data.user.email || email,
         firstName,
-        lastName
+        lastName,
+        provider
       });
 
       console.log('Showing success toast');

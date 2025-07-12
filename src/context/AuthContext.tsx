@@ -84,12 +84,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('🔍 User metadata:', data.session.user.user_metadata);
         
         const { firstName, lastName } = extractUserNames(data.session.user);
-        
+        const provider = data.session.user.app_metadata?.provider;
         auth.setUser({
           id: data.session.user.id,
           email: data.session.user.email || '',
           firstName,
-          lastName
+          lastName,
+          provider
         });
       } else {
         console.log('❌ No session found, user is not authenticated');
@@ -126,16 +127,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('🔍 User metadata:', session.user.user_metadata);
             
             const { firstName, lastName } = extractUserNames(session.user);
-            
+            const provider = session.user.app_metadata?.provider;
             auth.setUser({
               id: session.user.id,
               email: session.user.email || '',
               firstName,
-              lastName
+              lastName,
+              provider
             });
 
             // For OAuth sign-ins, automatically redirect to behavioral page
-            const provider = session.user.app_metadata?.provider;
             if (provider && ['google', 'github', 'linkedin_oidc'].includes(provider)) {
               console.log('🚀 OAuth sign-in detected, will redirect to /behavioral');
               // Add a small delay to ensure the auth state is fully updated
@@ -152,12 +153,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('✅ User authenticated via password recovery, setting recovery mode');
             
             const { firstName, lastName } = extractUserNames(session.user);
-            
+            const provider = session.user.app_metadata?.provider;
             auth.setUser({
               id: session.user.id,
               email: session.user.email || '',
               firstName,
-              lastName
+              lastName,
+              provider
             });
             
             setPasswordRecoveryMode(true);
