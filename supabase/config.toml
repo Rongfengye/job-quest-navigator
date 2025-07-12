@@ -1,5 +1,4 @@
 
-# This file is managed by Lovable
 project_id = "qrpppkxwvmngepzznorf"
 
 [api]
@@ -31,3 +30,6 @@ verify_jwt = true
 name = "storyline-question-vault-prep"
 verify_jwt = true
 
+[[functions]]
+name = "stripe-subscription-manager"
+verify_jwt = true
