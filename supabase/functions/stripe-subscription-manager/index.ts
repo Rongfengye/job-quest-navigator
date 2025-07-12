@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -83,7 +84,7 @@ async function handleCreateCheckout(stripe: Stripe, supabase: any, user: any, re
     logStep("No existing Stripe customer found");
   }
 
-  // Create checkout session for $0.50/month subscription
+  // Create checkout session for $10/month subscription
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     customer_email: customerId ? undefined : user.email,
@@ -92,7 +93,7 @@ async function handleCreateCheckout(stripe: Stripe, supabase: any, user: any, re
         price_data: {
           currency: "usd",
           product_data: { name: "Premium Plan" },
-          unit_amount: 50, // $0.50 in cents
+          unit_amount: 1000, // $10.00 in cents
           recurring: { interval: "month" },
         },
         quantity: 1,
