@@ -104,9 +104,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleLinkedInSignIn = async () => {
     setIsLinkedinLoading(true);
     try {
-      const redirectUrl = 'https://storyline.tryhireme.com';
+      // Use Supabase's callback URL for proper session establishment
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
-      console.log('LinkedIn OAuth initiated with redirect URL:', redirectUrl);
+      console.log('🔗 LinkedIn OAuth initiated with callback URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'linkedin_oidc',
@@ -117,7 +118,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       });
       
       if (error) {
-        console.error("LinkedIn sign in error:", error);
+        console.error("❌ LinkedIn sign in error:", error);
         toast({
           variant: "destructive",
           title: "LinkedIn sign in failed",
@@ -126,9 +127,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         throw error;
       }
       
-      console.log("LinkedIn OAuth response:", data);
+      console.log("✅ LinkedIn OAuth response:", data);
+      // The redirect will handle the rest, so we don't close the modal here
     } catch (error) {
-      console.error("LinkedIn sign in error:", error);
+      console.error("❌ LinkedIn sign in error:", error);
       toast({
         variant: "destructive",
         title: "LinkedIn sign in failed",
@@ -142,9 +144,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleGithubSignIn = async () => {
     setIsGithubLoading(true);
     try {
-      const redirectUrl = 'https://storyline.tryhireme.com';
+      // Use Supabase's callback URL for proper session establishment
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
-      console.log('Github OAuth initiated with redirect URL:', redirectUrl);
+      console.log('🔗 Github OAuth initiated with callback URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
@@ -155,7 +158,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       });
       
       if (error) {
-        console.error("Github sign in error:", error);
+        console.error("❌ Github sign in error:", error);
         toast({
           variant: "destructive",
           title: "Github sign in failed",
@@ -164,9 +167,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         throw error;
       }
       
-      console.log("Github OAuth response:", data);
+      console.log("✅ Github OAuth response:", data);
+      // The redirect will handle the rest, so we don't close the modal here
     } catch (error) {
-      console.error("Github sign in error:", error);
+      console.error("❌ Github sign in error:", error);
       toast({
         variant: "destructive",
         title: "Github sign in failed",
@@ -180,9 +184,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
     try {
-      const redirectUrl = 'https://storyline.tryhireme.com';
+      // Use Supabase's callback URL for proper session establishment
+      const redirectUrl = `${window.location.origin}/auth/callback`;
       
-      console.log('Google OAuth initiated with redirect URL:', redirectUrl);
+      console.log('🔗 Google OAuth initiated with callback URL:', redirectUrl);
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -193,7 +198,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       });
       
       if (error) {
-        console.error("Google sign in error:", error);
+        console.error("❌ Google sign in error:", error);
         toast({
           variant: "destructive",
           title: "Google sign in failed",
@@ -202,9 +207,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         throw error;
       }
       
-      console.log("Google OAuth response:", data);
+      console.log("✅ Google OAuth response:", data);
+      // The redirect will handle the rest, so we don't close the modal here
     } catch (error) {
-      console.error("Google sign in error:", error);
+      console.error("❌ Google sign in error:", error);
       toast({
         variant: "destructive",
         title: "Google sign in failed",

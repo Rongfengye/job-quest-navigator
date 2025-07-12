@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
@@ -31,9 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkSession = async () => {
     try {
-      console.log('Starting initial session check...');
+      console.log('🔍 Starting initial session check...');
       const authDebugInfo = await debugSupabaseAuth();
-      console.log('Auth debug info:', authDebugInfo);
+      console.log('🔧 Auth debug info:', authDebugInfo);
       
       const { data, error } = await supabase.auth.getSession();
       
@@ -41,10 +42,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      console.log('Initial session check result:', data.session ? 'Session found' : 'No session found');
+      console.log('📊 Initial session check result:', data.session ? 'Session found' : 'No session found');
       
       if (data.session) {
-        console.log('User is authenticated via session, userId:', data.session.user.id);
+        console.log('✅ User is authenticated via session, userId:', data.session.user.id);
         
         const metadata = data.session.user.user_metadata || {};
         let firstName = metadata.first_name || '';
@@ -77,11 +78,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           lastName
         });
       } else {
-        console.log('No session found, user is not authenticated');
+        console.log('❌ No session found, user is not authenticated');
         auth.setUser(null);
       }
     } catch (error) {
-      console.error("Error checking session:", error);
+      console.error("❌ Error checking session:", error);
       setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
       auth.setUser(null);
       
@@ -91,7 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "There was a problem checking your login status. You might need to clear your browser cache.",
       });
     } finally {
-      console.log('Finished initial session check, setting isLoading to false');
+      console.log('✅ Finished initial session check, setting isLoading to false');
       setIsLoading(false);
       setInitialCheckComplete(true);
     }
@@ -102,11 +103,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log("Auth state changed:", event, session ? 'Session exists' : 'No session');
+        console.log("🔄 Auth state changed:", event, session ? 'Session exists' : 'No session');
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session) {
-            console.log('User signed in or token refreshed, updating auth state, userId:', session.user.id);
+            console.log('✅ User signed in or token refreshed, updating auth state, userId:', session.user.id);
+            console.log('🔍 OAuth Provider:', session.user.app_metadata?.provider);
+            console.log('🔍 User metadata:', session.user.user_metadata);
             
             const metadata = session.user.user_metadata || {};
             let firstName = metadata.first_name || '';
@@ -138,11 +141,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               firstName,
               lastName
             });
+
+            // For OAuth sign-ins, automatically redirect to behavioral page
+            if (provider && ['google', 'github', 'linkedin_oidc'].includes(provider)) {
+              console.log('🚀 OAuth sign-in detected, will redirect to /behavioral');
+              setTimeout(() => {
+                window.location.href = '/behavioral';
+              }, 100);
+            }
           }
         } else if (event === 'PASSWORD_RECOVERY') {
-          console.log('Password recovery event detected');
+          console.log('🔑 Password recovery event detected');
           if (session) {
-            console.log('User authenticated via password recovery, setting recovery mode');
+            console.log('✅ User authenticated via password recovery, setting recovery mode');
             
             const metadata = session.user.user_metadata || {};
             let firstName = metadata.first_name || '';
@@ -183,7 +194,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, clearing auth state');
+          console.log('👋 User signed out, clearing auth state');
           auth.setUser(null);
           setPasswordRecoveryMode(false);
         }
@@ -193,7 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       checkSession();
     } catch (error) {
-      console.error("Error setting up auth listener:", error);
+      console.error("❌ Error setting up auth listener:", error);
       setInitializationError(error instanceof Error ? error : new Error('Unknown auth listener error'));
       setIsLoading(false);
       setInitialCheckComplete(true);
@@ -205,6 +216,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         subscription.unsubscribe();
       }
     };
+  }, []);
+
+  // Handle OAuth callback parameters
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      
+      const hasAccessToken = hashParams.get('access_token');
+      const hasAuthCode = urlParams.get('code');
+      
+      if (hasAccessToken || hasAuthCode) {
+        console.log('🔗 OAuth callback detected, checking session...');
+        
+        // Wait a bit for Supabase to process the callback
+        setTimeout(async () => {
+          try {
+            const { data, error } = await supabase.auth.getSession();
+            if (data.session) {
+              console.log('✅ Session established after OAuth callback');
+              // The auth state change handler will redirect to /behavioral
+            } else {
+              console.log('⚠️ No session after OAuth callback, retrying...');
+              // Retry once more
+              setTimeout(async () => {
+                const { data: retryData } = await supabase.auth.getSession();
+                if (retryData.session) {
+                  console.log('✅ Session established after retry');
+                } else {
+                  console.log('❌ Failed to establish session after OAuth');
+                }
+              }, 1000);
+            }
+          } catch (error) {
+            console.error('❌ Error checking session after OAuth callback:', error);
+          }
+        }, 500);
+      }
+    };
+
+    handleOAuthCallback();
   }, []);
 
   useEffect(() => {
@@ -224,7 +276,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: auth.logout
   };
 
-  console.log('AuthContext value updated:', { 
+  console.log('🔧 AuthContext value updated:', { 
     isAuthenticated: value.isAuthenticated, 
     userExists: !!value.user,
     isLoading: value.isLoading,
