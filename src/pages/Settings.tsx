@@ -73,7 +73,11 @@ const Settings = () => {
     setIsProcessingCheckout(true);
     try {
       const { data, error } = await supabase.functions.invoke('stripe-subscription-manager', {
-        body: { action: 'CREATE_CHECKOUT' },
+        body: { 
+          action: 'CREATE_CHECKOUT',
+          success_url: '/behavioral',
+          cancel_url: '/settings'
+        },
       });
 
       if (error) throw error;

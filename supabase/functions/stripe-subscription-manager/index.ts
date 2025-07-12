@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
@@ -38,8 +39,8 @@ serve(async (req) => {
 
     // Parse request data
     const requestData = await req.json();
-    const { action } = requestData;
-    logStep("Request parsed", { action });
+    const { action, success_url, cancel_url } = requestData;
+    logStep("Request parsed", { action, success_url, cancel_url });
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -55,7 +56,10 @@ serve(async (req) => {
     // Route based on action
     switch (action) {
       case "CREATE_CHECKOUT":
-        return await handleCreateCheckout(stripe, supabaseClient, user, req);
+        return await handleCreateCheckout(stripe, supabaseClient, user, req, {
+          success_url: success_url || "/",
+          cancel_url: cancel_url || "/"
+        });
       case "SYNC_SUBSCRIPTION":
         return await handleSyncSubscription(stripe, supabaseClient, user);
       case "CUSTOMER_PORTAL":

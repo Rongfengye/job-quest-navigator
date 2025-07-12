@@ -1,3 +1,4 @@
+
 import Stripe from "https://esm.sh/stripe@14.21.0";
 
 // Helper logging function for enhanced debugging
@@ -11,9 +12,23 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// will need to modularize this so storyline or resubuild can pass in their respective success/cancel urls
-export async function handleCreateCheckout(stripe: Stripe, supabase: any, user: any, req: Request) {
-  logStep("Creating checkout session", { userId: user.id });
+interface CheckoutUrlOptions {
+  success_url: string;
+  cancel_url: string;
+}
+
+export async function handleCreateCheckout(
+  stripe: Stripe, 
+  supabase: any, 
+  user: any, 
+  req: Request,
+  urlOptions: CheckoutUrlOptions
+) {
+  logStep("Creating checkout session", { 
+    userId: user.id,
+    successUrl: urlOptions.success_url,
+    cancelUrl: urlOptions.cancel_url
+  });
 
   // Check if customer exists in Stripe
   const customers = await stripe.customers.list({ email: user.email, limit: 1 });
@@ -24,6 +39,13 @@ export async function handleCreateCheckout(stripe: Stripe, supabase: any, user: 
   } else {
     logStep("No existing Stripe customer found");
   }
+
+  // Build dynamic URLs using the origin from the request
+  const origin = req.headers.get("origin") || "https://storyline.tryhireme.com";
+  const successUrl = `${origin}${urlOptions.success_url}`;
+  const cancelUrl = `${origin}${urlOptions.cancel_url}`;
+  
+  logStep("Using dynamic URLs", { successUrl, cancelUrl });
 
   // Create checkout session for $0.50/month subscription
   const session = await stripe.checkout.sessions.create({
@@ -41,8 +63,8 @@ export async function handleCreateCheckout(stripe: Stripe, supabase: any, user: 
       },
     ],
     mode: "subscription",
-    success_url: `${req.headers.get("origin")}/behavioral`,
-    cancel_url: `${req.headers.get("origin")}/settings`,
+    success_url: successUrl,
+    cancel_url: cancelUrl,
   });
 
   logStep("Checkout session created", { sessionId: session.id, url: session.url });
@@ -51,4 +73,4 @@ export async function handleCreateCheckout(stripe: Stripe, supabase: any, user: 
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
   });
-} 
+}
