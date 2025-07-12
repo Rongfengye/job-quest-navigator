@@ -70,6 +70,7 @@ serve(async (req) => {
   }
 });
 
+// will need to modularize this so storyline or resubuild can pass in their respective success/cancel urls
 async function handleCreateCheckout(stripe: Stripe, supabase: any, user: any, req: Request) {
   logStep("Creating checkout session", { userId: user.id });
 
@@ -99,7 +100,7 @@ async function handleCreateCheckout(stripe: Stripe, supabase: any, user: any, re
       },
     ],
     mode: "subscription",
-    success_url: `${req.headers.get("origin")}/dashboard`,
+    success_url: `${req.headers.get("origin")}/behavioral`,
     cancel_url: `${req.headers.get("origin")}/settings`,
   });
 
