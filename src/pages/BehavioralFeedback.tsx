@@ -40,7 +40,7 @@ const BehavioralFeedback = () => {
   const [canGenerateQuestions, setCanGenerateQuestions] = useState(true);
   const [usageLimitMessage, setUsageLimitMessage] = useState<string>('');
 
-  const { usageSummary, isLoadingUsage, isPremium, isBasic, checkUsageLimit, syncSubscriptionStatus } = useUserTokens();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
 
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
   const hasFeedbackInState = !!location.state?.feedback;
@@ -72,46 +72,126 @@ const BehavioralFeedback = () => {
       questions // Pass the original behavioral questions
     );
 
-  // Enhanced usage limits check with Stripe verification for question vault generation
+  // Check usage limits for question vault generation
   useEffect(() => {
-    const checkUsageLimitsWithSync = async () => {
-      console.log('🔄 Syncing subscription status before checking question vault limits...');
-      
-      if (isPremium) {
+    if (isPremium) {
+      setCanGenerateQuestions(true);
+      setUsageLimitMessage('');
+      return;
+    }
+
+    if (isBasic && usageSummary && !isLoadingUsage) {
+      const remaining = usageSummary.questionVault.remaining;
+      if (remaining === 0) {
+        setCanGenerateQuestions(false);
+        setUsageLimitMessage('You\'ve reached your monthly limit of 1 question vault generation. Upgrade to Premium for unlimited access.');
+      } else {
         setCanGenerateQuestions(true);
         setUsageLimitMessage('');
+      }
+    }
+  }, [isPremium, isBasic, usageSummary, isLoadingUsage]);
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Required",
+        description: "Please log in to view feedback.",
+      });
+      navigate('/', { replace: true });
+    }
+  }, [authLoading, isAuthenticated, navigate, toast]);
+
+  useEffect(() => {
+    if (authLoading || !isAuthenticated) {
+      return;
+    }
+    
+    // Always fetch from the database, ignore location.state for questions/answers/feedback
+    const fetchInterviewData = async () => {
+      if (!interviewId) {
+        setError('No interview ID provided');
+        setIsLoading(false);
         return;
       }
 
-      if (isBasic && !isLoadingUsage) {
-        try {
-          const usageCheck = await checkUsageLimit('question_vault');
-          setCanGenerateQuestions(usageCheck.canProceed);
-          
-          if (!usageCheck.canProceed) {
-            setUsageLimitMessage(usageCheck.message || 'You\'ve reached your monthly limit for question vault generations. Upgrade to Premium for unlimited access.');
-          } else {
-            setUsageLimitMessage('');
-          }
-        } catch (error) {
-          console.error('Error checking question vault usage limits:', error);
-          setCanGenerateQuestions(false);
-          setUsageLimitMessage('Unable to verify usage limits. Please try again.');
+      try {
+        const { data, error } = await supabase
+          .from('storyline_behaviorals')
+          .select('questions, feedback, responses, job_title, job_description, company_name, company_description, resume_path, cover_letter_path, additional_documents_path')
+          .eq('id', filterValue(interviewId))
+          .single();
+
+        if (error) throw error;
+        
+        if (!data || !data.questions || !data.feedback) {
+          setError('No feedback data found for this interview');
+          setIsLoading(false);
+          return;
         }
+
+        const questionsData = data.questions as any[];
+        const processedQuestions = Array.isArray(questionsData) 
+          ? questionsData.map(q => String(q)) 
+          : [];
+          
+        // Also save responses
+        const responsesData = data.responses as any[];
+        const processedResponses = Array.isArray(responsesData)
+          ? responsesData.map(r => String(r))
+          : [];
+          
+        setQuestions(processedQuestions);
+        setResponses(processedResponses);
+        setFeedback(data.feedback);
+        setInterviewData(data);
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Error fetching interview data:', err);
+        setError('Failed to load feedback data');
+        setIsLoading(false);
+        
+        toast({
+          variant: "destructive",
+          title: "Error loading feedback",
+          description: "Could not load the interview feedback data.",
+        });
       }
     };
 
-    checkUsageLimitsWithSync();
-  }, [isPremium, isBasic, isLoadingUsage, checkUsageLimit]);
+    fetchInterviewData();
+  }, [interviewId, toast, authLoading, isAuthenticated]);
 
-  // Sync subscription status on component mount
+  // Fetch related practices
   useEffect(() => {
-    console.log('🔄 Syncing subscription status on BehavioralFeedback page load...');
-    syncSubscriptionStatus();
-  }, [syncSubscriptionStatus]);
+    if (!interviewId || !isAuthenticated) return;
+    
+    const fetchRelatedPractices = async () => {
+      setIsLoadingPractices(true);
+      try {
+        const { data, error } = await supabase
+          .from('storyline_jobs')
+          .select('id, job_title, company_name, created_at, status')
+          .eq('behavioral_id', interviewId)
+          .order('created_at', { ascending: false });
+          
+        if (error) throw error;
+        
+        setRelatedPractices(data);
+      } catch (err) {
+        console.error('Error fetching related practices:', err);
+        setRelatedPractices(null);
+      } finally {
+        setIsLoadingPractices(false);
+      }
+    };
 
-  // Enhanced function to continue to questions with usage verification
-  async function handleContinueToQuestions() {
+    fetchRelatedPractices();
+  }, [interviewId, isAuthenticated]);
+
+  // Define the function to continue to questions
+  function handleContinueToQuestions() {
     if (!interviewData) {
       toast({
         variant: "destructive",
@@ -122,19 +202,6 @@ const BehavioralFeedback = () => {
     }
 
     try {
-      // Double-check usage limits before proceeding
-      console.log('🔍 Final usage check before generating questions...');
-      const usageCheck = await checkUsageLimit('question_vault');
-      
-      if (!usageCheck.canProceed) {
-        toast({
-          variant: "destructive",
-          title: "Usage Limit Reached",
-          description: usageCheck.message || "You've reached your limit for question vault generations.",
-        });
-        return;
-      }
-
       // The actual resumeFile and other files will be used from the behavioral interview
       // via the behavioralId, and the original questions will be passed via the hook
       submitJobPractice();
