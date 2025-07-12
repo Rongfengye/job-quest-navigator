@@ -37,7 +37,6 @@ interface PlanStatusContextType {
   fetchUsageSummary: () => Promise<void>;
   checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string }>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
-  syncSubscriptionStatus: () => Promise<void>;
 }
 
 const PlanStatusContext = createContext<PlanStatusContextType | undefined>(undefined);
@@ -86,37 +85,6 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
   }, [user?.id, toast]);
 
-  const syncSubscriptionStatus = useCallback(async () => {
-    if (!user?.id) return;
-    
-    console.log('🔄 Syncing subscription status with Stripe...');
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('stripe-subscription-manager', {
-        body: { action: 'SYNC_SUBSCRIPTION' }
-      });
-      
-      if (error) throw error;
-      
-      console.log('✅ Stripe sync completed:', data);
-      
-      // Refresh local status after sync
-      await fetchUserStatus();
-      await fetchUsageSummary();
-      
-    } catch (error) {
-      console.error('Error syncing subscription status:', error);
-      toast({
-        variant: "destructive",
-        title: "Error syncing subscription",
-        description: "Could not verify your subscription status with Stripe."
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id, toast, fetchUserStatus]);
-
   const fetchUsageSummary = useCallback(async () => {
     if (!user?.id) return;
     
@@ -147,13 +115,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       return { canProceed: false, message: 'Authentication required' };
     }
     
-    console.log(`🔍 Checking usage limit for ${usageType} with Stripe verification...`);
-    
     try {
-      // First sync with Stripe to ensure we have the latest subscription status
-      await syncSubscriptionStatus();
-      
-      // Then check usage limits with the updated status
       const { data, error } = await supabase.rpc('check_user_monthly_usage', {
         user_id: user.id,
         usage_type: usageType
@@ -172,15 +134,14 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         return { canProceed: false, message };
       }
       
-      console.log(`✅ Usage check passed for ${usageType}:`, result);
       return { canProceed: true };
     } catch (error) {
       console.error('Error checking usage limit:', error);
       return { canProceed: false, message: 'Failed to check usage limits. Please try again.' };
     }
-  }, [user?.id, syncSubscriptionStatus]);
+  }, [user?.id]);
 
-  // Enhanced initial authentication effect that includes Stripe sync
+  // Only fetch tokens on initial authentication - no continuous polling
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - clearing token state');
@@ -189,14 +150,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       return;
     }
     
-    // Initial fetch when user is authenticated with Stripe sync
-    console.log('👤 User authenticated - syncing with Stripe and fetching status');
-    const initializeUserStatus = async () => {
-      await syncSubscriptionStatus(); // This will also trigger fetchUserStatus and fetchUsageSummary
-    };
-    
-    initializeUserStatus();
-  }, [isAuthenticated, user?.id, syncSubscriptionStatus]);
+    // Initial fetch when user is authenticated
+    console.log('👤 User authenticated - fetching initial plan status and usage');
+    fetchUserStatus();
+    fetchUsageSummary();
+  }, [isAuthenticated, user?.id, fetchUserStatus, fetchUsageSummary]);
 
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
@@ -265,8 +223,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     fetchUserStatus,
     fetchUsageSummary,
     checkUsageLimit,
-    togglePremium,
-    syncSubscriptionStatus
+    togglePremium
   };
 
   return (
