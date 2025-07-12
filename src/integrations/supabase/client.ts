@@ -49,7 +49,7 @@ export const debugSupabaseAuth = async () => {
       // Add more detailed provider information
       providerInfo: user ? {
         provider: user.app_metadata?.provider,
-        identities: user.app_metadata?.identities,
+        identities: user.identities,
         user_metadata: user.user_metadata,
         email_confirmed_at: user.email_confirmed_at,
         phone_confirmed_at: user.phone_confirmed_at,
