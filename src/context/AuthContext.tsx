@@ -23,11 +23,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const [isOAuthCallbackHandled, setIsOAuthCallbackHandled] = useState(false);
   const { toast } = useToast();
 
   const setPasswordRecoveryMode = (mode: boolean) => {
     console.log('Setting password recovery mode:', mode);
     setIsPasswordRecovery(mode);
+  };
+
+  // Helper function to extract user names from metadata
+  const extractUserNames = (user: any) => {
+    const metadata = user.user_metadata || {};
+    let firstName = metadata.first_name || '';
+    let lastName = metadata.last_name || '';
+    
+    if ((!firstName || !lastName) && metadata.full_name) {
+      const nameParts = metadata.full_name.split(' ');
+      firstName = firstName || nameParts[0] || '';
+      lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+    } else if ((!firstName || !lastName) && metadata.name) {
+      const nameParts = metadata.name.split(' ');
+      firstName = firstName || nameParts[0] || '';
+      lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
+    }
+    
+    const provider = user.app_metadata?.provider;
+    if ((!firstName || !lastName)) {
+      if (provider === 'github') {
+        firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
+      } else if (provider === 'google') {
+        firstName = metadata.given_name || firstName;
+        lastName = metadata.family_name || lastName;
+      } else if (provider === 'linkedin_oidc') {
+        // LinkedIn OIDC specific handling
+        firstName = metadata.given_name || metadata.first_name || firstName;
+        lastName = metadata.family_name || metadata.last_name || lastName;
+      }
+    }
+    
+    return { firstName, lastName };
   };
 
   const checkSession = async () => {
@@ -46,30 +80,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (data.session) {
         console.log('✅ User is authenticated via session, userId:', data.session.user.id);
+        console.log('🔍 Actual OAuth Provider:', data.session.user.app_metadata?.provider);
+        console.log('🔍 User metadata:', data.session.user.user_metadata);
         
-        const metadata = data.session.user.user_metadata || {};
-        let firstName = metadata.first_name || '';
-        let lastName = metadata.last_name || '';
-        
-        if ((!firstName || !lastName) && metadata.full_name) {
-          const nameParts = metadata.full_name.split(' ');
-          firstName = firstName || nameParts[0] || '';
-          lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-        } else if ((!firstName || !lastName) && metadata.name) {
-          const nameParts = metadata.name.split(' ');
-          firstName = firstName || nameParts[0] || '';
-          lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-        }
-        
-        const provider = data.session.user.app_metadata?.provider;
-        if ((!firstName || !lastName)) {
-          if (provider === 'github') {
-            firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-          } else if (provider === 'google') {
-            firstName = metadata.given_name || firstName;
-            lastName = metadata.family_name || lastName;
-          }
-        }
+        const { firstName, lastName } = extractUserNames(data.session.user);
         
         auth.setUser({
           id: data.session.user.id,
@@ -111,29 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('🔍 OAuth Provider:', session.user.app_metadata?.provider);
             console.log('🔍 User metadata:', session.user.user_metadata);
             
-            const metadata = session.user.user_metadata || {};
-            let firstName = metadata.first_name || '';
-            let lastName = metadata.last_name || '';
-            
-            if ((!firstName || !lastName) && metadata.full_name) {
-              const nameParts = metadata.full_name.split(' ');
-              firstName = firstName || nameParts[0] || '';
-              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-            } else if ((!firstName || !lastName) && metadata.name) {
-              const nameParts = metadata.name.split(' ');
-              firstName = firstName || nameParts[0] || '';
-              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-            }
-            
-            const provider = session.user.app_metadata?.provider;
-            if ((!firstName || !lastName)) {
-              if (provider === 'github') {
-                firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-              } else if (provider === 'google') {
-                firstName = metadata.given_name || firstName;
-                lastName = metadata.family_name || lastName;
-              }
-            }
+            const { firstName, lastName } = extractUserNames(session.user);
             
             auth.setUser({
               id: session.user.id,
@@ -143,11 +135,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             // For OAuth sign-ins, automatically redirect to behavioral page
+            const provider = session.user.app_metadata?.provider;
             if (provider && ['google', 'github', 'linkedin_oidc'].includes(provider)) {
               console.log('🚀 OAuth sign-in detected, will redirect to /behavioral');
+              // Add a small delay to ensure the auth state is fully updated
               setTimeout(() => {
-                window.location.href = '/behavioral';
-              }, 100);
+                if (window.location.pathname !== '/behavioral') {
+                  window.location.href = '/behavioral';
+                }
+              }, 200);
             }
           }
         } else if (event === 'PASSWORD_RECOVERY') {
@@ -155,29 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (session) {
             console.log('✅ User authenticated via password recovery, setting recovery mode');
             
-            const metadata = session.user.user_metadata || {};
-            let firstName = metadata.first_name || '';
-            let lastName = metadata.last_name || '';
-            
-            if ((!firstName || !lastName) && metadata.full_name) {
-              const nameParts = metadata.full_name.split(' ');
-              firstName = firstName || nameParts[0] || '';
-              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-            } else if ((!firstName || !lastName) && metadata.name) {
-              const nameParts = metadata.name.split(' ');
-              firstName = firstName || nameParts[0] || '';
-              lastName = lastName || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : '');
-            }
-            
-            const provider = session.user.app_metadata?.provider;
-            if ((!firstName || !lastName)) {
-              if (provider === 'github') {
-                firstName = metadata.preferred_username || metadata.username || metadata.nickname || firstName;
-              } else if (provider === 'google') {
-                firstName = metadata.given_name || firstName;
-                lastName = metadata.family_name || lastName;
-              }
-            }
+            const { firstName, lastName } = extractUserNames(session.user);
             
             auth.setUser({
               id: session.user.id,
@@ -218,46 +192,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  // Handle OAuth callback parameters
+  // Handle OAuth callback parameters - improved to prevent loops
   useEffect(() => {
     const handleOAuthCallback = async () => {
+      // Check if we're on the callback page or have OAuth parameters
       const urlParams = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       
       const hasAccessToken = hashParams.get('access_token');
       const hasAuthCode = urlParams.get('code');
+      const hasError = urlParams.get('error');
       
-      if (hasAccessToken || hasAuthCode) {
+      if (hasError) {
+        console.log('❌ OAuth error detected:', hasError);
+        toast({
+          variant: "destructive",
+          title: "Authentication failed",
+          description: "There was an error during the sign-in process. Please try again.",
+        });
+        return;
+      }
+      
+      if ((hasAccessToken || hasAuthCode) && !isOAuthCallbackHandled) {
         console.log('🔗 OAuth callback detected, checking session...');
+        setIsOAuthCallbackHandled(true);
         
-        // Wait a bit for Supabase to process the callback
+        // Wait for Supabase to process the callback
         setTimeout(async () => {
           try {
             const { data, error } = await supabase.auth.getSession();
             if (data.session) {
               console.log('✅ Session established after OAuth callback');
-              // The auth state change handler will redirect to /behavioral
+              console.log('🔍 Provider after callback:', data.session.user.app_metadata?.provider);
+              // The auth state change handler will handle the redirect
             } else {
               console.log('⚠️ No session after OAuth callback, retrying...');
-              // Retry once more
+              // Retry once more with longer delay
               setTimeout(async () => {
                 const { data: retryData } = await supabase.auth.getSession();
                 if (retryData.session) {
                   console.log('✅ Session established after retry');
                 } else {
                   console.log('❌ Failed to establish session after OAuth');
+                  toast({
+                    variant: "destructive",
+                    title: "Authentication incomplete",
+                    description: "Your sign-in didn't complete properly. Please try again.",
+                  });
                 }
-              }, 1000);
+              }, 1500);
             }
           } catch (error) {
             console.error('❌ Error checking session after OAuth callback:', error);
           }
-        }, 500);
+        }, 1000);
       }
     };
 
     handleOAuthCallback();
-  }, []);
+  }, [isOAuthCallbackHandled, toast]);
 
   useEffect(() => {
     if (initialCheckComplete) {

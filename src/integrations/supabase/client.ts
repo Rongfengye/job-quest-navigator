@@ -18,7 +18,9 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
     detectSessionInUrl: true,
     storageKey: 'storyline-auth-token',
-    flowType: 'pkce'
+    flowType: 'pkce',
+    // Add additional configuration for better OAuth handling
+    debug: process.env.NODE_ENV === 'development'
   }
 });
 
@@ -26,6 +28,8 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 export const debugSupabaseAuth = async () => {
   try {
     const { data, error } = await supabase.auth.getSession();
+    const user = data.session?.user;
+    
     return {
       hasSession: !!data.session,
       sessionError: error,
@@ -37,7 +41,19 @@ export const debugSupabaseAuth = async () => {
       sessionData: data.session ? {
         expires_at: data.session.expires_at,
         user_id: data.session.user.id,
-        email: data.session.user.email
+        email: data.session.user.email,
+        provider: data.session.user.app_metadata?.provider,
+        user_metadata: data.session.user.user_metadata,
+        app_metadata: data.session.user.app_metadata
+      } : null,
+      // Add more detailed provider information
+      providerInfo: user ? {
+        provider: user.app_metadata?.provider,
+        identities: user.app_metadata?.identities,
+        user_metadata: user.user_metadata,
+        email_confirmed_at: user.email_confirmed_at,
+        phone_confirmed_at: user.phone_confirmed_at,
+        last_sign_in_at: user.last_sign_in_at
       } : null
     };
   } catch (e) {

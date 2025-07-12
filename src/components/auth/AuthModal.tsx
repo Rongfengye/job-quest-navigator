@@ -194,6 +194,11 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
         options: {
           redirectTo: redirectUrl,
           scopes: 'profile email',
+          // Add query parameters to help with single account scenarios
+          queryParams: {
+            prompt: 'select_account',
+            access_type: 'offline'
+          }
         }
       });
       

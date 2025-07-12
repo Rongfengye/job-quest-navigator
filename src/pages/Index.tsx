@@ -29,13 +29,28 @@ const Index = () => {
   // Check for recovery URL parameters and redirect to dedicated page
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const hasRecoveryCode = urlParams.has('code') || window.location.hash.includes('access_token');
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    
+    // Check for OAuth callback parameters first
+    const hasOAuthCode = urlParams.get('code') && (urlParams.get('state') || hashParams.get('access_token'));
+    const hasOAuthError = urlParams.get('error');
+    
+    // Only treat as recovery if it's specifically a password recovery flow
+    const hasRecoveryCode = urlParams.has('type') && urlParams.get('type') === 'recovery' && urlParams.has('code');
     
     console.log('🔗 URL parameter check on Index:', { 
+      hasOAuthCode,
+      hasOAuthError,
       hasRecoveryCode, 
       urlParams: urlParams.toString(),
       hash: window.location.hash 
     });
+    
+    // Don't interfere with OAuth callbacks
+    if (hasOAuthCode || hasOAuthError) {
+      console.log('🔗 OAuth callback detected on Index, letting AuthCallback handle it');
+      return;
+    }
     
     if (hasRecoveryCode) {
       console.log('🚨 Recovery code detected on Index, redirecting to recovery page');
