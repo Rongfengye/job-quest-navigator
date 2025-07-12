@@ -41,7 +41,7 @@ export async function handleCreateCheckout(
   }
 
   // Build dynamic URLs using the origin from the request
-  const origin = req.headers.get("origin") || "https://storyline.tryhireme.com";
+  const origin = req.headers.get("origin") || "https://tryhireme.com";
   const successUrl = `${origin}${urlOptions.success_url}`;
   const cancelUrl = `${origin}${urlOptions.cancel_url}`;
   
