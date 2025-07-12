@@ -8,11 +8,9 @@ import { Label } from '@/components/ui/label';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { useSubscriptionManager } from '@/hooks/useSubscriptionManager';
-import { Crown, User, Key, CreditCard, ExternalLink, Loader2, RefreshCw, AlertCircle, Calendar } from 'lucide-react';
+import { Crown, User, Key, CreditCard, ExternalLink, Loader2 } from 'lucide-react';
 import UsageDisplay from '@/components/UsageDisplay';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
-import SubscriptionStatusBadge from '@/components/SubscriptionStatusBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -23,17 +21,13 @@ const Settings = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
   const { isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus } = useUserTokens();
-  const { manualSync } = useSubscriptionManager();
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [subscriptionDetails, setSubscriptionDetails] = useState<{
     subscription_tier?: string;
     subscription_end?: string;
-    cancel_at_period_end?: boolean;
-    subscription_status?: string;
   } | null>(null);
   const [isVerifyingSubscription, setIsVerifyingSubscription] = useState(false);
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   
   const handleLogout = async () => {
     const { success } = await logout();
@@ -57,12 +51,9 @@ const Settings = () => {
           setSubscriptionDetails({
             subscription_tier: data.subscription.subscription_tier || 'Premium',
             subscription_end: data.subscription.subscription_end,
-            cancel_at_period_end: data.subscription.cancel_at_period_end,
-            subscription_status: data.subscription.status,
           });
         }
 
-        setLastSyncTime(new Date());
         // Refresh user status to ensure UI is in sync
         await fetchUserStatus();
       } catch (error) {
@@ -79,27 +70,6 @@ const Settings = () => {
 
     verifySubscription();
   }, [fetchUserStatus, toast]);
-
-  const handleRefreshStatus = async () => {
-    setIsVerifyingSubscription(true);
-    try {
-      await manualSync();
-      setLastSyncTime(new Date());
-      toast({
-        title: "Status Refreshed",
-        description: "Your subscription status has been updated.",
-      });
-    } catch (error) {
-      console.error('Error refreshing status:', error);
-      toast({
-        variant: "destructive",
-        title: "Refresh Failed",
-        description: "Could not refresh subscription status. Please try again."
-      });
-    } finally {
-      setIsVerifyingSubscription(false);
-    }
-  };
 
   const handleUpgradeToPremium = async () => {
     setIsProcessingCheckout(true);
@@ -163,29 +133,6 @@ const Settings = () => {
     });
   };
 
-  const getSubscriptionStatusColor = (status?: string) => {
-    switch (status) {
-      case 'active': return 'text-green-600';
-      case 'past_due': return 'text-orange-600';
-      case 'canceled': return 'text-red-600';
-      case 'incomplete': return 'text-yellow-600';
-      default: return 'text-gray-600';
-    }
-  };
-
-  const getSubscriptionStatusText = (status?: string, cancelAtPeriodEnd?: boolean) => {
-    if (cancelAtPeriodEnd && status === 'active') {
-      return 'Cancels at period end';
-    }
-    switch (status) {
-      case 'active': return 'Active';
-      case 'past_due': return 'Payment past due';
-      case 'canceled': return 'Canceled';
-      case 'incomplete': return 'Incomplete payment';
-      default: return 'Unknown';
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -208,13 +155,8 @@ const Settings = () => {
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </CardTitle>
-              <CardDescription className="flex items-center gap-2">
+              <CardDescription>
                 Manage your subscription and billing
-                {lastSyncTime && (
-                  <span className="text-xs text-muted-foreground">
-                    • Last updated {lastSyncTime.toLocaleTimeString()}
-                  </span>
-                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -227,37 +169,17 @@ const Settings = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xl font-semibold">Premium Plan</span>
-                          <SubscriptionStatusBadge />
-                          {subscriptionDetails?.subscription_status && (
-                            <Badge 
-                              variant="outline" 
-                              className={getSubscriptionStatusColor(subscriptionDetails.subscription_status)}
-                            >
-                              {getSubscriptionStatusText(
-                                subscriptionDetails.subscription_status, 
-                                subscriptionDetails.cancel_at_period_end
-                              )}
-                            </Badge>
-                          )}
+                          <Badge variant="default" className="bg-yellow-500 text-white">
+                            {subscriptionDetails?.subscription_tier || 'Premium'}
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           Unlimited access to all features
                         </p>
                         {subscriptionDetails?.subscription_end && (
-                          <div className="flex items-center gap-1 mt-1">
-                            <Calendar className="h-3 w-3 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">
-                              {subscriptionDetails.cancel_at_period_end ? 'Expires' : 'Renews'} on {formatDate(subscriptionDetails.subscription_end)}
-                            </p>
-                          </div>
-                        )}
-                        {subscriptionDetails?.subscription_status === 'past_due' && (
-                          <div className="flex items-center gap-1 mt-2 p-2 bg-orange-50 border border-orange-200 rounded">
-                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                            <p className="text-xs text-orange-800">
-                              Payment failed. Please update your payment method to continue premium access.
-                            </p>
-                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Renews on {formatDate(subscriptionDetails.subscription_end)}
+                          </p>
                         )}
                       </div>
                     </>
@@ -267,7 +189,9 @@ const Settings = () => {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="text-xl font-semibold">Free Plan</span>
-                          <SubscriptionStatusBadge />
+                          <Badge variant="secondary">
+                            Basic
+                          </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground">
                           Limited access to features
@@ -276,15 +200,6 @@ const Settings = () => {
                     </>
                   )}
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRefreshStatus}
-                  disabled={isVerifyingSubscription}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isVerifyingSubscription ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
               </div>
 
               {/* Action Buttons */}

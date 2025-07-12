@@ -1,28 +1,42 @@
-import React, { ReactNode } from 'react';
+
+import React from 'react';
+import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
-import { useSubscriptionManager } from '@/hooks/useSubscriptionManager';
+import { useAuthContext } from '@/context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 interface DashboardLayoutProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
-const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  // Enable subscription management for all dashboard pages
-  useSubscriptionManager({
-    enablePeriodicCheck: true,
-    enableVisibilityCheck: true,
-    checkInterval: 300000, // 5 minutes
-  });
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuthContext();
+  
+  // If still loading auth state, show a minimal loading indicator
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin h-8 w-8 border-4 border-interview-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+  
+  // If not authenticated, redirect to home page
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="flex">
+    <SidebarProvider defaultOpen={true}>
+      <div className="min-h-screen flex w-full">
         <DashboardSidebar />
-        <main className="flex-1 ml-64">
-          {children}
+        <main className="flex-1 overflow-auto">
+          <div className="p-0">
+            {children}
+          </div>
         </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
