@@ -1,0 +1,89 @@
+import Stripe from "https://esm.sh/stripe@14.21.0";
+
+// Helper logging function for enhanced debugging
+const logStep = (step: string, details?: any) => {
+  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+  console.log(`[STRIPE-MANAGER] ${step}${detailsStr}`);
+};
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+export async function handleSyncSubscription(stripe: Stripe, supabase: any, user: any) {
+  logStep("Syncing subscription status", { userId: user.id });
+
+  // Check if customer exists in Stripe
+  const customers = await stripe.customers.list({ email: user.email, limit: 1 });
+  if (customers.data.length === 0) {
+    logStep("No Stripe customer found, setting to basic");
+    
+    // Update user to basic plan
+    await supabase.rpc('make_user_basic', { user_id: user.id });
+    
+    return new Response(JSON.stringify({ 
+      subscribed: false, 
+      plan: "basic",
+      message: "No subscription found" 
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  }
+
+  const customerId = customers.data[0].id;
+  logStep("Found Stripe customer", { customerId });
+
+  // Get active subscriptions
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "active",
+    limit: 1,
+  });
+
+  const hasActiveSub = subscriptions.data.length > 0;
+  let subscriptionData = null;
+
+  if (hasActiveSub) {
+    const subscription = subscriptions.data[0];
+    subscriptionData = {
+      id: subscription.id,
+      status: subscription.status,
+      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
+      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+      cancel_at_period_end: subscription.cancel_at_period_end,
+    };
+    
+    logStep("Active subscription found", subscriptionData);
+
+    // Update user to premium plan
+    await supabase.rpc('make_user_premium', { user_id: user.id });
+
+    // Upsert subscription data
+    await supabase.from("stripe_subscriptions").upsert({
+      user_id: user.id,
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscription.id,
+      subscription_status: subscription.status,
+      current_period_start: subscriptionData.current_period_start,
+      current_period_end: subscriptionData.current_period_end,
+      cancel_at_period_end: subscription.cancel_at_period_end,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'user_id' });
+  } else {
+    logStep("No active subscription found");
+    
+    // Update user to basic plan
+    await supabase.rpc('make_user_basic', { user_id: user.id });
+  }
+
+  return new Response(JSON.stringify({
+    subscribed: hasActiveSub,
+    plan: hasActiveSub ? "premium" : "basic",
+    subscription: subscriptionData,
+  }), {
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    status: 200,
+  });
+} 
