@@ -16,29 +16,29 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
   onModeChange
 }) => {
   return (
-    <Card className="border-2 border-dashed border-gray-300 bg-gray-50/30">
-      <CardContent className="p-6">
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Approach</h2>
-          <p className="text-gray-600">
+    <Card className="mb-6 border-2 border-dashed border-gray-300">
+      <CardContent className="p-4">
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Choose Your Approach</h3>
+          <p className="text-sm text-gray-600 mt-1">
             How would you like to craft your answer?
           </p>
         </div>
         
-        <div className="flex gap-4 justify-center max-w-2xl mx-auto">
+        <div className="flex gap-3 justify-center">
           <Button
             variant={mode === 'manual' ? 'default' : 'outline'}
             onClick={() => onModeChange('manual')}
-            className={`flex-1 flex items-center gap-3 px-6 py-6 h-auto flex-col transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col ${
               mode === 'manual' 
-                ? 'bg-gray-900 text-white border-gray-900 shadow-lg scale-105' 
-                : 'hover:bg-gray-50 hover:border-gray-400 hover:shadow-md'
+                ? 'bg-gray-900 text-white border-gray-900' 
+                : 'hover:bg-gray-50'
             }`}
           >
-            <PenTool className="w-8 h-8" />
+            <PenTool className="w-5 h-5" />
             <div className="text-center">
-              <div className="font-semibold text-lg">Write from scratch</div>
-              <div className="text-sm opacity-90 mt-1">
+              <div className="font-medium">Write from scratch</div>
+              <div className="text-xs opacity-80 mt-1">
                 I'll write my own answer
               </div>
             </div>
@@ -47,48 +47,37 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
           <Button
             variant={mode === 'guided' ? 'default' : 'outline'}
             onClick={() => onModeChange('guided')}
-            className={`flex-1 flex items-center gap-3 px-6 py-6 h-auto flex-col transition-all ${
+            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col ${
               mode === 'guided' 
-                ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' 
-                : 'hover:bg-blue-50 border-blue-200 hover:border-blue-300 hover:shadow-md'
+                ? 'bg-blue-600 text-white border-blue-600' 
+                : 'hover:bg-blue-50 border-blue-200'
             }`}
           >
-            <Sparkles className="w-8 h-8" />
+            <Sparkles className="w-5 h-5" />
             <div className="text-center">
-              <div className="font-semibold text-lg">Use guided help</div>
-              <div className="text-sm opacity-90 mt-1">
+              <div className="font-medium">Use guided help</div>
+              <div className="text-xs opacity-80 mt-1">
                 AI will help structure my thoughts
               </div>
             </div>
           </Button>
         </div>
         
-        {/* Phase 4: Enhanced State Communication */}
         {mode && (
-          <div className="mt-6 text-center">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-sm ${
-              mode === 'manual' 
-                ? 'bg-gray-100 text-gray-800 border border-gray-200'
-                : 'bg-blue-100 text-blue-800 border border-blue-200'
-            }`}>
+          <div className="mt-4 text-center">
+            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
               {mode === 'manual' ? (
                 <>
-                  <PenTool className="w-4 h-4" />
-                  <span>Manual Mode Active</span>
+                  <PenTool className="w-3 h-3" />
+                  Manual Mode Active
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>Guided Mode Active</span>
+                  <Sparkles className="w-3 h-3" />
+                  Guided Mode Active
                 </>
               )}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              {mode === 'manual' 
-                ? 'You can write and edit your answer directly'
-                : 'AI will guide you through a structured process'
-              }
-            </p>
+            </span>
           </div>
         )}
       </CardContent>

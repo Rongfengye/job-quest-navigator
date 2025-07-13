@@ -108,30 +108,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     };
   }, [toast, setInputAnswer]);
 
-  // Listen for "use generated response" event from guided mode
-  useEffect(() => {
-    const handleUseGeneratedResponse = (event: CustomEvent) => {
-      const { response } = event.detail;
-      if (response) {
-        setInputAnswer(response);
-        setMode('manual');
-        setHasUnsavedDraft(true);
-        
-        toast({
-          title: "Response Added!",
-          description: "The generated response has been added to your answer. You can now edit and save it.",
-          duration: 4000,
-        });
-      }
-    };
-
-    window.addEventListener('useGeneratedResponse' as any, handleUseGeneratedResponse);
-    
-    return () => {
-      window.removeEventListener('useGeneratedResponse' as any, handleUseGeneratedResponse);
-    };
-  }, [toast, setInputAnswer]);
-
   const handleThoughtsSubmit = (thoughts: string) => {
     const thoughtsEvent = new CustomEvent('thoughtsSubmitted', {
       detail: { thoughts }
@@ -145,14 +121,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     handleSubmit(e);
   };
 
-  const handleSwitchToManual = () => {
-    setMode('manual');
-    toast({
-      title: "Switched to Manual Mode",
-      description: "You can now write your answer from scratch.",
-    });
-  };
-
   const loadingText = processingThoughts 
     ? 'Transforming your thoughts into a response...'
     : generatingAnswer 
@@ -163,7 +131,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Mode Toggle - Phase 5: Moved to top for better information architecture */}
+      {/* Mode Toggle */}
       <AnswerModeToggle 
         mode={mode} 
         onModeChange={setMode} 
@@ -189,7 +157,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
           processingThoughts={processingThoughts}
           handleGenerateAnswer={handleGenerateAnswer}
           onThoughtsSubmit={handleThoughtsSubmit}
-          onSwitchToManual={handleSwitchToManual}
         />
       )}
 
@@ -200,8 +167,8 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         loadingText={loadingText}
       />
 
-      {/* Feedback Section - Only show in manual mode to reduce cognitive load */}
-      {mode === 'manual' && (isFeedbackLoading || feedback) && (
+      {/* Feedback Section */}
+      {(isFeedbackLoading || feedback) && (
         <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
           <Accordion type="single" collapsible className="w-full" defaultValue="feedback">
             <AccordionItem value="feedback" className="border-none">
