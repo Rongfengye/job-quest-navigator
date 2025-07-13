@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Save, Mic, PenTool, Sparkles } from 'lucide-react';
+import { Save, Mic, PenTool, Sparkles, AlertCircle } from 'lucide-react';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { AnswerMode } from './AnswerModeToggle';
@@ -91,6 +91,16 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-6">
+        {/* Draft Warning */}
+        {hasUnsavedDraft && (
+          <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
+            <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
+            <span className="text-sm text-yellow-800">
+              You have unsaved changes. Click "Save Answer" to preserve this version.
+            </span>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="relative">
             <Textarea 
