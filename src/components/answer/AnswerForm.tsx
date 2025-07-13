@@ -44,6 +44,19 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [progressValue, setProgressValue] = useState(0);
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');
+  const [showInitialModeSelection, setShowInitialModeSelection] = useState(true);
+
+  // Hide initial mode selection once user has an answer or has made a mode choice
+  useEffect(() => {
+    if (inputAnswer.trim().length > 0) {
+      setShowInitialModeSelection(false);
+    }
+  }, [inputAnswer]);
+
+  const handleModeChange = (newMode: AnswerMode) => {
+    setMode(newMode);
+    setShowInitialModeSelection(false);
+  };
 
   // Track original answer to detect changes
   useEffect(() => {
@@ -131,33 +144,44 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Mode Toggle */}
-      <AnswerModeToggle 
-        mode={mode} 
-        onModeChange={setMode} 
-      />
-
-      {/* Manual Mode */}
-      {mode === 'manual' && (
-        <ManualAnswerMode
-          inputAnswer={inputAnswer}
-          setInputAnswer={setInputAnswer}
-          handleSubmit={handleSaveAnswer}
-          isSaving={isSaving}
-          feedback={feedback}
-          hasUnsavedDraft={hasUnsavedDraft}
+      {/* Show big mode selection only initially */}
+      {showInitialModeSelection && (
+        <AnswerModeToggle 
+          mode={mode} 
+          onModeChange={handleModeChange} 
         />
       )}
 
-      {/* Guided Mode */}
-      {mode === 'guided' && (
-        <GuidedAnswerMode
-          question={question}
-          generatingAnswer={generatingAnswer}
-          processingThoughts={processingThoughts}
-          handleGenerateAnswer={handleGenerateAnswer}
-          onThoughtsSubmit={handleThoughtsSubmit}
-        />
+      {/* Don't show mode components until initial selection is made */}
+      {!showInitialModeSelection && (
+        <>
+          {/* Manual Mode */}
+          {mode === 'manual' && (
+            <ManualAnswerMode
+              inputAnswer={inputAnswer}
+              setInputAnswer={setInputAnswer}
+              handleSubmit={handleSaveAnswer}
+              isSaving={isSaving}
+              feedback={feedback}
+              hasUnsavedDraft={hasUnsavedDraft}
+              onModeChange={setMode}
+              currentMode={mode}
+            />
+          )}
+
+          {/* Guided Mode */}
+          {mode === 'guided' && (
+            <GuidedAnswerMode
+              question={question}
+              generatingAnswer={generatingAnswer}
+              processingThoughts={processingThoughts}
+              handleGenerateAnswer={handleGenerateAnswer}
+              onThoughtsSubmit={handleThoughtsSubmit}
+              onModeChange={setMode}
+              currentMode={mode}
+            />
+          )}
+        </>
       )}
 
       {/* Progress Indicator */}
@@ -167,8 +191,8 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         loadingText={loadingText}
       />
 
-      {/* Feedback Section */}
-      {(isFeedbackLoading || feedback) && (
+      {/* Feedback Section - only show in manual mode and when not in initial selection */}
+      {!showInitialModeSelection && mode === 'manual' && (isFeedbackLoading || feedback) && (
         <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
           <Accordion type="single" collapsible className="w-full" defaultValue="feedback">
             <AccordionItem value="feedback" className="border-none">

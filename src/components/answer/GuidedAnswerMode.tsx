@@ -3,8 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Sparkles, HelpCircle, ArrowRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Sparkles, HelpCircle, ArrowRight, PenTool } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
+import { AnswerMode } from './AnswerModeToggle';
 
 interface GuidedAnswerModeProps {
   question: Question | null;
@@ -12,6 +14,8 @@ interface GuidedAnswerModeProps {
   processingThoughts: boolean;
   handleGenerateAnswer: () => void;
   onThoughtsSubmit: (thoughts: string) => void;
+  onModeChange: (mode: AnswerMode) => void;
+  currentMode: AnswerMode;
 }
 
 const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
@@ -19,7 +23,9 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
   generatingAnswer,
   processingThoughts,
   handleGenerateAnswer,
-  onThoughtsSubmit
+  onThoughtsSubmit,
+  onModeChange,
+  currentMode
 }) => {
   const [currentStep, setCurrentStep] = useState<'questions' | 'thoughts'>('questions');
   const [guidingQuestions, setGuidingQuestions] = useState<string[] | null>(null);
@@ -54,13 +60,32 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
   return (
     <Card className="border-2 border-blue-200 bg-blue-50/30">
       <CardHeader className="border-b border-blue-200 bg-blue-50/50">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-blue-600" />
-          <div>
-            <CardTitle className="text-xl text-blue-900">Guided Response Workshop</CardTitle>
-            <p className="text-sm text-blue-700 mt-1">
-              I'll help you structure your thoughts into a compelling answer
-            </p>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-blue-600" />
+            <div>
+              <CardTitle className="text-xl text-blue-900">Guided Response Workshop</CardTitle>
+              <p className="text-sm text-blue-700 mt-1">
+                I'll help you structure your thoughts into a compelling answer
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {/* Small mode toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onModeChange('manual')}
+              className="text-xs text-blue-600 hover:text-gray-600 hover:bg-gray-50"
+            >
+              <PenTool className="w-3 h-3 mr-1" />
+              Switch to Manual
+            </Button>
+            
+            <Badge variant="outline" className="text-xs text-blue-700 border-blue-300 bg-blue-50">
+              <Sparkles className="w-3 h-3 mr-1" />
+              Guided Mode Active
+            </Badge>
           </div>
         </div>
       </CardHeader>

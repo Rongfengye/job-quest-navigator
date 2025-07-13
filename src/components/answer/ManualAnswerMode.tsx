@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Save, Mic, PenTool } from 'lucide-react';
+import { Save, Mic, PenTool, Sparkles } from 'lucide-react';
 import { FeedbackData } from '@/hooks/useAnswerFeedback';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
+import { AnswerMode } from './AnswerModeToggle';
 
 interface ManualAnswerModeProps {
   inputAnswer: string;
@@ -15,6 +16,8 @@ interface ManualAnswerModeProps {
   isSaving: boolean;
   feedback: FeedbackData | null;
   hasUnsavedDraft: boolean;
+  onModeChange: (mode: AnswerMode) => void;
+  currentMode: AnswerMode;
 }
 
 const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
@@ -23,7 +26,9 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   handleSubmit,
   isSaving,
   feedback,
-  hasUnsavedDraft
+  hasUnsavedDraft,
+  onModeChange,
+  currentMode
 }) => {
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
@@ -53,6 +58,22 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Small mode toggle */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onModeChange('guided')}
+              className="text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Sparkles className="w-3 h-3 mr-1" />
+              Switch to Guided
+            </Button>
+            
+            <Badge variant="outline" className="text-xs text-gray-700 border-gray-300">
+              <PenTool className="w-3 h-3 mr-1" />
+              Manual Mode Active
+            </Badge>
+            
             {feedback && (
               <Badge 
                 variant="secondary" 
