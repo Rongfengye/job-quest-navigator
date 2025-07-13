@@ -47,33 +47,28 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   return (
     <Card className="border-2 border-gray-200">
       <CardHeader className="border-b bg-gray-50/50">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <PenTool className="w-5 h-5 text-gray-600" />
-            <div>
-              <CardTitle className="text-xl">Your Answer</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3">
+            <PenTool className="w-5 h-5 text-gray-600 mt-0.5" />
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <CardTitle className="text-xl">Your Answer</CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onModeChange('guided')}
+                  className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 h-auto rounded-md border border-blue-200"
+                >
+                  <Sparkles className="w-3 h-3 mr-1.5" />
+                  Switch to Guided
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
                 Write your response directly in the text area below
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {/* Small mode toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onModeChange('guided')}
-              className="text-xs text-gray-600 hover:text-blue-600 hover:bg-blue-50"
-            >
-              <Sparkles className="w-3 h-3 mr-1" />
-              Switch to Guided
-            </Button>
-            
-            <Badge variant="outline" className="text-xs text-gray-700 border-gray-300">
-              <PenTool className="w-3 h-3 mr-1" />
-              Manual Mode Active
-            </Badge>
-            
             {feedback && (
               <Badge 
                 variant="secondary" 
