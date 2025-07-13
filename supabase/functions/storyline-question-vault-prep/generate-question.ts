@@ -124,10 +124,11 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
 
   // New Perplexity Sonar API call with proper response_format
   console.log('Calling Perplexity Sonar API');
-  const perplexityResponse = await fetch('https://api.perplexity.ai/chat/completions', {
+  const perplexityResponse = await fetch('https://perplexity.helicone.ai/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${perplexityApiKey}`,
+      'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
