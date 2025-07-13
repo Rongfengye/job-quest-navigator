@@ -31,10 +31,11 @@ export async function generateTextToSpeech(text: string, voice: string = 'alloy'
   
   console.log('Generating speech for text:', text.substring(0, 100) + '...');
   
-  const response = await fetch('https://api.openai.com/v1/audio/speech', {
+  const response = await fetch('https://oai.helicone.ai/v1/audio/speech', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+      'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

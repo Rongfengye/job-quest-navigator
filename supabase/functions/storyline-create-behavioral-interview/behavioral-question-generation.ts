@@ -95,10 +95,11 @@ export async function generateBehavioralQuestion(
 
   console.log('Calling OpenAI API for question generation');
 
-  const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+  const openAIResponse = await fetch('https://oai.helicone.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${openAIApiKey}`,
+      'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({

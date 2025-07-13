@@ -114,10 +114,11 @@ export async function generateFeedbackHelper(
     console.log(`Processing feedback for question ${index + 1}: ${questions[index].substring(0, 50)}...`);
     console.log(`Processing answer ${index + 1}: ${answers[index].substring(0, 50)}...`);
 
-    const feedbackPromise = fetch('https://api.openai.com/v1/chat/completions', {
+    const feedbackPromise = fetch('https://oai.helicone.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
+        'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

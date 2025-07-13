@@ -54,11 +54,12 @@ import "https://deno.land/x/xhr@0.1.0/mod.ts"
      formData.append('file', blob, 'audio.webm')
      formData.append('model', 'whisper-1')
  
-     const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-       method: 'POST',
-       headers: {
-         'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-       },
+      const response = await fetch('https://oai.helicone.ai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+          'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
+        },
        body: formData,
      })
  

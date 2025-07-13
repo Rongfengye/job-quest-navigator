@@ -78,11 +78,12 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
   
   // Call OpenAI API
   console.log('Sending request to OpenAI API...');
-  const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+  const openAIResponse = await fetch('https://oai.helicone.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${openAIApiKey}`
+      'Authorization': `Bearer ${openAIApiKey}`,
+      'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`
     },
     body: JSON.stringify(openAIRequestPayload)
   });

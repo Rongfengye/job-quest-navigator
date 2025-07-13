@@ -48,10 +48,11 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   Make your feedback specific, actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.`;
 
   // Call the OpenAI API
-  const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+  const openAIResponse = await fetch('https://oai.helicone.ai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${openAIApiKey}`,
+      'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
