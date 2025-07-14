@@ -25,15 +25,15 @@ export const useFeedback = () => {
         formData: { ...formData, feedback: '[REDACTED]' }
       });
       
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      
-      // Only add authorization header if we have a valid session with access token
-      // and no session errors (to avoid sending expired/invalid tokens)
-      if (session?.access_token && !sessionError && user) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
-        console.log('✅ Adding Authorization header for authenticated user');
+      // Check if we have a valid session for authenticated users
+      if (!session?.access_token && user) {
+        console.log('❌ No valid session for authenticated user');
+        toast({
+          variant: "destructive",
+          title: "Authentication error",
+          description: "Please log in again to submit feedback.",
+        });
+        return false;
       } else if (!user && !formData.email) {
         // For anonymous users, email is required
         toast({
@@ -46,21 +46,20 @@ export const useFeedback = () => {
         console.log('📧 Submitting as anonymous user with email');
       }
 
-      const response = await fetch(
-        'https://qrpppkxwvmngepzznorf.supabase.co/functions/v1/hireme_feedback_edge',
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            feedback_string: formData.feedback,
-            email: formData.email,
-          }),
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('hireme_feedback_edge', {
+        body: {
+          feedback_string: formData.feedback,
+          email: formData.email,
+        },
+      });
 
-      const result: FeedbackSubmissionResponse = await response.json();
+      if (error) {
+        throw new Error(error.message || 'Failed to submit feedback');
+      }
 
-      if (response.ok && result.success) {
+      const result: FeedbackSubmissionResponse = data;
+
+      if (result.success) {
         toast({
           title: "Feedback submitted!",
           description: "Thank you for your feedback. We appreciate it!",
