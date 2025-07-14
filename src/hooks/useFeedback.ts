@@ -46,11 +46,28 @@ export const useFeedback = () => {
         console.log('📧 Submitting as anonymous user with email');
       }
 
+      // Construct metadata object
+      const feedbackMetadata = {
+        website: 'storyline',
+        text: formData.feedback,
+        email: formData.email || (user ? 'authenticated_user' : ''),
+        page: window.location.pathname,
+        timestamp: new Date().toISOString()
+      };
+
+      // Stringify the metadata object
+      const feedback_string = JSON.stringify(feedbackMetadata);
+
+      console.log('📝 Constructed feedback metadata:', { ...feedbackMetadata, text: '[REDACTED]' });
+
       const { data, error } = await supabase.functions.invoke('hireme_feedback_edge', {
         body: {
-          feedback_string: formData.feedback,
+          feedback_string,
           email: formData.email,
         },
+        headers: session?.access_token ? {
+          Authorization: `Bearer ${session.access_token}`,
+        } : undefined,
       });
 
       if (error) {
