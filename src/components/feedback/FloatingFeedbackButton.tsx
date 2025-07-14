@@ -17,11 +17,11 @@ export const FloatingFeedbackButton: React.FC = () => {
     <>
       <Button
         onClick={() => setIsModalOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 h-28 w-28 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center justify-center ${showPulse ? 'animate-pulse-glow' : ''}`}
+        className={`fixed bottom-6 right-6 z-50 h-21 w-21 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 flex items-center justify-center ${showPulse ? 'animate-pulse-glow' : ''}`}
         size="icon"
         aria-label="Share feedback"
       >
-        <MessageCircle className="h-12 w-12" />
+        <MessageCircle className="h-9 w-9" />
       </Button>
       <FeedbackModal
         isOpen={isModalOpen}
