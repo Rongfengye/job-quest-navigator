@@ -13,10 +13,24 @@ export interface FeedbackSubmissionResponse {
 }
 
 export const QUICK_FEEDBACK_PROMPTS = [
-  "I love this feature!",
-  "Something isn't working correctly",
-  "I have a suggestion for improvement",
-  "The interface is confusing",
-  "This saved me time",
-  "I need help with something"
+  {
+    label: "I love this feature!",
+    starter: "I love this feature!"
+  },
+  {
+    label: "What could be improved on this page?",
+    starter: "I think this page could be improved by... "
+  },
+  {
+    label: "Did you find this tool helpful?",
+    starter: "This tool was helpful because... "
+  },
+  {
+    label: "Any suggestions for new features?",
+    starter: "I’d love to see a feature that... "
+  },
+  {
+    label: "Report a bug or issue",
+    starter: "I encountered an issue where... "
+  }
 ] as const;

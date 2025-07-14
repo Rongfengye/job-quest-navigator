@@ -28,10 +28,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
   
   const { submitFeedback, isSubmitting, isAuthenticated } = useFeedback();
 
-  const handleQuickPromptClick = (prompt: string) => {
+  const handleQuickPromptClick = (starter: string) => {
     setFormData(prev => ({
       ...prev,
-      feedback: prev.feedback ? `${prev.feedback}\n\n${prompt}` : prompt,
+      feedback: prev.feedback ? `${prev.feedback}\n\n${starter}` : starter,
     }));
   };
 
@@ -85,14 +85,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
             <div className="grid grid-cols-1 gap-2">
               {QUICK_FEEDBACK_PROMPTS.map((prompt) => (
                 <Button
-                  key={prompt}
+                  key={prompt.label}
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickPromptClick(prompt)}
+                  onClick={() => handleQuickPromptClick(prompt.starter)}
                   className="justify-start text-left h-auto py-2 px-3 text-sm"
                 >
-                  {prompt}
+                  {prompt.label}
                 </Button>
               ))}
             </div>
