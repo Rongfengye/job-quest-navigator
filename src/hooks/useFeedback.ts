@@ -55,14 +55,11 @@ export const useFeedback = () => {
         timestamp: new Date().toISOString()
       };
 
-      // Stringify the metadata object
-      const feedback_string = JSON.stringify(feedbackMetadata);
-
       console.log('📝 Constructed feedback metadata:', { ...feedbackMetadata, text: '[REDACTED]' });
 
       const { data, error } = await supabase.functions.invoke('hireme_feedback_edge', {
         body: {
-          feedback_string,
+          feedback_string: feedbackMetadata,
           email: formData.email,
         },
         headers: session?.access_token ? {
