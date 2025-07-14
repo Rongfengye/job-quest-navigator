@@ -21,7 +21,7 @@ export const FloatingFeedbackButton: React.FC = () => {
         size="icon"
         aria-label="Share feedback"
       >
-        <MessageCircle className="h-9 w-9" />
+        <MessageCircle className="h-16 w-16" />
       </Button>
       <FeedbackModal
         isOpen={isModalOpen}
