@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { PlanStatusProvider } from "@/context/PlanStatusContext";
+import { FloatingFeedbackButton } from "@/components/feedback/FloatingFeedbackButton";
 import NavBar from "@/components/NavBar";
 import Index from "./pages/Index";
 import Create from "./pages/Create";
@@ -57,6 +58,7 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <FloatingFeedbackButton />
           </BrowserRouter>
         </TooltipProvider>
       </PlanStatusProvider>

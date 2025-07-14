@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      hireme_feedback: {
+        Row: {
+          created_at: string
+          feedback: string[]
+          id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string[]
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          feedback?: string[]
+          id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       hireme_user_status: {
         Row: {
           created_at: string | null
