@@ -15,15 +15,35 @@ export const useFeedback = () => {
     
     try {
       // Get the session token for authenticated users
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('🔍 Feedback submission debug:', {
+        hasSession: !!session,
+        hasAccessToken: !!session?.access_token,
+        sessionError,
+        userAuthenticated: !!user,
+        formData: { ...formData, feedback: '[REDACTED]' }
+      });
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
       
-      // Add authorization header if user is authenticated
-      if (session?.access_token) {
+      // Only add authorization header if we have a valid session with access token
+      // and no session errors (to avoid sending expired/invalid tokens)
+      if (session?.access_token && !sessionError && user) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
+        console.log('✅ Adding Authorization header for authenticated user');
+      } else if (!user && !formData.email) {
+        // For anonymous users, email is required
+        toast({
+          variant: "destructive",
+          title: "Email required",
+          description: "Please provide your email address for anonymous feedback.",
+        });
+        return false;
+      } else {
+        console.log('📧 Submitting as anonymous user with email');
       }
 
       const response = await fetch(
