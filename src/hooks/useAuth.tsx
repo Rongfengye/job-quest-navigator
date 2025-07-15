@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -324,51 +325,6 @@ export const useAuth = () => {
     }
   };
 
-  const resendSignupConfirmation = async (email: string) => {
-    console.log('Resend signup confirmation function called with email:', email);
-    setIsLoading(true);
-    
-    try {
-      const redirectUrl = `${window.location.origin}/welcome`;
-      console.log('Resending signup confirmation email with redirect URL:', redirectUrl);
-      
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: email,
-        options: {
-          emailRedirectTo: redirectUrl
-        }
-      });
-
-      console.log('Supabase resend signup confirmation response:', { 
-        success: !error, 
-        error: error ? error.message : null
-      });
-
-      if (error) throw error;
-
-      console.log('Showing success toast');
-      toast({
-        title: "Confirmation email sent",
-        description: "We've sent another confirmation email to your inbox.",
-      });
-      
-      console.log('Resend signup confirmation function completed successfully');
-      return { success: true };
-    } catch (error) {
-      console.error('Resend signup confirmation error:', error);
-      toast({
-        variant: "destructive",
-        title: "Error sending confirmation email",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
-      });
-      return { success: false, error };
-    } finally {
-      console.log('Setting isLoading to false');
-      setIsLoading(false);
-    }
-  };
-
   const updatePassword = async (newPassword: string) => {
     console.log('Update password function called');
     setIsLoading(true);
@@ -415,7 +371,6 @@ export const useAuth = () => {
     login,
     logout,
     resetPassword,
-    resendSignupConfirmation,
     updatePassword,
     syncUserData,
     setUser: setUserSafely
