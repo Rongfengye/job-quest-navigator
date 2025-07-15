@@ -23,6 +23,7 @@ import CreateBehavioral from "./pages/CreateBehavioral";
 import BehavioralFeedback from "./pages/BehavioralFeedback";
 import PasswordRecovery from "./pages/PasswordRecovery";
 import AuthCallback from "./pages/AuthCallback";
+import Welcome from "./pages/Welcome";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/behavioralFeedback" element={<BehavioralFeedback />} />
               <Route path="/recover-password" element={<PasswordRecovery />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/welcome" element={<Welcome />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
             <FloatingFeedbackButton />

@@ -116,7 +116,11 @@ export const useAuth = () => {
     
     try {
       console.log('Creating auth user with Supabase...');
-      // Create auth user with metadata for the trigger
+      
+      // Set up email redirect URL for confirmation
+      const redirectUrl = `${window.location.origin}/welcome`;
+      
+      // Create auth user with metadata and email confirmation
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -124,41 +128,48 @@ export const useAuth = () => {
           data: {
             first_name: firstName,
             last_name: lastName
-          }
+          },
+          emailRedirectTo: redirectUrl
         }
       });
 
       console.log('Supabase signup response:', { 
         success: !authError, 
         userId: authData?.user?.id,
+        needsConfirmation: !authData?.user?.email_confirmed_at,
         error: authError ? authError.message : null
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error('Failed to create user');
-      const provider = authData.user.app_metadata?.provider;
-      setUserSafely({
-        id: authData.user.id,
-        email: authData.user.email || email,
-        firstName,
-        lastName,
-        provider
-      });
 
-      console.log('Showing success toast');
+      // Don't set user state immediately - wait for email confirmation
+      console.log('Signup successful - user needs to confirm email');
+      
       toast({
         title: "Account created",
-        description: "Your account has been created successfully.",
+        description: "Please check your email to confirm your account before logging in.",
       });
       
       console.log('Signup function completed successfully');
-      return { success: true, user: authData.user };
+      return { success: true, user: authData.user, needsConfirmation: true };
     } catch (error) {
       console.error('Signup error:', error);
+      
+      // Handle specific error cases
+      let errorMessage = "An unknown error occurred";
+      if (error instanceof Error) {
+        if (error.message.includes('already registered')) {
+          errorMessage = "An account with this email already exists. Please try logging in instead.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         variant: "destructive",
         title: "Error creating account",
-        description: error instanceof Error ? error.message : "An unknown error occurred",
+        description: errorMessage,
       });
       return { success: false, error };
     } finally {
@@ -184,7 +195,18 @@ export const useAuth = () => {
         error: error ? error.message : null
       });
 
-      if (error) throw error;
+      if (error) {
+        // Handle specific error cases
+        if (error.message.includes('Email not confirmed')) {
+          toast({
+            variant: "destructive",
+            title: "Email not confirmed",
+            description: "Please check your email and click the confirmation link before logging in.",
+          });
+          return { success: false, error, needsConfirmation: true };
+        }
+        throw error;
+      }
       
       // Get name data using the helper
       const { firstName, lastName } = extractUserNames(data.user);

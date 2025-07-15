@@ -24,6 +24,7 @@ const AuthCallback = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get('error');
         const errorDescription = urlParams.get('error_description');
+        const type = urlParams.get('type');
         
         if (error) {
           console.error('❌ OAuth error detected:', error, errorDescription);
@@ -36,6 +37,40 @@ const AuthCallback = () => {
           return;
         }
 
+        // Check if this is an email confirmation
+        if (type === 'signup') {
+          console.log('📧 Email confirmation detected');
+          
+          // Wait a moment for Supabase to process the confirmation
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error('❌ Error getting session after email confirmation:', sessionError);
+            toast({
+              variant: "destructive",
+              title: "Email confirmation failed",
+              description: "There was an error confirming your email. Please try again.",
+            });
+            navigate('/', { replace: true });
+            return;
+          }
+
+          if (data.session) {
+            console.log('✅ Email confirmed and session established');
+            toast({
+              title: "Email confirmed!",
+              description: "Your account has been successfully verified.",
+            });
+            
+            // Redirect to welcome page for new users
+            navigate('/welcome', { replace: true });
+            return;
+          }
+        }
+
+        // Handle OAuth callbacks
         // Wait a moment for Supabase to process the OAuth callback
         await new Promise(resolve => setTimeout(resolve, 1000));
         
@@ -69,8 +104,9 @@ const AuthCallback = () => {
             description: `Welcome! You've been signed in via ${providerName}.`,
           });
           
-          // Redirect to behavioral page
-          navigate('/behavioral', { replace: true });
+          // Redirect to welcome page for new OAuth users, behavioral for returning users
+          // OAuth users typically go straight to welcome for a good first experience
+          navigate('/welcome', { replace: true });
         } else {
           console.log('⚠️ No session found after OAuth callback, retrying...');
           
@@ -92,7 +128,7 @@ const AuthCallback = () => {
               description: `Welcome! You've been signed in via ${providerName}.`,
             });
             
-            navigate('/behavioral', { replace: true });
+            navigate('/welcome', { replace: true });
           } else {
             console.log('❌ Failed to establish session after OAuth');
             toast({
