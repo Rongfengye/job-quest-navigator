@@ -90,44 +90,25 @@ const AuthCallback = () => {
 
         if (data.session) {
           const user = data.session.user;
-          // Check if profile exists
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
+          // Check if user has any behavioral interview rows
+          const { data: behaviorals, error: behavioralsError } = await supabase
+            .from('storyline_behaviorals')
             .select('id')
-            .eq('id', user.id)
-            .single();
+            .eq('user_id', user.id)
+            .limit(1);
 
-          if (profileError && profileError.code !== 'PGRST116') { // Not found is ok
-            console.error('❌ Error checking profile:', profileError);
+          if (behavioralsError) {
+            console.error('❌ Error checking behavioral interviews:', behavioralsError);
             toast({
               variant: "destructive",
-              title: "Profile error",
-              description: "There was an error checking your profile. Please try again.",
+              title: "Error",
+              description: "There was an error checking your account. Please try again.",
             });
             navigate('/', { replace: true });
             return;
           }
 
-          if (!profile) {
-            // New user: create profile
-            const { error: createError } = await supabase
-              .from('profiles')
-              .insert({
-                id: user.id,
-                email: user.email,
-                first_name: user.user_metadata?.first_name || user.user_metadata?.given_name || '',
-                last_name: user.user_metadata?.last_name || user.user_metadata?.family_name || '',
-              });
-            if (createError) {
-              console.error('❌ Error creating profile:', createError);
-              toast({
-                variant: "destructive",
-                title: "Profile creation failed",
-                description: "There was an error setting up your account. Please try again.",
-              });
-              navigate('/', { replace: true });
-              return;
-            }
+          if (!behaviorals || behaviorals.length === 0) {
             // New user: show welcome
             navigate('/welcome', { replace: true });
           } else {
