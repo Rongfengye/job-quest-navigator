@@ -13,13 +13,13 @@ interface EmailConfirmationScreenProps {
 
 const EmailConfirmationScreen: React.FC<EmailConfirmationScreenProps> = ({ email, onBack }) => {
   const [isResending, setIsResending] = useState(false);
-  const { resetPassword } = useAuth();
+  const { resendSignupConfirmation } = useAuth();
   const { toast } = useToast();
 
   const handleResendEmail = async () => {
     setIsResending(true);
     try {
-      const result = await resetPassword(email);
+      const result = await resendSignupConfirmation(email);
       if (result.success) {
         toast({
           title: "Email sent",
