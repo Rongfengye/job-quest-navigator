@@ -137,15 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             });
 
             // For OAuth sign-ins, automatically redirect to behavioral page
-            if (provider && ['google', 'github', 'linkedin_oidc'].includes(provider)) {
-              console.log('🚀 OAuth sign-in detected, will redirect to /behavioral');
-              // Add a small delay to ensure the auth state is fully updated
-              setTimeout(() => {
-                if (window.location.pathname !== '/behavioral') {
-                  window.location.href = '/behavioral';
-                }
-              }, 200);
-            }
+            // (REMOVED: This is now handled in AuthCallback.tsx based on profile existence)
           }
         } else if (event === 'PASSWORD_RECOVERY') {
           console.log('🔑 Password recovery event detected');
