@@ -364,6 +364,51 @@ export const useAuth = () => {
     }
   };
 
+  // Resend confirmation email for unconfirmed users
+  const resendConfirmationEmail = async (email: string) => {
+    setIsLoading(true);
+    try {
+      // Use a random password since we don't know the user's real password
+      const randomPassword = Math.random().toString(36).slice(-8);
+      const redirectUrl = `${window.location.origin}/welcome`;
+      const { error } = await supabase.auth.signUp({
+        email,
+        password: randomPassword,
+        options: { emailRedirectTo: redirectUrl }
+      });
+      if (!error) {
+        toast({
+          title: "Confirmation email sent",
+          description: "If your email is registered and not yet confirmed, you'll receive a confirmation email shortly.",
+        });
+        return { success: true };
+      } else if (error.message && error.message.includes('already registered')) {
+        toast({
+          variant: "destructive",
+          title: "Account already confirmed",
+          description: "Your account is already confirmed. Please log in.",
+        });
+        return { success: false, error };
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Failed to resend confirmation email",
+          description: error.message || "An unknown error occurred.",
+        });
+        return { success: false, error };
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Failed to resend confirmation email",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+      });
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     user,
     isLoading,
@@ -373,6 +418,7 @@ export const useAuth = () => {
     resetPassword,
     updatePassword,
     syncUserData,
-    setUser: setUserSafely
+    setUser: setUserSafely,
+    resendConfirmationEmail // Export the new function
   };
 };
