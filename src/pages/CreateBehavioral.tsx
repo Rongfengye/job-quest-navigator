@@ -339,7 +339,7 @@ const CreateBehavioral = () => {
                 <span className="text-lg font-semibold">Usage Limit Reached</span>
               </div>
               <p className="text-orange-700 mb-4">
-                You've reached your monthly limit of {usageSummary?.behavioral.limit} behavioral interview practices. Upgrade to Premium for unlimited access.
+                You've reached your monthly limit of 5 behavioral interview practices. Upgrade to Premium for unlimited access.
               </p>
               <Button
                 onClick={() => navigate('/settings')}
