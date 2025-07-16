@@ -94,7 +94,7 @@ BEGIN
   -- Set limits and get current count based on usage type
   IF usage_type = 'behavioral' THEN
     current_count := usage_record.behavioral_practices_count;
-    limit_count := 5;
+    limit_count := 10;
   ELSIF usage_type = 'question_vault' THEN
     current_count := usage_record.question_vaults_count;
     limit_count := 1;
@@ -236,8 +236,8 @@ BEGIN
       'isPremium', false,
       'behavioral', json_build_object(
         'current', 0,
-        'limit', 5,
-        'remaining', 5
+        'limit', 10,
+        'remaining', 10
       ),
       'questionVault', json_build_object(
         'current', 0,
@@ -252,8 +252,8 @@ BEGIN
     'isPremium', false,
     'behavioral', json_build_object(
       'current', usage_record.behavioral_practices_count,
-      'limit', 5,
-      'remaining', GREATEST(0, 5 - usage_record.behavioral_practices_count)
+      'limit', 10,
+      'remaining', GREATEST(0, 10 - usage_record.behavioral_practices_count)
     ),
     'questionVault', json_build_object(
       'current', usage_record.question_vaults_count,
