@@ -21,7 +21,7 @@ const SubmitButton = ({
   showProcessing = false
 }: SubmitButtonProps) => {
   return (
-    <div className="fixed bottom-0 left-0 w-full flex justify-center bg-white bg-opacity-90 z-50 py-4 shadow-t">
+    <div className="fixed bottom-0 right-0 w-full flex justify-end pr-8 bg-white bg-opacity-90 z-50 py-4 shadow-t">
       <Button
         onClick={onClick}
         disabled={isSubmitting || isLoading || isNextQuestionLoading || showProcessing}
