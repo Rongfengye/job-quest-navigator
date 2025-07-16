@@ -385,7 +385,7 @@ const BehavioralInterview = () => {
   return (
     <>
       <NavBar />
-      <div className="min-h-screen bg-white flex flex-col p-6">
+      <div className="min-h-screen bg-white flex flex-col p-6 pb-32">
         <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col">
           <InterviewHeader />
           
