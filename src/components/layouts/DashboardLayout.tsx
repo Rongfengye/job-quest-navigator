@@ -4,6 +4,14 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
+import { Menu } from 'lucide-react';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -11,6 +19,7 @@ interface DashboardLayoutProps {
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuthContext();
+  const isMobile = useIsMobile();
   
   // If still loading auth state, show a minimal loading indicator
   if (isLoading) {
@@ -26,6 +35,36 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
     return <Navigate to="/" replace />;
   }
 
+  // Mobile layout with drawer
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex flex-col w-full">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+          <Drawer>
+            <DrawerTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </DrawerTrigger>
+            <DrawerContent>
+              <div className="p-4">
+                <DashboardSidebar />
+              </div>
+            </DrawerContent>
+          </Drawer>
+          <span className="text-xl font-bold text-interview-primary">Storyline</span>
+          <div className="w-10" /> {/* Spacer for centering */}
+        </div>
+        <main className="flex-1 overflow-auto">
+          <div className="p-4">
+            {children}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Desktop layout with sidebar
   return (
     <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex w-full">
