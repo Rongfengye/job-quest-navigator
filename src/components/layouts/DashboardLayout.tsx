@@ -47,7 +47,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
               </Button>
             </DrawerTrigger>
             <DrawerContent>
-              <DashboardSidebar />
+              <SidebarProvider>
+                <DashboardSidebar />
+              </SidebarProvider>
             </DrawerContent>
           </Drawer>
           <span className="text-xl font-bold text-interview-primary">Storyline</span>
