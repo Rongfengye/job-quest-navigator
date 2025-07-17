@@ -11,7 +11,11 @@ import {
   Drawer,
   DrawerContent,
   DrawerTrigger,
+  DrawerTitle,
+  DrawerHeader,
+  DrawerClose,
 } from "@/components/ui/drawer";
+import { X } from 'lucide-react';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -46,7 +50,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
                 <Menu className="h-5 w-5" />
               </Button>
             </DrawerTrigger>
-            <DrawerContent>
+            <DrawerContent className="h-[100vh] w-full">
+              <DrawerHeader className="flex items-center justify-between p-4 border-b">
+                <DrawerTitle className="text-xl font-bold">Menu</DrawerTitle>
+                <DrawerClose asChild>
+                  <Button variant="ghost" size="icon">
+                    <X className="h-5 w-5" />
+                  </Button>
+                </DrawerClose>
+              </DrawerHeader>
               <SidebarProvider>
                 <DashboardSidebar />
               </SidebarProvider>
