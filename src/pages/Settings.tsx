@@ -7,11 +7,13 @@ import { Label } from '@/components/ui/label';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Crown, User, Key, CreditCard, ExternalLink, Loader2 } from 'lucide-react';
+import { Crown, User, Key, CreditCard, ExternalLink, Loader2, MessageSquare, TrendingUp } from 'lucide-react';
 import UsageDisplay from '@/components/UsageDisplay';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { Progress } from '@/components/ui/progress';
+import PremiumNudge from '@/components/PremiumNudge';
 
 const Settings = () => {
   const { logout, user } = useAuthContext();
@@ -27,6 +29,10 @@ const Settings = () => {
     subscription_end?: string;
   } | null>(null);
   const [isVerifyingSubscription, setIsVerifyingSubscription] = useState(false);
+  const [usageSummary, setUsageSummary] = useState<{
+    behavioral: { current: number; limit: number; remaining: number };
+    questionVault: { current: number; limit: number; remaining: number };
+  } | null>(null);
   
   const handleLogout = async () => {
     const { success } = await logout();
@@ -68,6 +74,31 @@ const Settings = () => {
 
     verifySubscription();
   }, [fetchUserStatus, toast]);
+
+  useEffect(() => {
+    const fetchUsageSummary = async () => {
+      try {
+        const { data, error } = await supabase.functions.invoke('usage-summary', {
+          body: { action: 'GET_SUMMARY' },
+        });
+
+        if (error) throw error;
+
+        if (data.summary) {
+          setUsageSummary(data.summary);
+        }
+      } catch (error) {
+        console.error('Error fetching usage summary:', error);
+        toast({
+          variant: "destructive",
+          title: "Usage Summary Failed",
+          description: "Could not load usage summary. Please try again."
+        });
+      }
+    };
+
+    fetchUsageSummary();
+  }, [toast]);
 
   const handleUpgradeToPremium = async () => {
     setIsProcessingCheckout(true);
@@ -144,122 +175,120 @@ const Settings = () => {
         </div>
         
         <div className="grid gap-6">
-          {/* Usage Display Card */}
-          <UsageDisplay />
-
-          {/* Subscription Plan Card */}
+          {/* Unified Subscription & Usage Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5" />
-                Subscription Plan
+                <CardTitle>Settings & Plan</CardTitle>
                 {isVerifyingSubscription && (
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 )}
-              </CardTitle>
+              </div>
               <CardDescription>
-                Manage your subscription and billing
+                Manage your subscription, usage, and billing
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Current Plan Status */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  {isPremium ? (
-                    <>
-                      <Crown className="h-6 w-6 text-yellow-500" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-semibold">Premium Plan</span>
-                          <Badge variant="default" className="bg-yellow-500 text-white">
-                            {subscriptionDetails?.subscription_tier || 'Premium'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Unlimited access to all features
-                        </p>
-                        {subscriptionDetails?.subscription_end && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Renews on {formatDate(subscriptionDetails.subscription_end)}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <User className="h-6 w-6 text-gray-500" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-semibold">Free Plan</span>
-                          <Badge variant="secondary">
-                            Basic
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Limited access to features
-                        </p>
-                      </div>
-                    </>
+            <CardContent className="space-y-8">
+              {/* Top: Plan Info */}
+              <div className="flex items-center gap-3 p-4 border rounded-lg">
+                <User className="h-6 w-6 text-gray-500" />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-semibold">Free Plan</span>
+                    <Badge variant="secondary">Basic</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Limited access to features</p>
+                </div>
+              </div>
+
+              {/* Middle: Usage Progress Bars & Nudge */}
+              <div className="space-y-6">
+                {/* Usage Progress Bars (from UsageDisplay) */}
+                {/* Behavioral Interview Practices */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="h-4 w-4 text-blue-500" />
+                      <span className="font-medium">Behavioral Interview Practices</span>
+                      {!isPremium && (
+                        <span className="text-xs text-muted-foreground">• Build confidence through practice</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {usageSummary ? `${usageSummary.behavioral.current} / ${usageSummary.behavioral.limit}` : '--'}
+                      </span>
+                      <Badge variant={usageSummary ? (usageSummary.behavioral.remaining / usageSummary.behavioral.limit <= 0.1 ? 'destructive' : usageSummary.behavioral.remaining / usageSummary.behavioral.limit <= 0.3 ? 'secondary' : 'default') : 'default'}>
+                        {usageSummary ? (usageSummary.behavioral.limit === -1 ? 'Unlimited' : `${usageSummary.behavioral.remaining} left`) : '--'}
+                      </Badge>
+                    </div>
+                  </div>
+                  {usageSummary && usageSummary.behavioral.limit !== -1 && (
+                    <Progress value={(usageSummary.behavioral.current / usageSummary.behavioral.limit) * 100} className="h-2" />
                   )}
                 </div>
+                {/* Question Vault Generations */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-green-500" />
+                      <span className="font-medium">Question Vault Generations</span>
+                      {!isPremium && (
+                        <span className="text-xs text-muted-foreground">• Get targeted interview questions</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {usageSummary ? `${usageSummary.questionVault.current} / ${usageSummary.questionVault.limit}` : '--'}
+                      </span>
+                      <Badge variant={usageSummary ? (usageSummary.questionVault.remaining / usageSummary.questionVault.limit <= 0.1 ? 'destructive' : usageSummary.questionVault.remaining / usageSummary.questionVault.limit <= 0.3 ? 'secondary' : 'default') : 'default'}>
+                        {usageSummary ? (usageSummary.questionVault.limit === -1 ? 'Unlimited' : `${usageSummary.questionVault.remaining} left`) : '--'}
+                      </Badge>
+                    </div>
+                  </div>
+                  {usageSummary && usageSummary.questionVault.limit !== -1 && (
+                    <Progress value={(usageSummary.questionVault.current / usageSummary.questionVault.limit) * 100} className="h-2" />
+                  )}
+                </div>
+                {/* Accelerate Your Interview Success Nudge */}
+                {isBasic && (
+                  <PremiumNudge variant="usage-enhancement" />
+                )}
+              </div>
+
+              {/* Bottom: Premium Features */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">Premium Features Include:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Unlimited behavioral interview practices</li>
+                  <li>• Unlimited question vault generations</li>
+                  <li>• Priority support</li>
+                  <li>• Advanced feedback and insights</li>
+                </ul>
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
-                {isBasic ? (
-                  <Button 
-                    onClick={handleUpgradeToPremium}
-                    disabled={isProcessingCheckout || tokensLoading}
-                    className="flex-1"
-                    size="lg"
-                  >
-                    {isProcessingCheckout ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Crown className="h-4 w-4 mr-2" />
-                        Upgrade to Premium - $0.50/month
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleManageSubscription}
-                    disabled={isLoadingPortal || tokensLoading}
-                    variant="outline"
-                    className="flex-1"
-                    size="lg"
-                  >
-                    {isLoadingPortal ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Manage Subscription
-                      </>
-                    )}
-                  </Button>
-                )}
+                <Button 
+                  onClick={handleUpgradeToPremium}
+                  disabled={isProcessingCheckout || tokensLoading}
+                  className="flex-1"
+                  size="lg"
+                >
+                  {isProcessingCheckout ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="h-4 w-4 mr-2" />
+                      Upgrade to Premium - $0.50/month
+                    </>
+                  )}
+                </Button>
               </div>
-
-              {/* Premium Features Info */}
-              {isBasic && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Premium Features Include:</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Unlimited behavioral interview practices</li>
-                    <li>• Unlimited question vault generations</li>
-                    <li>• Priority support</li>
-                    <li>• Advanced feedback and insights</li>
-                  </ul>
-                </div>
-              )}
             </CardContent>
           </Card>
 
