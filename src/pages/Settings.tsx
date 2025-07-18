@@ -1,15 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Crown, User, Key, CreditCard, ExternalLink, Loader2 } from 'lucide-react';
-import UsageDisplay from '@/components/UsageDisplay';
+import { Key, Loader2 } from 'lucide-react';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
+import UnifiedSettingsCard from '@/components/settings/UnifiedSettingsCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -19,7 +19,7 @@ const Settings = () => {
   const { toast } = useToast();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
-  const { isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus } = useUserTokens();
+  const { isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus, usageSummary, isLoadingUsage } = useUserTokens();
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [subscriptionDetails, setSubscriptionDetails] = useState<{
@@ -127,14 +127,6 @@ const Settings = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
   return (
     <DashboardLayout>
       <div className="p-6">
@@ -144,124 +136,20 @@ const Settings = () => {
         </div>
         
         <div className="grid gap-6">
-          {/* Usage Display Card */}
-          <UsageDisplay />
-
-          {/* Subscription Plan Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Subscription Plan
-                {isVerifyingSubscription && (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                )}
-              </CardTitle>
-              <CardDescription>
-                Manage your subscription and billing
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Current Plan Status */}
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  {isPremium ? (
-                    <>
-                      <Crown className="h-6 w-6 text-yellow-500" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-semibold">Premium Plan</span>
-                          <Badge variant="default" className="bg-yellow-500 text-white">
-                            {subscriptionDetails?.subscription_tier || 'Premium'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Unlimited access to all features
-                        </p>
-                        {subscriptionDetails?.subscription_end && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Renews on {formatDate(subscriptionDetails.subscription_end)}
-                          </p>
-                        )}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <User className="h-6 w-6 text-gray-500" />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xl font-semibold">Free Plan</span>
-                          <Badge variant="secondary">
-                            Basic
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Limited access to features
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {isBasic ? (
-                  <Button 
-                    onClick={handleUpgradeToPremium}
-                    disabled={isProcessingCheckout || tokensLoading}
-                    className="flex-1"
-                    size="lg"
-                  >
-                    {isProcessingCheckout ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <Crown className="h-4 w-4 mr-2" />
-                        Upgrade to Premium - $0.50/month
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleManageSubscription}
-                    disabled={isLoadingPortal || tokensLoading}
-                    variant="outline"
-                    className="flex-1"
-                    size="lg"
-                  >
-                    {isLoadingPortal ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        Manage Subscription
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-
-              {/* Premium Features Info */}
-              {isBasic && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-2">Premium Features Include:</h4>
-                  <ul className="text-sm text-blue-800 space-y-1">
-                    <li>• Unlimited behavioral interview practices</li>
-                    <li>• Unlimited question vault generations</li>
-                    <li>• Priority support</li>
-                    <li>• Advanced feedback and insights</li>
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Unified Settings Card */}
+          <UnifiedSettingsCard
+            isPremium={isPremium}
+            isBasic={isBasic}
+            isVerifyingSubscription={isVerifyingSubscription}
+            subscriptionDetails={subscriptionDetails}
+            usageSummary={usageSummary}
+            isLoadingUsage={isLoadingUsage}
+            isProcessingCheckout={isProcessingCheckout}
+            isLoadingPortal={isLoadingPortal}
+            tokensLoading={tokensLoading}
+            onUpgradeToPremium={handleUpgradeToPremium}
+            onManageSubscription={handleManageSubscription}
+          />
 
           {/* Password Settings Card */}
           {user?.provider === 'email' && (
