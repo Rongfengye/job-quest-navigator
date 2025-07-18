@@ -31,14 +31,14 @@ const PremiumNudge: React.FC<PremiumNudgeProps> = ({
             <p className="text-sm text-blue-700 mb-3">
               Premium members practice 3x more effectively with unlimited sessions and faster skill development.
             </p>
-            <Button 
+            {/* <Button 
               size="sm"
               onClick={() => navigate('/settings')}
               className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Unlock Unlimited Practice
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>
