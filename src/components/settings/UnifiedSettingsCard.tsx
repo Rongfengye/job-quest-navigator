@@ -62,7 +62,6 @@ const UnifiedSettingsCard: React.FC<UnifiedSettingsCardProps> = ({
       <CardContent className="space-y-8">
         {/* Section A: Plan Status */}
         <div>
-          <h3 className="text-lg font-semibold mb-4">Current Plan</h3>
           <PlanStatusSection
             isPremium={isPremium}
             isVerifyingSubscription={isVerifyingSubscription}
