@@ -14,6 +14,7 @@ import { useJobPracticeSubmission } from '@/hooks/useJobPracticeSubmission';
 import ProcessingModal from '@/components/ProcessingModal';
 import RelatedPracticesList from '@/components/behavioral/RelatedPracticesList';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import PremiumNudge from '@/components/PremiumNudge';
 
 interface RelatedPractice {
   id: string;
@@ -280,6 +281,11 @@ const BehavioralFeedback = () => {
                 questions={questions}
                 responses={responses} 
               />
+              
+              {/* Post-Practice Success Nudge for Basic Users */}
+              {isBasic && !hasRelatedPractice && (
+                <PremiumNudge variant="post-practice-success" className="mt-6" />
+              )}
               
               <RelatedPracticesList 
                 practices={relatedPractices} 

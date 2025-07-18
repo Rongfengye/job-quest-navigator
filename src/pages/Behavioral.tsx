@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUserTokens } from '@/hooks/useUserTokens';
+import PremiumNudge from '@/components/PremiumNudge';
 
 interface BehavioralInterview {
   id: string;
@@ -30,6 +32,7 @@ interface BehavioralInterview {
 
 const Behavioral = () => {
   const navigate = useNavigate();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
 
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['behavioral-interviews'],
@@ -199,6 +202,14 @@ const Behavioral = () => {
                   New Practice
                 </Button>
               </div>
+
+              {/* Premium Nudge Banner for Basic Users */}
+              {isBasic && !isLoadingUsage && usageSummary && usageSummary.behavioral.remaining <= 2 && (
+                <PremiumNudge 
+                  variant="behavioral-banner" 
+                  remainingPractices={usageSummary.behavioral.remaining}
+                />
+              )}
 
               {/* Practice Sessions Section */}
               <div className="mb-8">

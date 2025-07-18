@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Crown, User, TrendingUp, MessageSquare } from 'lucide-react';
+import PremiumNudge from './PremiumNudge';
 
 const UsageDisplay = () => {
   const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
@@ -89,6 +90,11 @@ const UsageDisplay = () => {
             <div className="flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-blue-500" />
               <span className="font-medium">Behavioral Interview Practices</span>
+              {!isPremium && (
+                <span className="text-xs text-muted-foreground">
+                  • Build confidence through practice
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
@@ -113,6 +119,11 @@ const UsageDisplay = () => {
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-green-500" />
               <span className="font-medium">Question Vault Generations</span>
+              {!isPremium && (
+                <span className="text-xs text-muted-foreground">
+                  • Get targeted interview questions
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
@@ -131,17 +142,9 @@ const UsageDisplay = () => {
           )}
         </div>
 
-        {/* Upgrade Notice for Basic Users */}
+        {/* Enhanced Premium Nudge for Basic Users */}
         {isBasic && (usageSummary.behavioral.remaining <= 2 || usageSummary.questionVault.remaining === 0) && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-center gap-2 text-blue-800">
-              <Crown className="h-4 w-4" />
-              <span className="font-medium">Approaching Usage Limits</span>
-            </div>
-            <p className="text-sm text-blue-700 mt-1">
-              Upgrade to Premium for unlimited access to all features. No monthly limits, no restrictions.
-            </p>
-          </div>
+          <PremiumNudge variant="usage-enhancement" />
         )}
       </CardContent>
     </Card>
