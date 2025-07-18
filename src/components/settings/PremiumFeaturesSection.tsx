@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Crown, ExternalLink, Loader2 } from 'lucide-react';
+import { TrendingUp, ExternalLink, Loader2 } from 'lucide-react';
 
 interface PremiumFeaturesSectionProps {
   isBasic: boolean;
@@ -40,7 +40,7 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
               </>
             ) : (
               <>
-                <Crown className="h-4 w-4 mr-2" />
+                <TrendingUp className="w-4 h-4 mr-2" />
                 Upgrade to Premium - $0.50/month
               </>
             )}
