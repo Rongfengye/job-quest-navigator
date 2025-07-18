@@ -141,26 +141,20 @@ export const useJobPracticeSubmission = (
       });
 
       if (error) {
-        // Handle usage limit errors specifically
+        // Handle usage limit errors - don't block, let soft gate handle it
         if (error.message?.includes('Usage limit exceeded') || error.message?.includes('429')) {
-          toast({
-            variant: "destructive",
-            title: "Monthly Limit Reached",
-            description: "You've reached your monthly limit for question vault generation. Upgrade to premium for unlimited access."
-          });
+          // Let the UI components handle the soft gate display
+          console.log('Usage limit reached, letting soft gate handle it');
           return;
         }
         
         throw new Error(`Error processing your application: ${error.message}`);
       }
 
-      // Check if the response contains usage limit error
+      // Check if the response contains usage limit error - don't block
       if (data?.error === 'Usage limit exceeded') {
-        toast({
-          variant: "destructive",
-          title: "Monthly Limit Reached",
-          description: data.message || "You've reached your monthly limit for question vault generation."
-        });
+        // Let the UI components handle the soft gate display
+        console.log('Usage limit reached, letting soft gate handle it');
         return;
       }
 

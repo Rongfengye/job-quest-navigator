@@ -228,14 +228,10 @@ export const useBehavioralInterview = () => {
       });
       
       if (error) {
-        // Handle usage limit exceeded error
+        // Handle usage limit exceeded error - don't block, let soft gate handle it
         if (error.message && error.message.includes('Usage limit exceeded')) {
-          toast({
-            variant: "destructive",
-            title: "Monthly limit reached",
-            description: "You've reached your monthly limit for behavioral interview practices. Upgrade to Premium for unlimited access.",
-          });
-          navigate('/behavioral');
+          // Let the UI components handle the soft gate display
+          console.log('Usage limit reached, letting soft gate handle it');
           return null;
         }
         throw new Error(`Error generating question: ${error.message}`);

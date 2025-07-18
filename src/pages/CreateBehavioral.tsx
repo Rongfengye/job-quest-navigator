@@ -11,6 +11,7 @@ import { uploadFile } from '@/hooks/useFileUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useUserTokens } from '@/hooks/useUserTokens';
+import SoftUsageGate from '@/components/SoftUsageGate';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -100,18 +101,12 @@ const CreateBehavioral = () => {
       return;
     }
 
-    // Pre-submission usage validation
+    // Pre-submission usage validation - but allow to proceed for soft gate
     console.log('🔍 Checking usage limits before behavioral interview creation...');
     const usageCheck = await checkUsageLimit('behavioral');
     
-    if (!usageCheck.canProceed) {
-      toast({
-        variant: "destructive",
-        title: "Usage Limit Reached",
-        description: usageCheck.message || "You've reached your monthly limit for behavioral interviews.",
-      });
-      return;
-    }
+    // Don't block here - let the backend handle the soft gate
+    console.log('Usage check result:', usageCheck);
 
     setIsProcessing(true);
 
@@ -204,13 +199,11 @@ const CreateBehavioral = () => {
     } catch (error) {
       console.error('Error during interview creation:', error);
       
-      // Handle usage limit errors specifically
+      // Handle usage limit errors with soft gate
       if (error instanceof Error && error.message.includes('Usage limit exceeded')) {
-        toast({
-          variant: "destructive",
-          title: "Monthly Limit Reached",
-          description: "You've reached your monthly limit for behavioral interviews. Upgrade to premium for unlimited access.",
-        });
+        // Set state to show soft gate instead of hard error
+        setIsProcessing(false);
+        return; // Don't show error toast, let the soft gate handle it
       } else {
         toast({
           variant: "destructive",
@@ -225,6 +218,7 @@ const CreateBehavioral = () => {
 
   // Check if user has reached their behavioral limit
   const hasReachedLimit = usageSummary && !usageSummary.isPremium && usageSummary.behavioral.remaining === 0;
+  const [showSoftGate, setShowSoftGate] = React.useState(false);
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center p-6">
@@ -332,26 +326,25 @@ const CreateBehavioral = () => {
             </div>
           </div>
 
-          {hasReachedLimit ? (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-6 text-center">
-              <div className="flex items-center justify-center gap-2 text-orange-800 mb-3">
-                <Crown className="h-5 w-5" />
-                <span className="text-lg font-semibold">Usage Limit Reached</span>
-              </div>
-              <p className="text-orange-700 mb-4">
-                You've reached your monthly limit of {usageSummary?.behavioral.limit} behavioral interview practices. Upgrade to Premium for unlimited access.
-              </p>
-              <Button
-                onClick={() => navigate('/settings')}
-                className="bg-orange-600 hover:bg-orange-700 text-white"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                Upgrade to Premium
-              </Button>
-            </div>
+          {showSoftGate && hasReachedLimit ? (
+            <SoftUsageGate
+              usageType="behavioral"
+              currentCount={usageSummary?.behavioral.current || 0}
+              limit={usageSummary?.behavioral.limit || 5}
+              onContinue={() => navigate('/settings')}
+              onWaitUntilNextMonth={() => navigate('/behavioral')}
+            />
           ) : (
             <Button 
               type="submit" 
+              onClick={(e) => {
+                if (hasReachedLimit) {
+                  e.preventDefault();
+                  setShowSoftGate(true);
+                  return;
+                }
+                // Continue with normal form submission
+              }}
               className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
             >
               Submit

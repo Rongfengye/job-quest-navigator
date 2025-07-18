@@ -35,7 +35,7 @@ interface PlanStatusContextType {
   isLoadingUsage: boolean;
   fetchUserStatus: () => Promise<void>;
   fetchUsageSummary: () => Promise<void>;
-  checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string }>;
+  checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string; usageInfo?: any }>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
 }
 
@@ -125,16 +125,19 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       const result = data as unknown as UsageCheckResult;
       
-      if (!result.canProceed) {
-        const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
-        const message = result.isPremium 
-          ? 'An error occurred while checking your usage limits.'
-          : `You've reached your monthly limit of ${result.limit} ${usageTypeLabel}. Upgrade to Premium for unlimited access.`;
-        
-        return { canProceed: false, message };
-      }
+      // Always return canProceed: true for soft gates, but include usage info
+      const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
+      const message = result.isPremium 
+        ? 'Unlimited access available'
+        : !result.canProceed 
+          ? `You're about to use all ${result.limit} monthly ${usageTypeLabel}. Keep the momentum going?`
+          : `${result.remaining} ${usageTypeLabel} remaining this month`;
       
-      return { canProceed: true };
+      return { 
+        canProceed: true, // Always allow proceeding for soft gates
+        message,
+        usageInfo: result // Include full usage info for soft gate display
+      };
     } catch (error) {
       console.error('Error checking usage limit:', error);
       return { canProceed: false, message: 'Failed to check usage limits. Please try again.' };

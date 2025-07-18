@@ -15,6 +15,7 @@ import ProcessingModal from '@/components/ProcessingModal';
 import RelatedPracticesList from '@/components/behavioral/RelatedPracticesList';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import PremiumNudge from '@/components/PremiumNudge';
+import SoftUsageGate from '@/components/SoftUsageGate';
 
 interface RelatedPractice {
   id: string;
@@ -40,6 +41,7 @@ const BehavioralFeedback = () => {
   const [isLoadingPractices, setIsLoadingPractices] = useState(false);
   const [canGenerateQuestions, setCanGenerateQuestions] = useState(true);
   const [usageLimitMessage, setUsageLimitMessage] = useState<string>('');
+  const [showQuestionVaultGate, setShowQuestionVaultGate] = useState(false);
 
   const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
 
@@ -85,7 +87,8 @@ const BehavioralFeedback = () => {
       const remaining = usageSummary.questionVault.remaining;
       if (remaining === 0) {
         setCanGenerateQuestions(false);
-        setUsageLimitMessage('You\'ve reached your monthly limit of 1 question vault generation. Upgrade to Premium for unlimited access.');
+        // Don't block with message, use soft gate instead
+        setUsageLimitMessage('');
       } else {
         setCanGenerateQuestions(true);
         setUsageLimitMessage('');
@@ -295,36 +298,32 @@ const BehavioralFeedback = () => {
             </CardContent>
             <CardFooter className="flex flex-col justify-center border-t pt-4">
               {!hasRelatedPractice ? (
-                canGenerateQuestions ? (
+                showQuestionVaultGate && usageSummary ? (
+                  <div className="w-full max-w-md">
+                    <SoftUsageGate
+                      usageType="question_vault"
+                      currentCount={usageSummary.questionVault.current}
+                      limit={usageSummary.questionVault.limit}
+                      onContinue={() => navigate('/settings')}
+                      onWaitUntilNextMonth={() => setShowQuestionVaultGate(false)}
+                    />
+                  </div>
+                ) : (
                   <Button
                     className="w-full max-w-md flex items-center gap-2"
-                    onClick={handleContinueToQuestions}
+                    onClick={(e) => {
+                      if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
+                        e.preventDefault();
+                        setShowQuestionVaultGate(true);
+                        return;
+                      }
+                      handleContinueToQuestions();
+                    }}
                     disabled={isCreatingQuestions}
                   >
                     <BookOpen className="w-4 h-4" />
                     {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual practice questions'}
                   </Button>
-                ) : (
-                  <div className="w-full max-w-md">
-                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
-                      <div className="flex items-center justify-center gap-2 text-orange-800 mb-2">
-                        <Crown className="h-4 w-4" />
-                        <span className="font-medium">Usage Limit Reached</span>
-                      </div>
-                      <p className="text-sm text-orange-700 mb-3">
-                        {usageLimitMessage}
-                      </p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate('/settings')}
-                        className="border-orange-300 text-orange-700 hover:bg-orange-100"
-                      >
-                        <Crown className="w-4 h-4 mr-2" />
-                        Upgrade to Premium
-                      </Button>
-                    </div>
-                  </div>
                 )
               ) : (
                 <div className="w-full max-w-md text-center">
