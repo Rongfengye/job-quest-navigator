@@ -354,27 +354,27 @@ export type Database = {
       storyline_user_monthly_usage: {
         Row: {
           behavioral_practices_count: number
+          billing_cycle_start_date: string
           created_at: string
           id: string
-          month_year: string
           question_vaults_count: number
           updated_at: string
           user_id: string
         }
         Insert: {
           behavioral_practices_count?: number
+          billing_cycle_start_date?: string
           created_at?: string
           id?: string
-          month_year: string
           question_vaults_count?: number
           updated_at?: string
           user_id: string
         }
         Update: {
           behavioral_practices_count?: number
+          billing_cycle_start_date?: string
           created_at?: string
           id?: string
-          month_year?: string
           question_vaults_count?: number
           updated_at?: string
           user_id?: string
