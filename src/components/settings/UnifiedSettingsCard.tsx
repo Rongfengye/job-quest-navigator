@@ -31,7 +31,7 @@ interface UnifiedSettingsCardProps {
   isLoadingUsage: boolean;
   isProcessingCheckout: boolean;
   isLoadingPortal: boolean;
-  tokensLoading: boolean;
+  planStatusLoading: boolean;
   onUpgradeToPremium: () => void;
   onManageSubscription: () => void;
 }
@@ -45,7 +45,7 @@ const UnifiedSettingsCard: React.FC<UnifiedSettingsCardProps> = ({
   isLoadingUsage,
   isProcessingCheckout,
   isLoadingPortal,
-  tokensLoading,
+  planStatusLoading,
   onUpgradeToPremium,
   onManageSubscription
 }) => {
@@ -91,7 +91,7 @@ const UnifiedSettingsCard: React.FC<UnifiedSettingsCardProps> = ({
              isPremium={isPremium}
              isProcessingCheckout={isProcessingCheckout}
              isLoadingPortal={isLoadingPortal}
-             tokensLoading={tokensLoading}
+             planStatusLoading={planStatusLoading}
              subscriptionEnd={subscriptionDetails?.subscription_end}
              cancelAtPeriodEnd={subscriptionDetails?.cancel_at_period_end}
              onUpgradeToPremium={onUpgradeToPremium}

@@ -10,14 +10,14 @@ import ProcessingModal from '@/components/ProcessingModal';
 import { uploadFile } from '@/hooks/useFileUpload';
 import { supabase } from '@/integrations/supabase/client';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import SoftUsageGate from '@/components/SoftUsageGate';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { generateQuestion } = useBehavioralInterview();
-  const { checkUsageLimit, usageSummary } = useUserTokens();
+  const { checkUsageLimit, usageSummary } = usePlanStatus();
   
   const [formData, setFormData] = React.useState({
     jobTitle: '',

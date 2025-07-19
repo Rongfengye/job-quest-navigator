@@ -1,13 +1,12 @@
+import { usePlanStatus as usePlanStatusContext } from '@/context/PlanStatusContext';
 
-import { usePlanStatus } from '@/context/PlanStatusContext';
-
-// Simplified hook that purely consumes the centralized context
-export const useUserTokens = () => {
-  const planStatusContext = usePlanStatus();
+// Clean hook that consumes the centralized plan status context
+export const usePlanStatus = () => {
+  const planStatusContext = usePlanStatusContext();
   
-  // Return a clean interface for backward compatibility plus new usage features
+  // Return a clean interface with updated terminology
   return {
-    tokens: planStatusContext.tokens,
+    planStatus: planStatusContext.planStatus,
     isPremium: planStatusContext.isPremium,
     isBasic: planStatusContext.isBasic,
     isLoading: planStatusContext.isLoading,

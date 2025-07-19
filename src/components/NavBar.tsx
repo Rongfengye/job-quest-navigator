@@ -5,14 +5,14 @@ import { useAuthContext } from '@/context/AuthContext';
 import { LogOut, User, Loader2, LogIn, Crown, AlertTriangle } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import AuthModal from '@/components/auth/AuthModal';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const NavBar = () => {
   const { isAuthenticated, logout, user, isLoading } = useAuthContext();
-  const { tokens, isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus } = useUserTokens();
+  const { planStatus, isPremium, isBasic, isLoading: planStatusLoading, fetchUserStatus } = usePlanStatus();
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
@@ -172,7 +172,7 @@ const NavBar = () => {
                 Logged in as {user?.firstName || 'User'} {user?.lastName || ''}
               </span>
               
-              {tokensLoading ? (
+              {planStatusLoading ? (
                 <Loader2 className="h-4 w-4 ml-2 animate-spin" />
               ) : (
                 <>

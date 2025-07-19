@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { useAnswers } from '@/hooks/useAnswers';
 import { useAnswerFeedback } from '@/hooks/useAnswerFeedback';
 import { useResumeText } from '@/hooks/useResumeText';

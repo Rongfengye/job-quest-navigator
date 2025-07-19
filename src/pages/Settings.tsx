@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { Key, Loader2 } from 'lucide-react';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
 import UnifiedSettingsCard from '@/components/settings/UnifiedSettingsCard';
@@ -20,7 +20,7 @@ const Settings = () => {
   const [searchParams] = useSearchParams();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
-  const { isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus, usageSummary, isLoadingUsage } = useUserTokens();
+  const { isPremium, isBasic, isLoading: planStatusLoading, fetchUserStatus, usageSummary, isLoadingUsage } = usePlanStatus();
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [subscriptionDetails, setSubscriptionDetails] = useState<{
@@ -161,7 +161,7 @@ const Settings = () => {
             isLoadingUsage={isLoadingUsage}
             isProcessingCheckout={isProcessingCheckout}
             isLoadingPortal={isLoadingPortal}
-            tokensLoading={tokensLoading}
+            planStatusLoading={planStatusLoading}
             onUpgradeToPremium={handleUpgradeToPremium}
             onManageSubscription={handleManageSubscription}
           />

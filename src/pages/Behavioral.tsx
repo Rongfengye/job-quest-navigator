@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import PremiumNudge from '@/components/PremiumNudge';
 
 interface BehavioralInterview {
@@ -32,7 +32,7 @@ interface BehavioralInterview {
 
 const Behavioral = () => {
   const navigate = useNavigate();
-  const { usageSummary, isLoadingUsage, isPremium, isBasic, fetchUserStatus } = useUserTokens();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic, fetchUserStatus } = usePlanStatus();
 
   // Phase 3: Smart sync on premium feature entry
   React.useEffect(() => {

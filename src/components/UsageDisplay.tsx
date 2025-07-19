@@ -3,12 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { Crown, User, TrendingUp, MessageSquare, Calendar } from 'lucide-react';
 import PremiumNudge from './PremiumNudge';
 
 const UsageDisplay = () => {
-  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic } = usePlanStatus();
 
   if (isLoadingUsage) {
     return (

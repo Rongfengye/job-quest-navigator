@@ -31,7 +31,7 @@ interface UsageCheckResult {
 }
 
 interface PlanStatusContextType {
-  tokens: number | null;
+  planStatus: number | null;
   isPremium: boolean;
   isBasic: boolean;
   isLoading: boolean;
@@ -55,7 +55,7 @@ interface PlanStatusProviderProps {
 }
 
 export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children }) => {
-  const [tokens, setTokens] = useState<number | null>(null);
+  const [planStatus, setPlanStatus] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
@@ -102,7 +102,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (error) throw error;
       
       console.log('📊 Plan status fetched from database:', data?.user_plan_status);
-      setTokens(data?.user_plan_status ?? null);
+      setPlanStatus(data?.user_plan_status ?? null);
       
     } catch (error) {
       console.error('Error fetching user plan status:', error);
@@ -122,7 +122,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     setIsLoadingUsage(true);
     try {
       // Check if user is premium first to avoid unnecessary usage record creation
-      const currentIsPremium = checkIsPremium(tokens);
+      const currentIsPremium = checkIsPremium(planStatus);
       
       // If user is basic (not premium), ensure they have a usage record before fetching summary
       if (!currentIsPremium) {
@@ -157,7 +157,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     } finally {
       setIsLoadingUsage(false);
     }
-  }, [user?.id, tokens, toast]);
+  }, [user?.id, planStatus, toast]);
 
   const checkUsageLimit = useCallback(async (usageType: 'behavioral' | 'question_vault') => {
     if (!user?.id) {
@@ -229,7 +229,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - clearing token state');
-      setTokens(null);
+      setPlanStatus(null);
       setUsageSummary(null);
       setHasInitializedSession(false);
       return;
@@ -250,11 +250,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     console.log('🪙 Toggling premium status with optimistic update');
     
     // Store current state for potential rollback
-    const previousTokens = tokens;
+    const previousPlanStatus = planStatus;
     
     // Optimistically update UI immediately - toggle between 0 and 1
-    const optimisticNewStatus = tokens === 1 ? 0 : 1;
-    setTokens(optimisticNewStatus);
+    const optimisticNewStatus = planStatus === 1 ? 0 : 1;
+    setPlanStatus(optimisticNewStatus);
     
     // Show optimistic toast immediately
     const isPremium = checkIsPremium(optimisticNewStatus);
@@ -272,7 +272,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       if (error) throw error;
       
       // Update with actual server response
-      setTokens(data ?? 0);
+      setPlanStatus(data ?? 0);
       
       // Refresh usage summary after plan change
       await fetchUsageSummary();
@@ -285,7 +285,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       console.error('Error toggling premium status:', error);
       
       // Rollback optimistic update on error
-      setTokens(previousTokens);
+      setPlanStatus(previousPlanStatus);
       toast({
         variant: "destructive",
         title: "Error updating plan",
@@ -298,11 +298,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   };
 
   // Helper function to check if user is premium
-  const isPremium = checkIsPremium(tokens);
+  const isPremium = checkIsPremium(planStatus);
   const isBasic = !isPremium;
 
   const value: PlanStatusContextType = {
-    tokens,
+    planStatus,
     isPremium,
     isBasic,
     isLoading,

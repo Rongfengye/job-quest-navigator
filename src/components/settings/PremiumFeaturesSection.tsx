@@ -8,7 +8,7 @@ interface PremiumFeaturesSectionProps {
   isPremium: boolean;
   isProcessingCheckout: boolean;
   isLoadingPortal: boolean;
-  tokensLoading: boolean;
+  planStatusLoading: boolean;
   subscriptionEnd?: string | null;
   cancelAtPeriodEnd?: boolean;
   onUpgradeToPremium: () => void;
@@ -20,7 +20,7 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
   isPremium,
   isProcessingCheckout,
   isLoadingPortal,
-  tokensLoading,
+  planStatusLoading,
   subscriptionEnd,
   cancelAtPeriodEnd,
   onUpgradeToPremium,
@@ -61,7 +61,7 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
           {isBasic ? (
             <Button 
               onClick={onUpgradeToPremium}
-              disabled={isProcessingCheckout || tokensLoading}
+              disabled={isProcessingCheckout || planStatusLoading}
               className="flex-1"
               size="lg"
             >
@@ -80,7 +80,7 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
           ) : (
             <Button
               onClick={onManageSubscription}
-              disabled={isLoadingPortal || tokensLoading}
+              disabled={isLoadingPortal || planStatusLoading}
               variant="outline"
               className="flex-1"
               size="lg"

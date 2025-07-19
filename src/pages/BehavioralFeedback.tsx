@@ -13,7 +13,7 @@ import { filterValue } from '@/utils/supabaseTypes';
 import { useJobPracticeSubmission } from '@/hooks/useJobPracticeSubmission';
 import ProcessingModal from '@/components/ProcessingModal';
 import RelatedPracticesList from '@/components/behavioral/RelatedPracticesList';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import PremiumNudge from '@/components/PremiumNudge';
 import SoftUsageGate from '@/components/SoftUsageGate';
 
@@ -43,7 +43,7 @@ const BehavioralFeedback = () => {
   const [usageLimitMessage, setUsageLimitMessage] = useState<string>('');
   const [showQuestionVaultGate, setShowQuestionVaultGate] = useState(false);
 
-  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic } = usePlanStatus();
 
   const interviewId = searchParams.get('id') || location.state?.behavioralId;
   const hasFeedbackInState = !!location.state?.feedback;

@@ -2,7 +2,7 @@
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuestionData } from '@/hooks/useQuestionData';
-import { useUserTokens } from '@/hooks/useUserTokens';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
 import Loading from '@/components/ui/loading';
 import ErrorDisplay from '@/components/ui/error-display';
 import QuestionsList from '@/components/questions/QuestionsList';
@@ -13,7 +13,7 @@ const Questions = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
-  const { fetchUserStatus } = useUserTokens();
+  const { fetchUserStatus } = usePlanStatus();
   
   // Phase 3: Smart sync on premium feature entry
   React.useEffect(() => {
