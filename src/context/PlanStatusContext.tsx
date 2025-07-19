@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { filterValue } from '@/utils/supabaseTypes';
+import { shouldPerformFullSync, checkLocalSubscriptionStatus } from '@/utils/subscriptionUtils';
 
 interface UsageData {
   current: number;
@@ -33,7 +34,7 @@ interface PlanStatusContextType {
   isLoading: boolean;
   usageSummary: UsageSummary | null;
   isLoadingUsage: boolean;
-  fetchUserStatus: () => Promise<void>;
+  fetchUserStatus: (reason?: string) => Promise<void>;
   fetchUsageSummary: () => Promise<void>;
   checkUsageLimit: (usageType: 'behavioral' | 'question_vault') => Promise<{ canProceed: boolean; message?: string; usageInfo?: any }>;
   togglePremium: () => Promise<{ success: boolean; isPremium?: boolean; balance?: number; error?: any }>;
@@ -55,14 +56,40 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const [isLoading, setIsLoading] = useState(false);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
+  const [hasInitializedSession, setHasInitializedSession] = useState(false);
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuthContext();
 
-  const fetchUserStatus = useCallback(async () => {
+  // Enhanced fetchUserStatus with smart sync logic
+  const fetchUserStatus = useCallback(async (reason: string = 'manual') => {
     if (!user?.id) return;
     
+    console.log(`📊 fetchUserStatus called with reason: ${reason}`);
     setIsLoading(true);
+    
     try {
+      // Determine if we need full Stripe sync or can use local data
+      const needsFullSync = await shouldPerformFullSync(user.id, reason);
+      
+      if (needsFullSync) {
+        console.log(`🔄 Performing full Stripe sync for reason: ${reason}`);
+        
+        // Call the Stripe sync function
+        const { data: syncData, error: syncError } = await supabase.functions.invoke('stripe-subscription-manager', {
+          body: { action: 'SYNC_SUBSCRIPTION' },
+        });
+
+        if (syncError) {
+          console.error('Stripe sync error:', syncError);
+          // Fall back to local data on sync error
+        } else {
+          console.log('✅ Stripe sync completed successfully');
+        }
+      } else {
+        console.log(`⚡ Using local subscription data for reason: ${reason}`);
+      }
+      
+      // Always fetch the current plan status from hireme_user_status
       const { data, error } = await supabase
         .from('hireme_user_status')
         .select('user_plan_status')
@@ -73,6 +100,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       console.log('📊 Plan status fetched from database:', data?.user_plan_status);
       setTokens(data?.user_plan_status ?? null);
+      
     } catch (error) {
       console.error('Error fetching user plan status:', error);
       toast({
@@ -144,20 +172,24 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
   }, [user?.id]);
 
-  // Only fetch tokens on initial authentication - no continuous polling
+  // Initial authentication handling with session tracking
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - clearing token state');
       setTokens(null);
       setUsageSummary(null);
+      setHasInitializedSession(false);
       return;
     }
     
-    // Initial fetch when user is authenticated
-    console.log('👤 User authenticated - fetching initial plan status and usage');
-    fetchUserStatus();
-    fetchUsageSummary();
-  }, [isAuthenticated, user?.id, fetchUserStatus, fetchUsageSummary]);
+    // App initialization sync - only once per session
+    if (!hasInitializedSession) {
+      console.log('🚀 App initialization - performing critical sync');
+      setHasInitializedSession(true);
+      fetchUserStatus('app_initialization');
+      fetchUsageSummary();
+    }
+  }, [isAuthenticated, user?.id, hasInitializedSession, fetchUserStatus, fetchUsageSummary]);
 
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };

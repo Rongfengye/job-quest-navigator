@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useAuthContext } from '@/context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useUserTokens } from '@/hooks/useUserTokens';
 import { Key, Loader2 } from 'lucide-react';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
@@ -17,6 +17,7 @@ const Settings = () => {
   const { logout, user } = useAuthContext();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   
   const { isPremium, isBasic, isLoading: tokensLoading, fetchUserStatus, usageSummary, isLoadingUsage } = useUserTokens();
@@ -36,9 +37,16 @@ const Settings = () => {
   };
 
   useEffect(() => {
+    // Check if user returned from Stripe Portal
+    const returnedFromStripe = searchParams.get('from') === 'stripe';
+    
     const verifySubscription = async () => {
       setIsVerifyingSubscription(true);
       try {
+        // Use the new smart sync logic - critical sync point for Stripe portal return
+        const syncReason = returnedFromStripe ? 'stripe_portal_return' : 'settings_page_load';
+        console.log(`🔄 Settings page verification with reason: ${syncReason}`);
+        
         const { data, error } = await supabase.functions.invoke('stripe-subscription-manager', {
           body: { action: 'SYNC_SUBSCRIPTION' },
         });
@@ -52,8 +60,15 @@ const Settings = () => {
           });
         }
 
-        // Refresh user status to ensure UI is in sync
-        await fetchUserStatus();
+        // Refresh user status with the appropriate reason
+        await fetchUserStatus(syncReason);
+        
+        if (returnedFromStripe) {
+          toast({
+            title: "Subscription Updated",
+            description: "Your subscription status has been refreshed."
+          });
+        }
       } catch (error) {
         console.error('Error verifying subscription:', error);
         toast({
@@ -67,7 +82,7 @@ const Settings = () => {
     };
 
     verifySubscription();
-  }, [fetchUserStatus, toast]);
+  }, [fetchUserStatus, toast, searchParams]);
 
   const handleUpgradeToPremium = async () => {
     setIsProcessingCheckout(true);
@@ -75,7 +90,7 @@ const Settings = () => {
       const { data, error } = await supabase.functions.invoke('stripe-subscription-manager', {
         body: { 
           action: 'CREATE_CHECKOUT',
-          success_url: '/behavioral',
+          success_url: '/settings?from=stripe',
           cancel_url: '/settings'
         },
       });
