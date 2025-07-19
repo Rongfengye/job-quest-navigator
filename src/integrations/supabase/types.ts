@@ -508,6 +508,10 @@ export type Database = {
         Args: { user_id: string; amount: number }
         Returns: number
       }
+      ensure_user_usage_record: {
+        Args: { user_id: string }
+        Returns: Json
+      }
       get_user_monthly_usage_summary: {
         Args: { user_id: string }
         Returns: Json
