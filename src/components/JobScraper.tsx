@@ -93,11 +93,18 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       setIsLoading(true);
       console.log("Starting scrape for URL:", url);
 
-      // Try using Firecrawl edge function first
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Scraping timeout')), 3000);
+      });
+
+      // Try using Firecrawl edge function first with timeout
       try {
-        const { data, error } = await supabase.functions.invoke('storyline-firecrawl-scraper', {
+        const scrapePromise = supabase.functions.invoke('storyline-firecrawl-scraper', {
           body: { url }
         });
+
+        const { data, error } = await Promise.race([scrapePromise, timeoutPromise]) as any;
 
         if (error) {
           console.error('Edge function error:', error);
@@ -126,9 +133,10 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       } catch (firecrawlError) {
         console.warn('Firecrawl failed, trying fallback method:', firecrawlError);
         
-        // Fallback to simple CORS proxy scraping
+        // Fallback to simple CORS proxy scraping with timeout
         try {
-          const fallbackResult = await fallbackScrape(url);
+          const fallbackPromise = fallbackScrape(url);
+          const fallbackResult = await Promise.race([fallbackPromise, timeoutPromise]) as any;
           
           if (fallbackResult.jobDescription) {
             onScrapedContent(fallbackResult.jobDescription);
@@ -145,15 +153,28 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           return;
         } catch (fallbackError) {
           console.error('Both scraping methods failed:', fallbackError);
-          throw new Error('Unable to scrape this URL. This may be due to JavaScript requirements or access restrictions.');
+          
+          // Show specific message for timeout or scraping failure
+          const isTimeout = fallbackError instanceof Error && fallbackError.message === 'Scraping timeout';
+          
+          toast({
+            title: "Website Cannot Be Scraped",
+            description: isTimeout 
+              ? "Scraping timed out after 3 seconds. Please manually copy and paste the job description."
+              : "This website blocks automated scraping. Please manually copy and paste the job description.",
+            variant: "destructive",
+            duration: 5000,
+          });
+          return;
         }
       }
     } catch (err) {
       console.error('Error scraping website:', err);
       toast({
-        title: "Scraping Failed",
-        description: err instanceof Error ? err.message : 'Error scraping website',
+        title: "Website Cannot Be Scraped", 
+        description: "Please manually copy and paste the job description from the website.",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setIsLoading(false);
