@@ -54,7 +54,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
     let jobDescription = contentContainer.textContent || '';
     jobDescription = jobDescription.replace(/\s+/g, ' ').trim();
     
-    // Extract company info using the existing logic
+    // Extract company info
     const companySelectors = [
       '[data-testid="company-name"]',
       '.company-name',
@@ -93,7 +93,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       setIsLoading(true);
       console.log("Starting scrape for URL:", url);
 
-      // First try using Firecrawl edge function
+      // Try using Firecrawl edge function first
       try {
         const { data, error } = await supabase.functions.invoke('storyline-firecrawl-scraper', {
           body: { url }
@@ -117,7 +117,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
           toast({
             title: "Job Scraped Successfully",
-            description: "Successfully extracted job information using advanced scraping",
+            description: "Successfully extracted job information using Firecrawl",
           });
           return;
         } else {

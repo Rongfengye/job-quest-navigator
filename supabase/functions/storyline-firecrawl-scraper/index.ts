@@ -1,5 +1,5 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,6 +50,7 @@ serve(async (req) => {
 
     const firecrawlApiKey = Deno.env.get('FIRECRAWL_API_KEY');
     if (!firecrawlApiKey) {
+      console.error('FIRECRAWL_API_KEY environment variable not found');
       return new Response(
         JSON.stringify({ success: false, error: 'Firecrawl API key not configured' }),
         { 
@@ -60,6 +61,7 @@ serve(async (req) => {
     }
 
     console.log(`Scraping URL: ${url}`);
+    console.log('Using Firecrawl API key:', firecrawlApiKey.substring(0, 10) + '...');
 
     // Call Firecrawl API
     const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -73,7 +75,7 @@ serve(async (req) => {
         formats: ['markdown', 'html'],
         includeTags: ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'div', 'span', 'article', 'section'],
         excludeTags: ['script', 'style', 'nav', 'footer', 'header', 'aside'],
-        waitFor: 3000, // Wait 3 seconds for dynamic content
+        waitFor: 3000,
       }),
     });
 
@@ -81,7 +83,7 @@ serve(async (req) => {
       const errorText = await firecrawlResponse.text();
       console.error('Firecrawl API error:', errorText);
       return new Response(
-        JSON.stringify({ success: false, error: `Firecrawl API error: ${firecrawlResponse.status}` }),
+        JSON.stringify({ success: false, error: `Firecrawl API error: ${firecrawlResponse.status} - ${errorText}` }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500 
@@ -90,6 +92,7 @@ serve(async (req) => {
     }
 
     const firecrawlData: FirecrawlResponse = await firecrawlResponse.json();
+    console.log('Firecrawl response:', JSON.stringify(firecrawlData, null, 2));
 
     if (!firecrawlData.success || !firecrawlData.data) {
       return new Response(
@@ -106,7 +109,6 @@ serve(async (req) => {
     // Extract job description from markdown (preferred) or HTML
     let jobDescription = '';
     if (markdown) {
-      // Clean up markdown and extract main content
       jobDescription = markdown
         .replace(/#{1,6}\s/g, '') // Remove markdown headers
         .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
@@ -117,32 +119,13 @@ serve(async (req) => {
         .trim();
     } else if (html) {
       // Parse HTML and extract text content
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // Try to find job description containers
-      const jobDescSelectors = [
-        '[data-testid="jobDescriptionText"]',
-        '[data-automation="jobDescription"]',
-        '.job-description',
-        '.description',
-        'article',
-        'main',
-        '.content'
-      ];
-      
-      let contentElement = null;
-      for (const selector of jobDescSelectors) {
-        contentElement = doc.querySelector(selector);
-        if (contentElement) break;
-      }
-      
-      if (!contentElement) {
-        contentElement = doc.body;
-      }
-      
-      jobDescription = contentElement?.textContent || '';
-      jobDescription = jobDescription.replace(/\s+/g, ' ').trim();
+      const cleanHtml = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      jobDescription = cleanHtml;
     }
 
     // Extract company information
@@ -150,39 +133,15 @@ serve(async (req) => {
     let companyDescription = '';
 
     if (metadata) {
-      // Try to get company name from metadata
       companyName = metadata.ogTitle || metadata.title || '';
       companyDescription = metadata.ogDescription || metadata.description || '';
       
       // Clean company name from job title patterns
       if (companyName) {
-        // Remove common job posting patterns
         companyName = companyName
           .replace(/\s*-\s*.*(job|position|role|career|hiring).*$/i, '')
           .replace(/^.*(at|@)\s+/i, '')
           .trim();
-      }
-    }
-
-    // If we couldn't get company info from metadata, try parsing from content
-    if (!companyName && html) {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      const companySelectors = [
-        '[data-testid="company-name"]',
-        '.company-name',
-        '[itemprop="hiringOrganization"]',
-        '.organization',
-        '.employer'
-      ];
-      
-      for (const selector of companySelectors) {
-        const element = doc.querySelector(selector);
-        if (element?.textContent?.trim()) {
-          companyName = element.textContent.trim();
-          break;
-        }
       }
     }
 
