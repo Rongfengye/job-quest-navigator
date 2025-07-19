@@ -9,6 +9,8 @@ interface PremiumFeaturesSectionProps {
   isProcessingCheckout: boolean;
   isLoadingPortal: boolean;
   tokensLoading: boolean;
+  subscriptionEnd?: string | null;
+  cancelAtPeriodEnd?: boolean;
   onUpgradeToPremium: () => void;
   onManageSubscription: () => void;
 }
@@ -19,9 +21,18 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
   isProcessingCheckout,
   isLoadingPortal,
   tokensLoading,
+  subscriptionEnd,
+  cancelAtPeriodEnd,
   onUpgradeToPremium,
   onManageSubscription
 }) => {
+  const formatExpirationDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
   return (
     <div className="space-y-4">
       {/* Premium Features Info - Always show for context */}
@@ -34,6 +45,16 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
           <li>• Unlimited tailored question generations</li>
           <li>• Priority support to any feedback or concerns you have</li>
         </ul>
+        
+        {/* Phase 2: Enhanced subscription details */}
+        {isPremium && subscriptionEnd && (
+          <div className="text-sm text-blue-700 mb-4 p-2 bg-blue-100 rounded">
+            <p>
+              <strong>Subscription expires:</strong> {formatExpirationDate(subscriptionEnd)}
+              {cancelAtPeriodEnd && <span className="text-orange-600"> (will not renew)</span>}
+            </p>
+          </div>
+        )}
         
         {/* Action Buttons inside the features box */}
         <div className="flex flex-col sm:flex-row gap-3">

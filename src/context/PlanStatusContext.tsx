@@ -144,6 +144,19 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     }
     
     try {
+      // Phase 2: Check local subscription data first for faster premium checks
+      const localStatus = await checkLocalSubscriptionStatus(user.id);
+      if (localStatus && !localStatus.isExpired && !localStatus.needsSync) {
+        // User has active subscription locally, skip DB call
+        const usageTypeLabel = usageType === 'behavioral' ? 'behavioral interview practices' : 'question vault generations';
+        return { 
+          canProceed: true,
+          message: 'Unlimited access available',
+          usageInfo: { isPremium: true, currentCount: 0, limit: -1, remaining: -1, canProceed: true }
+        };
+      }
+
+      // Fall back to full usage check if local data suggests basic user or needs sync
       const { data, error } = await supabase.rpc('check_user_monthly_usage', {
         user_id: user.id,
         usage_type: usageType
@@ -171,6 +184,25 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       return { canProceed: false, message: 'Failed to check usage limits. Please try again.' };
     }
   }, [user?.id]);
+
+  // Phase 2: Daily expiration check
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const checkDailyExpiration = async () => {
+      const localStatus = await checkLocalSubscriptionStatus(user.id);
+      if (localStatus?.isExpired && localStatus?.cancelAtPeriodEnd) {
+        console.log('📅 Daily check: subscription expired and set to cancel');
+        fetchUserStatus('daily_expiration_check');
+      }
+    };
+
+    // Check immediately and then every hour
+    checkDailyExpiration();
+    const intervalId = setInterval(checkDailyExpiration, 60 * 60 * 1000); // 1 hour
+
+    return () => clearInterval(intervalId);
+  }, [user?.id, fetchUserStatus]);
 
   // Initial authentication handling with session tracking
   useEffect(() => {

@@ -32,7 +32,12 @@ interface BehavioralInterview {
 
 const Behavioral = () => {
   const navigate = useNavigate();
-  const { usageSummary, isLoadingUsage, isPremium, isBasic } = useUserTokens();
+  const { usageSummary, isLoadingUsage, isPremium, isBasic, fetchUserStatus } = useUserTokens();
+
+  // Phase 3: Smart sync on premium feature entry
+  React.useEffect(() => {
+    fetchUserStatus('behavioral_page_entry');
+  }, [fetchUserStatus]);
 
   const { data: interviews, isLoading } = useQuery({
     queryKey: ['behavioral-interviews'],

@@ -25,6 +25,7 @@ interface UnifiedSettingsCardProps {
   subscriptionDetails?: {
     subscription_tier?: string;
     subscription_end?: string;
+    cancel_at_period_end?: boolean;
   } | null;
   usageSummary: UsageSummary | null;
   isLoadingUsage: boolean;
@@ -85,15 +86,17 @@ const UnifiedSettingsCard: React.FC<UnifiedSettingsCardProps> = ({
           <h3 className="text-lg font-semibold mb-4">
             {isPremium ? 'Subscription Management' : 'Upgrade Your Experience'}
           </h3>
-          <PremiumFeaturesSection
-            isBasic={isBasic}
-            isPremium={isPremium}
-            isProcessingCheckout={isProcessingCheckout}
-            isLoadingPortal={isLoadingPortal}
-            tokensLoading={tokensLoading}
-            onUpgradeToPremium={onUpgradeToPremium}
-            onManageSubscription={onManageSubscription}
-          />
+           <PremiumFeaturesSection
+             isBasic={isBasic}
+             isPremium={isPremium}
+             isProcessingCheckout={isProcessingCheckout}
+             isLoadingPortal={isLoadingPortal}
+             tokensLoading={tokensLoading}
+             subscriptionEnd={subscriptionDetails?.subscription_end}
+             cancelAtPeriodEnd={subscriptionDetails?.cancel_at_period_end}
+             onUpgradeToPremium={onUpgradeToPremium}
+             onManageSubscription={onManageSubscription}
+           />
         </div>
       </CardContent>
     </Card>
