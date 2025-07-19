@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface JobScraperProps {
   onScrapedContent: (content: string) => void;
@@ -20,9 +21,41 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
     setUrl(e.target.value);
   };
 
-  const findCompanyInfo = (doc: Document) => {
-    // Common selectors for company information
-    const companyNameSelectors = [
+  // Fallback scraping function for when Firecrawl fails
+  const fallbackScrape = async (url: string) => {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    console.log("Using fallback scraping for URL:", proxyUrl);
+    
+    const response = await fetch(proxyUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.text();
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(data, 'text/html');
+    
+    // Extract job description
+    const possibleContainers = [
+      doc.querySelector('.job-description'),
+      doc.querySelector('[data-automation="jobDescription"]'),
+      doc.querySelector('[data-testid="jobDescriptionText"]'),
+      doc.querySelector('.description'),
+      doc.querySelector('article'),
+      doc.querySelector('main'),
+      doc.querySelector('body')
+    ];
+    
+    const contentContainer = possibleContainers.find(container => container !== null);
+    if (!contentContainer) {
+      throw new Error('Could not extract job description from the page');
+    }
+    
+    let jobDescription = contentContainer.textContent || '';
+    jobDescription = jobDescription.replace(/\s+/g, ' ').trim();
+    
+    // Extract company info using the existing logic
+    const companySelectors = [
       '[data-testid="company-name"]',
       '.company-name',
       '[itemprop="hiringOrganization"]',
@@ -30,41 +63,20 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       'meta[property="og:site_name"]',
     ];
 
-    const companyDescriptionSelectors = [
-      '[data-testid="company-description"]',
-      '.company-description',
-      '[itemprop="description"]',
-      '.organization-description',
-      'meta[name="description"]',
-    ];
-
     let companyName = '';
-    let companyDescription = '';
-
-    // Try to find company name
-    for (const selector of companyNameSelectors) {
+    for (const selector of companySelectors) {
       const element = doc.querySelector(selector);
       if (element) {
         companyName = element instanceof HTMLMetaElement ? element.content : element.textContent || '';
         if (companyName.trim()) break;
       }
     }
-
-    // Try to find company description
-    for (const selector of companyDescriptionSelectors) {
-      const element = doc.querySelector(selector);
-      if (element) {
-        companyDescription = element instanceof HTMLMetaElement ? element.content : element.textContent || '';
-        if (companyDescription.trim()) break;
-      }
-    }
-
-    // Clean up the text
-    companyName = companyName.trim();
-    companyDescription = companyDescription.trim();
-
-    console.log("Found company info:", { companyName, companyDescription });
-    return { companyName, companyDescription };
+    
+    return {
+      jobDescription,
+      companyName: companyName.trim(),
+      companyDescription: ''
+    };
   };
 
   const handleScrape = async () => {
@@ -79,68 +91,62 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
     try {
       setIsLoading(true);
+      console.log("Starting scrape for URL:", url);
 
-      // Use a CORS proxy to bypass CORS restrictions
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-      console.log("Fetching URL:", proxyUrl);
-      const response = await fetch(proxyUrl);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch URL: ${response.status} ${response.statusText}`);
-      }
+      // First try using Firecrawl edge function
+      try {
+        const { data, error } = await supabase.functions.invoke('storyline-firecrawl-scraper', {
+          body: { url }
+        });
 
-      const data = await response.text();
-      console.log("Fetched data length:", data.length);
-      
-      // Extract the main content by removing HTML tags and normalizing whitespace
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(data, 'text/html');
-      
-      // Try to find the job description content
-      const possibleContainers = [
-        doc.querySelector('.job-description'),
-        doc.querySelector('[data-automation="jobDescription"]'),
-        doc.querySelector('[data-testid="jobDescriptionText"]'),
-        doc.querySelector('.description'),
-        doc.querySelector('article'),
-        doc.querySelector('main'),
-        doc.querySelector('body')
-      ];
-      
-      const contentContainer = possibleContainers.find(container => container !== null);
-      
-      if (contentContainer) {
-        let jobDescription = contentContainer.textContent || '';
-        jobDescription = jobDescription
-          .replace(/\s+/g, ' ')
-          .trim();
-        
-        console.log("Extracted job description:", jobDescription.substring(0, 100) + "...");
-        
-        // Pass the scraped content to the parent component
-        if (jobDescription) {
-          onScrapedContent(jobDescription);
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(`Scraping service error: ${error.message}`);
         }
 
-        // Find and pass company information if the callback exists
-        if (onCompanyInfoFound) {
-          const { companyName, companyDescription } = findCompanyInfo(doc);
-          if (companyName || companyDescription) {
-            onCompanyInfoFound(companyName, companyDescription);
-            // toast({
-            //   title: "Company Information Found",
-            //   description: "Successfully extracted company details",
-            // });
+        if (data?.success) {
+          console.log("Firecrawl scraping successful");
+          
+          if (data.jobDescription) {
+            onScrapedContent(data.jobDescription);
           }
+
+          if (onCompanyInfoFound && (data.companyName || data.companyDescription)) {
+            onCompanyInfoFound(data.companyName || '', data.companyDescription || '');
+          }
+
+          toast({
+            title: "Job Scraped Successfully",
+            description: "Successfully extracted job information using advanced scraping",
+          });
+          return;
+        } else {
+          throw new Error(data?.error || 'Firecrawl scraping failed');
         }
+      } catch (firecrawlError) {
+        console.warn('Firecrawl failed, trying fallback method:', firecrawlError);
         
-        // toast({
-        //   title: "Job Description Scraped",
-        //   description: "Successfully extracted job description from URL",
-        // });
-      } else {
-        console.error("No content container found");
-        throw new Error('Could not extract job description from the page');
+        // Fallback to simple CORS proxy scraping
+        try {
+          const fallbackResult = await fallbackScrape(url);
+          
+          if (fallbackResult.jobDescription) {
+            onScrapedContent(fallbackResult.jobDescription);
+          }
+
+          if (onCompanyInfoFound && fallbackResult.companyName) {
+            onCompanyInfoFound(fallbackResult.companyName, fallbackResult.companyDescription);
+          }
+
+          toast({
+            title: "Job Scraped (Fallback)",
+            description: "Successfully extracted job information using basic scraping",
+          });
+          return;
+        } catch (fallbackError) {
+          console.error('Both scraping methods failed:', fallbackError);
+          throw new Error('Unable to scrape this URL. This may be due to JavaScript requirements or access restrictions.');
+        }
       }
     } catch (err) {
       console.error('Error scraping website:', err);

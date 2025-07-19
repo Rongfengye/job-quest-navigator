@@ -31,5 +31,9 @@ name = "storyline-question-vault-prep"
 verify_jwt = true
 
 [[functions]]
+name = "storyline-firecrawl-scraper"
+verify_jwt = true
+
+[[functions]]
 name = "stripe-subscription-manager"
 verify_jwt = true
