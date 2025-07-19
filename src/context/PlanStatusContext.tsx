@@ -121,6 +121,24 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     setIsLoadingUsage(true);
     try {
+      // Check if user is premium first to avoid unnecessary usage record creation
+      const currentIsPremium = checkIsPremium(tokens);
+      
+      // If user is basic (not premium), ensure they have a usage record before fetching summary
+      if (!currentIsPremium) {
+        console.log('👤 Basic user detected - ensuring usage record exists');
+        const { data: ensureData, error: ensureError } = await supabase.rpc('ensure_user_usage_record', {
+          user_id: user.id
+        });
+        
+        if (ensureError) {
+          console.warn('Warning: Could not ensure usage record:', ensureError);
+          // Continue with summary fetch anyway - the get_user_monthly_usage_summary function has its own fallbacks
+        } else {
+          console.log('✅ Usage record ensured:', ensureData);
+        }
+      }
+      
       const { data, error } = await supabase.rpc('get_user_monthly_usage_summary', {
         user_id: user.id
       });
@@ -139,7 +157,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     } finally {
       setIsLoadingUsage(false);
     }
-  }, [user?.id, toast]);
+  }, [user?.id, tokens, toast]);
 
   const checkUsageLimit = useCallback(async (usageType: 'behavioral' | 'question_vault') => {
     if (!user?.id) {
