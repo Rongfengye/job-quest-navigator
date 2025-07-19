@@ -30,10 +30,9 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
           {isPremium ? 'Your Premium Features:' : 'Premium Features Include:'}
         </h4>
         <ul className="text-sm text-blue-800 space-y-1 mb-4">
-          <li>• Unlimited behavioral interview practices</li>
-          <li>• Unlimited question vault generations</li>
-          <li>• Priority support</li>
-          <li>• Advanced feedback and insights</li>
+          <li>• Unlimited behavioral interviews practice</li>
+          <li>• Unlimited tailored question generations</li>
+          <li>• Priority Support to any feedback or concerns you have</li>
         </ul>
         
         {/* Action Buttons inside the features box */}
