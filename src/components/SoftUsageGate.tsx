@@ -29,14 +29,14 @@ const SoftUsageGate: React.FC<SoftUsageGateProps> = ({
       title: "You're on fire!",
       description: `You've completed all ${limit} monthly behavioral interview practices.`,
       feature: 'behavioral interview sessions',
-      waitMessage: 'Your usage resets on the 1st of next month'
+      waitMessage: 'Your usage resets on your next billing cycle'
     },
     question_vault: {
       emoji: '🚀',
       title: "Amazing progress!",
       description: `You've used your ${limit} monthly question vault generation.`,
       feature: 'question vault generations',
-      waitMessage: 'Your usage resets on the 1st of next month'
+      waitMessage: 'Your usage resets on your next billing cycle'
     }
   };
 

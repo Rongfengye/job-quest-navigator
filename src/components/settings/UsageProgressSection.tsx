@@ -2,7 +2,7 @@
 import React from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { MessageSquare, TrendingUp } from 'lucide-react';
+import { MessageSquare, TrendingUp, Calendar } from 'lucide-react';
 import PremiumNudge from '@/components/PremiumNudge';
 
 interface UsageData {
@@ -15,6 +15,9 @@ interface UsageSummary {
   isPremium: boolean;
   behavioral: UsageData;
   questionVault: UsageData;
+  billingCycleStart?: string;
+  nextResetDate?: string;
+  hasActiveTracking?: boolean;
 }
 
 interface UsageProgressSectionProps {
@@ -62,12 +65,34 @@ const UsageProgressSection: React.FC<UsageProgressSectionProps> = ({
     return `${current} / ${limit}`;
   };
 
+  const formatResetDate = (dateString?: string) => {
+    if (!dateString || isPremium) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Usage resets info */}
-      <p className="text-sm text-muted-foreground">
-        Your usage resets on the 1st of each month
-      </p>
+      <div className="text-sm text-muted-foreground space-y-1">
+        <p>
+          {isPremium ? 'You have unlimited usage with Premium' : 'Your monthly limits reset on your billing cycle date'}
+        </p>
+        {!isPremium && usageSummary?.nextResetDate && (
+          <p className="flex items-center gap-1 text-xs">
+            <Calendar className="h-3 w-3" />
+            Next reset: {formatResetDate(usageSummary.nextResetDate)}
+          </p>
+        )}
+      </div>
 
       {/* Behavioral Interview Practices */}
       <div className="space-y-2">

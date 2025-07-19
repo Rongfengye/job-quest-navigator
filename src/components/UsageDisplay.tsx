@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { useUserTokens } from '@/hooks/useUserTokens';
-import { Crown, User, TrendingUp, MessageSquare } from 'lucide-react';
+import { Crown, User, TrendingUp, MessageSquare, Calendar } from 'lucide-react';
 import PremiumNudge from './PremiumNudge';
 
 const UsageDisplay = () => {
@@ -51,6 +51,20 @@ const UsageDisplay = () => {
     return `${current} / ${limit}`;
   };
 
+  const formatResetDate = (dateString?: string) => {
+    if (!dateString || isPremium) return null;
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      });
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -60,8 +74,20 @@ const UsageDisplay = () => {
               <TrendingUp className="h-5 w-5" />
               Monthly Usage
             </CardTitle>
-            <CardDescription>
-              Your usage resets on the 1st of each month
+            <CardDescription className="flex flex-col gap-1">
+              {isPremium ? (
+                'Unlimited usage with Premium'
+              ) : (
+                <>
+                  <span>Your monthly limits reset on your billing cycle date</span>
+                  {usageSummary?.nextResetDate && (
+                    <span className="flex items-center gap-1 text-xs">
+                      <Calendar className="h-3 w-3" />
+                      Next reset: {formatResetDate(usageSummary.nextResetDate)}
+                    </span>
+                  )}
+                </>
+              )}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">

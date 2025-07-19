@@ -16,6 +16,9 @@ interface UsageSummary {
   isPremium: boolean;
   behavioral: UsageData;
   questionVault: UsageData;
+  billingCycleStart?: string;
+  nextResetDate?: string;
+  hasActiveTracking?: boolean;
 }
 
 interface UsageCheckResult {
