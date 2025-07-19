@@ -95,7 +95,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
       // Create a timeout promise
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Scraping timeout')), 20000);
+        setTimeout(() => reject(new Error('Scraping timeout')), 10000);
       });
 
       // Try using Firecrawl edge function first with timeout
