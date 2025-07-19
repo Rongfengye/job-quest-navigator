@@ -75,7 +75,7 @@ serve(async (req) => {
         formats: ['markdown', 'html'],
         includeTags: ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'div', 'span', 'article', 'section'],
         excludeTags: ['script', 'style', 'nav', 'footer', 'header', 'aside'],
-        waitFor: 3000,
+        waitFor: 1000,
       }),
     });
 
