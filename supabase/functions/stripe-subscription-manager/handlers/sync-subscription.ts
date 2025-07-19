@@ -1,3 +1,4 @@
+
 import Stripe from "https://esm.sh/stripe@14.21.0";
 
 // Helper logging function for enhanced debugging
@@ -58,10 +59,12 @@ export async function handleSyncSubscription(stripe: Stripe, supabase: any, user
     logStep("Active subscription found", subscriptionData);
 
     // Update user to premium plan
-    await supabase.rpc('make_user_premium', { user_id: user.id });
+    logStep("Calling make_user_premium function", { userId: user.id });
+    const premiumResult = await supabase.rpc('make_user_premium', { user_id: user.id });
+    logStep("make_user_premium result", { result: premiumResult });
 
-    // Upsert subscription data
-    await supabase.from("stripe_subscriptions").upsert({
+    // Prepare upsert data
+    const upsertData = {
       user_id: user.id,
       stripe_customer_id: customerId,
       stripe_subscription_id: subscription.id,
@@ -70,7 +73,50 @@ export async function handleSyncSubscription(stripe: Stripe, supabase: any, user
       current_period_end: subscriptionData.current_period_end,
       cancel_at_period_end: subscription.cancel_at_period_end,
       updated_at: new Date().toISOString(),
-    }, { onConflict: 'user_id' });
+    };
+    
+    logStep("Attempting to upsert subscription data", { upsertData });
+
+    // Upsert subscription data with detailed error handling
+    try {
+      const { data: upsertResult, error: upsertError } = await supabase
+        .from("stripe_subscriptions")
+        .upsert(upsertData, { onConflict: 'user_id' });
+      
+      if (upsertError) {
+        logStep("ERROR during stripe_subscriptions upsert", { 
+          error: upsertError,
+          errorMessage: upsertError.message,
+          errorCode: upsertError.code,
+          errorDetails: upsertError.details,
+          errorHint: upsertError.hint 
+        });
+      } else {
+        logStep("Successfully upserted subscription data", { result: upsertResult });
+      }
+
+      // Double-check: Query the table to see if the record exists
+      const { data: checkData, error: checkError } = await supabase
+        .from("stripe_subscriptions")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (checkError) {
+        logStep("ERROR checking stripe_subscriptions table after upsert", { 
+          error: checkError,
+          errorMessage: checkError.message 
+        });
+      } else {
+        logStep("Verification: Found subscription record in database", { record: checkData });
+      }
+
+    } catch (dbError) {
+      logStep("EXCEPTION during database operations", { 
+        error: dbError,
+        errorMessage: dbError instanceof Error ? dbError.message : String(dbError)
+      });
+    }
   } else {
     logStep("No active subscription found");
     
@@ -86,4 +132,4 @@ export async function handleSyncSubscription(stripe: Stripe, supabase: any, user
     headers: { ...corsHeaders, "Content-Type": "application/json" },
     status: 200,
   });
-} 
+}
