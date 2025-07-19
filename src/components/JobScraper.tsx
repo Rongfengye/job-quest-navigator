@@ -95,7 +95,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
       // Create a timeout promise
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Scraping timeout')), 3000);
+        setTimeout(() => reject(new Error('Scraping timeout')), 5000);
       });
 
       // Try using Firecrawl edge function first with timeout
@@ -160,7 +160,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           toast({
             title: "Website Cannot Be Scraped",
             description: isTimeout 
-              ? "Scraping timed out after 3 seconds. Please manually copy and paste the job description."
+              ? "Scraping timed out after 5 seconds. Please manually copy and paste the job description."
               : "This website blocks automated scraping. Please manually copy and paste the job description.",
             variant: "destructive",
             duration: 5000,
