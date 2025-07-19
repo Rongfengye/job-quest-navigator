@@ -72,7 +72,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         url: url,
-        formats: ['markdown', 'html'],
+        formats: ['markdown'],
         includeTags: ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'div', 'span', 'article', 'section'],
         excludeTags: ['script', 'style', 'nav', 'footer', 'header', 'aside'],
         waitFor: 1000,
