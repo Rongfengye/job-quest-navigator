@@ -14,8 +14,10 @@ import {
   CollapsibleContent,
   CollapsibleTrigger
 } from "@/components/ui/collapsible";
+import EnhancedFeedbackDisplay from '@/components/feedback/EnhancedFeedbackDisplay';
+import { FeedbackData, isEnhancedFeedback } from '@/types/enhancedFeedback';
 
-interface FeedbackItem {
+interface LegacyFeedbackItem {
   pros: string[];
   cons: string[];
   score: number;
@@ -53,9 +55,9 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
         score: 50,
         suggestions: 'Please check back later for detailed feedback.',
         overall: typeof item === 'string' ? item : 'Answer recorded. Awaiting detailed feedback.',
-      };
+      } as LegacyFeedbackItem;
     }
-    return item as FeedbackItem;
+    return item as FeedbackData;
   });
 
   const averageScore = processedFeedback.length > 0 
@@ -166,82 +168,21 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
 
                       {feedbackItem && (
                         <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
-                          <div className="p-4 space-y-4">
+                          <div className="p-4">
                             <div className="flex items-center gap-3 mb-4">
                               <Lightbulb className="w-5 h-5 text-green-500 flex-shrink-0" />
                               <div>
                                 <div className="font-semibold text-gray-900">Answer Feedback</div>
                                 <div className="text-sm text-gray-600">
-                                  Detailed analysis of your response
+                                  {isEnhancedFeedback(feedbackItem) 
+                                    ? `AI confidence: ${Math.round(feedbackItem.confidence * 100)}%`
+                                    : 'Detailed analysis of your response'
+                                  }
                                 </div>
                               </div>
                             </div>
 
-                            {/* Strengths Section with Enhanced Pill Tags */}
-                            <div>
-                              <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-green-700">
-                                <CheckCircle className="h-4 w-4" /> 
-                                Strengths
-                              </h4>
-                              <div className="flex flex-wrap gap-2">
-                                {Array.isArray(feedbackItem.pros) ? feedbackItem.pros.map((pro, idx) => (
-                                  <Badge 
-                                    key={idx}
-                                    variant="secondary" 
-                                    className="bg-green-100 text-green-800 border-green-300 text-sm px-3 py-1.5 rounded-full"
-                                  >
-                                    {pro}
-                                  </Badge>
-                                )) : (
-                                  <Badge 
-                                    variant="secondary" 
-                                    className="bg-green-100 text-green-800 border-green-300 text-sm px-3 py-1.5 rounded-full"
-                                  >
-                                    No strengths data available
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Areas for Improvement Section with Enhanced Pill Tags */}
-                            <div>
-                              <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-red-700">
-                                <XCircle className="h-4 w-4" /> 
-                                Areas for Improvement
-                              </h4>
-                              <div className="flex flex-wrap gap-2">
-                                {Array.isArray(feedbackItem.cons) ? feedbackItem.cons.map((con, idx) => (
-                                  <Badge 
-                                    key={idx}
-                                    variant="secondary" 
-                                    className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1.5 rounded-full"
-                                  >
-                                    {con}
-                                  </Badge>
-                                )) : (
-                                  <Badge 
-                                    variant="secondary" 
-                                    className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1.5 rounded-full"
-                                  >
-                                    No improvement data available
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Improvement Suggestions */}
-                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                              <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-blue-800">
-                                <Lightbulb className="h-4 w-4" />
-                                Suggestions
-                              </h4>
-                              <p className="text-blue-700 text-sm leading-relaxed">{feedbackItem.suggestions || 'No suggestions available'}</p>
-                            </div>
-
-                            <div>
-                              <h4 className="font-semibold">Overall Assessment</h4>
-                              <p className="mt-1 text-gray-700">{feedbackItem.overall || 'No overall assessment available'}</p>
-                            </div>
+                            <EnhancedFeedbackDisplay feedback={feedbackItem} questionIndex={index} />
                           </div>
                         </Card>
                       )}

@@ -499,6 +499,7 @@ export const useBehavioralInterview = () => {
           companyName: jobData.companyName,
           companyDescription: jobData.companyDescription,
           resumeText: locationState?.resumeText || '',
+          extractedTopics: extractedTopics
         },
       });
 
