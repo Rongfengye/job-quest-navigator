@@ -183,7 +183,7 @@ const CreateBehavioral = () => {
       console.log('First question generated successfully');
 
       // Navigate to the interview page with all the data including the first question
-      navigate(`/behavioral/interview/${behavioralData.id}`, {
+      navigate('/behavioral/interview', {
         state: {
           formData,
           resumeText,
