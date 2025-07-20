@@ -104,7 +104,8 @@ export async function generateBehavioralQuestion(
   additionalDocumentsText: string,
   previousQuestions: string[] = [],
   previousAnswers: string[] = [],
-  extractedTopics: string[] = []
+  extractedTopics: string[] = [],
+  askedTopics: string[] = []
 ) {
   let systemPrompt = '';
 
@@ -163,29 +164,83 @@ export async function generateBehavioralQuestion(
     
     ${formatRequirement}`;
   } else {
-    // NOTE TO SELF
-    // removed 1. Builds upon the previous conversation naturally
-    const topicsGuidance = extractedTopics.length > 0 
-      ? `Key competencies to focus on for this role: ${extractedTopics.join(', ')}. Your question should explore one of these competencies that hasn't been thoroughly covered yet.`
-      : '';
+    // 40/60 Logic: Determine if we should follow up or explore new topic
+    let baseFollowUpChance = 0.4;
+    
+    // Smart context boosters for follow-up decisions
+    const lastAnswer = previousAnswers[previousAnswers.length - 1] || '';
+    const lastAnswerLength = lastAnswer.split(' ').length;
+    
+    // Boost follow-up chance if the last answer was rich (>50 words)
+    if (lastAnswerLength > 50) {
+      baseFollowUpChance += 0.15;
+    }
+    
+    // Reduce follow-up chance if we have limited topic coverage
+    const uncoveredTopics = extractedTopics.filter(topic => !askedTopics.includes(topic));
+    if (uncoveredTopics.length > 2) {
+      baseFollowUpChance -= 0.1;
+    }
+    
+    // Reduce follow-up chance if we're on the last question (question 5)
+    if (questionIndex === 4) {
+      baseFollowUpChance -= 0.2;
+    }
+    
+    const shouldFollowUp = Math.random() < baseFollowUpChance;
+    
+    console.log(`Question ${questionIndex + 1}: Follow-up chance: ${baseFollowUpChance}, Should follow up: ${shouldFollowUp}`);
+    
+    if (shouldFollowUp && previousQuestions.length > 0) {
+      // Follow-up mode: dive deeper into the last answer
+      const lastQuestion = previousQuestions[previousQuestions.length - 1];
+      
+      systemPrompt = `${companyContextString}
+      
+      You just asked this question:
+      """${lastQuestion}"""
+      
+      The candidate responded:
+      """${lastAnswer}"""
+      
+      Generate a natural follow-up behavioral question that:
+      1. Builds directly on their previous response
+      2. Digs deeper into unexplored aspects of their story
+      3. Seeks to understand their thought process, decision-making, or learnings
+      4. Maintains the STAR format expectation
+      5. Feels like a natural conversation progression
+      
+      Examples of good follow-up approaches:
+      - "You mentioned [specific detail]. Can you tell me more about how you approached that particular challenge?"
+      - "What would you do differently if you faced a similar situation again?"
+      - "How did that experience change your approach to [relevant competency]?"
+      
+      ${formatRequirement}`;
+    } else {
+      // New topic mode: explore uncovered competencies
+      const topicsGuidance = extractedTopics.length > 0 
+        ? `Key competencies to focus on: ${extractedTopics.join(', ')}. ${askedTopics.length > 0 ? `Already covered: ${askedTopics.join(', ')}. ` : ''}Your question should explore a competency that hasn't been thoroughly covered yet.`
+        : '';
 
-    systemPrompt = `${companyContextString}
-    
-    ${topicsGuidance}
-    
-    You have already asked the following questions and received these answers:
-    ${previousQuestions.map((q, i) => 
-      `Q${i+1}: """${q}"""\nA${i+1}: """${previousAnswers[i] || "No answer provided"}"""`
-    ).join('\n\n')}
-    
-    Based on this conversation history, the job description, and candidate's resume, generate the next behavioral interview question that:
-    1. Explores a different aspect of the candidate's experience or skill set not yet covered
-    2. Helps assess their fit for this specific role
-    3. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
-    
-    Make your question feel like a natural follow-up to the conversation, as if this were a real interview flow.
-    
-    ${formatRequirement}`;
+      systemPrompt = `${companyContextString}
+      
+      ${topicsGuidance}
+      
+      You have already asked the following questions and received these answers:
+      ${previousQuestions.map((q, i) => 
+        `Q${i+1}: """${q}"""\nA${i+1}: """${previousAnswers[i] || "No answer provided"}"""`
+      ).join('\n\n')}
+      
+      Based on this conversation history, the job description, and candidate's resume, generate the next behavioral interview question that:
+      1. Explores a different aspect of the candidate's experience or skill set not yet covered
+      2. Helps assess their fit for this specific role
+      3. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
+      4. Focuses on competencies that haven't been thoroughly explored yet
+      
+      Make your question feel like a natural progression in the interview conversation.
+      
+      ${formatRequirement}`;
+    }
   }
 
   const userPrompt = `
