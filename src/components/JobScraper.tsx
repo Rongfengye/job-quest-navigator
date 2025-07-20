@@ -1,7 +1,7 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
 import { Search, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -15,14 +15,68 @@ interface JobScraperProps {
 const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfoFound, className }) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
   const { toast } = useToast();
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
   };
 
+  // Progress simulation effect
+  useEffect(() => {
+    if (!isLoading) {
+      setProgress(0);
+      setProgressMessage('');
+      return;
+    }
+
+    const progressMessages = [
+      'Connecting to website...',
+      'Analyzing webpage structure...',
+      'Extracting job description...',
+      'Processing company information...',
+      'Finalizing results...'
+    ];
+
+    let messageIndex = 0;
+    let currentProgress = 0;
+
+    const progressInterval = setInterval(() => {
+      setProgress(prevProgress => {
+        // Progress simulation logic similar to ProcessingModal
+        if (prevProgress >= 95) {
+          return prevProgress; // Stay at 95% until completion
+        } else if (prevProgress >= 80) {
+          return prevProgress + 0.3; // Crawl slowly
+        } else if (prevProgress >= 50) {
+          return prevProgress + 0.8; // Moderate progress
+        } else {
+          return prevProgress + 2; // Quick initial progress
+        }
+      });
+    }, 400);
+
+    const messageInterval = setInterval(() => {
+      if (messageIndex < progressMessages.length - 1) {
+        messageIndex++;
+        setProgressMessage(progressMessages[messageIndex]);
+      }
+    }, 1800);
+
+    // Set initial message
+    setProgressMessage(progressMessages[0]);
+
+    return () => {
+      clearInterval(progressInterval);
+      clearInterval(messageInterval);
+    };
+  }, [isLoading]);
+
   // Fallback scraping function for when Firecrawl fails
   const fallbackScrape = async (url: string) => {
+    setProgressMessage('Using fallback scraping method...');
+    
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
     console.log("Using fallback scraping for URL:", proxyUrl);
     
@@ -91,6 +145,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
     try {
       setIsLoading(true);
+      setProgress(0);
       console.log("Starting scrape for URL:", url);
 
       // Create a timeout promise
@@ -113,6 +168,8 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
 
         if (data?.success) {
           console.log("Firecrawl scraping successful");
+          setProgress(100);
+          setProgressMessage('Scraping completed successfully!');
           
           if (data.jobDescription) {
             onScrapedContent(data.jobDescription);
@@ -137,6 +194,9 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
         try {
           const fallbackPromise = fallbackScrape(url);
           const fallbackResult = await Promise.race([fallbackPromise, timeoutPromise]) as any;
+          
+          setProgress(100);
+          setProgressMessage('Fallback scraping completed!');
           
           if (fallbackResult.jobDescription) {
             onScrapedContent(fallbackResult.jobDescription);
@@ -178,29 +238,46 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
       });
     } finally {
       setIsLoading(false);
+      // Keep progress and message visible for a moment after completion
+      setTimeout(() => {
+        setProgress(0);
+        setProgressMessage('');
+      }, 2000);
     }
   };
 
   return (
-    <div className={`flex flex-col sm:flex-row gap-3 ${className}`}>
-      <div className="relative flex-grow">
-        <Input
-          type="url"
-          value={url}
-          onChange={handleUrlChange}
-          placeholder="https://example.com/jobs/software-engineer"
-          className="pr-10"
-        />
-        <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+    <div className={`flex flex-col gap-3 ${className}`}>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-grow">
+          <Input
+            type="url"
+            value={url}
+            onChange={handleUrlChange}
+            placeholder="https://example.com/jobs/software-engineer"
+            className="pr-10"
+          />
+          <Globe className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+        </div>
+        <Button 
+          onClick={handleScrape} 
+          disabled={isLoading}
+          className="bg-interview-primary hover:bg-interview-dark gap-2 whitespace-nowrap"
+        >
+          <Search className="h-4 w-4" /> 
+          {isLoading ? 'Scraping...' : 'Scrape Job'}
+        </Button>
       </div>
-      <Button 
-        onClick={handleScrape} 
-        disabled={isLoading}
-        className="bg-interview-primary hover:bg-interview-dark gap-2 whitespace-nowrap"
-      >
-        <Search className="h-4 w-4" /> 
-        {isLoading ? 'Scraping...' : 'Scrape Job'}
-      </Button>
+      
+      {isLoading && (
+        <div className="space-y-2">
+          <Progress value={progress} className="h-2" />
+          <div className="flex justify-between items-center text-sm text-gray-600">
+            <span>{progressMessage}</span>
+            <span>{Math.round(progress)}%</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
