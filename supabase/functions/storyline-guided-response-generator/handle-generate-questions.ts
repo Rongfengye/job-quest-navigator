@@ -1,4 +1,3 @@
-
 import { corsHeaders } from './index.ts';
 
 // Handler for generating guiding questions
@@ -23,7 +22,7 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
   if (hasSubstantialInput) {
     systemPrompt += " Focus on helping the candidate elaborate on their existing response, asking questions that encourage adding more relevant details, examples, and specifics to strengthen their answer.";
   } else {
-    systemPrompt += " Ask 5 follow-up questions to help them structure their answer, specifically referencing their background when relevant.";
+    systemPrompt += " Ask 3 follow-up questions to help them structure their answer, specifically referencing their background when relevant.";
   }
   
   systemPrompt += " Respond strictly in valid JSON format with a 'guidingQuestions' array.";
@@ -59,7 +58,7 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
     }
   }
   
-  userPrompt += "Please provide 5 guiding questions in JSON format like: { \"guidingQuestions\": [\"Q1\", \"Q2\", ...] }. Make these questions specific to the user's background when possible.";
+  userPrompt += "Please provide 3 guiding questions in JSON format like: { \"guidingQuestions\": [\"Q1\", \"Q2\", \"Q3\"] }. Make these questions specific to the user's background when possible.";
   
   // Prepare API request
   const openAIRequestPayload = {
@@ -156,7 +155,7 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
       if (possibleQuestions.length >= 3) {
         console.log('Extracted questions from text as fallback:', JSON.stringify(possibleQuestions));
         parsedResponse = {
-          guidingQuestions: possibleQuestions.slice(0, 5)
+          guidingQuestions: possibleQuestions.slice(0, 3)
         };
       } else {
         // If we couldn't extract questions, use a default fallback
@@ -165,9 +164,7 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
           guidingQuestions: [
             "What specific experience can you highlight that's relevant to this question?",
             "How can you structure your answer using the STAR method?",
-            "What key skills or qualities should you emphasize in your response?",
-            "How can you quantify your achievements in this context?",
-            "What makes your approach or perspective unique in this situation?"
+            "What key skills or qualities should you emphasize in your response?"
           ]
         };
       }
@@ -178,9 +175,7 @@ export async function handleGenerateQuestions(openAIApiKey: string, questionInde
         guidingQuestions: [
           "What specific experience can you highlight that's relevant to this question?",
           "How can you structure your answer using the STAR method?",
-          "What key skills or qualities should you emphasize in your response?",
-          "How can you quantify your achievements in this context?",
-          "What makes your approach or perspective unique in this situation?"
+          "What key skills or qualities should you emphasize in your response?"
         ]
       };
     }

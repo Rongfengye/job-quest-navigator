@@ -185,7 +185,7 @@ export const useGuidedResponse = (
               
               if (lines.length > 0) {
                 const guidanceEvent = new CustomEvent('guidanceReceived', {
-                  detail: { guidingQuestions: lines.slice(0, 5) }
+                  detail: { guidingQuestions: lines.slice(0, 3) }
                 });
                 window.dispatchEvent(guidanceEvent);
               }
