@@ -65,7 +65,7 @@ const BehavioralInterview = () => {
     setIsTransitionLoading,
     setCurrentQuestion,
     setBehavioralId,
-    loadExistingInterview
+    loadExistingOrSetupInterview
   } = useBehavioralInterview();
 
   const playTransitionAudio = () => {
@@ -110,77 +110,45 @@ const BehavioralInterview = () => {
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
-  // Validation and initialization effect
+  // Updated initialization effect using the new hybrid function
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
-        console.log('Initializing interview - isResuming:', isResuming);
+        console.log('Initializing interview - behavioralId:', behavioralId);
         setPageLoaded(true);
         
-        // Validate behavioral ID for resuming interviews
-        if (isResuming && !behavioralId) {
+        // Validate that we have a behavioral ID
+        if (!behavioralId) {
           toast({
             variant: "destructive",
-            title: "Invalid resume attempt",
-            description: "Cannot resume interview without valid ID. Starting fresh.",
+            title: "Interview setup incomplete",
+            description: "Please go through the setup process again.",
           });
           navigate('/behavioral/create');
           return;
         }
         
-        if (isResuming && behavioralId) {
-          // Resume existing interview with error handling
-          try {
-            console.log('Resuming interview with ID:', behavioralId);
-            const loadedData = await loadExistingInterview(behavioralId);
-            setResumedFormData(loadedData.formData);
-            console.log('Interview resumed successfully');
-          } catch (error) {
-            console.error('Failed to resume interview:', error);
-            toast({
-              variant: "destructive",
-              title: "Failed to resume interview",
-              description: "We couldn't load your previous interview. Please try again from the dashboard.",
-            });
-            navigate('/behavioral');
-            return;
-          }
-        } else if (!isResuming) {
-          // New interview flow - validate required data
-          if (!firstQuestion || !behavioralId) {
-            toast({
-              variant: "destructive",
-              title: "Interview setup incomplete",
-              description: "Please go through the setup process again.",
-            });
-            navigate('/behavioral/create');
-            return;
-          }
-
-          // Set the behavioral ID and first question
-          setBehavioralId(behavioralId);
-          setCurrentQuestion({
-            question: firstQuestion.question,
-            questionIndex: 0,
-            audio: firstQuestion.audio || null
-          });
-
-          console.log('New interview initialized with first question');
-        } else {
-          // Invalid state - fallback to create
+        // Use the new hybrid function that handles both resuming and fresh starts
+        try {
+          console.log('Using hybrid function to load/setup interview');
+          const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
+          setResumedFormData(loadedData.formData);
+          console.log('Interview initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize interview:', error);
           toast({
             variant: "destructive",
-            title: "Invalid interview state",
-            description: "Please start a new interview.",
+            title: "Failed to initialize interview",
+            description: "We couldn't load your interview. Please try again from the dashboard.",
           });
-          navigate('/behavioral/create');
+          navigate('/behavioral');
           return;
         }
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, isResuming, firstQuestion, behavioralId, navigate, toast, setBehavioralId, setCurrentQuestion, loadExistingInterview]);
+  }, [pageLoaded, behavioralId, firstQuestion, navigate, toast, loadExistingOrSetupInterview]);
 
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
@@ -235,7 +203,7 @@ const BehavioralInterview = () => {
     };
 
     generateNextQuestion();
-  }, [currentQuestionIndex, shouldGenerateNext]); // Only depend on essential state
+  }, [currentQuestionIndex, shouldGenerateNext]);
 
   // Modified effect to handle feedback generation when interview is complete
   useEffect(() => {
@@ -285,11 +253,9 @@ const BehavioralInterview = () => {
     }
   }, [answers, interviewComplete, feedbackGenerated, generateFeedback, navigate, questions, behavioralId, toast]);
 
-  // This effect triggers question generation when resuming an interview
-  // where the next question needs to be created.
+  // Updated effect for handling question generation when resuming
   useEffect(() => {
     if (
-      isResuming &&
       pageLoaded &&
       !currentQuestion &&
       !isGenerating &&
@@ -297,12 +263,11 @@ const BehavioralInterview = () => {
       currentQuestionIndex > 0 &&
       currentQuestionIndex < 5
     ) {
-      console.log('Triggering next question generation on resume.');
-      setIsResumingAndLoading(true); // Show loader when resuming and needing a question
+      console.log('Triggering next question generation after initialization.');
+      setIsResumingAndLoading(true);
       setShouldGenerateNext(true);
     }
   }, [
-    isResuming,
     pageLoaded,
     currentQuestion,
     isGenerating,

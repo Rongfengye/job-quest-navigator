@@ -55,6 +55,97 @@ export const useBehavioralInterview = () => {
     }
   };
 
+  const loadExistingOrSetupInterview = useCallback(async (behavioralId: string, firstQuestion?: { question: string; audio?: string | null }) => {
+    setIsLoading(true);
+    
+    try {
+      console.log('Loading existing or setting up interview:', behavioralId);
+      
+      const { data: interviewData, error } = await supabase
+        .from('storyline_behaviorals')
+        .select('*')
+        .eq('id', behavioralId)
+        .single();
+      
+      if (error) {
+        throw new Error(`Failed to load interview: ${error.message}`);
+      }
+      
+      if (!interviewData) {
+        throw new Error('Interview not found');
+      }
+      
+      console.log('Loaded interview data:', interviewData);
+      
+      // Extract and validate data
+      const existingQuestions = (Array.isArray(interviewData.questions) ? interviewData.questions : []) as string[];
+      const existingResponses = (Array.isArray(interviewData.responses) ? interviewData.responses : []) as string[];
+      
+      // Calculate where to resume based on existing data
+      const resumeQuestionIndex = existingResponses.length;
+      
+      console.log(`Setting up interview at question ${resumeQuestionIndex + 1} with ${existingQuestions.length} existing questions`);
+      
+      // Set the state
+      setQuestions(existingQuestions);
+      setAnswers(existingResponses);
+      setCurrentQuestionIndex(resumeQuestionIndex);
+      setBehavioralId(behavioralId);
+      
+      // Determine what question to display
+      if (existingQuestions.length === 0 && firstQuestion) {
+        // Fresh start - use the provided first question with audio
+        console.log('Fresh start - using first question with audio');
+        setCurrentQuestionWithLog({
+          question: firstQuestion.question,
+          questionIndex: 0,
+          audio: firstQuestion.audio || null
+        });
+      } else if (resumeQuestionIndex < existingQuestions.length) {
+        // Resume with existing question - no audio replay
+        console.log('Resuming with existing question at index:', resumeQuestionIndex);
+        const currentQuestionText = existingQuestions[resumeQuestionIndex];
+        setCurrentQuestionWithLog({
+          question: currentQuestionText,
+          questionIndex: resumeQuestionIndex,
+          audio: null // Don't replay audio for existing questions
+        });
+      } else if (resumeQuestionIndex === existingQuestions.length && resumeQuestionIndex < 5) {
+        // Need to generate next question
+        console.log('Ready to generate next question at index:', resumeQuestionIndex);
+        setCurrentQuestionWithLog(null);
+      } else {
+        // Interview complete or invalid state
+        console.log('Interview complete or invalid state');
+        setCurrentQuestionWithLog(null);
+      }
+      
+      // Return the loaded form data
+      return {
+        formData: {
+          jobTitle: interviewData.job_title,
+          jobDescription: interviewData.job_description,
+          companyName: interviewData.company_name || '',
+          companyDescription: interviewData.company_description || ''
+        },
+        resumePath: interviewData.resume_path,
+        coverLetterPath: interviewData.cover_letter_path,
+        additionalDocumentsPath: interviewData.additional_documents_path
+      };
+      
+    } catch (error) {
+      console.error('Error in loadExistingOrSetupInterview:', error);
+      toast({
+        variant: "destructive",
+        title: "Error loading interview",
+        description: error instanceof Error ? error.message : "Failed to load interview",
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
   const loadExistingInterview = useCallback(async (behavioralId: string) => {
     setIsLoading(true);
     
@@ -480,6 +571,7 @@ export const useBehavioralInterview = () => {
     setIsTransitionLoading,
     setCurrentQuestion: setCurrentQuestionWithLog,
     setBehavioralId,
-    loadExistingInterview
+    loadExistingInterview,
+    loadExistingOrSetupInterview
   };
 };
