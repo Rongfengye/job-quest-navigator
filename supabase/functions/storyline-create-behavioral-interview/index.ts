@@ -4,7 +4,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
 import { generateTextToSpeech } from './audio-generation-helpers.ts';
 import { generateFeedbackHelper } from './feedback-logic.ts';
-import { generateBehavioralQuestion } from './behavioral-question-generation.ts';
+import { generateBehavioralQuestion, extractRelevantTopics } from './behavioral-question-generation.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,7 +43,10 @@ serve(async (req) => {
       generateAudio = true,
       voice = 'alloy',
       userId,
-      isFirstQuestion = false
+      isFirstQuestion = false,
+      extractedTopics = [],
+      askedTopics = [],
+      topicFollowUpCounts = {}
     } = requestBody;
 
     // Check usage limits for behavioral interviews (only for the first question)
@@ -122,6 +125,24 @@ serve(async (req) => {
       });
     }
 
+    // Extract topics on first question if not already provided
+    let currentExtractedTopics = extractedTopics;
+    if (questionIndex === 0 && extractedTopics.length === 0) {
+      console.log('Extracting relevant topics for first question');
+      const topicResults = await extractRelevantTopics(
+        openAIApiKey,
+        jobTitle,
+        jobDescription,
+        companyName,
+        companyDescription,
+        resumeText,
+        coverLetterText,
+        additionalDocumentsText
+      );
+      currentExtractedTopics = topicResults.topics;
+      console.log('Topics extracted:', currentExtractedTopics);
+    }
+
     // For questions 1-5, use the modularized question generation function to generate questions
     const parsedContent = await generateBehavioralQuestion(
       openAIApiKey,
@@ -134,7 +155,10 @@ serve(async (req) => {
       coverLetterText,
       additionalDocumentsText,
       previousQuestions,
-      previousAnswers
+      previousAnswers,
+      currentExtractedTopics,
+      askedTopics,
+      topicFollowUpCounts
     );
 
     // Generate audio for the question if requested
@@ -154,7 +178,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       question: parsedContent.question,
       questionIndex: questionIndex,
-      audio: audioData
+      audio: audioData,
+      extractedTopics: currentExtractedTopics,
+      analytics: parsedContent.analytics
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
