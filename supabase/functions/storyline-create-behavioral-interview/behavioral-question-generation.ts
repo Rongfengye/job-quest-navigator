@@ -1,4 +1,96 @@
 
+// Function to extract relevant topics for the interview using OpenAI API
+export async function extractRelevantTopics(
+  openAIApiKey: string,
+  jobTitle: string,
+  jobDescription: string,
+  companyName: string,
+  companyDescription: string,
+  resumeText: string,
+  coverLetterText: string,
+  additionalDocumentsText: string
+): Promise<{ topics: string[] }> {
+  const systemPrompt = `You are an expert interview coach analyzing a job application to identify the most critical behavioral competencies to assess. 
+
+Analyze the provided job context and candidate background to identify exactly 4-5 key behavioral competencies that would be most relevant for this specific role and candidate.
+
+Focus on competencies that are:
+1. Critical for success in this specific role
+2. Relevant to the company context and culture
+3. Aligned with what the candidate's background suggests they should be strong in
+4. Diverse enough to provide comprehensive behavioral assessment
+
+Return ONLY a JSON object with this exact format:
+{
+  "topics": ["competency1", "competency2", "competency3", "competency4", "competency5"]
+}
+
+Use clear, specific competency names like: "leadership", "stakeholder_management", "conflict_resolution", "initiative", "adaptability", "communication", "teamwork", "problem_solving", "ambiguity_handling", "ownership", "influence", "analytical_thinking", "resilience", "innovation", "time_management"`;
+
+  const userPrompt = `Job Title: ${jobTitle}
+
+Job Description: ${jobDescription}
+
+Company: ${companyName}
+Company Description: ${companyDescription}
+
+${resumeText ? `Candidate Resume: ${resumeText}` : ''}
+${coverLetterText ? `Cover Letter: ${coverLetterText}` : ''}
+${additionalDocumentsText ? `Additional Documents: ${additionalDocumentsText}` : ''}
+
+Based on this context, identify the 4-5 most critical behavioral competencies to assess for this specific role and candidate.`;
+
+  try {
+    console.log('Calling OpenAI API for topic extraction');
+    
+    const response = await fetch('https://oai.helicone.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Helicone-Auth': `Bearer ${Deno.env.get('HELICONE_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 200,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('OpenAI API response received for topic extraction');
+    
+    if (data.error) {
+      throw new Error(`OpenAI API error: ${data.error.message}`);
+    }
+
+    const content = data.choices[0].message.content.trim();
+    const parsedResponse = JSON.parse(content);
+    
+    if (!parsedResponse.topics || !Array.isArray(parsedResponse.topics)) {
+      throw new Error('Invalid response format from OpenAI');
+    }
+
+    console.log('Extracted topics:', parsedResponse.topics);
+    return { topics: parsedResponse.topics };
+  } catch (error) {
+    console.error('Error extracting topics:', error);
+    // Fallback to general topics if extraction fails
+    return { 
+      topics: ["leadership", "communication", "problem_solving", "teamwork", "adaptability"] 
+    };
+  }
+}
+
 // Separate module for generating behavioral interview questions
 export async function generateBehavioralQuestion(
   openAIApiKey: string,
@@ -11,7 +103,8 @@ export async function generateBehavioralQuestion(
   coverLetterText: string,
   additionalDocumentsText: string,
   previousQuestions: string[] = [],
-  previousAnswers: string[] = []
+  previousAnswers: string[] = [],
+  extractedTopics: string[] = []
 ) {
   let systemPrompt = '';
 
@@ -52,7 +145,13 @@ export async function generateBehavioralQuestion(
     // However this is something we need to test out, as there is a tradeoff between guiding the model and constraining it
     // Can read up on semantic anchoring more
 
+    const topicsGuidance = extractedTopics.length > 0 
+      ? `Key competencies to focus on for this role: ${extractedTopics.join(', ')}. Your question should assess one of these competencies.`
+      : '';
+
     systemPrompt = `${companyContextString}
+    
+    ${topicsGuidance}
     
     Based on the job description and candidate's resume, generate a thought-provoking behavioral interview question that:
     1. Assesses the candidate's past experiences relevant to this role
@@ -66,7 +165,13 @@ export async function generateBehavioralQuestion(
   } else {
     // NOTE TO SELF
     // removed 1. Builds upon the previous conversation naturally
+    const topicsGuidance = extractedTopics.length > 0 
+      ? `Key competencies to focus on for this role: ${extractedTopics.join(', ')}. Your question should explore one of these competencies that hasn't been thoroughly covered yet.`
+      : '';
+
     systemPrompt = `${companyContextString}
+    
+    ${topicsGuidance}
     
     You have already asked the following questions and received these answers:
     ${previousQuestions.map((q, i) => 
