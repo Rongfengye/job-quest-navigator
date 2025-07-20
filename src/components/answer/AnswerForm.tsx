@@ -45,6 +45,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');
   const [showInitialModeSelection, setShowInitialModeSelection] = useState(true);
+  const [guidedResponseGenerated, setGuidedResponseGenerated] = useState(false);
 
   // Hide initial mode selection once user has an answer or has made a mode choice
   useEffect(() => {
@@ -58,12 +59,12 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     setShowInitialModeSelection(false);
   };
 
-  // Track original answer to detect changes
+  // Track original answer to detect changes - set it immediately when inputAnswer first has content
   useEffect(() => {
-    if (inputAnswer && !originalAnswer) {
+    if (inputAnswer && !originalAnswer && !guidedResponseGenerated) {
       setOriginalAnswer(inputAnswer);
     }
-  }, [inputAnswer, originalAnswer]);
+  }, [inputAnswer, originalAnswer, guidedResponseGenerated]);
 
   // Detect if there are unsaved changes
   useEffect(() => {
@@ -103,8 +104,21 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     const handleResponseReceived = (event: CustomEvent) => {
       const { generatedResponse } = event.detail;
       if (generatedResponse) {
+        // Mark that a guided response was generated
+        setGuidedResponseGenerated(true);
+        
+        // Set the generated response
         setInputAnswer(generatedResponse);
-        setMode('manual'); // Switch back to manual mode
+        
+        // If this is the first content, set it as original to compare against future changes
+        if (!originalAnswer) {
+          setOriginalAnswer('');
+        }
+        
+        // Switch back to manual mode
+        setMode('manual');
+        
+        // Mark as having unsaved draft since this is new generated content
         setHasUnsavedDraft(true);
         
         toast({
@@ -119,7 +133,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
     return () => {
       window.removeEventListener('responseReceived' as any, handleResponseReceived);
     };
-  }, [toast, setInputAnswer]);
+  }, [toast, setInputAnswer, originalAnswer]);
 
   const handleThoughtsSubmit = (thoughts: string) => {
     const thoughtsEvent = new CustomEvent('thoughtsSubmitted', {
@@ -131,6 +145,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   const handleSaveAnswer = (e: React.FormEvent<HTMLFormElement>) => {
     setHasUnsavedDraft(false);
     setOriginalAnswer(inputAnswer);
+    setGuidedResponseGenerated(false); // Reset the guided response flag after saving
     handleSubmit(e);
   };
 
