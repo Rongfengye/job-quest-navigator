@@ -1,4 +1,3 @@
-
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.4.0';
 
 const corsHeaders = {
@@ -45,6 +44,7 @@ export async function generateFeedbackHelper(
   supabase: ReturnType<typeof createClient>,
   questions: string[],
   answers: string[],
+  questionTopics: string[] = [],
   jobTitle: string = '',
   companyName: string = '',
   companyDescription: string = '',
@@ -103,6 +103,7 @@ export async function generateFeedbackHelper(
     ${companyDescription ? `About the company: ${companyDescription}` : ''}
     ${jobDescription ? `Job Description: ${jobDescription}` : ''}
     ${resumeText ? `Based on the candidate's resume: ${resumeText}` : ''}
+    ${questionTopics[index] ? `This question explores the competency: "${questionTopics[index]}"` : ''}
     Your task is to provide detailed, constructive feedback on the candidate's response.
     
     ${considerationGuidelines}
@@ -195,4 +196,3 @@ export async function generateFeedbackHelper(
 
   return feedbackResults;
 }
-

@@ -106,6 +106,11 @@ serve(async (req) => {
       }
     }
 
+    // Extract topics on first question if not already provided
+    let currentExtractedTopics = extractedTopics;
+    let currentAskedTopics = askedTopics;
+    let currentTopicFollowUpCounts = topicFollowUpCounts;
+
     // Upon the submission of the last question, we actually turn this flag on and feedback is prompted for instead
     if (generateFeedback) {
       // Use the imported feedback function with the additional parameters
@@ -114,6 +119,7 @@ serve(async (req) => {
         supabase,
         questions,
         answers,
+        currentExtractedTopics,
         jobTitle,
         companyName,
         companyDescription,
@@ -125,11 +131,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Extract topics on first question if not already provided
-    let currentExtractedTopics = extractedTopics;
-    let currentAskedTopics = askedTopics;
-    let currentTopicFollowUpCounts = topicFollowUpCounts;
 
     if (questionIndex === 0 && extractedTopics.length === 0) {
       console.log('Extracting relevant topics for first question');
