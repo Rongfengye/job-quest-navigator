@@ -11,6 +11,15 @@ const structureGuidelines = `Provide feedback in JSON format with the following 
     "pros": ["strength 1", "strength 2", ...],
     "cons": ["area for improvement 1", "area for improvement 2", ...],
     "score": <number between 0-100>,
+    "scoreBreakdown": {
+      "structure": <number between 0-100>,
+      "clarity": <number between 0-100>, 
+      "relevance": <number between 0-100>,
+      "specificity": <number between 0-100>,
+      "professionalism": <number between 0-100>
+    },
+    "confidence": <number between 0.0-1.0>,
+    "competencyFocus": "<primary competency being assessed>",
     "suggestions": "specific suggestions for improvement",
     "overall": "brief overall assessment"
   }`
@@ -32,10 +41,15 @@ const contentConsiderations = `Additionally, please keep these in mind:
   7. Respond directly addressing the user with 'You ___' rather than describing the person's responses in third person.
 
   Base your score (0–100) on a weighted evaluation of:
-  - STAR structure clarity
-  - Specificity of examples
-  - Relevance to the question
-  - Professionalism and communication
+  - STAR structure clarity (structure score)
+  - Specificity of examples (specificity score)
+  - Relevance to the question (relevance score)
+  - Clarity and communication quality (clarity score)
+  - Professionalism and tone (professionalism score)
+  
+  Provide individual scores for each dimension in scoreBreakdown.
+  Set confidence (0.0-1.0) based on how certain you are about your evaluation.
+  Identify the primary competency being assessed in competencyFocus.
 `
 
 // Renamed from generateFeedback to avoid collision with the generateFeedback boolean input parameter
@@ -139,6 +153,9 @@ export async function generateFeedbackHelper(
             pros: ["Unable to analyze response"],
             cons: ["Error generating feedback"],
             score: 0,
+            scoreBreakdown: { structure: 0, clarity: 0, relevance: 0, specificity: 0, professionalism: 0 },
+            confidence: 0.0,
+            competencyFocus: "Unknown",
             suggestions: "Please try again later.",
             overall: "Error in feedback generation"
           };
@@ -151,6 +168,9 @@ export async function generateFeedbackHelper(
             pros: ["Unable to analyze response"],
             cons: ["Unexpected response format"],
             score: 0,
+            scoreBreakdown: { structure: 0, clarity: 0, relevance: 0, specificity: 0, professionalism: 0 },
+            confidence: 0.0,
+            competencyFocus: "Unknown",
             suggestions: "Please try again later.",
             overall: "Error in feedback generation"
           };
@@ -166,6 +186,9 @@ export async function generateFeedbackHelper(
             pros: ["Unable to analyze response"],
             cons: ["Error parsing feedback"],
             score: 0,
+            scoreBreakdown: { structure: 0, clarity: 0, relevance: 0, specificity: 0, professionalism: 0 },
+            confidence: 0.0,
+            competencyFocus: "Unknown",
             suggestions: "Please try again later.",
             overall: "Error in feedback generation"
           };
@@ -178,6 +201,9 @@ export async function generateFeedbackHelper(
           pros: ["Unable to analyze response"],
           cons: ["Network error"],
           score: 0,
+          scoreBreakdown: { structure: 0, clarity: 0, relevance: 0, specificity: 0, professionalism: 0 },
+          confidence: 0.0,
+          competencyFocus: "Unknown",
           suggestions: "Please try again later.",
           overall: "Error in feedback generation"
         };
