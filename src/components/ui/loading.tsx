@@ -37,17 +37,20 @@ const Loading: React.FC<LoadingProps> = ({
       progressInterval = setInterval(() => {
         setProgress(prev => {
           if (prev < 20) {
-            // Quick start: 0-20% in first 1 second
-            return prev + 4;
+            // Start: 0-20% in first 2 seconds
+            return prev + 2;
           } else if (prev < 70) {
-            // Steady progress: 20-70% over next 3 seconds
-            return prev + 1.5;
+            // Steady progress: 20-70% over next 4 seconds
+            return prev + 1.25;
           } else if (prev < 95) {
-            // Slowing down: 70-95% over next 1.5 seconds
-            return prev + 0.8;
+            // Slowing down: 70-95% over next 2.5 seconds
+            return prev + 1;
+          } else if (prev < 99) {
+            // Final crawl: 95-99% over next 1.5 seconds
+            return prev + 0.27;
           } else {
-            // Stay at 95% until completion
-            return 95;
+            // Stay at 99% until completion
+            return 99;
           }
         });
       }, 100);
