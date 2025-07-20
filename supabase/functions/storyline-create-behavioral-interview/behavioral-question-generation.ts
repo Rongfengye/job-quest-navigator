@@ -105,7 +105,8 @@ export async function generateBehavioralQuestion(
   previousQuestions: string[] = [],
   previousAnswers: string[] = [],
   extractedTopics: string[] = [],
-  askedTopics: string[] = []
+  askedTopics: string[] = [],
+  topicFollowUpCounts: Record<string, number> = {}
 ) {
   let systemPrompt = '';
 
@@ -164,15 +165,25 @@ export async function generateBehavioralQuestion(
     
     ${formatRequirement}`;
   } else {
+    // Analytics: Track competency coverage and follow-up patterns
+    const currentTopicFromLastQuestion = askedTopics[askedTopics.length - 1] || '';
+    const currentTopicFollowUps = topicFollowUpCounts[currentTopicFromLastQuestion] || 0;
+    
     // 40/60 Logic: Determine if we should follow up or explore new topic
     let baseFollowUpChance = 0.4;
+    
+    // CRITICAL: Prevent excessive follow-ups (max 2 per competency)
+    if (currentTopicFollowUps >= 2) {
+      baseFollowUpChance = 0; // Force new topic
+      console.log(`Topic "${currentTopicFromLastQuestion}" has reached max follow-ups (${currentTopicFollowUps}), forcing new topic`);
+    }
     
     // Smart context boosters for follow-up decisions
     const lastAnswer = previousAnswers[previousAnswers.length - 1] || '';
     const lastAnswerLength = lastAnswer.split(' ').length;
     
     // Boost follow-up chance if the last answer was rich (>50 words)
-    if (lastAnswerLength > 50) {
+    if (lastAnswerLength > 50 && currentTopicFollowUps < 2) {
       baseFollowUpChance += 0.15;
     }
     
@@ -189,9 +200,9 @@ export async function generateBehavioralQuestion(
     
     const shouldFollowUp = Math.random() < baseFollowUpChance;
     
-    console.log(`Question ${questionIndex + 1}: Follow-up chance: ${baseFollowUpChance}, Should follow up: ${shouldFollowUp}`);
+    console.log(`Question ${questionIndex + 1}: Topic: "${currentTopicFromLastQuestion}", Follow-ups: ${currentTopicFollowUps}/2, Chance: ${baseFollowUpChance}, Decision: ${shouldFollowUp ? 'Follow-up' : 'New topic'}`);
     
-    if (shouldFollowUp && previousQuestions.length > 0) {
+    if (shouldFollowUp && previousQuestions.length > 0 && currentTopicFollowUps < 2) {
       // Follow-up mode: dive deeper into the last answer
       const lastQuestion = previousQuestions[previousQuestions.length - 1];
       
@@ -301,5 +312,66 @@ export async function generateBehavioralQuestion(
     throw new Error('Invalid JSON format in the OpenAI response');
   }
   
-  return parsedContent;
+  // Generate analytics data for competency tracking
+  const analytics = generateAnalytics(
+    questionIndex,
+    extractedTopics,
+    askedTopics,
+    topicFollowUpCounts,
+    previousQuestions,
+    previousAnswers
+  );
+  
+  return {
+    ...parsedContent,
+    analytics
+  };
+}
+
+// Analytics helper function for competency completion tracking
+function generateAnalytics(
+  questionIndex: number,
+  extractedTopics: string[],
+  askedTopics: string[],
+  topicFollowUpCounts: Record<string, number>,
+  previousQuestions: string[],
+  previousAnswers: string[]
+) {
+  const uncoveredTopics = extractedTopics.filter(topic => !askedTopics.includes(topic));
+  const totalQuestions = 5;
+  const remainingQuestions = totalQuestions - (questionIndex + 1);
+  
+  // Calculate topic coverage percentage
+  const coveragePercentage = extractedTopics.length > 0 
+    ? Math.round((askedTopics.length / extractedTopics.length) * 100)
+    : 0;
+  
+  // Calculate follow-up depth per topic
+  const topicDepth = Object.entries(topicFollowUpCounts).map(([topic, count]) => ({
+    topic,
+    followUpCount: count,
+    maxReached: count >= 2
+  }));
+  
+  // Predict completion likelihood
+  const completionPrediction = uncoveredTopics.length <= remainingQuestions 
+    ? 'likely' 
+    : uncoveredTopics.length <= remainingQuestions + 1 
+    ? 'possible' 
+    : 'unlikely';
+
+  console.log(`Analytics - Coverage: ${coveragePercentage}%, Remaining topics: ${uncoveredTopics.length}, Completion: ${completionPrediction}`);
+
+  return {
+    questionNumber: questionIndex + 1,
+    totalQuestions,
+    remainingQuestions,
+    extractedTopics,
+    coveredTopics: askedTopics,
+    uncoveredTopics,
+    coveragePercentage,
+    topicDepth,
+    completionPrediction,
+    interviewProgress: Math.round(((questionIndex + 1) / totalQuestions) * 100)
+  };
 }
