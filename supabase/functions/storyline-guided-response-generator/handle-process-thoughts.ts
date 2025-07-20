@@ -193,21 +193,39 @@ export async function handleProcessThoughts(
   // Process the generated content - remove any prefixes like "Here's a response:" or "Sure!"
   let generatedResponse = generatedContent;
   
-  // Clean up any prefixes from the response
+  // Clean up any prefixes from the response - be conservative to avoid cutting legitimate content
   const prefixesToRemove = [
-    /^(Sure!|Here'?s|I've|Now|Here is|This is|I have|Following is|Below is|As requested|As an improvement|Here are|I'd suggest|Let me|Your improved|The following is|An enhanced version of|The updated version of|Based on your thoughts|Enhancing your response)/i,
-    /^(a |an |the |your |some |my |this |that |these |those )?(slightly |enhanced |improved |updated |modified |polished |revised |refined |adjusted |clearer |better |structured |more |professional |tailored |focused |concise )+(version|response|answer|draft|iteration|text|note|narrative|statement|submission|enhancement)/i,
-    /^(.*?)(:|\.\.\.|\-|\—)/
+    // AI assistant intro phrases
+    /^(Sure!|Here'?s|I've|Now|Here is|This is|I have|Following is|Below is|As requested|As an improvement|Here are|I'd suggest|Let me|Your improved|The following is|An enhanced version of|The updated version of|Based on your thoughts|Enhancing your response)\s*/i,
+    
+    // Common response wrapper phrases  
+    /^(a |an |the |your |some |my |this |that |these |those )?(slightly |enhanced |improved |updated |modified |polished |revised |refined |adjusted |clearer |better |structured |more |professional |tailored |focused |concise )+(version|response|answer|draft|iteration|text|note|narrative|statement|submission|enhancement)\s*:?\s*/i,
+    
+    // Very specific intro patterns - only match obvious AI prefixes, not legitimate content
+    /^(Here'?s what I would suggest|Let me help you|I recommend|My suggestion is|Consider this)\s*:?\s*/i,
+    
+    // Only match single words followed by colon when they're obviously AI prefixes
+    /^(Response|Answer|Suggestion|Improvement|Enhancement)\s*:\s*/i
   ];
+  
+  console.log('Original response before prefix removal:', generatedResponse.substring(0, 100) + '...');
   
   // Try each pattern and remove the prefix if found
   for (const pattern of prefixesToRemove) {
     const match = generatedResponse.match(pattern);
     if (match && match.index === 0) {
+      const removedText = match[0];
       generatedResponse = generatedResponse.substring(match[0].length).trim();
-      console.log('Removed prefix:', match[0]);
+      console.log('Removed prefix:', removedText);
+      console.log('Response after prefix removal:', generatedResponse.substring(0, 100) + '...');
       break;
     }
+  }
+  
+  // Safety check: ensure we haven't removed too much content
+  if (generatedResponse.length < 10) {
+    console.log('Warning: Response too short after prefix removal, reverting to original');
+    generatedResponse = generatedContent.trim();
   }
   
   // Remove any quotes that might be wrapping the response
