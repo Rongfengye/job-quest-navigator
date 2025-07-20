@@ -33,7 +33,6 @@ export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isTransitionLoading, setIsTransitionLoading] = useState(false);
-  const [isResumingState, setIsResumingState] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
@@ -58,7 +57,6 @@ export const useBehavioralInterview = () => {
 
   const loadExistingInterview = useCallback(async (behavioralId: string) => {
     setIsLoading(true);
-    setIsResumingState(true);
     
     try {
       console.log('Loading existing interview:', behavioralId);
@@ -88,7 +86,7 @@ export const useBehavioralInterview = () => {
       
       console.log(`Resuming at question ${resumeQuestionIndex + 1} of ${existingQuestions.length}`);
       
-      // Set the state SYNCHRONOUSLY
+      // Set the state
       setQuestions(existingQuestions);
       setAnswers(existingResponses);
       setCurrentQuestionIndex(resumeQuestionIndex);
@@ -140,7 +138,6 @@ export const useBehavioralInterview = () => {
       throw error;
     } finally {
       setIsLoading(false);
-      setIsResumingState(false);
     }
   }, [toast]);
 
@@ -463,14 +460,12 @@ export const useBehavioralInterview = () => {
     setBehavioralId(null);
     setIsInitialLoading(true);
     setIsTransitionLoading(false);
-    setIsResumingState(false);
   };
 
   return {
     isLoading,
     isInitialLoading,
     isTransitionLoading,
-    isResumingState,
     currentQuestionIndex,
     questions,
     answers,

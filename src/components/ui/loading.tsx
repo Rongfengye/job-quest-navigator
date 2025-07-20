@@ -22,12 +22,6 @@ const Loading: React.FC<LoadingProps> = ({
     "Preparing the next step for you…"
   ];
   
-  const resumingMessages = [
-    "Loading your progress...",
-    "Retrieving your interview state...",
-    "Almost ready..."
-  ];
-  
   const displayMessages = messages || transitionMessages;
   const showRotatingMessages = Array.isArray(messages) || messages === undefined;
   

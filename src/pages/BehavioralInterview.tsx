@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,6 @@ import SubmitButton from '@/components/behavioral/SubmitButton';
 const BehavioralInterview = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id: urlBehavioralId } = useParams();
   const { toast } = useToast();
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,16 +31,15 @@ const BehavioralInterview = () => {
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
-  const isResuming = locationState.isResuming || !locationState.firstQuestion;
+  const isResuming = locationState.isResuming || false;
   const resumePath = locationState.resumePath || '';
   const coverLetterPath = locationState.coverLetterPath || '';
   const additionalDocumentsPath = locationState.additionalDocumentsPath || '';
   const firstQuestion = locationState.firstQuestion;
-  const behavioralId = locationState.behavioralId || urlBehavioralId;
+  const behavioralId = locationState.behavioralId;
   
   console.log("BehavioralInterview - Is resuming:", isResuming);
   console.log("BehavioralInterview - Behavioral ID:", behavioralId);
-  console.log("BehavioralInterview - URL ID:", urlBehavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
   
@@ -56,7 +54,6 @@ const BehavioralInterview = () => {
     isLoading,
     isInitialLoading,
     isTransitionLoading,
-    isResumingState,
     currentQuestionIndex,
     currentQuestion,
     generateQuestion,
@@ -378,10 +375,10 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Show full-screen Loading for transitions between questions OR when resuming state is loading
-  if (isTransitionLoading || isResumingAndLoading || isResumingState) {
-    console.log('Rendering full-screen Loading component for question transition or resume');
-    return <Loading messages={isResumingState ? ["Loading your progress...", "Retrieving your interview state...", "Almost ready..."] : undefined} />;
+  // Only show full-screen Loading for transitions between questions
+  if (isTransitionLoading || isResumingAndLoading) {
+    console.log('Rendering full-screen Loading component for question transition');
+    return <Loading />;
   }
 
   console.log('Rendering main interview layout');
