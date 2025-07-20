@@ -50,7 +50,7 @@ const App = () => (
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/behavioral" element={<Behavioral />} />
               <Route path="/behavioral/create" element={<CreateBehavioral />} />
-              <Route path="/behavioral/interview" element={<BehavioralInterview />} />
+              <Route path="/behavioral/interview/:id" element={<BehavioralInterview />} />
               <Route path="/behavioral/all" element={<Behavioral />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />

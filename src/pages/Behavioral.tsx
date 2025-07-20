@@ -119,7 +119,7 @@ const Behavioral = () => {
       if (state.currentQuestionIndex >= 5) {
         navigate(`/behavioralFeedback?id=${interview.id}`);
       } else {
-        navigate('/behavioral/interview', {
+        navigate(`/behavioral/interview/${interview.id}`, {
           state: {
             isResuming: true,
             behavioralId: interview.id,

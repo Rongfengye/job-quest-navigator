@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -18,6 +18,7 @@ import SubmitButton from '@/components/behavioral/SubmitButton';
 const BehavioralInterview = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id: urlBehavioralId } = useParams();
   const { toast } = useToast();
   const [answer, setAnswer] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,15 +32,18 @@ const BehavioralInterview = () => {
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
-  const isResuming = locationState.isResuming || false;
+  const hasLocationState = Object.keys(locationState).length > 0;
+  const isResuming = locationState.isResuming || !hasLocationState; // If no state, treat as resume
   const resumePath = locationState.resumePath || '';
   const coverLetterPath = locationState.coverLetterPath || '';
   const additionalDocumentsPath = locationState.additionalDocumentsPath || '';
   const firstQuestion = locationState.firstQuestion;
-  const behavioralId = locationState.behavioralId;
+  const behavioralId = locationState.behavioralId || urlBehavioralId;
   
   console.log("BehavioralInterview - Is resuming:", isResuming);
+  console.log("BehavioralInterview - Has location state:", hasLocationState);
   console.log("BehavioralInterview - Behavioral ID:", behavioralId);
+  console.log("BehavioralInterview - URL Behavioral ID:", urlBehavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
   
@@ -117,12 +121,12 @@ const BehavioralInterview = () => {
         console.log('Initializing interview - isResuming:', isResuming);
         setPageLoaded(true);
         
-        // Validate behavioral ID for resuming interviews
-        if (isResuming && !behavioralId) {
+        // Validate behavioral ID for all cases
+        if (!behavioralId) {
           toast({
             variant: "destructive",
-            title: "Invalid resume attempt",
-            description: "Cannot resume interview without valid ID. Starting fresh.",
+            title: "Invalid interview",
+            description: "Cannot load interview without valid ID.",
           });
           navigate('/behavioral/create');
           return;
