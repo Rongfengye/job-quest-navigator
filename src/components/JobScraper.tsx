@@ -55,14 +55,14 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           return prevProgress + 2; // Quick initial progress
         }
       });
-    }, 400);
+    }, 280);
 
     const messageInterval = setInterval(() => {
       if (messageIndex < progressMessages.length - 1) {
         messageIndex++;
         setProgressMessage(progressMessages[messageIndex]);
       }
-    }, 1800);
+    }, 1260);
 
     // Set initial message
     setProgressMessage(progressMessages[0]);
