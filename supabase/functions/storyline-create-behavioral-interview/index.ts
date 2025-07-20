@@ -46,7 +46,8 @@ serve(async (req) => {
       isFirstQuestion = false,
       extractedTopics = [],
       askedTopics = [],
-      topicFollowUpCounts = {}
+      topicFollowUpCounts = {},
+      existingBehavioralId
     } = requestBody;
 
     // Check usage limits for behavioral interviews (only for the first question)
@@ -127,6 +128,9 @@ serve(async (req) => {
 
     // Extract topics on first question if not already provided
     let currentExtractedTopics = extractedTopics;
+    let currentAskedTopics = askedTopics;
+    let currentTopicFollowUpCounts = topicFollowUpCounts;
+
     if (questionIndex === 0 && extractedTopics.length === 0) {
       console.log('Extracting relevant topics for first question');
       const topicResults = await extractRelevantTopics(
@@ -141,6 +145,27 @@ serve(async (req) => {
       );
       currentExtractedTopics = topicResults.topics;
       console.log('Topics extracted:', currentExtractedTopics);
+    } else if (!isFirstQuestion && existingBehavioralId) {
+      // Load topic tracking data from database for subsequent questions
+      console.log('Loading topic tracking data from database for subsequent question');
+      const { data: behavioralData, error: loadError } = await supabase
+        .from('storyline_behaviorals')
+        .select('extracted_topics, asked_topics, topic_follow_up_counts')
+        .eq('id', existingBehavioralId)
+        .single();
+
+      if (loadError) {
+        console.error('Error loading topic tracking data:', loadError);
+      } else if (behavioralData) {
+        currentExtractedTopics = behavioralData.extracted_topics || [];
+        currentAskedTopics = behavioralData.asked_topics || [];
+        currentTopicFollowUpCounts = behavioralData.topic_follow_up_counts || {};
+        console.log('Loaded topic tracking data:', {
+          extractedTopics: currentExtractedTopics,
+          askedTopics: currentAskedTopics,
+          topicFollowUpCounts: currentTopicFollowUpCounts
+        });
+      }
     }
 
     // For questions 1-5, use the modularized question generation function to generate questions
@@ -157,9 +182,57 @@ serve(async (req) => {
       previousQuestions,
       previousAnswers,
       currentExtractedTopics,
-      askedTopics,
-      topicFollowUpCounts
+      currentAskedTopics,
+      currentTopicFollowUpCounts
     );
+
+    // Update database with topic tracking data if we have an existing behavioral ID
+    if (existingBehavioralId) {
+      const updateData: any = {};
+
+      // On first question, save extracted topics
+      if (isFirstQuestion && currentExtractedTopics.length > 0) {
+        updateData.extracted_topics = currentExtractedTopics;
+        updateData.asked_topics = [];
+        updateData.topic_follow_up_counts = {};
+      }
+
+      // On subsequent questions, update topic tracking data
+      if (!isFirstQuestion && parsedContent.analytics) {
+        updateData.asked_topics = parsedContent.analytics.coveredTopics;
+        
+        // Update follow-up counts from analytics
+        const followUpCounts: Record<string, number> = {};
+        parsedContent.analytics.topicDepth.forEach(topicInfo => {
+          followUpCounts[topicInfo.topic] = topicInfo.followUpCount;
+        });
+        updateData.topic_follow_up_counts = followUpCounts;
+        
+        // Save analytics history
+        const { data: currentBehavioral } = await supabase
+          .from('storyline_behaviorals')
+          .select('analytics_history')
+          .eq('id', existingBehavioralId)
+          .single();
+        
+        const currentAnalyticsHistory = currentBehavioral?.analytics_history || [];
+        updateData.analytics_history = [...currentAnalyticsHistory, parsedContent.analytics];
+      }
+
+      // Update the database if we have data to save
+      if (Object.keys(updateData).length > 0) {
+        const { error: updateError } = await supabase
+          .from('storyline_behaviorals')
+          .update(updateData)
+          .eq('id', existingBehavioralId);
+
+        if (updateError) {
+          console.error('Error updating topic tracking data:', updateError);
+        } else {
+          console.log('Successfully updated topic tracking data in database');
+        }
+      }
+    }
 
     // Generate audio for the question if requested
     // We have this here so that the Text and audio is delivered to the front end at the same time

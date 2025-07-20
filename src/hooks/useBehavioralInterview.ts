@@ -195,16 +195,31 @@ export const useBehavioralInterview = () => {
       const existingQuestions = (Array.isArray(interviewData.questions) ? interviewData.questions : []) as string[];
       const existingResponses = (Array.isArray(interviewData.responses) ? interviewData.responses : []) as string[];
       
+      // Load topic tracking data from database
+      const extractedTopicsFromDb = Array.isArray(interviewData.extracted_topics) ? interviewData.extracted_topics as string[] : [];
+      const askedTopicsFromDb = Array.isArray(interviewData.asked_topics) ? interviewData.asked_topics as string[] : [];
+      const topicFollowUpCountsFromDb = (interviewData.topic_follow_up_counts && typeof interviewData.topic_follow_up_counts === 'object' && !Array.isArray(interviewData.topic_follow_up_counts)) 
+        ? interviewData.topic_follow_up_counts as Record<string, number> 
+        : {};
+      
       // Calculate where to resume
       const resumeQuestionIndex = existingResponses.length;
       
       console.log(`Resuming at question ${resumeQuestionIndex + 1} of ${existingQuestions.length}`);
+      console.log('Loaded topic tracking data:', {
+        extractedTopics: extractedTopicsFromDb,
+        askedTopics: askedTopicsFromDb,
+        topicFollowUpCounts: topicFollowUpCountsFromDb
+      });
       
       // Set the state
       setQuestions(existingQuestions);
       setAnswers(existingResponses);
       setCurrentQuestionIndex(resumeQuestionIndex);
       setBehavioralId(behavioralId);
+      setExtractedTopics(extractedTopicsFromDb);
+      setAskedTopics(askedTopicsFromDb);
+      setTopicFollowUpCounts(topicFollowUpCountsFromDb);
       
       // If we have a question to display immediately
       if (resumeQuestionIndex < existingQuestions.length) {
@@ -335,7 +350,8 @@ export const useBehavioralInterview = () => {
         // Topic tracking parameters for enhanced question generation
         extractedTopics,
         askedTopics,
-        topicFollowUpCounts
+        topicFollowUpCounts,
+        existingBehavioralId: existingBehavioralId || behavioralId
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
@@ -596,6 +612,9 @@ export const useBehavioralInterview = () => {
     setBehavioralId(null);
     setIsInitialLoading(true);
     setIsTransitionLoading(false);
+    setExtractedTopics([]);
+    setAskedTopics([]);
+    setTopicFollowUpCounts({});
   };
 
   return {

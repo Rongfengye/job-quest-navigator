@@ -200,10 +200,13 @@ export type Database = {
       storyline_behaviorals: {
         Row: {
           additional_documents_path: string | null
+          analytics_history: Json | null
+          asked_topics: Json | null
           company_description: string | null
           company_name: string | null
           cover_letter_path: string | null
           created_at: string | null
+          extracted_topics: Json | null
           feedback: Json | null
           id: string
           job_description: string
@@ -211,15 +214,19 @@ export type Database = {
           questions: Json | null
           responses: Json | null
           resume_path: string
+          topic_follow_up_counts: Json | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           additional_documents_path?: string | null
+          analytics_history?: Json | null
+          asked_topics?: Json | null
           company_description?: string | null
           company_name?: string | null
           cover_letter_path?: string | null
           created_at?: string | null
+          extracted_topics?: Json | null
           feedback?: Json | null
           id?: string
           job_description: string
@@ -227,15 +234,19 @@ export type Database = {
           questions?: Json | null
           responses?: Json | null
           resume_path: string
+          topic_follow_up_counts?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           additional_documents_path?: string | null
+          analytics_history?: Json | null
+          asked_topics?: Json | null
           company_description?: string | null
           company_name?: string | null
           cover_letter_path?: string | null
           created_at?: string | null
+          extracted_topics?: Json | null
           feedback?: Json | null
           id?: string
           job_description?: string
@@ -243,6 +254,7 @@ export type Database = {
           questions?: Json | null
           responses?: Json | null
           resume_path?: string
+          topic_follow_up_counts?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }
