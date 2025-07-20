@@ -10,6 +10,23 @@ interface BehavioralQuestionData {
   questionIndex: number;
   storylineId?: string;
   audio?: string | null;
+  extractedTopics?: string[];
+  analytics?: {
+    questionNumber: number;
+    totalQuestions: number;
+    remainingQuestions: number;
+    extractedTopics: string[];
+    coveredTopics: string[];
+    uncoveredTopics: string[];
+    coveragePercentage: number;
+    topicDepth: Array<{
+      topic: string;
+      followUpCount: number;
+      maxReached: boolean;
+    }>;
+    completionPrediction: string;
+    interviewProgress: number;
+  };
 }
 
 interface LocationState {
@@ -39,6 +56,12 @@ export const useBehavioralInterview = () => {
   const [currentQuestion, setCurrentQuestion] = useState<BehavioralQuestionData | null>(null);
   const [interviewComplete, setInterviewComplete] = useState(false);
   const [behavioralId, setBehavioralId] = useState<string | null>(null);
+  
+  // Topic tracking state for enhanced question generation
+  const [extractedTopics, setExtractedTopics] = useState<string[]>([]);
+  const [askedTopics, setAskedTopics] = useState<string[]>([]);
+  const [topicFollowUpCounts, setTopicFollowUpCounts] = useState<Record<string, number>>({});
+  
   const { toast } = useToast();
   const { user } = useAuthContext();
   const navigate = useNavigate();
@@ -308,7 +331,11 @@ export const useBehavioralInterview = () => {
         resumePath: resumePath || '',
         // Add usage limit check parameters
         userId: user?.id,
-        isFirstQuestion: currentQuestionIndex === 0
+        isFirstQuestion: currentQuestionIndex === 0,
+        // Topic tracking parameters for enhanced question generation
+        extractedTopics,
+        askedTopics,
+        topicFollowUpCounts
       };
       
       console.log(`Generating question at index: ${currentQuestionIndex}`);
@@ -334,6 +361,24 @@ export const useBehavioralInterview = () => {
       
       console.log('Question generated:', data.question);
       console.log('Audio data received:', data.audio ? 'Yes' : 'No');
+      console.log('Analytics received:', data.analytics);
+      
+      // Update topic tracking state with new data from response
+      if (data.extractedTopics && data.extractedTopics.length > 0) {
+        setExtractedTopics(data.extractedTopics);
+      }
+      
+      // Update analytics and topic tracking from response
+      if (data.analytics) {
+        setAskedTopics(data.analytics.coveredTopics);
+        
+        // Update follow-up counts based on analytics topic depth
+        const newFollowUpCounts: Record<string, number> = {};
+        data.analytics.topicDepth.forEach(topicInfo => {
+          newFollowUpCounts[topicInfo.topic] = topicInfo.followUpCount;
+        });
+        setTopicFollowUpCounts(newFollowUpCounts);
+      }
       
       const questionData: BehavioralQuestionData = {
         ...data,
