@@ -133,6 +133,13 @@ const BehavioralInterview = () => {
           console.log('Using hybrid function to load/setup interview');
           const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
           setResumedFormData(loadedData.formData);
+          if (firstQuestion) {
+            setCurrentQuestion({
+              question: firstQuestion.question,
+              questionIndex: 0,
+              audio: firstQuestion.audio || null
+            });
+          }
           console.log('Interview initialized successfully');
         } catch (error) {
           console.error('Failed to initialize interview:', error);
