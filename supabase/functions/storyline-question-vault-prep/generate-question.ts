@@ -28,6 +28,63 @@ const TOPIC_DISTRIBUTION = {
   max_per_topic: 2 // Prevent over-concentration on single topics
 };
 
+// Phase 4: Resume parsing for experience extraction
+const RESUME_EXPERIENCE_KEYWORDS = {
+  internships: ['intern', 'internship', 'co-op', 'coop', 'summer analyst', 'trainee'],
+  leadership: ['president', 'leader', 'captain', 'coordinator', 'manager', 'director', 'head', 'chair'],
+  projects: ['project', 'developed', 'built', 'created', 'designed', 'implemented', 'led team'],
+  technical_skills: ['python', 'java', 'javascript', 'react', 'sql', 'git', 'aws', 'machine learning', 'data analysis'],
+  achievements: ['award', 'recognition', 'scholarship', 'dean\'s list', 'honor', 'achievement', 'competition'],
+  teamwork: ['team', 'collaborated', 'group project', 'cross-functional', 'committee', 'organization']
+};
+
+// Phase 5: Company culture research patterns
+const CULTURE_RESEARCH_PATTERNS = [
+  'company values', 'mission statement', 'company culture', 'work environment', 
+  'employee testimonials', 'glassdoor culture reviews', 'linkedin company updates',
+  'diversity and inclusion', 'remote work policy', 'employee benefits'
+];
+
+// Phase 4: Extract key experiences from resume text
+function extractResumeExperiences(resumeText: string): any {
+  if (!resumeText) return { experiences: [], skills: [], keywords: [] };
+  
+  const text = resumeText.toLowerCase();
+  const extractedData = {
+    experiences: [] as string[],
+    skills: [] as string[],
+    keywords: [] as string[],
+    leadership: [] as string[],
+    projects: [] as string[]
+  };
+  
+  // Extract experiences by category
+  Object.entries(RESUME_EXPERIENCE_KEYWORDS).forEach(([category, keywords]) => {
+    keywords.forEach(keyword => {
+      if (text.includes(keyword.toLowerCase())) {
+        extractedData.keywords.push(keyword);
+        if (category === 'leadership') extractedData.leadership.push(keyword);
+        if (category === 'technical_skills') extractedData.skills.push(keyword);
+        if (category === 'projects') extractedData.projects.push(keyword);
+      }
+    });
+  });
+  
+  return extractedData;
+}
+
+// Phase 5: Generate company culture research prompts
+function generateCultureResearchPrompts(companyName: string): string {
+  return `
+    COMPANY CULTURE RESEARCH for ${companyName}:
+    - Search for ${companyName} company values, mission statement, and cultural principles
+    - Look for employee testimonials and culture reviews on Glassdoor, Blind, LinkedIn
+    - Research ${companyName}'s stance on diversity, inclusion, remote work, and work-life balance
+    - Find information about ${companyName}'s leadership style and team dynamics
+    - Identify any unique cultural aspects, traditions, or employee programs at ${companyName}
+  `;
+}
+
 // Phase 2: Enhanced source attribution with validation scoring
 const SOURCE_ATTRIBUTION = {
   'glassdoor-verified': { priority: 1, reliability: 5, category: 'interview_review', platform: 'Glassdoor' },
@@ -97,6 +154,8 @@ function getSearchSpecification(companyName: string, variation: string): string 
   // Phase 2: Get company-specific search patterns
   const searchPatterns = getCompanySpecificSearchPatterns(companyName);
   const topicGuidance = generateTopicGuidance();
+  // Phase 5: Add company culture research
+  const cultureResearch = generateCultureResearchPrompts(companyName);
   
   if (variation === 'enhanced') {
     return `Search for REAL interview questions that have actually been asked by ${companyName} using this prioritized approach:
@@ -117,16 +176,20 @@ function getSearchSpecification(companyName: string, variation: string): string 
 
     ${topicGuidance}
 
+    ${cultureResearch}
+
     VALIDATION CRITERIA: Questions must be appropriate for college students/new grads with limited professional experience.`;
   }
   
-  // Standard variation with topic guidance added
+  // Standard variation with topic guidance and culture research added
   return `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${baseWebsiteList}) to find interview questions that have actually been asked by ${companyName} for intern and entry-level roles. 
   Focus on questions appropriate for college students and new graduates.
   If you find such questions, prioritize them in the list of returned questions. 
   If not, generate questions based on the job description and candidate profile.
   
-  ${topicGuidance}`;
+  ${topicGuidance}
+  
+  ${cultureResearch}`;
 }
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
@@ -144,9 +207,13 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   // Generate unique request ID for tracking
   const requestId = crypto.randomUUID().substring(0, 8);
 
+  // Phase 4: Extract resume experiences for personalization
+  const resumeExperiences = extractResumeExperiences(resumeText);
+  
   console.log(`[GENERATE-QUESTION] ${requestId} - Received request to generate interview questions`);
   console.log(`[GENERATE-QUESTION] ${requestId} - Job Title: ${jobTitle}, Company: ${companyName}`);
   console.log(`[GENERATE-QUESTION] ${requestId} - Resume text length: ${resumeText?.length || 0}`);
+  console.log(`[RESUME-ANALYSIS] ${requestId} - Extracted experiences:`, resumeExperiences);
   console.log(`[GENERATE-QUESTION] ${requestId} - Original behavioral questions count: ${originalBehavioralQuestions.length}`);
   console.log(`[GENERATE-QUESTION] ${requestId} - Technical questions enabled: ${ENABLE_TECHNICAL_QUESTIONS}`);
 
@@ -211,6 +278,18 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     - 5 behavioral questions focused on teamwork, learning, and project experience`
     : `- 5 behavioral questions focused on teamwork, learning, and project experience`;
 
+  // Phase 4: Generate experience-based personalization prompts
+  const experiencePrompts = resumeExperiences.keywords.length > 0 ? 
+    `
+    CANDIDATE EXPERIENCE CUSTOMIZATION:
+    - Based on candidate's resume, they have experience with: ${resumeExperiences.keywords.join(', ')}
+    - Leadership experiences found: ${resumeExperiences.leadership.join(', ') || 'None identified'}
+    - Technical skills mentioned: ${resumeExperiences.skills.join(', ') || 'None identified'}
+    - Project experience: ${resumeExperiences.projects.join(', ') || 'None identified'}
+    - Generate questions that allow the candidate to discuss their specific experiences
+    - Reference their actual background when crafting model answers
+    ` : '';
+
   const userPrompt = `
   Candidate Documents and Context:
   ${resumeText ? `Resume content: "${resumeText}"` : ''}
@@ -221,6 +300,8 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   ${questionTypes}
 
   ${searchSpecification}
+
+  ${experiencePrompts}
 
   ${formatSpecification}
   `;
