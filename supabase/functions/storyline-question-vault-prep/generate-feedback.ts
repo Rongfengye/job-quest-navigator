@@ -1,6 +1,48 @@
 
 import { corsHeaders } from './index.ts';
 
+function detectCompetencyFromQuestion(question: string): string {
+  const lowercaseQuestion = question.toLowerCase();
+  
+  // Leadership competencies
+  if (lowercaseQuestion.includes('lead') || lowercaseQuestion.includes('manage') || 
+      lowercaseQuestion.includes('team') || lowercaseQuestion.includes('delegate') ||
+      lowercaseQuestion.includes('motivate') || lowercaseQuestion.includes('influence')) {
+    return 'Leadership & Team Management';
+  }
+  
+  // Communication competencies
+  if (lowercaseQuestion.includes('communicate') || lowercaseQuestion.includes('present') ||
+      lowercaseQuestion.includes('explain') || lowercaseQuestion.includes('persuade') ||
+      lowercaseQuestion.includes('conflict') || lowercaseQuestion.includes('feedback')) {
+    return 'Communication & Interpersonal Skills';
+  }
+  
+  // Problem-solving competencies
+  if (lowercaseQuestion.includes('problem') || lowercaseQuestion.includes('challenge') ||
+      lowercaseQuestion.includes('solve') || lowercaseQuestion.includes('difficult') ||
+      lowercaseQuestion.includes('overcome') || lowercaseQuestion.includes('obstacle')) {
+    return 'Problem-Solving & Critical Thinking';
+  }
+  
+  // Adaptability competencies
+  if (lowercaseQuestion.includes('change') || lowercaseQuestion.includes('adapt') ||
+      lowercaseQuestion.includes('flexible') || lowercaseQuestion.includes('learn') ||
+      lowercaseQuestion.includes('new') || lowercaseQuestion.includes('different')) {
+    return 'Adaptability & Learning';
+  }
+  
+  // Initiative competencies
+  if (lowercaseQuestion.includes('initiative') || lowercaseQuestion.includes('proactive') ||
+      lowercaseQuestion.includes('improve') || lowercaseQuestion.includes('innovate') ||
+      lowercaseQuestion.includes('idea') || lowercaseQuestion.includes('suggest')) {
+    return 'Initiative & Innovation';
+  }
+  
+  // Default to general competency
+  return 'Professional Skills & Experience';
+}
+
 export async function generateAnswer(requestData: any, openAIApiKey: string) {
   const { 
     answerText, 
@@ -14,6 +56,10 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   console.log('Received request to generate feedback for answer');
   console.log('Question type:', questionType);
   console.log('Answer length:', answerText?.length || 0);
+
+  // Detect the primary competency being assessed
+  const detectedCompetency = detectCompetencyFromQuestion(question);
+  console.log('Detected competency:', detectedCompetency);
 
   const structureGuidelines = `
     Analyze the candidate's response to the interview question and provide detailed feedback in JSON format with the following sections:
@@ -36,6 +82,13 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   ${companyName ? `at ${companyName}` : ''}
   ${jobDescription ? `consider how well the answer aligns with these job requirements: """${jobDescription}"""` : ''}`
 
+  const competencyContext = `This question primarily assesses: ${detectedCompetency}
+  
+  Focus your evaluation on how well the candidate demonstrates competency in this area, considering:
+  - Relevant skills and experience in ${detectedCompetency.toLowerCase()}
+  - Specific examples that showcase this competency
+  - Areas where the candidate could strengthen their demonstration of this skill`
+
   // Prepare the system prompt
   const systemPrompt = `You are an expert interview coach specializing in providing constructive feedback on interview answers.
   
@@ -44,6 +97,8 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   ${questionTypeSpecifications}
   
   ${jobContextSpecifications}
+  
+  ${competencyContext}
   
   Make your feedback specific, actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.`;
 
