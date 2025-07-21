@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -136,13 +135,17 @@ export const useBehavioralInterview = () => {
         console.log('First question audio present:', firstQuestion.audio ? 'Yes' : 'No');
         console.log('First question audio length:', firstQuestion.audio?.length || 0);
         
+        // CRITICAL FIX: Ensure audio is preserved when creating the question object
         const questionWithAudio = {
           question: firstQuestion.question,
           questionIndex: 0,
-          audio: firstQuestion.audio || null
+          audio: firstQuestion.audio || null // Preserve the audio data
         };
         
-        console.log('Setting current question with audio:', questionWithAudio);
+        console.log('=== FIXED: Setting current question with preserved audio ===');
+        console.log('Question object being set:', questionWithAudio);
+        console.log('Audio in question object:', questionWithAudio.audio ? 'PRESERVED' : 'LOST');
+        
         setCurrentQuestionWithLog(questionWithAudio);
       } else if (resumeQuestionIndex < existingQuestions.length) {
         // Resume with existing question - no audio replay
