@@ -14,14 +14,43 @@ const PROMPT_VARIATION_CONFIG = {
   }
 };
 
-// Source attribution metadata for tracking question origins
-const SOURCE_ATTRIBUTION = {
-  glassdoor: { priority: 1, reliability: 5, category: 'interview_review' },
-  blind: { priority: 2, reliability: 4, category: 'professional_forum' },
-  reddit: { priority: 3, reliability: 3, category: 'community_forum' },
-  company_official: { priority: 1, reliability: 5, category: 'official_source' },
-  ai_generated: { priority: 5, reliability: 2, category: 'ai_fallback' }
+// Phase 3: College-focused competencies for topic control
+const COLLEGE_COMPETENCIES = [
+  'teamwork', 'learning_agility', 'initiative', 'problem_solving', 
+  'adaptability', 'communication', 'leadership', 'time_management',
+  'collaboration', 'conflict_resolution', 'project_management'
+];
+
+// Phase 3: Topic distribution tracking
+const TOPIC_DISTRIBUTION = {
+  required_coverage: ['teamwork', 'learning_agility', 'initiative', 'problem_solving'],
+  preferred_coverage: ['adaptability', 'communication', 'leadership'],
+  max_per_topic: 2 // Prevent over-concentration on single topics
 };
+
+// Phase 2: Enhanced source attribution with validation scoring
+const SOURCE_ATTRIBUTION = {
+  'glassdoor-verified': { priority: 1, reliability: 5, category: 'interview_review', platform: 'Glassdoor' },
+  'blind-verified': { priority: 2, reliability: 4, category: 'professional_forum', platform: 'Blind' },
+  'company-official': { priority: 1, reliability: 5, category: 'official_source', platform: 'Company Website' },
+  'reddit-cscareerquestions': { priority: 3, reliability: 3, category: 'community_forum', platform: 'Reddit' },
+  'reddit-internships': { priority: 3, reliability: 3, category: 'community_forum', platform: 'Reddit' },
+  'reddit-company': { priority: 2, reliability: 4, category: 'community_forum', platform: 'Reddit' },
+  'forum-general': { priority: 4, reliability: 2, category: 'general_forum', platform: 'Various' },
+  'ai-generated': { priority: 5, reliability: 2, category: 'ai_fallback', platform: 'AI' }
+};
+
+// Phase 2: Company-specific search patterns
+function getCompanySpecificSearchPatterns(companyName: string): string[] {
+  return [
+    `"${companyName}" intern interview questions site:glassdoor.com`,
+    `"${companyName}" interview experience site:blind.com`,
+    `"${companyName}" internship interview site:reddit.com/r/cscareerquestions`,
+    `"${companyName}" new grad interview site:reddit.com/r/internships`,
+    `"${companyName}" behavioral interview questions`,
+    `"${companyName}" entry level interview process`
+  ];
+}
 
 function logSourceAttribution(companyName: string, requestId: string) {
   console.log(`[SOURCE-ATTRIBUTION] ${requestId} - Company: ${companyName}`);
@@ -47,33 +76,57 @@ function determinePromptVariation(requestId: string): string {
   return variation;
 }
 
+// Phase 3: Generate college-appropriate topic guidance
+function generateTopicGuidance(): string {
+  const shuffledRequiredTopics = [...TOPIC_DISTRIBUTION.required_coverage].sort(() => Math.random() - 0.5);
+  const shuffledPreferredTopics = [...TOPIC_DISTRIBUTION.preferred_coverage].sort(() => Math.random() - 0.5);
+  
+  return `
+    TOPIC DISTRIBUTION REQUIREMENTS for college students/new grads:
+    - MUST cover these competencies (at least 1 question each): ${shuffledRequiredTopics.join(', ')}
+    - PREFERRED coverage: ${shuffledPreferredTopics.join(', ')}
+    - Focus on school projects, internships, part-time jobs, group work, leadership roles
+    - Avoid requiring extensive professional experience
+    - Maximum ${TOPIC_DISTRIBUTION.max_per_topic} questions per competency to ensure variety
+  `;
+}
+
 function getSearchSpecification(companyName: string, variation: string): string {
   const baseWebsiteList = 'Glassdoor, Reddit, Blind, Wall Street Oasis, OneClass, Fishbowl, PrepLounge, Quora, LeetCode Discuss, Indeed';
+  
+  // Phase 2: Get company-specific search patterns
+  const searchPatterns = getCompanySpecificSearchPatterns(companyName);
+  const topicGuidance = generateTopicGuidance();
   
   if (variation === 'enhanced') {
     return `Search for REAL interview questions that have actually been asked by ${companyName} using this prioritized approach:
 
-    PRIORITY 1 - Official Interview Experience Sources:
-    - Glassdoor interview experiences for ${companyName} (mark as "source": "glassdoor-verified")
-    - Blind company-specific posts about ${companyName} interviews (mark as "source": "blind-verified")
-    - ${companyName} official career pages and interview guides (mark as "source": "company-official")
+    PRIORITY 1 - Official Interview Experience Sources (Focus: intern/new grad roles):
+    - Glassdoor interview experiences for ${companyName} internships and entry-level roles (mark as "source": "glassdoor-verified")
+    - Blind company-specific posts about ${companyName} intern/new grad interviews (mark as "source": "blind-verified") 
+    - ${companyName} official career pages and university recruiting guides (mark as "source": "company-official")
 
     PRIORITY 2 - Community & Forum Sources:
-    - Reddit r/cscareerquestions posts mentioning ${companyName} (mark as "source": "reddit-community")
+    - Reddit r/cscareerquestions posts mentioning ${companyName} intern interviews (mark as "source": "reddit-cscareerquestions")
     - Reddit r/internships ${companyName} interview experiences (mark as "source": "reddit-internships")
-    - Company-specific subreddits (mark as "source": "reddit-company")
+    - Company-specific subreddits discussing ${companyName} recruiting (mark as "source": "reddit-company")
 
     PRIORITY 3 - Fallback Sources:
-    - Other professional forums (${baseWebsiteList}) (mark as "source": "forum-general")
-    - If no real questions found, generate based on job description (mark as "source": "ai-generated")
+    - Other professional forums focusing on entry-level roles (mark as "source": "forum-general")
+    - If no real questions found, generate college-appropriate questions (mark as "source": "ai-generated")
 
-    For each question found, include source attribution metadata and prioritize questions with verified interview experiences.`;
+    ${topicGuidance}
+
+    VALIDATION CRITERIA: Questions must be appropriate for college students/new grads with limited professional experience.`;
   }
   
-  // Standard variation (existing behavior)
-  return `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${baseWebsiteList}) to find interview questions that have actually been asked by ${companyName} for the role the candidate is applying to. 
+  // Standard variation with topic guidance added
+  return `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${baseWebsiteList}) to find interview questions that have actually been asked by ${companyName} for intern and entry-level roles. 
+  Focus on questions appropriate for college students and new graduates.
   If you find such questions, prioritize them in the list of returned questions. 
-  If not, generate questions based on the job description and candidate profile.`;
+  If not, generate questions based on the job description and candidate profile.
+  
+  ${topicGuidance}`;
 }
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
