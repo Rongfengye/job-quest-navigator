@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
@@ -46,34 +46,6 @@ interface LocationState {
   behavioralId?: string;
 }
 
-// Helper function to create deep copy of audio data
-const createAudioDeepCopy = (audio: string | null | undefined): string | null => {
-  if (!audio) return null;
-  
-  // Create a proper deep copy of the audio string
-  const audioCopy = String(audio);
-  console.log('=== Audio Deep Copy Created ===');
-  console.log('Original audio length:', audio?.length || 0);
-  console.log('Copy audio length:', audioCopy?.length || 0);
-  console.log('Audio validation - strings match:', audio === audioCopy);
-  
-  return audioCopy;
-};
-
-// Helper function to validate audio data
-const validateAudioData = (audio: string | null | undefined, context: string): boolean => {
-  console.log(`=== Audio Validation - ${context} ===`);
-  console.log('Audio exists:', !!audio);
-  console.log('Audio length:', audio?.length || 0);
-  console.log('Audio type:', typeof audio);
-  console.log('Audio is non-empty string:', typeof audio === 'string' && audio.length > 0);
-  
-  const isValid = typeof audio === 'string' && audio.length > 0;
-  console.log(`Audio validation result for ${context}:`, isValid);
-  
-  return isValid;
-};
-
 export const useBehavioralInterview = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
@@ -90,104 +62,23 @@ export const useBehavioralInterview = () => {
   const [askedTopics, setAskedTopics] = useState<string[]>([]);
   const [topicFollowUpCounts, setTopicFollowUpCounts] = useState<Record<string, number>>({});
   
-  // Add a ref to prevent multiple initializations
-  const isInitializedRef = useRef(false);
-  
   const { toast } = useToast();
   const { user } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
   const locationState = location.state as LocationState | null;
 
-  // Enhanced setCurrentQuestionWithLog with detailed audio tracking
+  // Debug logging for currentQuestion state changes
   const setCurrentQuestionWithLog = (value: BehavioralQuestionData | null) => {
-    console.log('=== PRE-setCurrentQuestionWithLog ===');
-    console.log('About to set current question:', value?.question || 'null');
-    console.log('Question object before setting:', value);
-    
-    if (value?.audio) {
-      console.log('=== PRE-SET Audio Analysis ===');
-      console.log('Audio exists before setting:', !!value.audio);
-      console.log('Audio length before setting:', value.audio?.length || 0);
-      console.log('Audio type before setting:', typeof value.audio);
-      console.log('Audio preview before setting:', value.audio ? value.audio.substring(0, 50) + '...' : 'No audio');
-      
-      // Validate audio before setting
-      const isValidBeforeSet = validateAudioData(value.audio, 'PRE-SET');
-      console.log('Audio validation before set:', isValidBeforeSet);
-    } else {
-      console.log('=== PRE-SET: No audio data to analyze ===');
-    }
-    
-    // Create deep copy of the entire question object to prevent reference issues
-    const questionCopy = value ? {
-      ...value,
-      audio: createAudioDeepCopy(value.audio)
-    } : null;
-    
-    console.log('=== Question Copy Created ===');
-    console.log('Original question audio:', value?.audio ? 'EXISTS' : 'MISSING');
-    console.log('Copy question audio:', questionCopy?.audio ? 'EXISTS' : 'MISSING');
-    console.log('Audio preserved in copy:', !!questionCopy?.audio && !!value?.audio);
-    
-    // Set the state with the deep copy
-    setCurrentQuestion(questionCopy);
-    
-    // Post-set validation
-    setTimeout(() => {
-      console.log('=== POST-setCurrentQuestionWithLog (async check) ===');
-      console.log('Current question set successfully');
-      
-      if (questionCopy?.audio) {
-        console.log('=== POST-SET Audio Analysis ===');
-        console.log('Audio should exist after setting:', !!questionCopy.audio);
-        console.log('Audio length after setting:', questionCopy.audio?.length || 0);
-        
-        // Validate audio after setting
-        const isValidAfterSet = validateAudioData(questionCopy.audio, 'POST-SET');
-        console.log('Audio validation after set:', isValidAfterSet);
-        
-        if (!isValidAfterSet) {
-          console.error('=== AUDIO LOST DURING STATE SETTING ===');
-          console.error('This indicates a state management issue');
-        }
-      } else {
-        console.log('=== POST-SET: No audio in final state ===');
-      }
-    }, 100);
+    setCurrentQuestion(value);
     
     // If this is the first question being set, mark initial loading as complete
     if (value && isInitialLoading) {
-      console.log('First question set, marking initial loading as complete');
       setIsInitialLoading(false);
     }
   };
 
   const loadExistingOrSetupInterview = useCallback(async (behavioralId: string, firstQuestion?: { question: string; audio?: string | null }) => {
-    console.log('=== loadExistingOrSetupInterview called ===');
-    console.log('Behavioral ID:', behavioralId);
-    console.log('First question provided:', firstQuestion ? 'Yes' : 'No');
-    
-    if (firstQuestion?.audio) {
-      console.log('=== INITIAL Audio Analysis ===');
-      console.log('First question audio exists:', !!firstQuestion.audio);
-      console.log('First question audio length:', firstQuestion.audio?.length || 0);
-      console.log('First question audio type:', typeof firstQuestion.audio);
-      console.log('First question audio preview:', firstQuestion.audio ? firstQuestion.audio.substring(0, 50) + '...' : 'No audio');
-      
-      // Validate initial audio
-      const isValidInitial = validateAudioData(firstQuestion.audio, 'INITIAL-LOAD');
-      console.log('Initial audio validation:', isValidInitial);
-    } else {
-      console.log('=== INITIAL: No audio data provided ===');
-    }
-    
-    // Prevent multiple initializations
-    if (isInitializedRef.current) {
-      console.log('Already initialized, skipping...');
-      return;
-    }
-    
     setIsLoading(true);
     
     try {
@@ -224,69 +115,15 @@ export const useBehavioralInterview = () => {
       setCurrentQuestionIndex(resumeQuestionIndex);
       setBehavioralId(behavioralId);
       
-      // Mark as initialized BEFORE setting current question
-      isInitializedRef.current = true;
-      
       // Determine what question to display
       if (existingQuestions.length === 0 && firstQuestion) {
         // Fresh start - use the provided first question with audio
-        console.log('=== Fresh start - processing first question with audio ===');
-        
-        if (firstQuestion.audio) {
-          console.log('=== BEFORE State Setting - Audio Preservation ===');
-          console.log('Original firstQuestion.audio exists:', !!firstQuestion.audio);
-          console.log('Original firstQuestion.audio length:', firstQuestion.audio?.length || 0);
-          
-          // Create deep copy before state setting
-          const preservedAudio = createAudioDeepCopy(firstQuestion.audio);
-          console.log('=== Audio Deep Copy Results ===');
-          console.log('Preserved audio exists:', !!preservedAudio);
-          console.log('Preserved audio length:', preservedAudio?.length || 0);
-          console.log('Audio preservation successful:', !!preservedAudio && preservedAudio.length > 0);
-          
-          // Validate preserved audio
-          const isValidPreserved = validateAudioData(preservedAudio, 'PRESERVED-COPY');
-          
-          if (!isValidPreserved) {
-            console.error('=== AUDIO PRESERVATION FAILED ===');
-            console.error('Audio was lost during deep copy process');
-          }
-          
-          // Create question object with preserved audio
-          const questionWithAudio = {
-            question: firstQuestion.question,
-            questionIndex: 0,
-            audio: preservedAudio // Use the preserved copy
-          };
-          
-          console.log('=== FINAL Question Object Before State Setting ===');
-          console.log('Question object:', questionWithAudio);
-          console.log('Question object audio exists:', !!questionWithAudio.audio);
-          console.log('Question object audio length:', questionWithAudio.audio?.length || 0);
-          
-          // Final validation before state setting
-          const isValidFinal = validateAudioData(questionWithAudio.audio, 'FINAL-BEFORE-STATE');
-          
-          if (isValidFinal) {
-            console.log('=== CALLING setCurrentQuestionWithLog with valid audio ===');
-            setCurrentQuestionWithLog(questionWithAudio);
-          } else {
-            console.error('=== AUDIO VALIDATION FAILED - NOT SETTING STATE ===');
-            console.error('Audio was lost during processing, setting question without audio');
-            setCurrentQuestionWithLog({
-              question: firstQuestion.question,
-              questionIndex: 0,
-              audio: null
-            });
-          }
-        } else {
-          console.log('=== Setting first question without audio ===');
-          setCurrentQuestionWithLog({
-            question: firstQuestion.question,
-            questionIndex: 0,
-            audio: null
-          });
-        }
+        console.log('Fresh start - using first question with audio');
+        setCurrentQuestionWithLog({
+          question: firstQuestion.question,
+          questionIndex: 0,
+          audio: firstQuestion.audio || null
+        });
       } else if (resumeQuestionIndex < existingQuestions.length) {
         // Resume with existing question - no audio replay
         console.log('Resuming with existing question at index:', resumeQuestionIndex);
@@ -330,7 +167,7 @@ export const useBehavioralInterview = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]); // Only depend on toast, not on the changing firstQuestion
+  }, [toast]);
 
   const loadExistingInterview = useCallback(async (behavioralId: string) => {
     setIsLoading(true);
@@ -779,8 +616,6 @@ export const useBehavioralInterview = () => {
     setExtractedTopics([]);
     setAskedTopics([]);
     setTopicFollowUpCounts({});
-    // Reset the initialization flag
-    isInitializedRef.current = false;
   };
 
   return {

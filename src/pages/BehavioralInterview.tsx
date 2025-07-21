@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -29,9 +29,6 @@ const BehavioralInterview = () => {
   const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
   
-  // Add a ref to track if initialization has been attempted
-  const initializationAttemptedRef = useRef(false);
-  
   // Extract data from location state with error handling
   const locationState = location.state || {};
   const isResuming = locationState.isResuming || false;
@@ -41,13 +38,10 @@ const BehavioralInterview = () => {
   const firstQuestion = locationState.firstQuestion;
   const behavioralId = locationState.behavioralId;
   
-  console.log("=== BehavioralInterview Audio Debug ===");
   console.log("BehavioralInterview - Is resuming:", isResuming);
   console.log("BehavioralInterview - Behavioral ID:", behavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
-  console.log("BehavioralInterview - First question audio:", firstQuestion?.audio ? 'Audio data present' : 'No audio data');
-  console.log("BehavioralInterview - First question audio length:", firstQuestion?.audio?.length || 0);
   
   const formData = locationState.formData || resumedFormData || {
     jobTitle: 'Software Developer',
@@ -116,46 +110,45 @@ const BehavioralInterview = () => {
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
-  // FIXED: Stabilized initialization effect with proper guards
+  // Updated initialization effect using the new hybrid function
   useEffect(() => {
     const initializeInterview = async () => {
-      // Prevent multiple initializations
-      if (initializationAttemptedRef.current || !behavioralId) {
-        return;
-      }
-      
-      console.log('=== Initializing Interview ===');
-      console.log('Initializing interview - behavioralId:', behavioralId);
-      console.log('Initializing interview - firstQuestion with audio:', firstQuestion?.audio ? 'Yes' : 'No');
-      
-      initializationAttemptedRef.current = true;
-      setPageLoaded(true);
-      
-      try {
-        console.log('Using hybrid function to load/setup interview');
-        console.log('Passing firstQuestion to loadExistingOrSetupInterview:', firstQuestion);
-        const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
-        setResumedFormData(loadedData.formData);
-        setCurrentQuestion({
-          question: firstQuestion.question,
-          questionIndex: 0,
-          audio: firstQuestion.audio || null
-        });
-        console.log('Interview initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize interview:', error);
-        toast({
-          variant: "destructive",
-          title: "Failed to initialize interview",
-          description: "We couldn't load your interview. Please try again from the dashboard.",
-        });
-        navigate('/behavioral');
-        return;
+      if (!pageLoaded) {
+        console.log('Initializing interview - behavioralId:', behavioralId);
+        setPageLoaded(true);
+        
+        // Validate that we have a behavioral ID
+        if (!behavioralId) {
+          toast({
+            variant: "destructive",
+            title: "Interview setup incomplete",
+            description: "Please go through the setup process again.",
+          });
+          navigate('/behavioral/create');
+          return;
+        }
+        
+        // Use the new hybrid function that handles both resuming and fresh starts
+        try {
+          console.log('Using hybrid function to load/setup interview');
+          const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
+          setResumedFormData(loadedData.formData);
+          console.log('Interview initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize interview:', error);
+          toast({
+            variant: "destructive",
+            title: "Failed to initialize interview",
+            description: "We couldn't load your interview. Please try again from the dashboard.",
+          });
+          navigate('/behavioral');
+          return;
+        }
       }
     };
     
     initializeInterview();
-  }, [behavioralId]); // Only depend on behavioralId
+  }, [pageLoaded, behavioralId, firstQuestion, navigate, toast, loadExistingOrSetupInterview]);
 
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {
@@ -353,11 +346,7 @@ const BehavioralInterview = () => {
     return <Loading />;
   }
 
-  console.log('=== Rendering Main Interview ===');
-  console.log('Current question:', currentQuestion?.question || 'No question');
-  console.log('Current question audio:', currentQuestion?.audio ? 'Audio present' : 'No audio');
-  console.log('Current question audio length:', currentQuestion?.audio?.length || 0);
-  
+  console.log('Rendering main interview layout');
   return (
     <>
       <NavBar />
