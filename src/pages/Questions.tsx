@@ -8,6 +8,7 @@ import ErrorDisplay from '@/components/ui/error-display';
 import QuestionsList from '@/components/questions/QuestionsList';
 import NoQuestions from '@/components/questions/NoQuestions';
 import QuestionPageHeader from '@/components/questions/QuestionPageHeader';
+import SourceInfoPanel from '@/components/questions/SourceInfoPanel';
 
 const Questions = () => {
   const location = useLocation();
@@ -47,7 +48,10 @@ const Questions = () => {
         <ErrorDisplay message={error} />
 
         {questions.length > 0 ? (
-          <QuestionsList questions={questions} storylineId={storylineId || ''} />
+          <>
+            <SourceInfoPanel questions={questions} />
+            <QuestionsList questions={questions} storylineId={storylineId || ''} />
+          </>
         ) : (
           <NoQuestions />
         )}

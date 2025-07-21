@@ -15,6 +15,12 @@ export type Question = {
   followUp?: string[];
   type?: 'technical' | 'behavioral' | 'original-behavioral';
   originalIndex?: number;
+  sourceAttribution?: {
+    source: string;
+    reliability: number;
+    category: string;
+    platform?: string;
+  };
 };
 
 export type ParsedResponse = {

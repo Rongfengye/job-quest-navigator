@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Question } from '@/hooks/useQuestionData';
+import { SourceBadge } from '@/components/questions/SourceBadge';
 
 interface QuestionDisplayProps {
   question: Question;
@@ -22,12 +23,20 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
             <span className="text-gray-500 font-mono font-medium">{formatQuestionIndex(questionIndex)}</span>
             <CardTitle className="text-xl">Question</CardTitle>
           </div>
-          {question.type && (
-            <Badge 
-              variant={question.type === 'technical' ? 'secondary' : 'default'}
-            >
-              {question.type}
-            </Badge>
+          {(question.type || question.sourceAttribution) && (
+            <div className="flex items-center gap-2">
+              {question.type && (
+                <Badge 
+                  variant={question.type === 'technical' ? 'secondary' : 'default'}
+                >
+                  {question.type}
+                </Badge>
+              )}
+              <SourceBadge 
+                sourceAttribution={question.sourceAttribution}
+                showReliability={true}
+              />
+            </div>
           )}
         </div>
         <CardDescription className="text-lg font-medium text-gray-800 mt-2">
