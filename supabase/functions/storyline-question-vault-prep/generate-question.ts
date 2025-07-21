@@ -1,7 +1,80 @@
+
 import { corsHeaders } from './index.ts';
 
 // Feature flag to control technical question generation
 const ENABLE_TECHNICAL_QUESTIONS = false;
+
+// A/B testing configuration for prompt variations
+const PROMPT_VARIATION_CONFIG = {
+  enabled: Deno.env.get('ENABLE_PROMPT_AB_TESTING') === 'true',
+  defaultVariation: 'standard',
+  variations: {
+    standard: 'standard_search_prompt',
+    enhanced: 'enhanced_search_prompt'
+  }
+};
+
+// Source attribution metadata for tracking question origins
+const SOURCE_ATTRIBUTION = {
+  glassdoor: { priority: 1, reliability: 5, category: 'interview_review' },
+  blind: { priority: 2, reliability: 4, category: 'professional_forum' },
+  reddit: { priority: 3, reliability: 3, category: 'community_forum' },
+  company_official: { priority: 1, reliability: 5, category: 'official_source' },
+  ai_generated: { priority: 5, reliability: 2, category: 'ai_fallback' }
+};
+
+function logSourceAttribution(companyName: string, requestId: string) {
+  console.log(`[SOURCE-ATTRIBUTION] ${requestId} - Company: ${companyName}`);
+  console.log(`[SOURCE-ATTRIBUTION] ${requestId} - Target sources prioritized:`, {
+    primary: ['Glassdoor', 'Blind', 'Company Official'],
+    secondary: ['Reddit (r/cscareerquestions, r/internships)', 'Quora'],
+    fallback: ['AI-generated based on job description']
+  });
+}
+
+function logPromptVariation(variation: string, requestId: string) {
+  console.log(`[PROMPT-VARIATION] ${requestId} - Using variation: ${variation}`);
+}
+
+function determinePromptVariation(requestId: string): string {
+  if (!PROMPT_VARIATION_CONFIG.enabled) {
+    return PROMPT_VARIATION_CONFIG.defaultVariation;
+  }
+  
+  // Simple A/B test logic - could be enhanced with proper experiment framework
+  const variation = Math.random() < 0.5 ? 'standard' : 'enhanced';
+  logPromptVariation(variation, requestId);
+  return variation;
+}
+
+function getSearchSpecification(companyName: string, variation: string): string {
+  const baseWebsiteList = 'Glassdoor, Reddit, Blind, Wall Street Oasis, OneClass, Fishbowl, PrepLounge, Quora, LeetCode Discuss, Indeed';
+  
+  if (variation === 'enhanced') {
+    return `Search for REAL interview questions that have actually been asked by ${companyName} using this prioritized approach:
+
+    PRIORITY 1 - Official Interview Experience Sources:
+    - Glassdoor interview experiences for ${companyName} (mark as "source": "glassdoor-verified")
+    - Blind company-specific posts about ${companyName} interviews (mark as "source": "blind-verified")
+    - ${companyName} official career pages and interview guides (mark as "source": "company-official")
+
+    PRIORITY 2 - Community & Forum Sources:
+    - Reddit r/cscareerquestions posts mentioning ${companyName} (mark as "source": "reddit-community")
+    - Reddit r/internships ${companyName} interview experiences (mark as "source": "reddit-internships")
+    - Company-specific subreddits (mark as "source": "reddit-company")
+
+    PRIORITY 3 - Fallback Sources:
+    - Other professional forums (${baseWebsiteList}) (mark as "source": "forum-general")
+    - If no real questions found, generate based on job description (mark as "source": "ai-generated")
+
+    For each question found, include source attribution metadata and prioritize questions with verified interview experiences.`;
+  }
+  
+  // Standard variation (existing behavior)
+  return `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${baseWebsiteList}) to find interview questions that have actually been asked by ${companyName} for the role the candidate is applying to. 
+  If you find such questions, prioritize them in the list of returned questions. 
+  If not, generate questions based on the job description and candidate profile.`;
+}
 
 export async function generateQuestion(requestData: any, perplexityApiKey: string) {
   const { 
@@ -15,10 +88,20 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     originalBehavioralQuestions = [] // New parameter for original questions
   } = requestData;
 
-  console.log('Received request to generate interview questions');
-  console.log('Resume text length:', resumeText?.length || 0);
-  console.log('Original behavioral questions count:', originalBehavioralQuestions.length);
-  console.log('Technical questions enabled:', ENABLE_TECHNICAL_QUESTIONS);
+  // Generate unique request ID for tracking
+  const requestId = crypto.randomUUID().substring(0, 8);
+
+  console.log(`[GENERATE-QUESTION] ${requestId} - Received request to generate interview questions`);
+  console.log(`[GENERATE-QUESTION] ${requestId} - Job Title: ${jobTitle}, Company: ${companyName}`);
+  console.log(`[GENERATE-QUESTION] ${requestId} - Resume text length: ${resumeText?.length || 0}`);
+  console.log(`[GENERATE-QUESTION] ${requestId} - Original behavioral questions count: ${originalBehavioralQuestions.length}`);
+  console.log(`[GENERATE-QUESTION] ${requestId} - Technical questions enabled: ${ENABLE_TECHNICAL_QUESTIONS}`);
+
+  // Log source attribution strategy
+  logSourceAttribution(companyName, requestId);
+
+  // Determine prompt variation for A/B testing
+  const promptVariation = determinePromptVariation(requestId);
 
   const formatSpecification = `
   Your response MUST be a valid JSON object in the following format:
@@ -28,7 +111,12 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
         "question": "string",
         "explanation": "string",
         "modelAnswer": "string (STAR format)",
-        "followUp": ["string"]
+        "followUp": ["string"],
+        "sourceAttribution": {
+          "source": "string (e.g., glassdoor-verified, blind-verified, ai-generated)",
+          "reliability": "number (1-5 scale)",
+          "category": "string (e.g., interview_review, professional_forum)"
+        }
       }
     ],` : ''}
     "behavioralQuestions": [
@@ -36,7 +124,12 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
         "question": "string",
         "explanation": "string",
         "modelAnswer": "string (STAR format)",
-        "followUp": ["string"]
+        "followUp": ["string"],
+        "sourceAttribution": {
+          "source": "string (e.g., glassdoor-verified, blind-verified, ai-generated)",
+          "reliability": "number (1-5 scale)",
+          "category": "string (e.g., interview_review, professional_forum)"
+        }
       }
     ]
   }
@@ -47,17 +140,16 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   - Do not use all capital letters or run words together.
   `
 
-  const suggestedWebsiteList = 'Glassdoor, Reddit, Blind, Wall Street Oasis, OneClass, Fishbowl, PrepLounge, Quora, LeetCode Discuss, Indeed'
-
   // Sonar system prompt
   const sonarSystemPrompt = `You are an experienced interviewer for a ${jobTitle} position.
   ${companyName ? `The company name is ${companyName}.` : ''}
   ${companyDescription ? `About the company: """${companyDescription}"""` : ''}
   ${jobDescription ? `About the job: """${jobDescription}"""` : ''}`
 
-  const searchSpecification = `Search the web across hiring forums, ${companyName}'s website, and job review sites (such as ${suggestedWebsiteList}) to find interview questions that have actually been asked by ${companyName} for the role the candidate is applying to. 
-  If you find such questions, prioritize them in the list of returned questions. 
-  If not, generate questions based on the job description and candidate profile.`
+  // Get search specification based on prompt variation
+  const searchSpecification = getSearchSpecification(companyName, promptVariation);
+
+  console.log(`[SEARCH-STRATEGY] ${requestId} - Using ${promptVariation} search specification`);
 
   // Create the user prompt with conditional question generation
   const questionCount = ENABLE_TECHNICAL_QUESTIONS ? 10 : 5;
@@ -96,6 +188,14 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
               "followUp": { 
                 "type": "array",
                 "items": { "type": "string" }
+              },
+              "sourceAttribution": {
+                "type": "object",
+                "properties": {
+                  "source": { "type": "string" },
+                  "reliability": { "type": "number" },
+                  "category": { "type": "string" }
+                }
               }
             },
             "required": ["question", "explanation", "modelAnswer", "followUp"]
@@ -113,6 +213,14 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
             "followUp": { 
               "type": "array",
               "items": { "type": "string" }
+            },
+            "sourceAttribution": {
+              "type": "object",
+              "properties": {
+                "source": { "type": "string" },
+                "reliability": { "type": "number" },
+                "category": { "type": "string" }
+              }
             }
           },
           "required": ["question", "explanation", "modelAnswer", "followUp"]
@@ -123,7 +231,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   };
 
   // New Perplexity Sonar API call with proper response_format
-  console.log('Calling Perplexity Sonar API');
+  console.log(`[PERPLEXITY-API] ${requestId} - Calling Perplexity Sonar API`);
   const perplexityResponse = await fetch('https://perplexity.helicone.ai/chat/completions', {
     method: 'POST',
     headers: {
@@ -150,25 +258,23 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   });
 
   const perplexityData = await perplexityResponse.json();
-  console.log('Perplexity API response received');
+  console.log(`[PERPLEXITY-API] ${requestId} - API response received`);
 
   if (perplexityData.error) {
-    console.error('Perplexity API error:', perplexityData.error);
+    console.error(`[PERPLEXITY-ERROR] ${requestId} - API error:`, perplexityData.error);
     throw new Error(`Perplexity API error: ${perplexityData.error.message}`);
   }
 
   const generatedContent = perplexityData.choices[0].message.content;
-  console.log('Generated content length:', generatedContent.length);
-  
-  // Log first 100 characters to check format
-  console.log('Content preview:', generatedContent.substring(0, 100));
+  console.log(`[CONTENT-ANALYSIS] ${requestId} - Generated content length: ${generatedContent.length}`);
+  console.log(`[CONTENT-ANALYSIS] ${requestId} - Content preview:`, generatedContent.substring(0, 100));
 
   let parsedContent;
   try {
     // Check if content is already a JSON object
     if (typeof generatedContent === 'object' && generatedContent !== null) {
       parsedContent = generatedContent;
-      console.log('Content was already a JSON object');
+      console.log(`[PARSING] ${requestId} - Content was already a JSON object`);
     } 
     // Try to parse as JSON string
     else if (typeof generatedContent === 'string') {
@@ -176,18 +282,18 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       let cleanContent = generatedContent;
       if (cleanContent.includes('```json')) {
         cleanContent = cleanContent.replace(/```json/g, '').replace(/```/g, '').trim();
-        console.log('Removed markdown code blocks');
+        console.log(`[PARSING] ${requestId} - Removed markdown code blocks`);
       }
       
       parsedContent = JSON.parse(cleanContent);
-      console.log('Successfully parsed JSON string');
+      console.log(`[PARSING] ${requestId} - Successfully parsed JSON string`);
     } else {
-      console.error('Unexpected content type:', typeof generatedContent);
+      console.error(`[PARSING-ERROR] ${requestId} - Unexpected content type:`, typeof generatedContent);
       throw new Error('Content is neither a string nor an object');
     }
     
     // Validate the expected structure
-    console.log('Parsed content structure check:', 
+    console.log(`[STRUCTURE-CHECK] ${requestId} - Parsed content structure:`, 
       ENABLE_TECHNICAL_QUESTIONS ? (
         'technicalQuestions' in parsedContent ? 'has technicalQuestions' : 'no technicalQuestions'
       ) : 'technical questions disabled',
@@ -195,19 +301,30 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       'questions' in parsedContent ? 'has questions' : 'no questions'
     );
     
+    // Log source attribution analytics
+    if (parsedContent.behavioralQuestions) {
+      const sourceAnalytics = parsedContent.behavioralQuestions.reduce((acc: any, question: any) => {
+        const source = question.sourceAttribution?.source || 'unknown';
+        acc[source] = (acc[source] || 0) + 1;
+        return acc;
+      }, {});
+      
+      console.log(`[SOURCE-ANALYTICS] ${requestId} - Question source distribution:`, sourceAnalytics);
+    }
+    
     // Check if the response structure is valid based on feature flag
     const hasRequiredStructure = ENABLE_TECHNICAL_QUESTIONS 
       ? (parsedContent.technicalQuestions && parsedContent.behavioralQuestions)
       : parsedContent.behavioralQuestions;
 
     if (!hasRequiredStructure && !parsedContent.questions) {
-      console.error('Invalid response structure:', JSON.stringify(parsedContent).substring(0, 200));
+      console.error(`[STRUCTURE-ERROR] ${requestId} - Invalid response structure:`, JSON.stringify(parsedContent).substring(0, 200));
       throw new Error('Perplexity did not return the expected data structure');
     }
     
     // Transform if the response doesn't match our expected structure
     if (!hasRequiredStructure && parsedContent.questions) {
-      console.log('Transforming questions array to separate technical and behavioral arrays');
+      console.log(`[TRANSFORMATION] ${requestId} - Transforming questions array to separate technical and behavioral arrays`);
       
       const transformedContent = {
         ...(ENABLE_TECHNICAL_QUESTIONS && { technicalQuestions: [] }),
@@ -237,19 +354,19 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       }
       
       parsedContent = transformedContent;
-      console.log('Transformed to expected structure');
+      console.log(`[TRANSFORMATION] ${requestId} - Transformed to expected structure`);
     }
     
-    console.log('Final structure:', 
+    console.log(`[FINAL-STRUCTURE] ${requestId} - Final question counts:`, 
       ENABLE_TECHNICAL_QUESTIONS ? (
-        'technicalQuestions count:', parsedContent.technicalQuestions?.length || 0
+        'technicalQuestions:', parsedContent.technicalQuestions?.length || 0
       ) : 'technical questions disabled',
-      'behavioralQuestions count:', parsedContent.behavioralQuestions?.length || 0
+      'behavioralQuestions:', parsedContent.behavioralQuestions?.length || 0
     );
     
   } catch (parseError) {
-    console.error('Error parsing JSON response:', parseError);
-    console.log('Raw response:', generatedContent);
+    console.error(`[PARSING-ERROR] ${requestId} - Error parsing JSON response:`, parseError);
+    console.log(`[PARSING-ERROR] ${requestId} - Raw response:`, generatedContent);
     
     throw new Error('Invalid JSON format in the Perplexity response');
   }
@@ -261,7 +378,7 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
 
   // NEW: Combine original behavioral questions with newly generated ones
   if (originalBehavioralQuestions.length > 0) {
-    console.log('Adding original behavioral questions to the response');
+    console.log(`[ORIGINAL-QUESTIONS] ${requestId} - Adding original behavioral questions to the response`);
     
     // Convert original questions to the expected format
     const formattedOriginalQuestions = originalBehavioralQuestions.map((question: string, index: number) => ({
@@ -270,14 +387,20 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
       modelAnswer: "Use the STAR method (Situation, Task, Action, Result) to structure your response based on your previous answer during the interview.",
       followUp: [`Can you elaborate on the results you achieved?`, `What would you do differently next time?`],
       type: 'original-behavioral' as const,
-      originalIndex: index
+      originalIndex: index,
+      sourceAttribution: {
+        source: "behavioral-practice-session",
+        reliability: 5,
+        category: "practice_session"
+      }
     }));
 
     // Add original questions to the parsed content
     parsedContent.originalBehavioralQuestions = formattedOriginalQuestions;
     
-    console.log('Added', formattedOriginalQuestions.length, 'original behavioral questions');
+    console.log(`[ORIGINAL-QUESTIONS] ${requestId} - Added ${formattedOriginalQuestions.length} original behavioral questions`);
   }
 
+  console.log(`[GENERATE-QUESTION] ${requestId} - Question generation completed successfully`);
   return parsedContent;
 }
