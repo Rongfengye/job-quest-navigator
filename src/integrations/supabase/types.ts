@@ -41,6 +41,7 @@ export type Database = {
       hireme_user_status: {
         Row: {
           created_at: string | null
+          custom_premium: number
           id: string
           updated_at: string | null
           user_id: string
@@ -48,6 +49,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          custom_premium?: number
           id?: string
           updated_at?: string | null
           user_id: string
@@ -55,6 +57,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          custom_premium?: number
           id?: string
           updated_at?: string | null
           user_id?: string
