@@ -136,6 +136,11 @@ const BehavioralInterview = () => {
         console.log('Passing firstQuestion to loadExistingOrSetupInterview:', firstQuestion);
         const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
         setResumedFormData(loadedData.formData);
+        setCurrentQuestion({
+          question: firstQuestion.question,
+          questionIndex: 0,
+          audio: firstQuestion.audio || null
+        });
         console.log('Interview initialized successfully');
       } catch (error) {
         console.error('Failed to initialize interview:', error);
