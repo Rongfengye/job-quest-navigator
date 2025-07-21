@@ -66,11 +66,18 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
     
     1. "pros" - An array of strings, each highlighting a strength in the answer (be specific about what was good)
     2. "cons" - An array of strings, each highlighting a weakness or area for improvement (be specific and actionable)
-    3. "guidelines" - A string with concise guidelines on how to better answer this type of question
-    4. "improvementSuggestions" - A string with 2-3 specific suggestions to enhance this particular answer
-    5. "score" - A number between 1-100 representing the overall quality of the answer`
+    3. "score" - A number between 1-100 representing the overall quality of the answer
+    4. "scoreBreakdown" - An object with the following numeric scores (1-100):
+       - "structure": How well the answer is organized and follows logical flow
+       - "clarity": How clear and understandable the response is
+       - "relevance": How well the answer addresses the question asked
+       - "specificity": How specific and detailed the examples are
+       - "professionalism": How professional and appropriate the response is
+    5. "confidence" - A decimal between 0.0-1.0 representing AI confidence in the analysis
+    6. "competencyFocus" - A string indicating the primary competency being assessed
+    7. "suggestions" - A string with 2-3 specific suggestions to enhance this particular answer
+    8. "overall" - A string with an overall assessment and summary of the response quality`
 
-  // May need to change this up if we no longer user technicals
   const questionTypeSpecifications = `For ${questionType || 'interview'} questions, focus on:
   ${questionType === 'technical' ? 
     '- Depth of technical knowledge\n- Clarity of explanation\n- Problem-solving approach\n- Relevant experience with technologies' : 
@@ -100,7 +107,9 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   
   ${competencyContext}
   
-  Make your feedback specific, actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.`;
+  Make your feedback specific, actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.
+  
+  IMPORTANT: You must return valid JSON with all required fields. The competencyFocus should be set to: "${detectedCompetency}"`;
 
   // Call the OpenAI API
   const openAIResponse = await fetch('https://oai.helicone.ai/v1/chat/completions', {
@@ -137,11 +146,29 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   try {
     feedbackContent = JSON.parse(generatedContent);
     
-    // Ensure the structure is valid
-    if (!feedbackContent.pros || !feedbackContent.cons) {
-      console.error('Invalid feedback structure:', feedbackContent);
-      throw new Error('OpenAI did not return the expected data structure');
+    // Ensure the structure is valid for enhanced feedback
+    if (!feedbackContent.pros || !feedbackContent.cons || !feedbackContent.scoreBreakdown) {
+      console.error('Invalid enhanced feedback structure:', feedbackContent);
+      throw new Error('OpenAI did not return the expected enhanced data structure');
     }
+    
+    // Ensure competencyFocus is set
+    if (!feedbackContent.competencyFocus) {
+      feedbackContent.competencyFocus = detectedCompetency;
+    }
+    
+    // Ensure confidence is set (default to 0.8 if not provided)
+    if (!feedbackContent.confidence) {
+      feedbackContent.confidence = 0.8;
+    }
+    
+    // Validate scoreBreakdown structure
+    const requiredScoreFields = ['structure', 'clarity', 'relevance', 'specificity', 'professionalism'];
+    if (!requiredScoreFields.every(field => typeof feedbackContent.scoreBreakdown[field] === 'number')) {
+      console.error('Invalid scoreBreakdown structure:', feedbackContent.scoreBreakdown);
+      throw new Error('OpenAI did not return valid scoreBreakdown structure');
+    }
+    
   } catch (parseError) {
     console.error('Error parsing feedback JSON:', parseError);
     throw new Error('Invalid JSON format in the OpenAI response');
