@@ -32,6 +32,7 @@ interface UsageCheckResult {
 
 interface PlanStatusContextType {
   planStatus: number | null;
+  customPremium: number | null;
   isPremium: boolean;
   isBasic: boolean;
   isLoading: boolean;
@@ -45,9 +46,9 @@ interface PlanStatusContextType {
 
 const PlanStatusContext = createContext<PlanStatusContextType | undefined>(undefined);
 
-// Helper function to check if user is premium (1 = premium, 0 = basic)
-const checkIsPremium = (planStatus: number | null): boolean => {
-  return planStatus === 1;
+// Updated helper function to check if user is premium (either user_plan_status = 1 OR custom_premium = 1)
+const checkIsPremium = (planStatus: number | null, customPremium: number | null): boolean => {
+  return planStatus === 1 || customPremium === 1;
 };
 
 interface PlanStatusProviderProps {
@@ -56,6 +57,7 @@ interface PlanStatusProviderProps {
 
 export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children }) => {
   const [planStatus, setPlanStatus] = useState<number | null>(null);
+  const [customPremium, setCustomPremium] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [usageSummary, setUsageSummary] = useState<UsageSummary | null>(null);
   const [isLoadingUsage, setIsLoadingUsage] = useState(false);
@@ -92,17 +94,18 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         console.log(`⚡ Using local subscription data for reason: ${reason}`);
       }
       
-      // Always fetch the current plan status from hireme_user_status
+      // Always fetch both plan status and custom_premium from hireme_user_status
       const { data, error } = await supabase
         .from('hireme_user_status')
-        .select('user_plan_status')
+        .select('user_plan_status, custom_premium')
         .eq('user_id', filterValue(user.id))
         .maybeSingle();
       
       if (error) throw error;
       
-      console.log('📊 Plan status fetched from database:', data?.user_plan_status);
+      console.log('📊 Plan status fetched from database:', data);
       setPlanStatus(data?.user_plan_status ?? null);
+      setCustomPremium(data?.custom_premium ?? null);
       
     } catch (error) {
       console.error('Error fetching user plan status:', error);
@@ -122,7 +125,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     setIsLoadingUsage(true);
     try {
       // Check if user is premium first to avoid unnecessary usage record creation
-      const currentIsPremium = checkIsPremium(planStatus);
+      const currentIsPremium = checkIsPremium(planStatus, customPremium);
       
       // If user is basic (not premium), ensure they have a usage record before fetching summary
       if (!currentIsPremium) {
@@ -157,7 +160,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     } finally {
       setIsLoadingUsage(false);
     }
-  }, [user?.id, planStatus, toast]);
+  }, [user?.id, planStatus, customPremium, toast]);
 
   const checkUsageLimit = useCallback(async (usageType: 'behavioral' | 'question_vault') => {
     if (!user?.id) {
@@ -230,6 +233,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     if (!isAuthenticated || !user?.id) {
       console.log('🚫 User not authenticated - clearing token state');
       setPlanStatus(null);
+      setCustomPremium(null);
       setUsageSummary(null);
       setHasInitializedSession(false);
       return;
@@ -257,7 +261,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     setPlanStatus(optimisticNewStatus);
     
     // Show optimistic toast immediately
-    const isPremium = checkIsPremium(optimisticNewStatus);
+    const isPremium = checkIsPremium(optimisticNewStatus, customPremium);
     toast({
       title: isPremium ? "Upgraded to Premium" : "Downgraded to Basic",
       description: isPremium ? "You now have premium access." : "You're now on the basic plan.",
@@ -277,7 +281,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       // Refresh usage summary after plan change
       await fetchUsageSummary();
       
-      const actualIsPremium = checkIsPremium(data);
+      const actualIsPremium = checkIsPremium(data, customPremium);
       console.log(`✅ Successfully toggled to ${actualIsPremium ? 'premium' : 'basic'}. Server status: ${data}`);
       
       return { success: true, isPremium: actualIsPremium, balance: data };
@@ -298,11 +302,12 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   };
 
   // Helper function to check if user is premium
-  const isPremium = checkIsPremium(planStatus);
+  const isPremium = checkIsPremium(planStatus, customPremium);
   const isBasic = !isPremium;
 
   const value: PlanStatusContextType = {
     planStatus,
+    customPremium,
     isPremium,
     isBasic,
     isLoading,

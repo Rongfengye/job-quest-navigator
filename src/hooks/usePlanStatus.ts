@@ -7,6 +7,7 @@ export const usePlanStatus = () => {
   // Return a clean interface with updated terminology
   return {
     planStatus: planStatusContext.planStatus,
+    customPremium: planStatusContext.customPremium,
     isPremium: planStatusContext.isPremium,
     isBasic: planStatusContext.isBasic,
     isLoading: planStatusContext.isLoading,

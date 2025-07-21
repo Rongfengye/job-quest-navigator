@@ -10,6 +10,7 @@ import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { Key, Loader2 } from 'lucide-react';
 import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
 import UnifiedSettingsCard from '@/components/settings/UnifiedSettingsCard';
+import { CustomPremiumStatus } from '@/components/debug/CustomPremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -196,6 +197,11 @@ const Settings = () => {
               </CardContent>
             </Card>
           )}
+          
+          {/* Debug Component for Custom Premium Status */}
+          <div className="flex justify-center">
+            <CustomPremiumStatus />
+          </div>
         </div>
       </div>
 
