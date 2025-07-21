@@ -197,11 +197,6 @@ const Settings = () => {
               </CardContent>
             </Card>
           )}
-          
-          {/* Debug Component for Custom Premium Status */}
-          <div className="flex justify-center">
-            <CustomPremiumStatus />
-          </div>
         </div>
       </div>
 
