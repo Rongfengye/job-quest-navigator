@@ -147,17 +147,59 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
 
   // Transform behavioral data to answer iteration format
   const transformBehavioralDataToIteration = (response: string, feedback: any, timestamp: string): AnswerIteration => {
-    return {
-      answerText: response,
-      timestamp: timestamp,
-      feedback: {
+    console.log('transformBehavioralDataToIteration - original feedback:', feedback);
+    
+    // Check if feedback is already in enhanced format
+    const isEnhancedFeedback = feedback && 
+      typeof feedback === 'object' && 
+      'scoreBreakdown' in feedback && 
+      'confidence' in feedback && 
+      'competencyFocus' in feedback;
+    
+    if (isEnhancedFeedback) {
+      // Preserve enhanced feedback structure
+      const enhancedFeedback = {
         pros: feedback.pros || [],
         cons: feedback.cons || [],
-        guidelines: feedback.guidelines || '',
-        improvementSuggestions: feedback.improvementSuggestions || '',
-        score: feedback.score || 0
-      }
-    };
+        score: feedback.score || 0,
+        scoreBreakdown: feedback.scoreBreakdown || {
+          structure: 0,
+          clarity: 0,
+          relevance: 0,
+          specificity: 0,
+          professionalism: 0
+        },
+        confidence: feedback.confidence || 0,
+        competencyFocus: feedback.competencyFocus || '',
+        suggestions: feedback.suggestions || '',
+        overall: feedback.overall || ''
+      };
+      
+      console.log('transformBehavioralDataToIteration - preserved enhanced feedback:', enhancedFeedback);
+      
+      return {
+        answerText: response,
+        timestamp: timestamp,
+        feedback: enhancedFeedback
+      };
+    } else {
+      // Fallback to legacy format for old data
+      const legacyFeedback = {
+        pros: feedback?.pros || [],
+        cons: feedback?.cons || [],
+        score: feedback?.score || 0,
+        suggestions: feedback?.improvementSuggestions || feedback?.suggestions || '',
+        overall: feedback?.overall || ''
+      };
+      
+      console.log('transformBehavioralDataToIteration - fallback legacy feedback:', legacyFeedback);
+      
+      return {
+        answerText: response,
+        timestamp: timestamp,
+        feedback: legacyFeedback
+      };
+    }
   };
 
   // Fetch behavioral interview data for original behavioral questions
