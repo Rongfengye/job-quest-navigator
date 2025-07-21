@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { History, CheckCircle } from 'lucide-react';
 import { AnswerIteration } from '@/hooks/useAnswers';
 import { Question } from '@/hooks/useQuestionData';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import AnswerForm from './AnswerForm';
 import AnswerHistory from './AnswerHistory';
 
@@ -20,7 +20,7 @@ interface AnswerTabsProps {
   processingThoughts: boolean;
   iterations: AnswerIteration[];
   question: Question | null;
-  feedback: FeedbackData | null;
+  feedback: QuestionVaultFeedback | null;
   isFeedbackLoading: boolean;
   feedbackError: string | null;
 }

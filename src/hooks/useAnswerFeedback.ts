@@ -4,7 +4,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { AnswerIteration } from '@/hooks/useAnswers';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
+import { EnhancedFeedbackData, LegacyFeedbackData, isEnhancedFeedback } from '@/types/enhancedFeedback';
 
+// Legacy feedback interface for backward compatibility
 export interface FeedbackData {
   pros: string[];
   cons: string[];
@@ -13,6 +15,9 @@ export interface FeedbackData {
   score: number;
 }
 
+// Union type to handle both legacy and enhanced feedback
+export type QuestionVaultFeedback = LegacyFeedbackData | EnhancedFeedbackData;
+
 export const useAnswerFeedback = (
   storylineId: string,
   question: Question | null,
@@ -20,7 +25,7 @@ export const useAnswerFeedback = (
   jobTitle: string = '',
   companyName: string = ''
 ) => {
-  const [feedback, setFeedback] = useState<FeedbackData | null>(null);
+  const [feedback, setFeedback] = useState<QuestionVaultFeedback | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -124,7 +129,7 @@ export const useAnswerFeedback = (
         return null;
       }
 
-      const feedbackData: FeedbackData = data as FeedbackData;
+      const feedbackData: QuestionVaultFeedback = data as QuestionVaultFeedback;
       setFeedback(feedbackData);
       return feedbackData;
     } catch (err) {

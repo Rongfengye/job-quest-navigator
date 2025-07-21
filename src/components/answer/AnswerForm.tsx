@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import AnswerModeToggle, { AnswerMode } from './AnswerModeToggle';
 import ManualAnswerMode from './ManualAnswerMode';
 import GuidedAnswerMode from './GuidedAnswerMode';
@@ -20,7 +20,7 @@ interface AnswerFormProps {
   isSaving: boolean;
   generatingAnswer: boolean;
   question: Question | null;
-  feedback: FeedbackData | null;
+  feedback: QuestionVaultFeedback | null;
   isFeedbackLoading: boolean;
   feedbackError: string | null;
   processingThoughts: boolean;

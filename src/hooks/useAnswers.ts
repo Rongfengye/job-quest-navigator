@@ -3,20 +3,14 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { Json } from '@/integrations/supabase/types';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { FeedbackData, QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import { filterValue, safeDatabaseData } from '@/utils/supabaseTypes';
 import { transformIterations, parseOpenAIResponse } from '@/utils/answerUtils';
 
 export interface AnswerIteration {
   answerText: string;
   timestamp: string;
-  feedback?: {
-    pros: string[];
-    cons: string[];
-    guidelines: string;
-    improvementSuggestions: string;
-    score: number;
-  };
+  feedback?: QuestionVaultFeedback;
   [key: string]: any;
 }
 
@@ -197,7 +191,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
     return [];
   };
 
-  const saveAnswer = async (answerText: string, feedbackData: FeedbackData | null) => {
+  const saveAnswer = async (answerText: string, feedbackData: QuestionVaultFeedback | null) => {
     if (!question) {
       toast({
         variant: "destructive",

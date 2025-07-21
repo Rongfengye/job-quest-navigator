@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Save, Mic, PenTool, Sparkles, AlertCircle } from 'lucide-react';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { AnswerMode } from './AnswerModeToggle';
 
@@ -14,7 +14,7 @@ interface ManualAnswerModeProps {
   setInputAnswer: (value: string) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
   isSaving: boolean;
-  feedback: FeedbackData | null;
+  feedback: QuestionVaultFeedback | null;
   hasUnsavedDraft: boolean;
   onModeChange: (mode: AnswerMode) => void;
   currentMode: AnswerMode;

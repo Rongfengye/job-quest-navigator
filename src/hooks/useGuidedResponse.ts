@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { supabase } from '@/integrations/supabase/client';
-import { FeedbackData } from '@/hooks/useAnswerFeedback';
+import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import { useAnswers } from '@/hooks/useAnswers';
 
 export const useGuidedResponse = (
   questionIndex: number, 
   question: Question | null,
   storylineId: string,
-  previousFeedback?: FeedbackData | null
+  previousFeedback?: QuestionVaultFeedback | null
 ) => {
   const { toast } = useToast();
   const [generatingAnswer, setGeneratingAnswer] = useState(false);
