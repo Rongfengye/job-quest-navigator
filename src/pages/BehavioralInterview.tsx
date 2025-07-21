@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -28,6 +28,9 @@ const BehavioralInterview = () => {
   const [resumedFormData, setResumedFormData] = useState<any>(null);
   const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
+  
+  // Add a ref to track if initialization has been attempted
+  const initializationAttemptedRef = useRef(false);
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
@@ -113,48 +116,41 @@ const BehavioralInterview = () => {
   const [feedbackData, setFeedbackData] = useState(null);
   const [allAnswersSubmitted, setAllAnswersSubmitted] = useState(false);
 
-  // Updated initialization effect using the new hybrid function
+  // FIXED: Stabilized initialization effect with proper guards
   useEffect(() => {
     const initializeInterview = async () => {
-      if (!pageLoaded) {
-        console.log('=== Initializing Interview ===');
-        console.log('Initializing interview - behavioralId:', behavioralId);
-        console.log('Initializing interview - firstQuestion with audio:', firstQuestion?.audio ? 'Yes' : 'No');
-        setPageLoaded(true);
-        
-        // Validate that we have a behavioral ID
-        if (!behavioralId) {
-          toast({
-            variant: "destructive",
-            title: "Interview setup incomplete",
-            description: "Please go through the setup process again.",
-          });
-          navigate('/behavioral/create');
-          return;
-        }
-        
-        // Use the new hybrid function that handles both resuming and fresh starts
-        try {
-          console.log('Using hybrid function to load/setup interview');
-          console.log('Passing firstQuestion to loadExistingOrSetupInterview:', firstQuestion);
-          const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
-          setResumedFormData(loadedData.formData);
-          console.log('Interview initialized successfully');
-        } catch (error) {
-          console.error('Failed to initialize interview:', error);
-          toast({
-            variant: "destructive",
-            title: "Failed to initialize interview",
-            description: "We couldn't load your interview. Please try again from the dashboard.",
-          });
-          navigate('/behavioral');
-          return;
-        }
+      // Prevent multiple initializations
+      if (initializationAttemptedRef.current || !behavioralId) {
+        return;
+      }
+      
+      console.log('=== Initializing Interview ===');
+      console.log('Initializing interview - behavioralId:', behavioralId);
+      console.log('Initializing interview - firstQuestion with audio:', firstQuestion?.audio ? 'Yes' : 'No');
+      
+      initializationAttemptedRef.current = true;
+      setPageLoaded(true);
+      
+      try {
+        console.log('Using hybrid function to load/setup interview');
+        console.log('Passing firstQuestion to loadExistingOrSetupInterview:', firstQuestion);
+        const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
+        setResumedFormData(loadedData.formData);
+        console.log('Interview initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize interview:', error);
+        toast({
+          variant: "destructive",
+          title: "Failed to initialize interview",
+          description: "We couldn't load your interview. Please try again from the dashboard.",
+        });
+        navigate('/behavioral');
+        return;
       }
     };
     
     initializeInterview();
-  }, [pageLoaded, behavioralId, firstQuestion, navigate, toast, loadExistingOrSetupInterview]);
+  }, [behavioralId]); // Only depend on behavioralId
 
   // Simplified useEffect to handle question generation - only depends on essential state
   useEffect(() => {

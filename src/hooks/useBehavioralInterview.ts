@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
@@ -62,6 +62,9 @@ export const useBehavioralInterview = () => {
   const [askedTopics, setAskedTopics] = useState<string[]>([]);
   const [topicFollowUpCounts, setTopicFollowUpCounts] = useState<Record<string, number>>({});
   
+  // Add a ref to prevent multiple initializations
+  const isInitializedRef = useRef(false);
+  
   const { toast } = useToast();
   const { user } = useAuthContext();
   const navigate = useNavigate();
@@ -90,6 +93,12 @@ export const useBehavioralInterview = () => {
     console.log('First question provided:', firstQuestion ? 'Yes' : 'No');
     console.log('First question audio:', firstQuestion?.audio ? 'Yes' : 'No');
     console.log('First question audio length:', firstQuestion?.audio?.length || 0);
+    
+    // Prevent multiple initializations
+    if (isInitializedRef.current) {
+      console.log('Already initialized, skipping...');
+      return;
+    }
     
     setIsLoading(true);
     
@@ -126,6 +135,9 @@ export const useBehavioralInterview = () => {
       setAnswers(existingResponses);
       setCurrentQuestionIndex(resumeQuestionIndex);
       setBehavioralId(behavioralId);
+      
+      // Mark as initialized BEFORE setting current question
+      isInitializedRef.current = true;
       
       // Determine what question to display
       if (existingQuestions.length === 0 && firstQuestion) {
@@ -190,7 +202,7 @@ export const useBehavioralInterview = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast]); // Only depend on toast, not on the changing firstQuestion
 
   const loadExistingInterview = useCallback(async (behavioralId: string) => {
     setIsLoading(true);
@@ -639,6 +651,8 @@ export const useBehavioralInterview = () => {
     setExtractedTopics([]);
     setAskedTopics([]);
     setTopicFollowUpCounts({});
+    // Reset the initialization flag
+    isInitializedRef.current = false;
   };
 
   return {
