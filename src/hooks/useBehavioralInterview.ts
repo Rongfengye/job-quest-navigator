@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -70,15 +71,27 @@ export const useBehavioralInterview = () => {
 
   // Debug logging for currentQuestion state changes
   const setCurrentQuestionWithLog = (value: BehavioralQuestionData | null) => {
+    console.log('=== setCurrentQuestionWithLog called ===');
+    console.log('Setting current question:', value?.question || 'null');
+    console.log('Question has audio:', value?.audio ? 'Yes' : 'No');
+    console.log('Audio data length:', value?.audio?.length || 0);
+    
     setCurrentQuestion(value);
     
     // If this is the first question being set, mark initial loading as complete
     if (value && isInitialLoading) {
+      console.log('First question set, marking initial loading as complete');
       setIsInitialLoading(false);
     }
   };
 
   const loadExistingOrSetupInterview = useCallback(async (behavioralId: string, firstQuestion?: { question: string; audio?: string | null }) => {
+    console.log('=== loadExistingOrSetupInterview called ===');
+    console.log('Behavioral ID:', behavioralId);
+    console.log('First question provided:', firstQuestion ? 'Yes' : 'No');
+    console.log('First question audio:', firstQuestion?.audio ? 'Yes' : 'No');
+    console.log('First question audio length:', firstQuestion?.audio?.length || 0);
+    
     setIsLoading(true);
     
     try {
@@ -118,12 +131,19 @@ export const useBehavioralInterview = () => {
       // Determine what question to display
       if (existingQuestions.length === 0 && firstQuestion) {
         // Fresh start - use the provided first question with audio
-        console.log('Fresh start - using first question with audio');
-        setCurrentQuestionWithLog({
+        console.log('=== Fresh start - using first question with audio ===');
+        console.log('First question text:', firstQuestion.question);
+        console.log('First question audio present:', firstQuestion.audio ? 'Yes' : 'No');
+        console.log('First question audio length:', firstQuestion.audio?.length || 0);
+        
+        const questionWithAudio = {
           question: firstQuestion.question,
           questionIndex: 0,
           audio: firstQuestion.audio || null
-        });
+        };
+        
+        console.log('Setting current question with audio:', questionWithAudio);
+        setCurrentQuestionWithLog(questionWithAudio);
       } else if (resumeQuestionIndex < existingQuestions.length) {
         // Resume with existing question - no audio replay
         console.log('Resuming with existing question at index:', resumeQuestionIndex);

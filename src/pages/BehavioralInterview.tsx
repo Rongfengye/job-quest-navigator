@@ -38,10 +38,13 @@ const BehavioralInterview = () => {
   const firstQuestion = locationState.firstQuestion;
   const behavioralId = locationState.behavioralId;
   
+  console.log("=== BehavioralInterview Audio Debug ===");
   console.log("BehavioralInterview - Is resuming:", isResuming);
   console.log("BehavioralInterview - Behavioral ID:", behavioralId);
   console.log("BehavioralInterview - Resume path from state:", resumePath);
   console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
+  console.log("BehavioralInterview - First question audio:", firstQuestion?.audio ? 'Audio data present' : 'No audio data');
+  console.log("BehavioralInterview - First question audio length:", firstQuestion?.audio?.length || 0);
   
   const formData = locationState.formData || resumedFormData || {
     jobTitle: 'Software Developer',
@@ -114,7 +117,9 @@ const BehavioralInterview = () => {
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
+        console.log('=== Initializing Interview ===');
         console.log('Initializing interview - behavioralId:', behavioralId);
+        console.log('Initializing interview - firstQuestion with audio:', firstQuestion?.audio ? 'Yes' : 'No');
         setPageLoaded(true);
         
         // Validate that we have a behavioral ID
@@ -131,6 +136,7 @@ const BehavioralInterview = () => {
         // Use the new hybrid function that handles both resuming and fresh starts
         try {
           console.log('Using hybrid function to load/setup interview');
+          console.log('Passing firstQuestion to loadExistingOrSetupInterview:', firstQuestion);
           const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
           setResumedFormData(loadedData.formData);
           console.log('Interview initialized successfully');
@@ -346,7 +352,11 @@ const BehavioralInterview = () => {
     return <Loading />;
   }
 
-  console.log('Rendering main interview layout');
+  console.log('=== Rendering Main Interview ===');
+  console.log('Current question:', currentQuestion?.question || 'No question');
+  console.log('Current question audio:', currentQuestion?.audio ? 'Audio present' : 'No audio');
+  console.log('Current question audio length:', currentQuestion?.audio?.length || 0);
+  
   return (
     <>
       <NavBar />
