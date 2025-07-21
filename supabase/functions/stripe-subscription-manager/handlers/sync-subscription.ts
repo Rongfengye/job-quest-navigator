@@ -15,12 +15,42 @@ const corsHeaders = {
 export async function handleSyncSubscription(stripe: Stripe, supabase: any, user: any) {
   logStep("Syncing subscription status", { userId: user.id });
 
+  // PHASE 3: Check if user has custom_premium enabled first
+  logStep("Checking for custom_premium status");
+  const { data: userStatus, error: statusError } = await supabase
+    .from("hireme_user_status")
+    .select("custom_premium, user_plan_status")
+    .eq("user_id", user.id)
+    .single();
+
+  if (statusError) {
+    logStep("Error fetching user status", { error: statusError });
+    // Continue with normal flow if we can't fetch status
+  } else if (userStatus?.custom_premium === 1) {
+    logStep("User has custom_premium enabled, forcing premium status", { userStatus });
+    
+    // Force user to premium regardless of Stripe status
+    await supabase.rpc("make_user_premium", { user_id: user.id });
+    
+    return new Response(JSON.stringify({
+      subscribed: true,
+      plan: "premium",
+      custom_premium: true,
+      message: "User has custom premium override, maintained premium status"
+    }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200,
+    });
+  }
+
+  logStep("No custom_premium override, proceeding with normal Stripe sync");
+
   // Check if customer exists in Stripe
   const customers = await stripe.customers.list({ email: user.email, limit: 1 });
   if (customers.data.length === 0) {
     logStep("No Stripe customer found, setting to basic");
     
-    // Update user to basic plan
+    // Update user to basic plan (only if custom_premium is not 1)
     await supabase.rpc('make_user_basic', { user_id: user.id });
     
     return new Response(JSON.stringify({ 
