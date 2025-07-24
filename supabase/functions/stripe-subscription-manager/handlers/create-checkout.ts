@@ -47,7 +47,7 @@ export async function handleCreateCheckout(
   
   logStep("Using dynamic URLs", { successUrl, cancelUrl });
 
-  // Create checkout session for $0.50/month subscription
+  // Create checkout session for $9.99/month subscription
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     customer_email: customerId ? undefined : user.email,
@@ -56,7 +56,7 @@ export async function handleCreateCheckout(
         price_data: {
           currency: "usd",
           product_data: { name: "Premium Plan" },
-          unit_amount: 50, // $0.50 in cents
+          unit_amount: 999, // $9.99 in cents
           recurring: { interval: "month" },
         },
         quantity: 1,
