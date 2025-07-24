@@ -73,7 +73,7 @@ const PremiumFeaturesSection: React.FC<PremiumFeaturesSectionProps> = ({
               ) : (
                 <>
                   <TrendingUp className="w-4 h-4 mr-2" />
-                  Upgrade to Premium - $0.50/month
+                  Upgrade to Premium - $9.99/month
                 </>
               )}
             </Button>
