@@ -42,8 +42,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
   // Mobile layout with drawer
   if (isMobile) {
     return (
-      <div className="min-h-screen flex flex-col w-full">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+      <div className="h-screen flex flex-col w-full overflow-hidden">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white flex-shrink-0">
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -67,8 +67,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
           <span className="text-xl font-bold text-interview-primary">Storyline</span>
           <div className="w-10" /> {/* Spacer for centering */}
         </div>
-        <main className="flex-1 overflow-auto">
-          <div className="p-4">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden mobile-scroll">
+          <div className="p-4 pb-safe">
             {children}
           </div>
         </main>

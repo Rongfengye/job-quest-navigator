@@ -186,3 +186,22 @@
 .animate-pulse-glow {
   animation: pulse-glow 3s ease-out 2;
 }
+
+/* Mobile scrolling optimizations */
+.mobile-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+}
+
+/* Safe area padding for mobile devices */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Fix for mobile viewport height on iOS Safari */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+}
