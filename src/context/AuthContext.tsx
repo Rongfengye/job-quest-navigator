@@ -8,10 +8,11 @@ interface AuthContextType {
   user: UserData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  isPasswordRecovery: boolean;
-  setPasswordRecoveryMode: (mode: boolean) => void;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
-  signup: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: any }>;
+  // Password recovery commented out for OAuth-only flow
+  // isPasswordRecovery: boolean;
+  // setPasswordRecoveryMode: (mode: boolean) => void;
+  // login: (email: string, password: string) => Promise<{ success: boolean; error?: any }>;
+  // signup: (email: string, password: string, firstName: string, lastName: string) => Promise<{ success: boolean; error?: any }>;
   logout: () => Promise<{ success: boolean; error?: any }>;
 }
 
@@ -22,14 +23,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [initialCheckComplete, setInitialCheckComplete] = useState(false);
   const [initializationError, setInitializationError] = useState<Error | null>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  // Password recovery commented out for OAuth-only flow
+  // const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [isOAuthCallbackHandled, setIsOAuthCallbackHandled] = useState(false);
   const { toast } = useToast();
 
-  const setPasswordRecoveryMode = (mode: boolean) => {
-    console.log('Setting password recovery mode:', mode);
-    setIsPasswordRecovery(mode);
-  };
+  // Password recovery function commented out for OAuth-only flow
+  // const setPasswordRecoveryMode = (mode: boolean) => {
+  //   console.log('Setting password recovery mode:', mode);
+  //   setIsPasswordRecovery(mode);
+  // };
 
   // Helper function to extract user names from metadata
   const extractUserNames = (user: any) => {
@@ -139,32 +142,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // For OAuth sign-ins, automatically redirect to behavioral page
             // (REMOVED: This is now handled in AuthCallback.tsx based on profile existence)
           }
-        } else if (event === 'PASSWORD_RECOVERY') {
-          console.log('🔑 Password recovery event detected');
-          if (session) {
-            console.log('✅ User authenticated via password recovery, setting recovery mode');
-            
-            const { firstName, lastName } = extractUserNames(session.user);
-            const provider = session.user.app_metadata?.provider;
-            auth.setUser({
-              id: session.user.id,
-              email: session.user.email || '',
-              firstName,
-              lastName,
-              provider
-            });
-            
-            setPasswordRecoveryMode(true);
-            
-            toast({
-              title: "Password Recovery",
-              description: "Please set your new password to continue.",
-            });
-          }
         } else if (event === 'SIGNED_OUT') {
           console.log('👋 User signed out, clearing auth state');
           auth.setUser(null);
-          setPasswordRecoveryMode(false);
+          // setPasswordRecoveryMode(false); // Commented out for OAuth-only flow
         }
       });
       
@@ -256,18 +237,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user: auth.user,
     isLoading: isLoading,
     isAuthenticated: !!auth.user,
-    isPasswordRecovery,
-    setPasswordRecoveryMode,
-    login: auth.login,
-    signup: auth.signup,
+    // Password recovery and manual auth commented out for OAuth-only flow
+    // isPasswordRecovery,
+    // setPasswordRecoveryMode,
+    // login: auth.login,
+    // signup: auth.signup,
     logout: auth.logout
   };
 
   console.log('🔧 AuthContext value updated:', { 
     isAuthenticated: value.isAuthenticated, 
     userExists: !!value.user,
-    isLoading: value.isLoading,
-    isPasswordRecovery: value.isPasswordRecovery
+    isLoading: value.isLoading
+    // isPasswordRecovery: value.isPasswordRecovery // Commented out for OAuth-only flow
   });
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

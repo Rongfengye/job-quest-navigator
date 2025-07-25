@@ -1,4 +1,7 @@
 
+// PASSWORD RESET MODAL - Currently not being used (OAuth-only flow)
+
+/*
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -223,3 +226,4 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({
 };
 
 export default PasswordResetModal;
+*/

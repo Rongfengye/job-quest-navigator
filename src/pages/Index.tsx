@@ -5,28 +5,29 @@ import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
 import Testimonials from '@/components/Testimonials';
 import CallToAction from '@/components/CallToAction';
-import PasswordResetModal from '@/components/PasswordResetModal';
+// import PasswordResetModal from '@/components/PasswordResetModal'; // Commented out for OAuth-only flow
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
 
 const Index = () => {
-  const { isAuthenticated, isLoading, isPasswordRecovery, setPasswordRecoveryMode } = useAuthContext();
-  const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
+  const { isAuthenticated, isLoading } = useAuthContext();
+  // Password recovery commented out for OAuth-only flow
+  // const [showPasswordResetModal, setShowPasswordResetModal] = useState(false);
   const navigate = useNavigate();
   
   // Debug logging - log all state changes
   useEffect(() => {
     console.log('🔍 Index state debug:', { 
       isAuthenticated, 
-      isPasswordRecovery, 
       isLoading,
-      showPasswordResetModal,
+      // showPasswordResetModal, // Commented out for OAuth-only flow
       currentUrl: window.location.href
     });
-  }, [isAuthenticated, isPasswordRecovery, isLoading, showPasswordResetModal]);
+  }, [isAuthenticated, isLoading]);
   
-  // Check for recovery URL parameters and redirect to dedicated page
+  // OAuth callback handling only (password recovery commented out for OAuth-only flow)
+  /*
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
@@ -58,13 +59,16 @@ const Index = () => {
       return;
     }
   }, [navigate]);
+  */
   
-  // If authenticated and NOT in password recovery mode, redirect to behavioral
-  if (isAuthenticated && !isPasswordRecovery && !isLoading) {
-    console.log('🔄 Redirecting to behavioral - user authenticated and not in recovery');
+  // If authenticated, redirect to behavioral (password recovery disabled for OAuth-only flow)
+  if (isAuthenticated && !isLoading) {
+    console.log('🔄 Redirecting to behavioral - user authenticated');
     return <Navigate to="/behavioral" replace />;
   }
 
+  // Password reset handlers commented out for OAuth-only flow
+  /*
   const handlePasswordResetSuccess = () => {
     console.log('✅ Password reset successful, clearing recovery mode and redirecting');
     setPasswordRecoveryMode(false);
@@ -94,6 +98,7 @@ const Index = () => {
       window.history.replaceState({}, document.title, url.pathname);
     }
   };
+  */
   
   console.log('🎨 Rendering Index page - landing page mode');
   
@@ -149,12 +154,14 @@ const Index = () => {
         </div>
       </footer>
 
-      {/* Password Reset Modal - shown when user is in password recovery mode */}
+      {/* Password Reset Modal commented out for OAuth-only flow */}
+      {/*
       <PasswordResetModal
         open={showPasswordResetModal}
         onOpenChange={handlePasswordResetModalClose}
         onSuccess={handlePasswordResetSuccess}
       />
+      */}
     </div>
   );
 };

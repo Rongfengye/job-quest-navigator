@@ -1,4 +1,7 @@
 
+// EMAIL CONFIRMATION SCREEN - Currently not being used (OAuth-only flow)
+
+/*
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -101,3 +104,4 @@ const EmailConfirmationScreen: React.FC<EmailConfirmationScreenProps> = ({ email
 };
 
 export default EmailConfirmationScreen;
+*/

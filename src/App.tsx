@@ -55,7 +55,8 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/behavioralFeedback" element={<BehavioralFeedback />} />
-              <Route path="/recover-password" element={<PasswordRecovery />} />
+              {/* Password recovery route commented out for OAuth-only flow */}
+              {/* <Route path="/recover-password" element={<PasswordRecovery />} /> */}
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="*" element={<NotFound />} />

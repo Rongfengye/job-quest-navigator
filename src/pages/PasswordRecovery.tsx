@@ -1,4 +1,7 @@
 
+// PASSWORD RECOVERY PAGE - Currently not being used (OAuth-only flow)
+
+/*
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -247,6 +250,24 @@ const PasswordRecovery = () => {
       </Card>
     </div>
   );
+};
+
+export default PasswordRecovery;
+*/
+
+// Simple redirect component for OAuth-only flow
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const PasswordRecovery = () => {
+  const navigate = useNavigate();
+  
+  useEffect(() => {
+    // Redirect to home page since password recovery is disabled
+    navigate('/', { replace: true });
+  }, [navigate]);
+  
+  return null;
 };
 
 export default PasswordRecovery;

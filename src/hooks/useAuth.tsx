@@ -110,6 +110,9 @@ export const useAuth = () => {
     }
   }, [setUserSafely, extractUserNames]);
 
+  // MANUAL AUTHENTICATION FUNCTIONS - Currently not being used (OAuth-only flow)
+  
+  /*
   const signup = async (email: string, password: string, firstName: string, lastName: string) => {
     console.log('Signup function called with:', { email, firstName, lastName });
     setIsLoading(true);
@@ -177,7 +180,9 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  */
 
+  /*
   const login = async (email: string, password: string) => {
     console.log('Login function called with email:', email);
     setIsLoading(true);
@@ -243,6 +248,7 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  */
 
   const logout = async () => {
     console.log('Logout function called');
@@ -284,6 +290,7 @@ export const useAuth = () => {
     }
   };
 
+  /*
   const resetPassword = async (email: string) => {
     console.log('Reset password function called with email:', email);
     setIsLoading(true);
@@ -324,7 +331,9 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  */
 
+  /*
   const updatePassword = async (newPassword: string) => {
     console.log('Update password function called');
     setIsLoading(true);
@@ -363,7 +372,9 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  */
 
+  /*
   // Resend confirmation email for unconfirmed users
   const resendConfirmationEmail = async (email: string) => {
     setIsLoading(true);
@@ -408,17 +419,19 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   };
+  */
 
   return {
     user,
     isLoading,
-    signup,
-    login,
+    // Manual auth functions commented out - OAuth only
+    // signup,
+    // login,
     logout,
-    resetPassword,
-    updatePassword,
+    // resetPassword,
+    // updatePassword,
     syncUserData,
     setUser: setUserSafely,
-    resendConfirmationEmail // Export the new function
+    // resendConfirmationEmail
   };
 };
