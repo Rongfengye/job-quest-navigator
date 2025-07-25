@@ -8,7 +8,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { usePlanStatus } from '@/hooks/usePlanStatus';
 import { Key, Loader2 } from 'lucide-react';
-import PasswordChangeModal from '@/components/settings/PasswordChangeModal';
+// import PasswordChangeModal from '@/components/settings/PasswordChangeModal'; // Commented out for OAuth-only flow
 import UnifiedSettingsCard from '@/components/settings/UnifiedSettingsCard';
 import { CustomPremiumStatus } from '@/components/debug/CustomPremiumStatus';
 import { supabase } from '@/integrations/supabase/client';
@@ -19,7 +19,7 @@ const Settings = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  // const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false); // Commented out for OAuth-only flow
   
   const { isPremium, isBasic, isLoading: planStatusLoading, fetchUserStatus, usageSummary, isLoadingUsage } = usePlanStatus();
   const [isProcessingCheckout, setIsProcessingCheckout] = useState(false);
@@ -167,7 +167,8 @@ const Settings = () => {
             onManageSubscription={handleManageSubscription}
           />
 
-          {/* Password Settings Card */}
+          {/* Password Settings Card - Commented out for OAuth-only flow */}
+          {/*
           {user?.provider === 'email' && (
             <Card>
               <CardHeader>
@@ -197,13 +198,17 @@ const Settings = () => {
               </CardContent>
             </Card>
           )}
+          */}
         </div>
       </div>
 
+      {/* Password Change Modal - Commented out for OAuth-only flow */}
+      {/*
       <PasswordChangeModal 
         open={isPasswordModalOpen}
         onOpenChange={setIsPasswordModalOpen}
       />
+      */}
     </DashboardLayout>
   );
 };

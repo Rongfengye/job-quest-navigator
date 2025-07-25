@@ -1,4 +1,7 @@
 
+// PASSWORD CHANGE MODAL - Currently not being used (OAuth-only flow)
+
+/*
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -169,3 +172,4 @@ const PasswordChangeModal: React.FC<PasswordChangeModalProps> = ({
 };
 
 export default PasswordChangeModal;
+*/
