@@ -172,8 +172,7 @@ serve(async (req) => {
       body: JSON.stringify({
         url: url,
         formats: ['markdown'],
-        includeTags: ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'div', 'span', 'article', 'section'],
-        excludeTags: ['script', 'style', 'nav', 'footer', 'header', 'aside'],
+        excludeTags: ['script', 'style', 'nav', 'footer'],
       }),
     });
 
@@ -202,60 +201,60 @@ serve(async (req) => {
     }
 
     const { markdown, html, metadata } = firecrawlData.data;
-    
-    // Extract job description from markdown (preferred) or HTML
-    let jobDescription = '';
-    if (markdown) {
-      jobDescription = markdown
-        .replace(/#{1,6}\s/g, '') // Remove markdown headers
-        .replace(/\*\*(.*?)\*\*/g, '$1') // Remove bold formatting
-        .replace(/\*(.*?)\*/g, '$1') // Remove italic formatting
-        .replace(/\[(.*?)\]\(.*?\)/g, '$1') // Remove links but keep text
-        .replace(/`(.*?)`/g, '$1') // Remove code formatting
-        .replace(/\n{3,}/g, '\n\n') // Normalize line breaks
-        .trim();
-    } else if (html) {
-      // Parse HTML and extract text content
-      const cleanHtml = html
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-      jobDescription = cleanHtml;
-    }
-
-    // Extract company information
-    let companyName = '';
-    let companyDescription = '';
-
-    if (metadata) {
-      companyName = metadata.ogTitle || metadata.title || '';
-      companyDescription = metadata.ogDescription || metadata.description || '';
-      
-      // Clean company name from job title patterns
-      if (companyName) {
-        companyName = companyName
-          .replace(/\s*-\s*.*(job|position|role|career|hiring).*$/i, '')
-          .replace(/^.*(at|@)\s+/i, '')
-          .trim();
-      }
-    }
-
-    // Try OpenAI extraction on the raw Firecrawl content (before processing)
-    let extractedData: ScrapedJobData['extracted'] | null = null;
     const rawContent = markdown || html;
+
+    // Try OpenAI extraction first (preferred method)
+    let extractedData: ScrapedJobData['extracted'] | null = null;
     if (rawContent) {
       extractedData = await extractStructuredJobData(rawContent);
     }
 
+    // Only process legacy format if OpenAI extraction failed
+    let jobDescription = '';
+    let companyName = '';
+    let companyDescription = '';
+
+    if (!extractedData) {
+      // Legacy processing - only when needed
+      if (markdown) {
+        jobDescription = markdown
+          .replace(/#{1,6}\s/g, '')
+          .replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\*(.*?)\*/g, '$1')
+          .replace(/\[(.*?)\]\(.*?\)/g, '$1')
+          .replace(/`(.*?)`/g, '$1')
+          .replace(/\n{3,}/g, '\n\n')
+          .trim();
+      } else if (html) {
+        const cleanHtml = html
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+          .replace(/<[^>]+>/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        jobDescription = cleanHtml;
+      }
+
+      if (metadata) {
+        companyName = metadata.ogTitle || metadata.title || '';
+        companyDescription = metadata.ogDescription || metadata.description || '';
+        
+        if (companyName) {
+          companyName = companyName
+            .replace(/\s*-\s*.*(job|position|role|career|hiring).*$/i, '')
+            .replace(/^.*(at|@)\s+/i, '')
+            .trim();
+        }
+      }
+    }
+
     const result: ScrapedJobData = {
       success: true,
-      // Legacy format (backward compatibility)
+      // Legacy format (backward compatibility) - only populated if OpenAI failed
       jobDescription: jobDescription || undefined,
       companyName: companyName || undefined,
       companyDescription: companyDescription || undefined,
-      // NEW: Structured extraction (if available)
+      // NEW: Structured extraction (preferred)
       extracted: extractedData || undefined,
     };
 
