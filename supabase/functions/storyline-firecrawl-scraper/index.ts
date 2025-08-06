@@ -173,15 +173,15 @@ Return only the JSON object, no additional text or explanation.`;
     }
 
     // Check if extracted data looks like navigation (expanded based on user feedback)
-    const suspiciousJobTitles = [
-      'home', 'careers', 'jobs', 'about', 'contact', 'login', 'sign up',
-      'search', 'apply', 'website', 'page', 'site', 'menu', 'navigation'
-    ];
-    console.log('Checking job title for suspicious content:', extracted.jobTitle);
-    if (suspiciousJobTitles.some(title => extracted.jobTitle.toLowerCase().includes(title))) {
-      console.log(`Job title "${extracted.jobTitle}" appears to be navigation, skipping`);
-      return null;
-    }
+    // const suspiciousJobTitles = [
+    //   'home', 'careers', 'jobs', 'about', 'contact', 'login', 'sign up',
+    //   'apply', 'website', 'page', 'site', 'menu', 'navigation'
+    // ];
+    // console.log('Checking job title for suspicious content:', extracted.jobTitle);
+    // if (suspiciousJobTitles.some(title => extracted.jobTitle.toLowerCase().includes(title))) {
+    //   console.log(`Job title "${extracted.jobTitle}" appears to be navigation, skipping`);
+    //   return null;
+    // }
 
     // Check if company name looks suspicious
     const suspiciousCompanyIndicators = ['careers', 'jobs', 'com', 'www', 'http'];
