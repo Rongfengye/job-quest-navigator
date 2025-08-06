@@ -249,10 +249,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           // Show specific message for timeout or scraping failure
           const isTimeout = fallbackError instanceof Error && fallbackError.message === 'Scraping timeout';
           
-          setScrapingError(isTimeout 
-            ? "This website took too long to respond. Please manually copy and paste the job details from the website below."
-            : "This website cannot be automatically scraped. Please manually copy and paste the job details from the website below."
-          );
+          setScrapingError("Manual entry recommended for this site. Copy and paste the job details below for best results.");
           return;
         }
       }
