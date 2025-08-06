@@ -34,9 +34,10 @@ const JobScraper: React.FC<JobScraperProps> = ({
     const progressMessages = [
       'Connecting to website...',
       'Analyzing webpage structure...',
-      'Extracting job description...',
-      'Processing company information...',
-      'Finalizing results...'
+      'Extracting job content...',
+      'AI processing job data...',
+      'Extracting job title and company...',
+      'Finalizing structured data...'
     ];
 
     let messageIndex = 0;
@@ -62,7 +63,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
         messageIndex++;
         setProgressMessage(progressMessages[messageIndex]);
       }
-    }, 1260);
+    }, 2000); // Slower message changes for 30s timeout
 
     // Set initial message
     setProgressMessage(progressMessages[0]);
@@ -148,9 +149,9 @@ const JobScraper: React.FC<JobScraperProps> = ({
       setProgress(0);
       console.log("Starting scrape for URL:", url);
 
-      // Create a timeout promise
+      // Create a timeout promise - increased to 30s for OpenAI extraction
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Scraping timeout')), 10000);
+        setTimeout(() => reject(new Error('Scraping timeout')), 30000);
       });
 
       // Try using Firecrawl edge function first with timeout
@@ -241,7 +242,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           toast({
             title: "Website Cannot Be Scraped",
             description: isTimeout 
-              ? "Scraping timed out after 10 seconds. Please manually copy and paste the job description."
+              ? "Scraping timed out after 30 seconds. Please manually copy and paste the job description."
               : "This website blocks automated scraping. Please manually copy and paste the job description.",
             variant: "destructive",
             duration: 5000,
