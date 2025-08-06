@@ -274,6 +274,20 @@ const CreateBehavioral = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
+          {/* Job URL Scraper - Auto-fills multiple fields */}
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 className="text-lg font-semibold mb-2 text-blue-900">🚀 Quick Fill from Job URL</h3>
+            <p className="text-sm text-blue-700 mb-3">
+              Paste a job posting URL to automatically fill Job Title, Company Name, and Job Description
+            </p>
+            <JobScraper 
+              onScrapedContent={handleScrapedContent} 
+              onCompanyInfoFound={handleScrapedCompanyInfo}
+              onStructuredDataExtracted={handleStructuredScrapedData} // NEW: Phase 3
+              className="" 
+            />
+          </div>
+
           <FormField
             id="companyName"
             name="companyName"
@@ -300,17 +314,9 @@ const CreateBehavioral = () => {
             label="Job Description"
             value={formData.jobDescription}
             onChange={handleInputChange}
-            placeholder="Paste the job description here or use the scraper"
+            placeholder="Paste the job description here"
             required
             isTextarea
-            additionalComponent={
-              <JobScraper 
-                onScrapedContent={handleScrapedContent} 
-                onCompanyInfoFound={handleScrapedCompanyInfo}
-                onStructuredDataExtracted={handleStructuredScrapedData} // NEW: Phase 3
-                className="mb-2" 
-              />
-            }
           />
 
           <div className="pt-4">
