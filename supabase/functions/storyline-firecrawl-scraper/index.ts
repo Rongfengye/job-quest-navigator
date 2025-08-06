@@ -51,23 +51,23 @@ async function extractStructuredJobData(scrapedContent: string): Promise<Scraped
   }
 
   // Check for obvious navigation/header content that user feedback mentioned
-  const navigationIndicators = [
-    'home', 'about', 'contact', 'login', 'sign up', 'privacy policy', 'terms',
-    'careers', 'jobs', 'search jobs', 'footer', 'header', 'navigation', 'menu'
-  ];
-  const contentLower = scrapedContent.toLowerCase();
-  const navCount = navigationIndicators.filter(indicator => contentLower.includes(indicator)).length;
+  // const navigationIndicators = [
+  //   'home', 'about', 'contact', 'login', 'sign up', 'privacy policy', 'terms',
+  //   'careers', 'jobs', 'search jobs', 'footer', 'header', 'navigation', 'menu'
+  // ];
+  // const contentLower = scrapedContent.toLowerCase();
+  // const navCount = navigationIndicators.filter(indicator => contentLower.includes(indicator)).length;
   
-  if (navCount > 3 && scrapedContent.length < 500) {
-    console.log('Content appears to be mostly navigation, skipping extraction');
-    return null;
-  }
+  // if (navCount > 3 && scrapedContent.length < 500) {
+  //   console.log('Content appears to be mostly navigation, skipping extraction');
+  //   return null;
+  // }
 
-  // Additional check for Meta careers specific issues mentioned in user feedback
-  const metaCareersPattern = /metacareers\.com/i;
-  if (metaCareersPattern.test(scrapedContent) && scrapedContent.includes('website headers and links')) {
-    console.log('Detected Meta careers page with navigation content, enhancing extraction');
-  }
+  // // Additional check for Meta careers specific issues mentioned in user feedback
+  // const metaCareersPattern = /metacareers\.com/i;
+  // if (metaCareersPattern.test(scrapedContent) && scrapedContent.includes('website headers and links')) {
+  //   console.log('Detected Meta careers page with navigation content, enhancing extraction');
+  // }
 
   const prompt = `You are an expert at extracting structured job information from raw web content scraped by Firecrawl.
 
