@@ -69,13 +69,13 @@ async function extractStructuredJobData(scrapedContent: string): Promise<Scraped
     console.log('Detected Meta careers page with navigation content, enhancing extraction');
   }
 
-  const prompt = `You are an expert at extracting structured job information from scraped web content.
+  const prompt = `You are an expert at extracting structured job information from raw web content scraped by Firecrawl.
 
-Extract the following information from the scraped job posting content below. The content may include navigation elements, headers, footers, or have content in mixed order - focus only on the actual job posting information.
+Extract the following information from the raw scraped content below. This content is in markdown or HTML format and contains the full webpage data including navigation, headers, footers, and metadata - focus ONLY on the actual job posting information.
 
-SCRAPED CONTENT:
+RAW SCRAPED CONTENT (Markdown/HTML):
 ---
-${scrapedContent.substring(0, 8000)} ${scrapedContent.length > 8000 ? '...(truncated)' : ''}
+${scrapedContent.substring(0, 12000)} ${scrapedContent.length > 12000 ? '...(truncated)' : ''}
 ---
 
 Extract and return ONLY valid JSON in this exact format:
@@ -86,21 +86,24 @@ Extract and return ONLY valid JSON in this exact format:
   "companyDescription": "brief company overview if available in the content, otherwise empty string"
 }
 
-CRITICAL REQUIREMENTS:
-- jobTitle must be the actual position title (e.g. "Senior Software Engineer", "Product Manager"), NOT page titles like "Careers", "Jobs", "Home", or navigation elements
-- companyName should be clean company name only (e.g. "Meta", "Google", "Apple"), remove words like "at", "careers", "jobs", or website elements
-- jobDescription should be substantial (at least 100 words) and contain actual job requirements, responsibilities, and qualifications
-- IGNORE: navigation links, headers, footers, "Apply now" buttons, social media links, copyright text, website menus
-- REORDER: if content appears out of order, reorganize it logically with job title first, then description, then requirements
-- If you cannot find legitimate job posting information (only navigation/website content found), return null
-- For sites like Meta Careers, LinkedIn, or other job boards, look specifically for the job posting content, not the site structure
+CRITICAL REQUIREMENTS FOR RAW FIRECRAWL DATA:
+- The content is in markdown or HTML format with full webpage structure
+- jobTitle must be the actual position title (e.g. "Senior Software Engineer", "Product Manager"), NOT page titles like "Careers", "Jobs", or HTML titles
+- companyName should be clean company name only (e.g. "Meta", "Google", "Apple"), extracted from job posting content not website metadata
+- jobDescription should be substantial (at least 100 words) with actual job requirements, responsibilities, qualifications - extract the complete job posting text
+- PARSE MARKDOWN: Handle markdown formatting (##, **, [], etc.) and extract the actual job content
+- PARSE HTML: If HTML, extract text from relevant tags while ignoring script, style, nav elements
+- IGNORE COMPLETELY: navigation menus, headers, footers, "Apply now" buttons, social media links, copyright text, website menus, breadcrumbs
+- STRUCTURE LOGICALLY: Clean and organize the job description in a readable format
+- META CAREERS SPECIFIC: Look for the actual job posting content within the page structure, not the Meta careers website chrome
+- If you cannot find legitimate job posting information (only navigation/website structure found), return null
 
-EXAMPLES OF WHAT TO IGNORE:
-- "Home About Contact Careers" (navigation)
-- "© 2024 Company Name" (footer)
-- "Sign up for alerts" (website features)
-- "Share this job" (social buttons)
-- Website headers and links mentioned in user feedback
+EXAMPLES OF WHAT TO IGNORE FROM RAW DATA:
+- Navigation markdown: "[Home](/) [About](/about) [Careers](/careers)"  
+- HTML navigation: "<nav>...</nav>" or "<header>...</header>"
+- Metadata: Page titles, meta descriptions that are website-focused
+- Footer content: Copyright, legal links, social media
+- Website chrome: "Sign up for job alerts", "Share this job", breadcrumbs
 
 Return only the JSON object, no additional text or explanation.`;
 
@@ -318,11 +321,12 @@ serve(async (req) => {
       }
     }
 
-    // Try OpenAI extraction on the scraped content
+    // Try OpenAI extraction on the raw Firecrawl content (before processing)
     let extractedData: ScrapedJobData['extracted'] | null = null;
-    if (jobDescription) {
-      console.log('Attempting structured extraction with OpenAI...');
-      extractedData = await extractStructuredJobData(jobDescription);
+    const rawContent = markdown || html; // Use raw Firecrawl data, not processed jobDescription
+    if (rawContent) {
+      console.log('Attempting structured extraction with OpenAI on raw Firecrawl data...');
+      extractedData = await extractStructuredJobData(rawContent);
     }
 
     const result: ScrapedJobData = {
