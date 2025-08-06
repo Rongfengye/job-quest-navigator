@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { useJobPracticeSubmission } from './useJobPracticeSubmission';
+import { ExtractedJobData } from '@/types/jobScraper';
 
 interface FormData {
   jobTitle: string;
@@ -66,6 +67,18 @@ export const useCreateForm = () => {
     }));
   };
 
+  // NEW: Phase 3 - Handle structured data extraction to auto-fill all fields
+  const handleStructuredScrapedData = (data: ExtractedJobData) => {
+    console.log('Auto-filling form with structured data:', data);
+    setFormData((prev) => ({
+      ...prev,
+      jobTitle: data.jobTitle || prev.jobTitle, // Keep existing if extraction failed
+      companyName: data.companyName || prev.companyName,
+      jobDescription: data.jobDescription || prev.jobDescription,
+      companyDescription: data.companyDescription || prev.companyDescription,
+    }));
+  };
+
   const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await submitJobPractice();
@@ -83,6 +96,7 @@ export const useCreateForm = () => {
     handleCoverLetterChange,
     handleAdditionalDocumentsChange,
     handleScrapedJobDescription,
+    handleStructuredScrapedData, // NEW: Phase 3
     handleSubmit,
   };
 };

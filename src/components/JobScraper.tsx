@@ -169,6 +169,10 @@ const JobScraper: React.FC<JobScraperProps> = ({
 
         if (data?.success) {
           console.log("Firecrawl scraping successful");
+          console.log("Received data:", { hasExtracted: !!data.extracted, hasCallback: !!onStructuredDataExtracted });
+          if (data.extracted) {
+            console.log("Structured data available:", data.extracted);
+          }
           setProgress(100);
           setProgressMessage('Scraping completed successfully!');
           

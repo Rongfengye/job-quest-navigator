@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import FormField from '@/components/FormField';
 import { ArrowLeft, Crown } from 'lucide-react';
 import JobScraper from '@/components/JobScraper';
+import { ExtractedJobData } from '@/types/jobScraper';
 import { useToast } from '@/hooks/use-toast';
 import FileUpload from '@/components/FileUpload';
 import ProcessingModal from '@/components/ProcessingModal';
@@ -53,6 +54,18 @@ const CreateBehavioral = () => {
       ...prev,
       companyName: companyName || prev.companyName,
       companyDescription: companyDescription || prev.companyDescription
+    }));
+  };
+
+  // NEW: Phase 3 - Handle structured data extraction to auto-fill all fields
+  const handleStructuredScrapedData = (data: ExtractedJobData) => {
+    console.log('Auto-filling behavioral form with structured data:', data);
+    setFormData(prev => ({
+      ...prev,
+      jobTitle: data.jobTitle || prev.jobTitle, // Keep existing if extraction failed
+      companyName: data.companyName || prev.companyName,
+      jobDescription: data.jobDescription || prev.jobDescription,
+      companyDescription: data.companyDescription || prev.companyDescription,
     }));
   };
 
@@ -294,6 +307,7 @@ const CreateBehavioral = () => {
               <JobScraper 
                 onScrapedContent={handleScrapedContent} 
                 onCompanyInfoFound={handleScrapedCompanyInfo}
+                onStructuredDataExtracted={handleStructuredScrapedData} // NEW: Phase 3
                 className="mb-2" 
               />
             }

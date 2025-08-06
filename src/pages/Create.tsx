@@ -9,6 +9,7 @@ import ProcessingModal from '@/components/ProcessingModal';
 import { useCreateForm } from '@/hooks/useCreateForm';
 import { useAuthContext } from '@/context/AuthContext';
 import JobScraper from '@/components/JobScraper';
+import { ExtractedJobData } from '@/types/jobScraper';
 
 const Create = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
@@ -32,6 +33,7 @@ const Create = () => {
     handleCoverLetterChange,
     handleAdditionalDocumentsChange,
     handleScrapedJobDescription,
+    handleStructuredScrapedData, // NEW: Phase 3
     handleSubmit,
   } = useCreateForm();
 
@@ -102,6 +104,7 @@ const Create = () => {
               <JobScraper 
                 onScrapedContent={handleScrapedJobDescription} 
                 onCompanyInfoFound={handleScrapedCompanyInfo}
+                onStructuredDataExtracted={handleStructuredScrapedData} // NEW: Phase 3
                 className="mb-2" 
               />
             }
