@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { Search, Globe } from 'lucide-react';
+import { Search, Globe, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { JobScraperProps, ScrapedJobResponse } from '@/types/jobScraper';
@@ -17,10 +17,15 @@ const JobScraper: React.FC<JobScraperProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [scrapingError, setScrapingError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(e.target.value);
+    // Clear any previous scraping error when URL changes
+    if (scrapingError) {
+      setScrapingError(null);
+    }
   };
 
   // Progress simulation effect
@@ -147,6 +152,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
     try {
       setIsLoading(true);
       setProgress(0);
+      setScrapingError(null); // Clear any previous errors
       console.log("Starting scrape for URL:", url);
 
       // Create a timeout promise - increased to 30s for OpenAI extraction
@@ -243,25 +249,16 @@ const JobScraper: React.FC<JobScraperProps> = ({
           // Show specific message for timeout or scraping failure
           const isTimeout = fallbackError instanceof Error && fallbackError.message === 'Scraping timeout';
           
-          toast({
-            title: "Website Cannot Be Scraped",
-            description: isTimeout 
-              ? "Scraping timed out after 30 seconds. Please manually copy and paste the job description."
-              : "This website blocks automated scraping. Please manually copy and paste the job description.",
-            variant: "destructive",
-            duration: 5000,
-          });
+          setScrapingError(isTimeout 
+            ? "This website took too long to respond. Please manually copy and paste the job details from the website below."
+            : "This website cannot be automatically scraped. Please manually copy and paste the job details from the website below."
+          );
           return;
         }
       }
     } catch (err) {
       console.error('Error scraping website:', err);
-      toast({
-        title: "Website Cannot Be Scraped", 
-        description: "Please manually copy and paste the job description from the website.",
-        variant: "destructive",
-        duration: 5000,
-      });
+      setScrapingError("This website cannot be automatically scraped. Please manually copy and paste the job details from the website below.");
     } finally {
       setIsLoading(false);
       // Keep progress and message visible for a moment after completion
@@ -294,6 +291,16 @@ const JobScraper: React.FC<JobScraperProps> = ({
           {isLoading ? 'Scraping...' : 'Scrape Job'}
         </Button>
       </div>
+      
+      {/* Scraping Error Warning */}
+      {scrapingError && (
+        <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <span className="text-sm text-yellow-800">
+            {scrapingError}
+          </span>
+        </div>
+      )}
       
       {isLoading && (
         <div className="space-y-2">
