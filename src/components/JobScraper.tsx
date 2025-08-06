@@ -5,14 +5,14 @@ import { Progress } from '@/components/ui/progress';
 import { Search, Globe } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { JobScraperProps, ScrapedJobResponse } from '@/types/jobScraper';
 
-interface JobScraperProps {
-  onScrapedContent: (content: string) => void;
-  onCompanyInfoFound?: (companyName: string, companyDescription: string) => void;
-  className?: string;
-}
-
-const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfoFound, className }) => {
+const JobScraper: React.FC<JobScraperProps> = ({ 
+  onScrapedContent, 
+  onCompanyInfoFound, 
+  onStructuredDataExtracted, 
+  className 
+}) => {
   const [url, setUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -159,7 +159,7 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           body: { url }
         });
 
-        const { data, error } = await Promise.race([scrapePromise, timeoutPromise]) as any;
+        const { data, error } = await Promise.race([scrapePromise, timeoutPromise]) as { data: ScrapedJobResponse; error: any };
 
         if (error) {
           console.error('Edge function error:', error);
@@ -171,6 +171,25 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           setProgress(100);
           setProgressMessage('Scraping completed successfully!');
           
+          // Priority 1: Try structured data extraction (Phase 2)
+          if (data.extracted && onStructuredDataExtracted) {
+            console.log("Using structured job data extraction");
+            onStructuredDataExtracted({
+              jobTitle: data.extracted.jobTitle,
+              companyName: data.extracted.companyName,
+              jobDescription: data.extracted.jobDescription,
+              companyDescription: data.extracted.companyDescription
+            });
+            
+            toast({
+              title: "Smart Job Extraction Complete",
+              description: "Successfully extracted and auto-filled job title, company, and description",
+            });
+            return;
+          }
+          
+          // Fallback: Use legacy callbacks for backward compatibility
+          console.log("Using legacy job data extraction");
           if (data.jobDescription) {
             onScrapedContent(data.jobDescription);
           }
@@ -198,6 +217,8 @@ const JobScraper: React.FC<JobScraperProps> = ({ onScrapedContent, onCompanyInfo
           setProgress(100);
           setProgressMessage('Fallback scraping completed!');
           
+          // Note: Fallback method doesn't have OpenAI extraction, so use legacy callbacks
+          console.log("Using fallback scraping - legacy callbacks only");
           if (fallbackResult.jobDescription) {
             onScrapedContent(fallbackResult.jobDescription);
           }
