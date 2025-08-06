@@ -192,15 +192,15 @@ Return only the JSON object, no additional text or explanation.`;
     // }
 
     // Check if job description contains mostly navigation text
-    const navKeywordsInDescription = navigationIndicators.filter(nav => 
-      extracted.jobDescription.toLowerCase().includes(nav)
-    ).length;
+    // const navKeywordsInDescription = navigationIndicators.filter(nav => 
+    //   extracted.jobDescription.toLowerCase().includes(nav)
+    // ).length;
     
-    console.log('Checking navigation keywords in description, found:', navKeywordsInDescription);
-    if (navKeywordsInDescription > 5) {
-      console.log('Job description contains too many navigation keywords, likely scraped website structure');
-      return null;
-    }
+    // console.log('Checking navigation keywords in description, found:', navKeywordsInDescription);
+    // if (navKeywordsInDescription > 5) {
+    //   console.log('Job description contains too many navigation keywords, likely scraped website structure');
+    //   return null;
+    // }
 
     console.log('Successfully extracted structured job data');
     console.log(`Job Title: ${extracted.jobTitle}`);
