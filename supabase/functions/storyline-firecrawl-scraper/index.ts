@@ -149,12 +149,24 @@ Return only the JSON object, no additional text or explanation.`;
     const extracted = JSON.parse(extractedContent);
     
     // Validate the extracted data
+    console.log('Validating extracted data:', {
+      hasJobTitle: !!extracted.jobTitle,
+      hasCompanyName: !!extracted.companyName, 
+      hasJobDescription: !!extracted.jobDescription,
+      descriptionLength: extracted.jobDescription?.length || 0
+    });
+    
     if (!extracted.jobTitle || !extracted.companyName || !extracted.jobDescription) {
-      console.log('Incomplete extraction, missing required fields');
+      console.log('Incomplete extraction, missing required fields:', {
+        jobTitle: extracted.jobTitle || 'MISSING',
+        companyName: extracted.companyName || 'MISSING',
+        jobDescription: extracted.jobDescription ? 'PRESENT' : 'MISSING'
+      });
       return null;
     }
 
     // Enhanced validation based on user feedback
+    console.log('Checking job description length:', extracted.jobDescription.length);
     if (extracted.jobDescription.length < 100) {
       console.log('Job description too short, likely not actual job content');
       return null;
@@ -165,6 +177,7 @@ Return only the JSON object, no additional text or explanation.`;
       'home', 'careers', 'jobs', 'about', 'contact', 'login', 'sign up',
       'search', 'apply', 'website', 'page', 'site', 'menu', 'navigation'
     ];
+    console.log('Checking job title for suspicious content:', extracted.jobTitle);
     if (suspiciousJobTitles.some(title => extracted.jobTitle.toLowerCase().includes(title))) {
       console.log(`Job title "${extracted.jobTitle}" appears to be navigation, skipping`);
       return null;
@@ -172,6 +185,7 @@ Return only the JSON object, no additional text or explanation.`;
 
     // Check if company name looks suspicious
     const suspiciousCompanyIndicators = ['careers', 'jobs', 'com', 'www', 'http'];
+    console.log('Checking company name for suspicious content:', extracted.companyName);
     if (suspiciousCompanyIndicators.some(indicator => extracted.companyName.toLowerCase().includes(indicator))) {
       console.log(`Company name "${extracted.companyName}" appears to be website element, skipping`);
       return null;
@@ -182,6 +196,7 @@ Return only the JSON object, no additional text or explanation.`;
       extracted.jobDescription.toLowerCase().includes(nav)
     ).length;
     
+    console.log('Checking navigation keywords in description, found:', navKeywordsInDescription);
     if (navKeywordsInDescription > 5) {
       console.log('Job description contains too many navigation keywords, likely scraped website structure');
       return null;
@@ -192,12 +207,15 @@ Return only the JSON object, no additional text or explanation.`;
     console.log(`Company: ${extracted.companyName}`);
     console.log(`Description length: ${extracted.jobDescription.length}`);
 
-    return {
+    const structuredData = {
       jobTitle: extracted.jobTitle.trim(),
       companyName: extracted.companyName.trim(),
       jobDescription: extracted.jobDescription.trim(),
       companyDescription: extracted.companyDescription?.trim() || '',
     };
+    
+    console.log('Returning structured data:', JSON.stringify(structuredData, null, 2));
+    return structuredData;
 
   } catch (error) {
     console.error('Error in OpenAI extraction:', error);
@@ -327,6 +345,14 @@ serve(async (req) => {
     if (rawContent) {
       console.log('Attempting structured extraction with OpenAI on raw Firecrawl data...');
       extractedData = await extractStructuredJobData(rawContent);
+      console.log('OpenAI extraction result:', extractedData ? 'SUCCESS' : 'FAILED/NULL');
+      if (extractedData) {
+        console.log('Extracted data preview:', {
+          jobTitle: extractedData.jobTitle,
+          companyName: extractedData.companyName,
+          descriptionLength: extractedData.jobDescription.length
+        });
+      }
     }
 
     const result: ScrapedJobData = {
