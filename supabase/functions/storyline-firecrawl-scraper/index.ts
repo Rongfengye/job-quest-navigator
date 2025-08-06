@@ -184,12 +184,12 @@ Return only the JSON object, no additional text or explanation.`;
     // }
 
     // Check if company name looks suspicious
-    const suspiciousCompanyIndicators = ['careers', 'jobs', 'com', 'www', 'http'];
-    console.log('Checking company name for suspicious content:', extracted.companyName);
-    if (suspiciousCompanyIndicators.some(indicator => extracted.companyName.toLowerCase().includes(indicator))) {
-      console.log(`Company name "${extracted.companyName}" appears to be website element, skipping`);
-      return null;
-    }
+    // const suspiciousCompanyIndicators = ['careers', 'jobs', 'com', 'www', 'http'];
+    // console.log('Checking company name for suspicious content:', extracted.companyName);
+    // if (suspiciousCompanyIndicators.some(indicator => extracted.companyName.toLowerCase().includes(indicator))) {
+    //   console.log(`Company name "${extracted.companyName}" appears to be website element, skipping`);
+    //   return null;
+    // }
 
     // Check if job description contains mostly navigation text
     const navKeywordsInDescription = navigationIndicators.filter(nav => 
