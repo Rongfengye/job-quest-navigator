@@ -157,7 +157,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
 
       // Create a timeout promise - increased to 30s for OpenAI extraction
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Scraping timeout')), 200);
+        setTimeout(() => reject(new Error('Scraping timeout')), 20000);
       });
 
       // Try using Firecrawl edge function first with timeout
