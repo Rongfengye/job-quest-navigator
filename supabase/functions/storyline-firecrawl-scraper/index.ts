@@ -50,46 +50,26 @@ async function extractStructuredJobData(scrapedContent: string): Promise<Scraped
     return null;
   }
 
-  const prompt = `You are an expert at extracting structured job information from raw web content scraped by Firecrawl.
+  const prompt = `Extract job information from this scraped webpage content. Focus on the actual job posting, ignore navigation/headers/footers.
 
-Extract the following information from the raw scraped content below. This content is in markdown or HTML format and contains the full webpage data including navigation, headers, footers, and metadata - focus ONLY on the actual job posting information.
+CONTENT:
+${scrapedContent.substring(0, 6000)} ${scrapedContent.length > 6000 ? '...(truncated)' : ''}
 
-RAW SCRAPED CONTENT (Markdown/HTML):
----
-${scrapedContent.substring(0, 12000)} ${scrapedContent.length > 12000 ? '...(truncated)' : ''}
----
-
-Extract and return ONLY valid JSON in this exact format:
+Return valid JSON only:
 {
-  "jobTitle": "exact job title from the posting",
-  "companyName": "company name only (no extra words like 'at' or 'careers')",
-  "jobDescription": "clean, well-formatted job description with exact text of requirements and responsibilities from raw scraped content, excluding any navigation or footer content",
-  "companyDescription": "brief company overview if available in the content, otherwise empty string"
+  "jobTitle": "actual job position title",
+  "companyName": "company name only", 
+  "jobDescription": "complete job requirements and responsibilities",
+  "companyDescription": "company overview or empty string"
 }
 
-CRITICAL REQUIREMENTS FOR RAW FIRECRAWL DATA:
-- The content is in markdown or HTML format with full webpage structure
-- jobTitle must be the actual position title (e.g. "Senior Software Engineer", "Product Manager"), NOT page titles like "Careers", "Jobs", or HTML titles
-- companyName should be clean company name only (e.g. "Meta", "Google", "Apple"), extracted from job posting content not website metadata
-- jobDescription should be substantial (at least 100 words) with actual job requirements, responsibilities, qualifications - extract the complete job posting text
-- PARSE MARKDOWN: Handle markdown formatting (##, **, [], etc.) and extract the actual job content
-- PARSE HTML: If HTML, extract text from relevant tags while ignoring script, style, nav elements
-- IGNORE COMPLETELY: navigation menus, headers, footers, "Apply now" buttons, social media links, copyright text, website menus, breadcrumbs
-- STRUCTURE LOGICALLY: Clean and organize the job description in a readable format
-- META CAREERS SPECIFIC: Look for the actual job posting content within the page structure, not the Meta careers website chrome
-- If you cannot find legitimate job posting information (only navigation/website structure found), return null
-
-EXAMPLES OF WHAT TO IGNORE FROM RAW DATA:
-- Navigation markdown: "[Home](/) [About](/about) [Careers](/careers)"  
-- HTML navigation: "<nav>...</nav>" or "<header>...</header>"
-- Metadata: Page titles, meta descriptions that are website-focused
-- Footer content: Copyright, legal links, social media
-- Website chrome: "Sign up for job alerts", "Share this job", breadcrumbs
-
-Return only the JSON object, no additional text or explanation.`;
+Requirements:
+- jobTitle: actual position (not "Careers" or page titles)
+- companyName: clean company name (not "XYZ Careers" or website elements)
+- jobDescription: substantial content (100+ words), ignore navigation
+- Extract from job posting content, not website metadata`;
 
   try {
-    console.log('Making OpenAI extraction request...');
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -104,8 +84,8 @@ Return only the JSON object, no additional text or explanation.`;
             content: prompt
           }
         ],
-        temperature: 0.1, // Low temperature for consistent extraction
-        max_tokens: 2000,
+        temperature: 0.1,
+        max_tokens: 1000,
         response_format: { type: 'json_object' }
       }),
     });
@@ -124,49 +104,24 @@ Return only the JSON object, no additional text or explanation.`;
       return null;
     }
 
-    console.log('Raw OpenAI response:', extractedContent);
-
     // Parse the JSON response
     const extracted = JSON.parse(extractedContent);
     
-    // Validate the extracted data
-    console.log('Validating extracted data:', {
-      hasJobTitle: !!extracted.jobTitle,
-      hasCompanyName: !!extracted.companyName, 
-      hasJobDescription: !!extracted.jobDescription,
-      descriptionLength: extracted.jobDescription?.length || 0
-    });
-    
+    // Basic validation
     if (!extracted.jobTitle || !extracted.companyName || !extracted.jobDescription) {
-      console.log('Incomplete extraction, missing required fields:', {
-        jobTitle: extracted.jobTitle || 'MISSING',
-        companyName: extracted.companyName || 'MISSING',
-        jobDescription: extracted.jobDescription ? 'PRESENT' : 'MISSING'
-      });
       return null;
     }
 
-    // Enhanced validation based on user feedback
-    console.log('Checking job description length:', extracted.jobDescription.length);
     if (extracted.jobDescription.length < 100) {
-      console.log('Job description too short, likely not actual job content');
       return null;
     }
 
-    console.log('Successfully extracted structured job data');
-    console.log(`Job Title: ${extracted.jobTitle}`);
-    console.log(`Company: ${extracted.companyName}`);
-    console.log(`Description length: ${extracted.jobDescription.length}`);
-
-    const structuredData = {
+    return {
       jobTitle: extracted.jobTitle.trim(),
       companyName: extracted.companyName.trim(),
       jobDescription: extracted.jobDescription.trim(),
       companyDescription: extracted.companyDescription?.trim() || '',
     };
-    
-    console.log('Returning structured data:', JSON.stringify(structuredData, null, 2));
-    return structuredData;
 
   } catch (error) {
     console.error('Error in OpenAI extraction:', error);
@@ -206,7 +161,6 @@ serve(async (req) => {
     }
 
     console.log(`Scraping URL: ${url}`);
-    console.log('Using Firecrawl API key:', firecrawlApiKey.substring(0, 10) + '...');
 
     // Call Firecrawl API
     const firecrawlResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
@@ -220,7 +174,6 @@ serve(async (req) => {
         formats: ['markdown'],
         includeTags: ['title', 'meta', 'h1', 'h2', 'h3', 'p', 'div', 'span', 'article', 'section'],
         excludeTags: ['script', 'style', 'nav', 'footer', 'header', 'aside'],
-        waitFor: 500,
       }),
     });
 
@@ -237,7 +190,6 @@ serve(async (req) => {
     }
 
     const firecrawlData: FirecrawlResponse = await firecrawlResponse.json();
-    console.log('Firecrawl response:', JSON.stringify(firecrawlData, null, 2));
 
     if (!firecrawlData.success || !firecrawlData.data) {
       return new Response(
@@ -292,18 +244,9 @@ serve(async (req) => {
 
     // Try OpenAI extraction on the raw Firecrawl content (before processing)
     let extractedData: ScrapedJobData['extracted'] | null = null;
-    const rawContent = markdown || html; // Use raw Firecrawl data, not processed jobDescription
+    const rawContent = markdown || html;
     if (rawContent) {
-      console.log('Attempting structured extraction with OpenAI on raw Firecrawl data...');
       extractedData = await extractStructuredJobData(rawContent);
-      console.log('OpenAI extraction result:', extractedData ? 'SUCCESS' : 'FAILED/NULL');
-      if (extractedData) {
-        console.log('Extracted data preview:', {
-          jobTitle: extractedData.jobTitle,
-          companyName: extractedData.companyName,
-          descriptionLength: extractedData.jobDescription.length
-        });
-      }
     }
 
     const result: ScrapedJobData = {
@@ -316,16 +259,7 @@ serve(async (req) => {
       extracted: extractedData || undefined,
     };
 
-    console.log('Scraping completed successfully');
-    console.log(`Job description length: ${jobDescription.length}`);
-    console.log(`Company name: ${companyName}`);
-    if (extractedData) {
-      console.log('Structured extraction successful');
-      console.log(`Extracted job title: ${extractedData.jobTitle}`);
-      console.log(`Extracted company: ${extractedData.companyName}`);
-    } else {
-      console.log('Structured extraction skipped or failed');
-    }
+    console.log('Scraping completed', extractedData ? 'with structured data' : 'with legacy data only');
 
     return new Response(
       JSON.stringify(result),
