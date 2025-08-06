@@ -50,25 +50,6 @@ async function extractStructuredJobData(scrapedContent: string): Promise<Scraped
     return null;
   }
 
-  // Check for obvious navigation/header content that user feedback mentioned
-  // const navigationIndicators = [
-  //   'home', 'about', 'contact', 'login', 'sign up', 'privacy policy', 'terms',
-  //   'careers', 'jobs', 'search jobs', 'footer', 'header', 'navigation', 'menu'
-  // ];
-  // const contentLower = scrapedContent.toLowerCase();
-  // const navCount = navigationIndicators.filter(indicator => contentLower.includes(indicator)).length;
-  
-  // if (navCount > 3 && scrapedContent.length < 500) {
-  //   console.log('Content appears to be mostly navigation, skipping extraction');
-  //   return null;
-  // }
-
-  // // Additional check for Meta careers specific issues mentioned in user feedback
-  // const metaCareersPattern = /metacareers\.com/i;
-  // if (metaCareersPattern.test(scrapedContent) && scrapedContent.includes('website headers and links')) {
-  //   console.log('Detected Meta careers page with navigation content, enhancing extraction');
-  // }
-
   const prompt = `You are an expert at extracting structured job information from raw web content scraped by Firecrawl.
 
 Extract the following information from the raw scraped content below. This content is in markdown or HTML format and contains the full webpage data including navigation, headers, footers, and metadata - focus ONLY on the actual job posting information.
@@ -171,36 +152,6 @@ Return only the JSON object, no additional text or explanation.`;
       console.log('Job description too short, likely not actual job content');
       return null;
     }
-
-    // Check if extracted data looks like navigation (expanded based on user feedback)
-    // const suspiciousJobTitles = [
-    //   'home', 'careers', 'jobs', 'about', 'contact', 'login', 'sign up',
-    //   'apply', 'website', 'page', 'site', 'menu', 'navigation'
-    // ];
-    // console.log('Checking job title for suspicious content:', extracted.jobTitle);
-    // if (suspiciousJobTitles.some(title => extracted.jobTitle.toLowerCase().includes(title))) {
-    //   console.log(`Job title "${extracted.jobTitle}" appears to be navigation, skipping`);
-    //   return null;
-    // }
-
-    // Check if company name looks suspicious
-    // const suspiciousCompanyIndicators = ['careers', 'jobs', 'com', 'www', 'http'];
-    // console.log('Checking company name for suspicious content:', extracted.companyName);
-    // if (suspiciousCompanyIndicators.some(indicator => extracted.companyName.toLowerCase().includes(indicator))) {
-    //   console.log(`Company name "${extracted.companyName}" appears to be website element, skipping`);
-    //   return null;
-    // }
-
-    // Check if job description contains mostly navigation text
-    // const navKeywordsInDescription = navigationIndicators.filter(nav => 
-    //   extracted.jobDescription.toLowerCase().includes(nav)
-    // ).length;
-    
-    // console.log('Checking navigation keywords in description, found:', navKeywordsInDescription);
-    // if (navKeywordsInDescription > 5) {
-    //   console.log('Job description contains too many navigation keywords, likely scraped website structure');
-    //   return null;
-    // }
 
     console.log('Successfully extracted structured job data');
     console.log(`Job Title: ${extracted.jobTitle}`);
