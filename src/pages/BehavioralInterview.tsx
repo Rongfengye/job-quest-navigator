@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useResumeText } from '@/hooks/useResumeText';
-import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import { Mic, MicOff, Send } from 'lucide-react';
@@ -15,8 +14,7 @@ import NavBar from '@/components/NavBar';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
-import AnswerValidationDisplay from '@/components/behavioral/AnswerValidationDisplay';
-// Import validation utils last to avoid dependency cycles
+// Import validation utils for submit-time validation only
 import { validateAnswer, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
 
 const BehavioralInterview = () => {
@@ -33,24 +31,8 @@ const BehavioralInterview = () => {
   const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
   
-  // Validation state - debounced to avoid excessive calculations
-  const debouncedAnswer = useDebounce(answer, 500);
-  const validation = useMemo(() => {
-    if (!debouncedAnswer || debouncedAnswer.trim().length === 0) {
-      return null;
-    }
-    return validateAnswer(debouncedAnswer);
-  }, [debouncedAnswer]);
-  
-  const [showValidation, setShowValidation] = useState(false);
+  // Submit-time validation state only
   const [overrideAttempt, setOverrideAttempt] = useState(false);
-  
-  // Show validation after user starts typing
-  useEffect(() => {
-    if (answer.length > 10) {
-      setShowValidation(true);
-    }
-  }, [answer]);
   
   // Reset override attempt when answer changes
   useEffect(() => {
@@ -218,7 +200,6 @@ const BehavioralInterview = () => {
         
         console.log('Next question generated, clearing states');
         setAnswer('');
-        setShowValidation(false);
         setIsTransitionLoading(false);
         setShowProcessing(false);
         setShouldGenerateNext(false);
@@ -321,8 +302,10 @@ const BehavioralInterview = () => {
       return;
     }
     
-    // Validation logic - consistent enforcement across all questions
-    if (validation && !validation.isValid) {
+    // Submit-time validation - only check when user tries to submit
+    const validation = validateAnswer(answer.trim());
+    
+    if (!validation.isValid) {
       const validationMessage = getValidationMessage(validation);
       
       if (validationMessage) {
@@ -347,7 +330,7 @@ const BehavioralInterview = () => {
             description: "Submitting with incomplete answer. This may affect your evaluation.",
           });
         } else {
-          // Standard gentle warning for all questions
+          // Standard gentle warning for all questions - show helpful messages
           toast({
             variant: "default",
             title: "💡 Answer Quality",
@@ -456,13 +439,13 @@ const BehavioralInterview = () => {
               toggleRecording={toggleRecording}
             />
             
-            {/* Validation Display */}
-            {validation && (
+            {/* Validation Display - Commented out for less visual overwhelm */}
+            {/* {validation && (
               <AnswerValidationDisplay
                 validation={validation}
                 isVisible={showValidation}
               />
-            )}
+            )} */}
           </div>
           
           <SubmitButton
@@ -472,7 +455,6 @@ const BehavioralInterview = () => {
             isNextQuestionLoading={isTransitionLoading}
             onClick={handleSubmit}
             showProcessing={showProcessing}
-            validation={validation}
             answerLength={answer.trim().length}
           />
         </div>
