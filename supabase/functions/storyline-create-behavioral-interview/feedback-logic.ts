@@ -142,7 +142,8 @@ export async function generateFeedbackHelper(
           { role: 'system', content: systemPrompt },
           { role: 'user', content: `Question: """${questions[index]}""" \n\nAnswer: """${answers[index]}"""` }
         ],
-        response_format: { type: "json_object" }
+        response_format: { type: "json_object" },
+        temperature: 0.1
       }),
     }).then(response => response.json())
       .then(data => {
