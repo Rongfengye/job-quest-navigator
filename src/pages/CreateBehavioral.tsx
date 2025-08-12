@@ -27,11 +27,11 @@ const CreateBehavioral = () => {
     companyDescription: '',
   });
   const [resumeFile, setResumeFile] = React.useState<File | null>(null);
-  const [coverLetterFile, setCoverLetterFile] = React.useState<File | null>(null);
-  const [additionalDocumentsFile, setAdditionalDocumentsFile] = React.useState<File | null>(null);
+  // const [coverLetterFile, setCoverLetterFile] = React.useState<File | null>(null);
+  // const [additionalDocumentsFile, setAdditionalDocumentsFile] = React.useState<File | null>(null);
   const [resumeText, setResumeText] = React.useState('');
-  const [coverLetterText, setCoverLetterText] = React.useState('');
-  const [additionalDocumentsText, setAdditionalDocumentsText] = React.useState('');
+  // const [coverLetterText, setCoverLetterText] = React.useState('');
+  // const [additionalDocumentsText, setAdditionalDocumentsText] = React.useState('');
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -74,15 +74,15 @@ const CreateBehavioral = () => {
     setResumeText(text);
   };
 
-  const handleCoverLetterChange = (file: File | null, text: string) => {
-    setCoverLetterFile(file);
-    setCoverLetterText(text);
-  };
+  // const handleCoverLetterChange = (file: File | null, text: string) => {
+  //   setCoverLetterFile(file);
+  //   setCoverLetterText(text);
+  // };
 
-  const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
-    setAdditionalDocumentsFile(file);
-    setAdditionalDocumentsText(text);
-  };
+  // const handleAdditionalDocumentsChange = (file: File | null, text: string) => {
+  //   setAdditionalDocumentsFile(file);
+  //   setAdditionalDocumentsText(text);
+  // };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -133,8 +133,8 @@ const CreateBehavioral = () => {
 
       // Upload files to Supabase storage
       let resumePath = '';
-      let coverLetterPath = '';
-      let additionalDocumentsPath = '';
+      // let coverLetterPath = '';
+      // let additionalDocumentsPath = '';
       
       console.log("Uploading resume file to Supabase storage...");
       
@@ -143,15 +143,15 @@ const CreateBehavioral = () => {
         console.log("Resume uploaded successfully, path:", resumePath);
       }
       
-      if (coverLetterFile) {
-        coverLetterPath = await uploadFile(coverLetterFile, 'job_documents');
-        console.log("Cover letter uploaded successfully, path:", coverLetterPath);
-      }
+      // if (coverLetterFile) {
+      //   coverLetterPath = await uploadFile(coverLetterFile, 'job_documents');
+      //   console.log("Cover letter uploaded successfully, path:", coverLetterPath);
+      // }
       
-      if (additionalDocumentsFile) {
-        additionalDocumentsPath = await uploadFile(additionalDocumentsFile, 'job_documents');
-        console.log("Additional document uploaded successfully, path:", additionalDocumentsPath);
-      }
+      // if (additionalDocumentsFile) {
+      //   additionalDocumentsPath = await uploadFile(additionalDocumentsFile, 'job_documents');
+      //   console.log("Additional document uploaded successfully, path:", additionalDocumentsPath);
+      // }
 
       // Create behavioral interview record
       const { data: behavioralData, error: behavioralError } = await supabase
@@ -163,8 +163,8 @@ const CreateBehavioral = () => {
           company_name: formData.companyName,
           company_description: formData.companyDescription,
           resume_path: resumePath || '',
-          cover_letter_path: coverLetterPath || null,
-          additional_documents_path: additionalDocumentsPath || null,
+          cover_letter_path: null, // coverLetterPath || null,
+          additional_documents_path: null, // additionalDocumentsPath || null,
           questions: [],
           responses: []
         })
@@ -181,11 +181,11 @@ const CreateBehavioral = () => {
       const questionData = await generateQuestion(
         formData,
         resumeText,
-        coverLetterText,
-        additionalDocumentsText,
+        '', // coverLetterText,
+        '', // additionalDocumentsText,
         resumePath,
-        coverLetterPath,
-        additionalDocumentsPath,
+        '', // coverLetterPath,
+        '', // additionalDocumentsPath,
         behavioralData.id,
       );
 
@@ -201,10 +201,10 @@ const CreateBehavioral = () => {
           formData,
           resumeText,
           resumePath,
-          coverLetterText,
-          coverLetterPath,
-          additionalDocumentsText,
-          additionalDocumentsPath,
+          // coverLetterText,
+          // coverLetterPath,
+          // additionalDocumentsText,
+          // additionalDocumentsPath,
           behavioralId: behavioralData.id,
           firstQuestion: questionData
         }
@@ -330,7 +330,7 @@ const CreateBehavioral = () => {
                 currentFile={resumeFile}
               />
 
-              <FileUpload
+              {/* <FileUpload
                 id="coverLetter"
                 label="Cover Letter (Optional)"
                 onFileChange={handleCoverLetterChange}
@@ -342,7 +342,7 @@ const CreateBehavioral = () => {
                 label="Additional Documents (Optional)"
                 onFileChange={handleAdditionalDocumentsChange}
                 currentFile={additionalDocumentsFile}
-              />
+              /> */}
             </div>
           </div>
 
