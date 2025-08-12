@@ -347,9 +347,20 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Only show full-screen Loading for transitions between questions
-  if (isTransitionLoading || isResumingAndLoading) {
-    console.log('Rendering full-screen Loading component for question transition');
+  // Show loading screen when:
+  // 1. Initially loading (before first question appears)  
+  // 2. Transitioning between questions
+  // 3. Resuming and loading existing interview
+  // 4. No current question but interview not complete
+  if (isInitialLoading || isTransitionLoading || isResumingAndLoading || (!currentQuestion && !interviewComplete)) {
+    console.log('Rendering full-screen Loading component', {
+      isInitialLoading,
+      isTransitionLoading,
+      isResumingAndLoading,
+      hasCurrentQuestion: !!currentQuestion,
+      currentQuestionIndex,
+      interviewComplete
+    });
     return <Loading />;
   }
 
