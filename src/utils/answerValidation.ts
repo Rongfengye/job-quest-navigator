@@ -103,7 +103,7 @@ export function detectSpamPatterns(text: string): string[] {
     for (let i = 0; i < words.length - 2; i++) {
       const phrase = words.slice(i, i + 3).join(' ');
       const occurrences = (text.toLowerCase().match(new RegExp(phrase, 'g')) || []).length;
-      if (occurrences > 2) {
+      if (occurrences > 10) {
         warnings.push(`Repeated phrase detected: "${phrase}"`);
         break;
       }
@@ -112,7 +112,7 @@ export function detectSpamPatterns(text: string): string[] {
   
   // Check for single word repeated many times
   const wordCounts = words.reduce((acc, word) => {
-    if (word.length > 2) {
+    if (word.length > 15) {
       acc[word] = (acc[word] || 0) + 1;
     }
     return acc;
