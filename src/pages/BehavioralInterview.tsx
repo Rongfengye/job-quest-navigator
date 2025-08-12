@@ -14,6 +14,7 @@ import NavBar from '@/components/NavBar';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
+import SimpleValidationDisplay from '@/components/behavioral/SimpleValidationDisplay';
 // Import validation utils for submit-time validation only
 import { validateAnswer, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
 
@@ -33,11 +34,18 @@ const BehavioralInterview = () => {
   
   // Submit-time validation state only
   const [overrideAttempt, setOverrideAttempt] = useState(false);
+  const [showValidationDisplay, setShowValidationDisplay] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
   
-  // Reset override attempt when answer changes
+  // Reset override attempt and validation display when answer changes
   useEffect(() => {
     setOverrideAttempt(false);
-  }, [answer]);
+    // Hide validation display when user starts typing after seeing it
+    if (showValidationDisplay && answer.trim().length > 0) {
+      setShowValidationDisplay(false);
+      setValidationResult(null);
+    }
+  }, [answer, showValidationDisplay]);
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
@@ -327,28 +335,17 @@ const BehavioralInterview = () => {
           description: "Submitting with incomplete answer. This may affect your evaluation.",
         });
       } else {
-        // NORMAL validation failures - show detailed helpful messages on first attempt
-        const validationMessage = getValidationMessage(validation);
-        if (validationMessage) {
-          // Build detailed message with specific issues
-          let detailedMessage = validationMessage.message;
+        // NORMAL validation failures - show visual validation display below text area
+        if (!showValidationDisplay) {
+          setValidationResult(validation);
+          setShowValidationDisplay(true);
           
-          // Add specific warnings from validation
-          if (validation.warnings.length > 0) {
-            const specificWarnings = validation.warnings
-              .filter(w => w.includes('currently') || w.includes('words') || w.includes('sentences'))
-              .slice(0, 2); // Show max 2 specific warnings
-            
-            if (specificWarnings.length > 0) {
-              detailedMessage = specificWarnings.join('. ') + '. ' + validationMessage.message;
-            }
-          }
-          
+          // Simple toast without detailed warnings
           toast({
             variant: "default",
-            title: "💡 Answer Quality",
-            description: detailedMessage + " You can still submit, but consider adding more detail.",
-            duration: 4000,
+            title: "💡 Consider Adding More Detail",
+            description: "You can still submit, but consider improving your answer for better evaluation.",
+            duration: 3000,
           });
         }
       }
@@ -453,13 +450,13 @@ const BehavioralInterview = () => {
               toggleRecording={toggleRecording}
             />
             
-            {/* Validation Display - Commented out for less visual overwhelm */}
-            {/* {validation && (
-              <AnswerValidationDisplay
-                validation={validation}
-                isVisible={showValidation}
+            {/* Simple Validation Display - only shows warnings after failed submit */}
+            {showValidationDisplay && validationResult && (
+              <SimpleValidationDisplay
+                validation={validationResult}
+                isVisible={showValidationDisplay}
               />
-            )} */}
+            )}
           </div>
           
           <SubmitButton
