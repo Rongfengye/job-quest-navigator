@@ -314,38 +314,40 @@ const BehavioralInterview = () => {
     const validation = validateAnswer(answer.trim());
     
     if (!validation.isValid) {
-      const shouldBlock = shouldBlockSubmission(validation, overrideAttempt);
-      
-      if (shouldBlock && !overrideAttempt) {
-        // EXTREME cases only - block and offer override (< 20 words, spam, etc.)
-        toast({
-          variant: "destructive",
-          title: "❗ Answer Too Short",
-          description: "Your answer needs significant improvement. Please add more detail or click submit again to override.",
-          duration: 5000,
-        });
-        
+      if (!overrideAttempt) {
+        // FIRST ATTEMPT - Always show helpful messages and validation display
+        setValidationResult(validation);
+        setShowValidationDisplay(true);
         setOverrideAttempt(true);
-        return; // Block submission
-      } else if (shouldBlock && overrideAttempt) {
-        // Override attempt - allow but log
+        
+        // Simple toast without detailed warnings
         toast({
           variant: "default",
-          title: "⚠️ Override Accepted",
-          description: "Submitting with incomplete answer. This may affect your evaluation.",
+          title: "💡 Consider Adding More Detail",
+          description: "Review the suggestions below and submit again to continue, or improve your answer.",
+          duration: 4000,
         });
+        
+        return; // Block submission on first attempt
       } else {
-        // NORMAL validation failures - show visual validation display below text area
-        if (!showValidationDisplay) {
-          setValidationResult(validation);
-          setShowValidationDisplay(true);
-          
-          // Simple toast without detailed warnings
+        // SECOND ATTEMPT - Allow override but check if extremely poor
+        const shouldBlock = shouldBlockSubmission(validation, false); // Check without override flag
+        
+        if (shouldBlock) {
+          // Still extremely poor - stronger warning but allow
+          toast({
+            variant: "destructive", 
+            title: "⚠️ Submitting Minimal Answer",
+            description: "Your answer is very brief and may significantly impact your evaluation.",
+            duration: 3000,
+          });
+        } else {
+          // Regular validation failure - gentle override
           toast({
             variant: "default",
-            title: "💡 Consider Adding More Detail",
-            description: "You can still submit, but consider improving your answer for better evaluation.",
-            duration: 3000,
+            title: "✓ Submitting Answer",
+            description: "Answer submitted. Consider the feedback for future responses.",
+            duration: 2000,
           });
         }
       }
@@ -354,7 +356,7 @@ const BehavioralInterview = () => {
       console.log('[Validation]', {
         questionIndex: currentQuestionIndex,
         validation,
-        wasBlocked: shouldBlock && !overrideAttempt,
+        wasBlocked: !overrideAttempt, // Only blocked on first attempt
         wasOverridden: overrideAttempt,
         timestamp: new Date().toISOString()
       });
