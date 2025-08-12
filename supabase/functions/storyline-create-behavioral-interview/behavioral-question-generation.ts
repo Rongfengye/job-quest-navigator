@@ -35,8 +35,6 @@ Company: ${companyName}
 Company Description: ${companyDescription}
 
 ${resumeText ? `Candidate Resume: ${resumeText}` : ''}
-${coverLetterText ? `Cover Letter: ${coverLetterText}` : ''}
-${additionalDocumentsText ? `Additional Documents: ${additionalDocumentsText}` : ''}
 
 Based on this context, identify the 4-5 most critical behavioral competencies to assess for this specific role and candidate.`;
 
@@ -258,8 +256,6 @@ export async function generateBehavioralQuestion(
   Candidate Documents and Context:
   
   ${resumeText ? `Resume content: """${resumeText}"""` : ''}
-  ${coverLetterText ? `Cover Letter content: """${coverLetterText}"""` : ''}
-  ${additionalDocumentsText ? `Additional Documents content: """${additionalDocumentsText}"""` : ''}
   
   ${questionIndex > 0 ? 'Please generate the next question in the interview sequence, based on the conversation history provided in the system prompt.' : 'Please generate the first behavioral interview question for this candidate.'}
   `;
