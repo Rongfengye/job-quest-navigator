@@ -36,16 +36,18 @@ const BehavioralInterview = () => {
   const [overrideAttempt, setOverrideAttempt] = useState(false);
   const [showValidationDisplay, setShowValidationDisplay] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
+  const [lastValidatedAnswer, setLastValidatedAnswer] = useState('');
   
-  // Reset override attempt and validation display when answer changes
+  // Reset override attempt and validation display when answer changes significantly
   useEffect(() => {
-    setOverrideAttempt(false);
-    // Hide validation display when user starts typing after seeing it
-    if (showValidationDisplay && answer.trim().length > 0) {
+    // Only reset if user has actually modified the answer after validation was shown
+    if (showValidationDisplay && answer.trim() !== lastValidatedAnswer.trim()) {
+      setOverrideAttempt(false);
       setShowValidationDisplay(false);
       setValidationResult(null);
+      setLastValidatedAnswer('');
     }
-  }, [answer, showValidationDisplay]);
+  }, [answer, showValidationDisplay, lastValidatedAnswer]);
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
@@ -318,6 +320,7 @@ const BehavioralInterview = () => {
         // FIRST ATTEMPT - Always show helpful messages and validation display
         setValidationResult(validation);
         setShowValidationDisplay(true);
+        setLastValidatedAnswer(answer.trim()); // Remember what we validated
         setOverrideAttempt(true);
         
         // Simple toast without detailed warnings
