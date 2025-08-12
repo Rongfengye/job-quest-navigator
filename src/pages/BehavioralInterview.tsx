@@ -306,47 +306,61 @@ const BehavioralInterview = () => {
     const validation = validateAnswer(answer.trim());
     
     if (!validation.isValid) {
-      const validationMessage = getValidationMessage(validation);
+      const shouldBlock = shouldBlockSubmission(validation, overrideAttempt);
       
-      if (validationMessage) {
-        const shouldBlock = shouldBlockSubmission(validation, overrideAttempt);
+      if (shouldBlock && !overrideAttempt) {
+        // EXTREME cases only - block and offer override (< 20 words, spam, etc.)
+        toast({
+          variant: "destructive",
+          title: "❗ Answer Too Short",
+          description: "Your answer needs significant improvement. Please add more detail or click submit again to override.",
+          duration: 5000,
+        });
         
-        if (shouldBlock && !overrideAttempt) {
-          // Extreme cases - block and offer override (applies to all questions)
-          toast({
-            variant: "destructive",
-            title: "❗ Answer Too Short",
-            description: "Your answer needs significant improvement. Please add more detail or click submit again to override.",
-            duration: 5000,
-          });
+        setOverrideAttempt(true);
+        return; // Block submission
+      } else if (shouldBlock && overrideAttempt) {
+        // Override attempt - allow but log
+        toast({
+          variant: "default",
+          title: "⚠️ Override Accepted",
+          description: "Submitting with incomplete answer. This may affect your evaluation.",
+        });
+      } else {
+        // NORMAL validation failures - show detailed helpful messages on first attempt
+        const validationMessage = getValidationMessage(validation);
+        if (validationMessage) {
+          // Build detailed message with specific issues
+          let detailedMessage = validationMessage.message;
           
-          setOverrideAttempt(true);
-          return; // Block submission
-        } else if (shouldBlock && overrideAttempt) {
-          // Override attempt - allow but log
-          toast({
-            variant: "default",
-            title: "⚠️ Override Accepted",
-            description: "Submitting with incomplete answer. This may affect your evaluation.",
-          });
-        } else {
-          // Standard gentle warning for all questions - show helpful messages
+          // Add specific warnings from validation
+          if (validation.warnings.length > 0) {
+            const specificWarnings = validation.warnings
+              .filter(w => w.includes('currently') || w.includes('words') || w.includes('sentences'))
+              .slice(0, 2); // Show max 2 specific warnings
+            
+            if (specificWarnings.length > 0) {
+              detailedMessage = specificWarnings.join('. ') + '. ' + validationMessage.message;
+            }
+          }
+          
           toast({
             variant: "default",
             title: "💡 Answer Quality",
-            description: validationMessage.message + " You can still submit, but consider adding more detail.",
+            description: detailedMessage + " You can still submit, but consider adding more detail.",
+            duration: 4000,
           });
         }
-        
-        // Log validation for analytics
-        console.log('[Validation]', {
-          questionIndex: currentQuestionIndex,
-          validation,
-          wasBlocked: shouldBlock && !overrideAttempt,
-          wasOverridden: overrideAttempt,
-          timestamp: new Date().toISOString()
-        });
       }
+      
+      // Log validation for analytics
+      console.log('[Validation]', {
+        questionIndex: currentQuestionIndex,
+        validation,
+        wasBlocked: shouldBlock && !overrideAttempt,
+        wasOverridden: overrideAttempt,
+        timestamp: new Date().toISOString()
+      });
     }
     
     // Check if microphone is recording and stop it first
