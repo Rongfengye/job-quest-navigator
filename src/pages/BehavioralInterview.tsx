@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,7 +6,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { useResumeText } from '@/hooks/useResumeText';
-import { useDebounce } from '@/hooks/useDebounce';
 import { supabase } from '@/integrations/supabase/client';
 import Loading from '@/components/ui/loading';
 import { Mic, MicOff, Send } from 'lucide-react';
@@ -15,8 +14,6 @@ import NavBar from '@/components/NavBar';
 import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
-import AnswerValidationDisplay from '@/components/behavioral/AnswerValidationDisplay';
-import { validateAnswer, getThresholdsForQuestion, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -31,31 +28,6 @@ const BehavioralInterview = () => {
   const [resumedFormData, setResumedFormData] = useState<any>(null);
   const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
-  
-  // Validation state (Phase 3)
-  const debouncedAnswer = useDebounce(answer, 500);
-  const validation = useMemo(() => {
-    if (!debouncedAnswer || debouncedAnswer.trim().length === 0) {
-      return null;
-    }
-    const thresholds = getThresholdsForQuestion(currentQuestionIndex);
-    return validateAnswer(debouncedAnswer, thresholds, currentQuestionIndex);
-  }, [debouncedAnswer, currentQuestionIndex]);
-  
-  const [showValidation, setShowValidation] = useState(false);
-  const [overrideAttempt, setOverrideAttempt] = useState(false);
-  
-  // Show validation after user starts typing
-  useEffect(() => {
-    if (answer.length > 10) {
-      setShowValidation(true);
-    }
-  }, [answer]);
-  
-  // Reset override attempt when answer changes
-  useEffect(() => {
-    setOverrideAttempt(false);
-  }, [answer]);
   
   // Extract data from location state with error handling
   const locationState = location.state || {};
@@ -218,7 +190,6 @@ const BehavioralInterview = () => {
         
         console.log('Next question generated, clearing states');
         setAnswer('');
-        setShowValidation(false);
         setIsTransitionLoading(false);
         setShowProcessing(false);
         setShouldGenerateNext(false);
@@ -321,58 +292,6 @@ const BehavioralInterview = () => {
       return;
     }
     
-    // Phase 4: Progressive validation warnings
-    const currentValidation = validateAnswer(
-      answer, 
-      getThresholdsForQuestion(currentQuestionIndex),
-      currentQuestionIndex
-    );
-    
-    if (!currentValidation.isValid) {
-      const validationMessage = getValidationMessage(currentValidation, currentQuestionIndex);
-      
-      if (validationMessage) {
-        // Option C: Consistent handling across all questions
-        const shouldBlock = shouldBlockSubmission(currentValidation, currentQuestionIndex, overrideAttempt);
-        
-        if (shouldBlock && !overrideAttempt) {
-          // Extreme cases - block and offer override (applies to all questions)
-          toast({
-            variant: "destructive",
-            title: "❗ Answer Too Short",
-            description: "Your answer needs significant improvement. Please add more detail or click submit again to override.",
-            duration: 5000,
-          });
-          
-          setOverrideAttempt(true);
-          return; // Block submission
-        } else if (shouldBlock && overrideAttempt) {
-          // Override attempt - allow but log
-          toast({
-            variant: "default",
-            title: "⚠️ Override Accepted",
-            description: "Submitting with incomplete answer. This may affect your evaluation.",
-          });
-        } else {
-          // Standard gentle warning for all questions
-          toast({
-            variant: "default",
-            title: "💡 Answer Quality",
-            description: validationMessage.message + " You can still submit, but consider adding more detail.",
-          });
-        }
-      }
-      
-      // Log validation failure for analytics (Phase 4)
-      console.log('[Validation Warning]', {
-        questionIndex: currentQuestionIndex,
-        validation: currentValidation,
-        wasBlocked: shouldBlockSubmission(currentValidation, currentQuestionIndex, false),
-        wasOverridden: overrideAttempt,
-        timestamp: new Date().toISOString()
-      });
-    }
-    
     // Check if microphone is recording and stop it first
     if (isRecording) {
       console.log('Stopping recording before submitting answer');
@@ -451,15 +370,6 @@ const BehavioralInterview = () => {
               isRecording={isRecording}
               toggleRecording={toggleRecording}
             />
-            
-            {/* Validation Display (Phase 3) */}
-            {validation && (
-              <AnswerValidationDisplay
-                validation={validation}
-                questionIndex={currentQuestionIndex}
-                isVisible={showValidation}
-              />
-            )}
           </div>
           
           <SubmitButton
@@ -469,8 +379,6 @@ const BehavioralInterview = () => {
             isNextQuestionLoading={isTransitionLoading}
             onClick={handleSubmit}
             showProcessing={showProcessing}
-            validation={validation}
-            answerLength={answer.trim().length}
           />
         </div>
         
