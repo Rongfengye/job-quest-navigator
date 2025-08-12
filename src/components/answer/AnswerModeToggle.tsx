@@ -19,9 +19,9 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
     <Card className="mb-6 border-2 border-dashed border-gray-300">
       <CardContent className="p-4">
         <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Choose Your Approach</h3>
+          <h3 className="text-lg font-semibold text-gray-900">How Would You Like to Answer?</h3>
           <p className="text-sm text-gray-600 mt-1">
-            How would you like to craft your answer?
+            Most users find the AI coach helps them create better answers faster
           </p>
         </div>
         
@@ -47,17 +47,20 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
           <Button
             variant={mode === 'guided' ? 'default' : 'outline'}
             onClick={() => onModeChange('guided')}
-            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col ${
+            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col relative ${
               mode === 'guided' 
                 ? 'bg-blue-600 text-white border-blue-600' 
                 : 'hover:bg-blue-50 border-blue-200'
             }`}
           >
+            <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+              Recommended
+            </div>
             <Sparkles className="w-5 h-5" />
             <div className="text-center">
-              <div className="font-medium">Use guided help</div>
+              <div className="font-medium">Get AI Coaching</div>
               <div className="text-xs opacity-80 mt-1">
-                AI will help structure my thoughts
+                Turn thoughts into structured responses
               </div>
             </div>
           </Button>

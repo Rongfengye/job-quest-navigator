@@ -40,7 +40,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   processingThoughts
 }) => {
   const { toast } = useToast();
-  const [mode, setMode] = useState<AnswerMode>('manual');
+  const [mode, setMode] = useState<AnswerMode>('guided'); // Changed default to 'guided'
   const [progressValue, setProgressValue] = useState(0);
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');

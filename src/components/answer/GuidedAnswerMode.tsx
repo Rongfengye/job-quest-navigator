@@ -65,7 +65,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             <Sparkles className="w-5 h-5 text-blue-600 mt-0.5" />
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <CardTitle className="text-xl text-blue-900">Guided Response Workshop</CardTitle>
+                <CardTitle className="text-xl text-blue-900">AI Interview Coach</CardTitle>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -73,11 +73,11 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
                   className="text-xs text-gray-600 hover:text-gray-700 hover:bg-gray-100 px-2 py-1 h-auto rounded-md border border-gray-300"
                 >
                   <PenTool className="w-3 h-3 mr-1.5" />
-                  Switch to Manual
+                  Write Manually Instead
                 </Button>
               </div>
               <p className="text-sm text-blue-700">
-                I'll help you structure your thoughts into a compelling answer
+                Transform your experiences into a structured answer in a few simple steps
               </p>
             </div>
           </div>
@@ -118,10 +118,10 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             <div className="mb-4">
               <HelpCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Ready to get started?
+              Ready to get started?
               </h3>
               <p className="text-gray-600 max-w-md mx-auto">
-                I'll analyze the question and create personalized guiding questions to help you structure your response.
+              I'll analyze the question and create personalized guiding questions to help you structure your response.
               </p>
             </div>
             <Button 
