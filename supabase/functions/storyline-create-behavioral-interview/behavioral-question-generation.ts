@@ -246,7 +246,7 @@ export async function generateBehavioralQuestion(
       3. Is specific enough to elicit a detailed STAR (Situation, Task, Action, Result) response
       4. Focuses on competencies that haven't been thoroughly explored yet
       
-      Make your question feel like a natural progression in the interview conversation.
+      Make your question feel like a natural progression in the interview conversation and reference the job description and candidate's resume when appropriate.
       
       ${formatRequirement}`;
     }
