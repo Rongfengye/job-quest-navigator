@@ -1,5 +1,5 @@
-// Answer validation utilities for behavioral interviews
-// Phase 1: Non-blocking validation foundation
+// Pure validation functions with NO external dependencies
+// No React imports, no hooks, no complex dependencies
 
 export interface ValidationResult {
   wordCount: number;
@@ -22,14 +22,11 @@ export interface ValidationThresholds {
 }
 
 // Consistent thresholds for all questions (Option C: Middle Ground)
-export const DEFAULT_THRESHOLDS: ValidationThresholds = {
+export const CONSISTENT_THRESHOLDS: ValidationThresholds = {
   minWordCount: 50,
   minSentenceCount: 3,
   minUniqueWords: 15,
 };
-
-// All questions use the same thresholds now
-export const CONSISTENT_THRESHOLDS: ValidationThresholds = DEFAULT_THRESHOLDS;
 
 // Common English stop words to exclude from unique word count
 const STOP_WORDS = new Set([
@@ -142,8 +139,7 @@ export function detectSpamPatterns(text: string): string[] {
 
 export function validateAnswer(
   text: string, 
-  thresholds: ValidationThresholds = DEFAULT_THRESHOLDS,
-  questionIndex?: number
+  thresholds: ValidationThresholds = CONSISTENT_THRESHOLDS
 ): ValidationResult {
   const wordCount = countWords(text);
   const sentenceCount = countSentences(text);
@@ -178,17 +174,6 @@ export function validateAnswer(
     spamWarnings.length === 0 &&
     repetitionScore <= 0.3;
   
-  // Log for monitoring (Phase 1 - non-blocking)
-  if (!isValid && questionIndex !== undefined) {
-    console.log(`[Validation] Question ${questionIndex + 1} failed validation:`, {
-      wordCount,
-      sentenceCount,
-      uniqueWordCount,
-      repetitionScore,
-      warnings
-    });
-  }
-  
   return {
     wordCount,
     sentenceCount,
@@ -204,15 +189,9 @@ export function validateAnswer(
   };
 }
 
-// Helper to get appropriate thresholds for a question
-export function getThresholdsForQuestion(questionIndex: number): ValidationThresholds {
-  return CONSISTENT_THRESHOLDS; // All questions use same thresholds now
-}
-
 // Helper to determine if we should block submission
 export function shouldBlockSubmission(
   validation: ValidationResult,
-  questionIndex: number,
   allowOverride: boolean = false
 ): boolean {
   // Option C: Middle Ground - Consistent blocking logic for extreme cases
@@ -237,8 +216,7 @@ export function shouldBlockSubmission(
 
 // Helper to get appropriate warning message
 export function getValidationMessage(
-  validation: ValidationResult,
-  questionIndex: number
+  validation: ValidationResult
 ): { type: 'error' | 'warning' | 'info', message: string } | null {
   if (validation.isValid) return null;
   

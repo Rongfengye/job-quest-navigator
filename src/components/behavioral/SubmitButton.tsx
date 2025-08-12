@@ -26,7 +26,7 @@ const SubmitButton = ({
   validation,
   answerLength = 0
 }: SubmitButtonProps) => {
-  // Determine button state based on validation (Phase 5)
+  // Determine button state based on validation
   const getButtonState = () => {
     if (!answerLength || answerLength === 0) {
       return { disabled: true, variant: 'default', showWarning: false };

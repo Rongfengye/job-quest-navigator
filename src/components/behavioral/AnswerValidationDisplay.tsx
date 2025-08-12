@@ -1,23 +1,21 @@
 import React from 'react';
 import { Check, AlertCircle, Info } from 'lucide-react';
-import { ValidationResult, getThresholdsForQuestion } from '@/utils/answerValidation';
+import { ValidationResult, CONSISTENT_THRESHOLDS } from '@/utils/answerValidation';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 
 interface AnswerValidationDisplayProps {
   validation: ValidationResult;
-  questionIndex: number;
   isVisible?: boolean;
 }
 
 const AnswerValidationDisplay: React.FC<AnswerValidationDisplayProps> = ({
   validation,
-  questionIndex,
   isVisible = true
 }) => {
   if (!isVisible) return null;
 
-  const thresholds = getThresholdsForQuestion(questionIndex);
+  const thresholds = CONSISTENT_THRESHOLDS;
   
   // Calculate progress percentages
   const wordProgress = Math.min((validation.wordCount / thresholds.minWordCount) * 100, 100);
@@ -155,7 +153,7 @@ const AnswerValidationDisplay: React.FC<AnswerValidationDisplayProps> = ({
       </div>
       
       {/* Helper Text */}
-      {!validation.isValid && questionIndex <= 1 && (
+      {!validation.isValid && (
         <p className="text-xs text-gray-500 italic">
           💡 Include specific examples from your experience using the STAR method
         </p>

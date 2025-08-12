@@ -16,7 +16,8 @@ import InterviewHeader from '@/components/behavioral/InterviewHeader';
 import QuestionContent from '@/components/behavioral/QuestionContent';
 import SubmitButton from '@/components/behavioral/SubmitButton';
 import AnswerValidationDisplay from '@/components/behavioral/AnswerValidationDisplay';
-import { validateAnswer, getThresholdsForQuestion, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
+// Import validation utils last to avoid dependency cycles
+import { validateAnswer, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -32,15 +33,14 @@ const BehavioralInterview = () => {
   const [isResumingAndLoading, setIsResumingAndLoading] = useState(false);
   const { resumeText } = useResumeText(null);
   
-  // Validation state (Phase 3)
+  // Validation state - debounced to avoid excessive calculations
   const debouncedAnswer = useDebounce(answer, 500);
   const validation = useMemo(() => {
     if (!debouncedAnswer || debouncedAnswer.trim().length === 0) {
       return null;
     }
-    const thresholds = getThresholdsForQuestion(currentQuestionIndex);
-    return validateAnswer(debouncedAnswer, thresholds, currentQuestionIndex);
-  }, [debouncedAnswer, currentQuestionIndex]);
+    return validateAnswer(debouncedAnswer);
+  }, [debouncedAnswer]);
   
   const [showValidation, setShowValidation] = useState(false);
   const [overrideAttempt, setOverrideAttempt] = useState(false);
@@ -321,19 +321,12 @@ const BehavioralInterview = () => {
       return;
     }
     
-    // Phase 4: Progressive validation warnings
-    const currentValidation = validateAnswer(
-      answer, 
-      getThresholdsForQuestion(currentQuestionIndex),
-      currentQuestionIndex
-    );
-    
-    if (!currentValidation.isValid) {
-      const validationMessage = getValidationMessage(currentValidation, currentQuestionIndex);
+    // Validation logic - consistent enforcement across all questions
+    if (validation && !validation.isValid) {
+      const validationMessage = getValidationMessage(validation);
       
       if (validationMessage) {
-        // Option C: Consistent handling across all questions
-        const shouldBlock = shouldBlockSubmission(currentValidation, currentQuestionIndex, overrideAttempt);
+        const shouldBlock = shouldBlockSubmission(validation, overrideAttempt);
         
         if (shouldBlock && !overrideAttempt) {
           // Extreme cases - block and offer override (applies to all questions)
@@ -361,16 +354,16 @@ const BehavioralInterview = () => {
             description: validationMessage.message + " You can still submit, but consider adding more detail.",
           });
         }
+        
+        // Log validation for analytics
+        console.log('[Validation]', {
+          questionIndex: currentQuestionIndex,
+          validation,
+          wasBlocked: shouldBlock && !overrideAttempt,
+          wasOverridden: overrideAttempt,
+          timestamp: new Date().toISOString()
+        });
       }
-      
-      // Log validation failure for analytics (Phase 4)
-      console.log('[Validation Warning]', {
-        questionIndex: currentQuestionIndex,
-        validation: currentValidation,
-        wasBlocked: shouldBlockSubmission(currentValidation, currentQuestionIndex, false),
-        wasOverridden: overrideAttempt,
-        timestamp: new Date().toISOString()
-      });
     }
     
     // Check if microphone is recording and stop it first
@@ -428,9 +421,20 @@ const BehavioralInterview = () => {
     }
   };
 
-  // Only show full-screen Loading for transitions between questions
-  if (isTransitionLoading || isResumingAndLoading) {
-    console.log('Rendering full-screen Loading component for question transition');
+  // Show loading screen when:
+  // 1. Initially loading (before first question appears)  
+  // 2. Transitioning between questions
+  // 3. Resuming and loading existing interview
+  // 4. No current question but interview not complete
+  if (isInitialLoading || isTransitionLoading || isResumingAndLoading || (!currentQuestion && !interviewComplete)) {
+    console.log('Rendering full-screen Loading component', {
+      isInitialLoading,
+      isTransitionLoading,
+      isResumingAndLoading,
+      hasCurrentQuestion: !!currentQuestion,
+      currentQuestionIndex,
+      interviewComplete
+    });
     return <Loading />;
   }
 
@@ -452,11 +456,10 @@ const BehavioralInterview = () => {
               toggleRecording={toggleRecording}
             />
             
-            {/* Validation Display (Phase 3) */}
+            {/* Validation Display */}
             {validation && (
               <AnswerValidationDisplay
                 validation={validation}
-                questionIndex={currentQuestionIndex}
                 isVisible={showValidation}
               />
             )}
