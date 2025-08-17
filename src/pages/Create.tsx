@@ -96,6 +96,16 @@ const Create = () => {
           </div>
 
           <FormField
+            id="companyName"
+            name="companyName"
+            label="Company Name"
+            value={formData.companyName}
+            onChange={handleInputChange}
+            placeholder="Enter company name"
+            required
+          />
+
+          <FormField
             id="jobTitle"
             name="jobTitle"
             label="Job Title"
@@ -103,15 +113,6 @@ const Create = () => {
             onChange={handleInputChange}
             placeholder="Enter job title"
             required
-          />
-
-          <FormField
-            id="companyName"
-            name="companyName"
-            label="Company Name (Optional)"
-            value={formData.companyName}
-            onChange={handleInputChange}
-            placeholder="Enter company name"
           />
 
           <FormField
@@ -125,26 +126,6 @@ const Create = () => {
             isTextarea
           />
 
-          <FormField
-            id="companyName"
-            name="companyName"
-            label="Company Name (Optional)"
-            value={formData.companyName}
-            onChange={handleInputChange}
-            placeholder="Enter company name"
-          />
-
-          <FormField
-            id="companyDescription"
-            name="companyDescription"
-            label="Company Description (Optional)"
-            value={formData.companyDescription}
-            onChange={handleInputChange}
-            placeholder="Enter company description"
-            isTextarea
-            className="min-h-[100px] border-gray-300"
-          />
-
           <div className="pt-4">
             <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p>
             
@@ -155,20 +136,6 @@ const Create = () => {
                 required
                 onFileChange={handleResumeChange}
                 currentFile={resumeFile}
-              />
-
-              <FileUpload
-                id="coverLetter"
-                label="Cover Letter (Optional)"
-                onFileChange={handleCoverLetterChange}
-                currentFile={coverLetterFile}
-              />
-
-              <FileUpload
-                id="additionalDocuments"
-                label="Additional Documents (Optional)"
-                onFileChange={handleAdditionalDocumentsChange}
-                currentFile={additionalDocumentsFile}
               />
             </div>
           </div>
