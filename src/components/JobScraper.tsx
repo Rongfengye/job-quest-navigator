@@ -6,6 +6,7 @@ import { Search, Globe, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { JobScraperProps, ScrapedJobResponse } from '@/types/jobScraper';
+import { logger } from '@/lib/logger';
 
 const JobScraper: React.FC<JobScraperProps> = ({ 
   onScrapedContent, 
@@ -84,7 +85,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
     setProgressMessage('Using fallback scraping method...');
     
     const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    console.log("Using fallback scraping for URL:", proxyUrl);
+    logger.debug('Using fallback scraping for URL', { proxyUrl });
     
     const response = await fetch(proxyUrl);
     if (!response.ok) {
@@ -153,7 +154,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
       setIsLoading(true);
       setProgress(0);
       setScrapingError(null); // Clear any previous errors
-      console.log("Starting scrape for URL:", url);
+      logger.debug('Starting scrape for URL', { url });
 
       // Create a timeout promise - increased to 30s for OpenAI extraction
       const timeoutPromise = new Promise((_, reject) => {
@@ -169,22 +170,25 @@ const JobScraper: React.FC<JobScraperProps> = ({
         const { data, error } = await Promise.race([scrapePromise, timeoutPromise]) as { data: ScrapedJobResponse; error: any };
 
         if (error) {
-          console.error('Edge function error:', error);
+          logger.error('Edge function error', { error });
           throw new Error(`Scraping service error: ${error.message}`);
         }
 
         if (data?.success) {
-          console.log("Firecrawl scraping successful");
-          console.log("Received data:", { hasExtracted: !!data.extracted, hasCallback: !!onStructuredDataExtracted });
+          logger.info('Firecrawl scraping successful');
+          logger.debug('Received data', { 
+            hasExtracted: !!data.extracted, 
+            hasCallback: !!onStructuredDataExtracted 
+          });
           if (data.extracted) {
-            console.log("Structured data available:", data.extracted);
+            logger.debug('Structured data available', data.extracted);
           }
           setProgress(100);
           setProgressMessage('Scraping completed successfully!');
           
           // Priority 1: Try structured data extraction (Phase 2)
           if (data.extracted && onStructuredDataExtracted) {
-            console.log("Using structured job data extraction");
+            logger.debug('Using structured job data extraction');
             onStructuredDataExtracted({
               jobTitle: data.extracted.jobTitle,
               companyName: data.extracted.companyName,
@@ -200,7 +204,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           }
           
           // Fallback: Use legacy callbacks for backward compatibility
-          console.log("Using legacy job data extraction");
+          logger.debug('Using legacy job data extraction');
           if (data.jobDescription) {
             onScrapedContent(data.jobDescription);
           }
@@ -218,7 +222,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           throw new Error(data?.error || 'Firecrawl scraping failed');
         }
       } catch (firecrawlError) {
-        console.warn('Firecrawl failed, trying fallback method:', firecrawlError);
+        logger.warn('Firecrawl failed, trying fallback method', { error: firecrawlError });
         
         // Fallback to simple CORS proxy scraping with timeout
         try {
@@ -229,7 +233,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           setProgressMessage('Fallback scraping completed!');
           
           // Note: Fallback method doesn't have OpenAI extraction, so use legacy callbacks
-          console.log("Using fallback scraping - legacy callbacks only");
+          logger.debug('Using fallback scraping - legacy callbacks only');
           if (fallbackResult.jobDescription) {
             onScrapedContent(fallbackResult.jobDescription);
           }
@@ -244,7 +248,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
           });
           return;
         } catch (fallbackError) {
-          console.error('Both scraping methods failed:', fallbackError);
+          logger.error('Both scraping methods failed', { error: fallbackError });
           
           // Show specific message for timeout or scraping failure
           const isTimeout = fallbackError instanceof Error && fallbackError.message === 'Scraping timeout';
@@ -254,7 +258,7 @@ const JobScraper: React.FC<JobScraperProps> = ({
         }
       }
     } catch (err) {
-      console.error('Error scraping website:', err);
+      logger.error('Error scraping website', { error: err });
       setScrapingError("This website cannot be automatically scraped. Please manually copy and paste the job details from the website below.");
     } finally {
       setIsLoading(false);

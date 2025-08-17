@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { useAuthContext } from '@/context/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 interface BehavioralQuestionData {
   question: string;
@@ -82,7 +83,7 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
-      console.log('Loading existing or setting up interview:', behavioralId);
+      logger.debug('Loading existing or setting up interview', { behavioralId });
       
       const { data: interviewData, error } = await supabase
         .from('storyline_behaviorals')
@@ -98,7 +99,7 @@ export const useBehavioralInterview = () => {
         throw new Error('Interview not found');
       }
       
-      console.log('Loaded interview data:', interviewData);
+      logger.debug('Loaded interview data', interviewData);
       
       // Extract and validate data
       const existingQuestions = (Array.isArray(interviewData.questions) ? interviewData.questions : []) as string[];
@@ -107,7 +108,7 @@ export const useBehavioralInterview = () => {
       // Calculate where to resume based on existing data
       const resumeQuestionIndex = existingResponses.length;
       
-      console.log(`Setting up interview at question ${resumeQuestionIndex + 1} with ${existingQuestions.length} existing questions`);
+      logger.debug('Setting up interview', { questionIndex: resumeQuestionIndex + 1, existingQuestionsCount: existingQuestions.length });
       
       // Set the state
       setQuestions(existingQuestions);
@@ -118,7 +119,7 @@ export const useBehavioralInterview = () => {
       // Determine what question to display
       if (existingQuestions.length === 0 && firstQuestion) {
         // Fresh start - use the provided first question with audio
-        console.log('Fresh start - using first question with audio');
+        logger.info('Fresh start - using first question with audio');
         setCurrentQuestionWithLog({
           question: firstQuestion.question,
           questionIndex: 0,
@@ -126,7 +127,7 @@ export const useBehavioralInterview = () => {
         });
       } else if (resumeQuestionIndex < existingQuestions.length) {
         // Resume with existing question - no audio replay
-        console.log('Resuming with existing question at index:', resumeQuestionIndex);
+        logger.info('Resuming with existing question', { index: resumeQuestionIndex });
         const currentQuestionText = existingQuestions[resumeQuestionIndex];
         setCurrentQuestionWithLog({
           question: currentQuestionText,
@@ -135,11 +136,11 @@ export const useBehavioralInterview = () => {
         });
       } else if (resumeQuestionIndex === existingQuestions.length && resumeQuestionIndex < 5) {
         // Need to generate next question
-        console.log('Ready to generate next question at index:', resumeQuestionIndex);
+        logger.debug('Ready to generate next question', { index: resumeQuestionIndex });
         setCurrentQuestionWithLog(null);
       } else {
         // Interview complete or invalid state
-        console.log('Interview complete or invalid state');
+        logger.warn('Interview complete or invalid state');
         setCurrentQuestionWithLog(null);
       }
       
@@ -157,7 +158,7 @@ export const useBehavioralInterview = () => {
       };
       
     } catch (error) {
-      console.error('Error in loadExistingOrSetupInterview:', error);
+      logger.error('Error in loadExistingOrSetupInterview', error);
       toast({
         variant: "destructive",
         title: "Error loading interview",
@@ -173,7 +174,7 @@ export const useBehavioralInterview = () => {
     setIsLoading(true);
     
     try {
-      console.log('Loading existing interview:', behavioralId);
+      logger.debug('Loading existing interview', { behavioralId });
       
       const { data: interviewData, error } = await supabase
         .from('storyline_behaviorals')
@@ -189,7 +190,7 @@ export const useBehavioralInterview = () => {
         throw new Error('Interview not found');
       }
       
-      console.log('Loaded interview data:', interviewData);
+      logger.debug('Loaded interview data', interviewData);
       
       // Extract and validate data
       const existingQuestions = (Array.isArray(interviewData.questions) ? interviewData.questions : []) as string[];
@@ -205,8 +206,8 @@ export const useBehavioralInterview = () => {
       // Calculate where to resume
       const resumeQuestionIndex = existingResponses.length;
       
-      console.log(`Resuming at question ${resumeQuestionIndex + 1} of ${existingQuestions.length}`);
-      console.log('Loaded topic tracking data:', {
+      logger.info('Resuming interview', { questionIndex: resumeQuestionIndex + 1, totalQuestions: existingQuestions.length });
+      logger.debug('Loaded topic tracking data', {
         extractedTopics: extractedTopicsFromDb,
         askedTopics: askedTopicsFromDb,
         topicFollowUpCounts: topicFollowUpCountsFromDb
@@ -229,18 +230,18 @@ export const useBehavioralInterview = () => {
           questionIndex: resumeQuestionIndex,
           audio: null // We don't store audio for resumed questions
         });
-        console.log('Resuming with an existing question.');
+        logger.debug('Resuming with an existing question');
       } 
       // If we have answered all fetched questions and there are more to come
       else if (resumeQuestionIndex === existingQuestions.length && resumeQuestionIndex < 5) {
         // We don't have the next question text yet, but we are in a state to generate it.
         // Set currentQuestion to null, and the interview page will trigger generation.
         setCurrentQuestionWithLog(null);
-        console.log('Ready to generate next question on resume.');
+        logger.debug('Ready to generate next question on resume');
       }
       // If we have answered 5 or more, or some other invalid state.
       else {
-        console.error(`Invalid resume state: resumeIndex=${resumeQuestionIndex}, questions=${existingQuestions.length}`);
+        logger.error('Invalid resume state', { resumeIndex: resumeQuestionIndex, questionsCount: existingQuestions.length });
         throw new Error('No more questions to resume from');
       }
       
@@ -258,7 +259,7 @@ export const useBehavioralInterview = () => {
       };
       
     } catch (error) {
-      console.error('Error loading existing interview:', error);
+      logger.error('Error loading existing interview', error);
       toast({
         variant: "destructive",
         title: "Error loading interview",
@@ -296,9 +297,9 @@ export const useBehavioralInterview = () => {
       setCurrentQuestionWithLog(formattedQuestion);
       setIsLoading(false);
       
-      console.log('Set initial questions:', questionTexts);
+      logger.debug('Set initial questions', questionTexts);
     } catch (error) {
-      console.error('Error setting initial questions:', error);
+      logger.error('Error setting initial questions', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -354,8 +355,8 @@ export const useBehavioralInterview = () => {
         existingBehavioralId: existingBehavioralId || behavioralId
       };
       
-      console.log(`Generating question at index: ${currentQuestionIndex}`);
-      console.log(`Using resume path: ${resumePath}`);
+      logger.debug('Generating question', { index: currentQuestionIndex });
+      logger.debug('Using resume path', { resumePath });
       
       const { data, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: requestBody,
@@ -365,7 +366,7 @@ export const useBehavioralInterview = () => {
         // Handle usage limit exceeded error - don't block, let soft gate handle it
         if (error.message && error.message.includes('Usage limit exceeded')) {
           // Let the UI components handle the soft gate display
-          console.log('Usage limit reached, letting soft gate handle it');
+          logger.warn('Usage limit reached, letting soft gate handle it');
           return null;
         }
         throw new Error(`Error generating question: ${error.message}`);
@@ -375,9 +376,9 @@ export const useBehavioralInterview = () => {
         throw new Error('No question was generated');
       }
       
-      console.log('Question generated:', data.question);
-      console.log('Audio data received:', data.audio ? 'Yes' : 'No');
-      console.log('Analytics received:', data.analytics);
+      logger.info('Question generated', { question: data.question });
+      logger.debug('Audio data received', { hasAudio: !!data.audio });
+      logger.debug('Analytics received', data.analytics);
       
       // Update topic tracking state with new data from response
       if (data.extractedTopics && data.extractedTopics.length > 0) {
@@ -410,7 +411,7 @@ export const useBehavioralInterview = () => {
       
       const BehavioralIdToUse = existingBehavioralId || behavioralId;
       
-      console.log('BehavioralIdToUse', BehavioralIdToUse, 'existingBehavioralId', existingBehavioralId, 'behavioralId', behavioralId)
+      logger.debug('Behavioral ID mapping', { BehavioralIdToUse, existingBehavioralId, behavioralId });
       if (BehavioralIdToUse) {
         // Append the new question to the questions array in the database
         const { data: currentData } = await supabase
@@ -431,16 +432,16 @@ export const useBehavioralInterview = () => {
             .eq('id', BehavioralIdToUse);
             
           if (updateError) {
-            console.error('Error updating questions:', updateError);
+            logger.error('Error updating questions', updateError);
           } else {
-            console.log('Successfully appended question in database');
+            logger.debug('Successfully appended question in database');
           }
         }
       }
       
       return data;
     } catch (error) {
-      console.error('Error in generateQuestion:', error);
+      logger.error('Error in generateQuestion', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -475,7 +476,7 @@ export const useBehavioralInterview = () => {
       }
       
       if (!answersToUse.every(a => a?.trim())) {
-        console.error('One or more answers are empty', answersToUse);
+        logger.error('One or more answers are empty', answersToUse);
         throw new Error('Cannot generate feedback: one or more answers are empty');
       }
       
@@ -486,8 +487,8 @@ export const useBehavioralInterview = () => {
         companyDescription: '',
       };
 
-      console.log('Generating feedback for questions:', questionsToUse);
-      console.log('Generating feedback for answers:', answersToUse);
+      logger.debug('Generating feedback for questions', questionsToUse);
+      logger.debug('Generating feedback for answers', answersToUse);
 
       const { data: response, error } = await supabase.functions.invoke('storyline-create-behavioral-interview', {
         body: {
@@ -511,7 +512,7 @@ export const useBehavioralInterview = () => {
         throw new Error('No feedback was generated');
       }
 
-      console.log('Feedback received:', response.feedback);
+      logger.info('Feedback received', response.feedback);
 
       if (behavioralId) {
         // Save both feedback and ensure questions are also saved
@@ -525,9 +526,9 @@ export const useBehavioralInterview = () => {
           .eq('id', behavioralId);
           
         if (updateResult.error) {
-          console.error('Error saving feedback to database:', updateResult.error);
+          logger.error('Error saving feedback to database', updateResult.error);
         } else {
-          console.log('Successfully saved feedback and questions to database');
+          logger.info('Successfully saved feedback and questions to database');
         }
       }
 
@@ -538,7 +539,7 @@ export const useBehavioralInterview = () => {
       
       return response.feedback;
     } catch (error) {
-      console.error('Error in generateFeedback:', error);
+      logger.error('Error in generateFeedback', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -578,16 +579,16 @@ export const useBehavioralInterview = () => {
             .eq('id', behavioralId);
             
           if (updateError) {
-            console.error('Error updating responses:', updateError);
+            logger.error('Error updating responses', updateError);
           } else {
-            console.log('Successfully appended response in database');
+            logger.debug('Successfully appended response in database');
           }
         }
       }
       
       if (currentQuestionIndex >= 4) {
         setInterviewComplete(true);
-        console.log('Final answer submitted, all answers:', {
+        logger.info('Final answer submitted, all answers', {
           answers: updatedAnswers
         });
       } else {
@@ -595,7 +596,7 @@ export const useBehavioralInterview = () => {
         setCurrentQuestionIndex(prev => prev + 1);
       }
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      logger.error('Error submitting answer', error);
       toast({
         variant: "destructive",
         title: "Error",

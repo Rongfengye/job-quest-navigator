@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useBehavioralInterview } from '@/hooks/useBehavioralInterview';
 import { usePlanStatus } from '@/hooks/usePlanStatus';
 import SoftUsageGate from '@/components/SoftUsageGate';
+import { logger } from '@/lib/logger';
 
 const CreateBehavioral = () => {
   const navigate = useNavigate();
@@ -59,7 +60,7 @@ const CreateBehavioral = () => {
 
   // NEW: Phase 3 - Handle structured data extraction to auto-fill all fields
   const handleStructuredScrapedData = (data: ExtractedJobData) => {
-    console.log('Auto-filling behavioral form with structured data:', data);
+    logger.debug('Auto-filling behavioral form with structured data', data);
     setFormData(prev => ({
       ...prev,
       jobTitle: data.jobTitle || prev.jobTitle, // Keep existing if extraction failed
@@ -115,11 +116,11 @@ const CreateBehavioral = () => {
     }
 
     // Pre-submission usage validation - but allow to proceed for soft gate
-    console.log('🔍 Checking usage limits before behavioral interview creation...');
+    logger.debug('Checking usage limits before behavioral interview creation');
     const usageCheck = await checkUsageLimit('behavioral');
     
     // Don't block here - let the backend handle the soft gate
-    console.log('Usage check result:', usageCheck);
+    logger.debug('Usage check result', { usageCheck });
 
     setIsProcessing(true);
 
@@ -136,11 +137,11 @@ const CreateBehavioral = () => {
       // let coverLetterPath = '';
       // let additionalDocumentsPath = '';
       
-      console.log("Uploading resume file to Supabase storage...");
+      logger.debug('Uploading resume file to Supabase storage');
       
       if (resumeFile) {
         resumePath = await uploadFile(resumeFile, 'job_documents');
-        console.log("Resume uploaded successfully, path:", resumePath);
+        logger.info('Resume uploaded successfully', { resumePath });
       }
       
       // if (coverLetterFile) {
@@ -175,7 +176,7 @@ const CreateBehavioral = () => {
         throw new Error(`Error creating behavioral interview: ${behavioralError.message}`);
       }
 
-      console.log("Created behavioral interview with ID:", behavioralData.id);
+      logger.info('Created behavioral interview', { id: behavioralData.id });
 
       // Use generateQuestion instead of direct function call with usage validation
       const questionData = await generateQuestion(
@@ -193,7 +194,7 @@ const CreateBehavioral = () => {
         throw new Error('Failed to generate first question');
       }
 
-      console.log('First question generated successfully');
+      logger.info('First question generated successfully');
 
       // Navigate to the interview page with all the data including the first question
       navigate('/behavioral/interview', {
@@ -210,7 +211,7 @@ const CreateBehavioral = () => {
         }
       });
     } catch (error) {
-      console.error('Error during interview creation:', error);
+      logger.error('Error during interview creation', { error });
       
       // Handle usage limit errors with soft gate
       if (error instanceof Error && error.message.includes('Usage limit exceeded')) {

@@ -2,6 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 
 export const useVoiceRecording = (onTranscriptionComplete: (text: string) => void) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -10,50 +11,50 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
 
   const startRecording = useCallback(async () => {
     try {
-      console.log('🎤 Starting microphone access request');
+      logger.debug('Starting microphone access request');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      console.log('✅ Microphone access granted');
+      logger.info('Microphone access granted');
       
       const recorder = new MediaRecorder(stream);
       const audioChunks: BlobPart[] = [];
 
       recorder.ondataavailable = (e) => {
-        console.log(`📊 Audio chunk received: ${e.data.size} bytes`);
+        logger.debug('Audio chunk received', { size: e.data.size });
         audioChunks.push(e.data);
       };
 
       recorder.onstop = async () => {
-        console.log(`🔄 Recording stopped, processing ${audioChunks.length} chunks`);
+        logger.debug('Recording stopped, processing chunks', { chunkCount: audioChunks.length });
         const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        console.log(`🔊 Audio blob created: ${audioBlob.size} bytes`);
+        logger.debug('Audio blob created', { size: audioBlob.size });
         
         const reader = new FileReader();
         
         reader.onloadend = async () => {
-          console.log('📑 FileReader loaded audio data');
+          logger.debug('FileReader loaded audio data');
           const base64Audio = (reader.result as string).split(',')[1];
-          console.log(`📦 Base64 audio length: ${base64Audio?.length || 0} characters`);
+          logger.debug('Base64 audio encoded', { length: base64Audio?.length || 0 });
           
           try {
-            console.log('🚀 Sending audio to storyline-audio-function');
+            logger.debug('Sending audio to storyline-audio-function');
             const { data, error } = await supabase.functions.invoke('storyline-audio-function', {
               body: { audio: base64Audio }
             });
 
             if (error) {
-              console.error('❌ Supabase function error:', error);
+              logger.error('Supabase function error', { error });
               throw error;
             }
             
-            console.log('✅ Transcription response received:', data);
+            logger.debug('Transcription response received', data);
             if (data.text) {
-              console.log(`📝 Transcribed text: "${data.text}"`);
+              logger.info('Transcribed text', { text: data.text });
               onTranscriptionComplete(data.text);
             } else {
-              console.warn('⚠️ No text in transcription response');
+              logger.warn('No text in transcription response');
             }
           } catch (error) {
-            console.error('❌ Transcription error:', error);
+            logger.error('Transcription error', { error });
             toast({
               title: "Error",
               description: "Failed to transcribe audio. Please try again.",
@@ -63,15 +64,15 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         };
 
         reader.onerror = (error) => {
-          console.error('❌ FileReader error:', error);
+          logger.error('FileReader error', { error });
         };
 
-        console.log('🔍 Reading audio blob as data URL');
+        logger.debug('Reading audio blob as data URL');
         reader.readAsDataURL(audioBlob);
       };
 
       recorder.start();
-      console.log('🎙️ MediaRecorder started');
+      logger.debug('MediaRecorder started');
       setMediaRecorder(recorder);
       setIsRecording(true);
       
@@ -80,7 +81,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
         description: "Speak clearly into your microphone"
       });
     } catch (error) {
-      console.error('❌ Error accessing microphone:', error);
+      logger.error('Error accessing microphone', { error });
       toast({
         title: "Error",
         description: "Could not access microphone. Please check your permissions.",
@@ -91,7 +92,7 @@ export const useVoiceRecording = (onTranscriptionComplete: (text: string) => voi
 
   const stopRecording = useCallback(() => {
     if (mediaRecorder && isRecording) {
-      console.log('🛑 Stopping recording');
+      logger.debug('Stopping recording');
       mediaRecorder.stop();
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
       setIsRecording(false);

@@ -17,6 +17,7 @@ import SubmitButton from '@/components/behavioral/SubmitButton';
 import SimpleValidationDisplay from '@/components/behavioral/SimpleValidationDisplay';
 // Import validation utils for submit-time validation only
 import { validateAnswer, getValidationMessage, shouldBlockSubmission } from '@/utils/answerValidation';
+import { logger } from '@/lib/logger';
 
 const BehavioralInterview = () => {
   const navigate = useNavigate();
@@ -58,10 +59,12 @@ const BehavioralInterview = () => {
   const firstQuestion = locationState.firstQuestion;
   const behavioralId = locationState.behavioralId;
   
-  console.log("BehavioralInterview - Is resuming:", isResuming);
-  console.log("BehavioralInterview - Behavioral ID:", behavioralId);
-  console.log("BehavioralInterview - Resume path from state:", resumePath);
-  console.log("BehavioralInterview - First question:", firstQuestion ? 'Loaded' : 'Not provided');
+  logger.debug('BehavioralInterview initialization', {
+    isResuming,
+    behavioralId,
+    resumePath,
+    firstQuestion: firstQuestion ? 'Loaded' : 'Not provided'
+  });
   
   const formData = locationState.formData || resumedFormData || {
     jobTitle: 'Software Developer',
@@ -103,12 +106,12 @@ const BehavioralInterview = () => {
         };
         
         audio.onerror = () => {
-          console.error('Error playing audio');
+          logger.error('Error playing audio');
           resolve(); // Resolve anyway to continue the flow
         };
         
         audio.play().catch(error => {
-          console.error('Error playing audio:', error);
+          logger.error('Error playing audio', { error });
           resolve(); // Resolve anyway to continue the flow
         });
       }, 1500); // Changed from 750ms to 1500ms
@@ -134,7 +137,7 @@ const BehavioralInterview = () => {
   useEffect(() => {
     const initializeInterview = async () => {
       if (!pageLoaded) {
-        console.log('Initializing interview - behavioralId:', behavioralId);
+        logger.debug('Initializing interview', { behavioralId });
         setPageLoaded(true);
         
         // Validate that we have a behavioral ID
@@ -150,7 +153,7 @@ const BehavioralInterview = () => {
         
         // Use the new hybrid function that handles both resuming and fresh starts
         try {
-          console.log('Using hybrid function to load/setup interview');
+          logger.debug('Using hybrid function to load/setup interview');
           const loadedData = await loadExistingOrSetupInterview(behavioralId, firstQuestion);
           setResumedFormData(loadedData.formData);
           if (firstQuestion) {
@@ -160,9 +163,9 @@ const BehavioralInterview = () => {
               audio: firstQuestion.audio || null
             });
           }
-          console.log('Interview initialized successfully');
+          logger.info('Interview initialized successfully');
         } catch (error) {
-          console.error('Failed to initialize interview:', error);
+          logger.error('Failed to initialize interview', { error });
           toast({
             variant: "destructive",
             title: "Failed to initialize interview",
@@ -185,7 +188,7 @@ const BehavioralInterview = () => {
         return;
       }
 
-      console.log(`Generating question for index: ${currentQuestionIndex}`);
+      logger.debug('Generating question', { questionIndex: currentQuestionIndex });
       setIsGenerating(true);
       
       try {
@@ -193,11 +196,11 @@ const BehavioralInterview = () => {
         try {
           await playTransitionAudio();
         } catch (error) {
-          console.error('Error playing transition audio:', error);
+          logger.error('Error playing transition audio', { error });
           // Continue even if audio fails
         }
         
-        console.log('About to generate next question with correct index:', currentQuestionIndex);
+        logger.debug('About to generate next question', { questionIndex: currentQuestionIndex });
         await generateQuestion(
           formData, 
           locationState.resumeText || resumeText, 
@@ -208,14 +211,14 @@ const BehavioralInterview = () => {
           additionalDocumentsPath
         );
         
-        console.log('Next question generated, clearing states');
+        logger.debug('Next question generated, clearing states');
         setAnswer('');
         setIsTransitionLoading(false);
         setShowProcessing(false);
         setShouldGenerateNext(false);
         setIsResumingAndLoading(false); // Hide loader after question is generated
       } catch (error) {
-        console.error('Error generating next question:', error);
+        logger.error('Error generating next question', { error });
         toast({
           variant: "destructive",
           title: "Error",
@@ -239,7 +242,7 @@ const BehavioralInterview = () => {
       const generateFeedbackWithAnswers = async () => {
         try {
           setShowFeedbackModal(true);
-          console.log('All 5 answers collected, generating feedback with:', answers);
+          logger.debug('All 5 answers collected, generating feedback', { answersCount: answers.length });
           const feedback = await generateFeedback();
           
           if (feedback) {
@@ -266,7 +269,7 @@ const BehavioralInterview = () => {
             throw new Error('Failed to generate feedback');
           }
         } catch (error) {
-          console.error('Error generating feedback:', error);
+          logger.error('Error generating feedback', { error });
           toast({
             variant: "destructive",
             title: "Error",
@@ -290,7 +293,7 @@ const BehavioralInterview = () => {
       currentQuestionIndex > 0 &&
       currentQuestionIndex < 5
     ) {
-      console.log('Triggering next question generation after initialization.');
+      logger.debug('Triggering next question generation after initialization');
       setIsResumingAndLoading(true);
       setShouldGenerateNext(true);
     }
@@ -356,7 +359,7 @@ const BehavioralInterview = () => {
       }
       
       // Log validation for analytics
-      console.log('[Validation]', {
+      logger.debug('Answer validation result', {
         questionIndex: currentQuestionIndex,
         validation,
         wasBlocked: !overrideAttempt, // Only blocked on first attempt
@@ -367,7 +370,7 @@ const BehavioralInterview = () => {
     
     // Check if microphone is recording and stop it first
     if (isRecording) {
-      console.log('Stopping recording before submitting answer');
+      logger.debug('Stopping recording before submitting answer');
       await stopRecording();
       
       toast({
@@ -382,14 +385,20 @@ const BehavioralInterview = () => {
     // Show processing immediately
     setShowProcessing(true);
     setIsSubmitting(true);
-    console.log('Starting answer submission for question', currentQuestionIndex + 1, 'of 5');
+    logger.info('Starting answer submission', {
+      question: currentQuestionIndex + 1,
+      totalQuestions: 5
+    });
     
     try {
       await submitAnswer(answer);
       
       // After submitting the 5th question (index 4), we don't need to generate a new question
       if (currentQuestionIndex < 4) {
-        console.log('Submitting answer for question', currentQuestionIndex + 1, 'of 5');
+        logger.debug('Submitting answer', {
+          question: currentQuestionIndex + 1,
+          totalQuestions: 5
+        });
         
         // Set flag to generate next question - the useEffect will handle it when currentQuestionIndex updates
         setShouldGenerateNext(true);
@@ -400,7 +409,7 @@ const BehavioralInterview = () => {
         // Let the useEffect handle the feedback generation
       }
     } catch (error) {
-      console.error('Error submitting answer:', error);
+      logger.error('Error submitting answer', { error });
       toast({
         variant: "destructive",
         title: "Error",
@@ -426,7 +435,7 @@ const BehavioralInterview = () => {
   // 3. Resuming and loading existing interview
   // 4. No current question but interview not complete
   if (isInitialLoading || isTransitionLoading || isResumingAndLoading || (!currentQuestion && !interviewComplete)) {
-    console.log('Rendering full-screen Loading component', {
+    logger.debug('Rendering full-screen Loading component', {
       isInitialLoading,
       isTransitionLoading,
       isResumingAndLoading,
@@ -437,7 +446,7 @@ const BehavioralInterview = () => {
     return <Loading />;
   }
 
-  console.log('Rendering main interview layout');
+  logger.debug('Rendering main interview layout');
   return (
     <>
       <NavBar />

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
+import { logger } from '@/lib/logger';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ const AuthCallback = () => {
       }
 
       setIsProcessing(true);
-      console.log('🔗 Auth callback page loaded');
+      logger.info('Auth callback page loaded');
       
       try {
         // Check for OAuth errors first
@@ -27,7 +28,7 @@ const AuthCallback = () => {
         const type = urlParams.get('type');
         
         if (error) {
-          console.error('❌ OAuth error detected:', error, errorDescription);
+          logger.error('OAuth error detected', { error, errorDescription });
           toast({
             variant: "destructive",
             title: "Authentication failed",
@@ -39,7 +40,7 @@ const AuthCallback = () => {
 
         // Check if this is an email confirmation
         if (type === 'signup') {
-          console.log('📧 Email confirmation detected');
+          logger.info('Email confirmation detected');
           
           // Wait a moment for Supabase to process the confirmation
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -47,7 +48,7 @@ const AuthCallback = () => {
           const { data, error: sessionError } = await supabase.auth.getSession();
           
           if (sessionError) {
-            console.error('❌ Error getting session after email confirmation:', sessionError);
+            logger.error('Error getting session after email confirmation', sessionError);
             toast({
               variant: "destructive",
               title: "Email confirmation failed",
@@ -58,7 +59,7 @@ const AuthCallback = () => {
           }
 
           if (data.session) {
-            console.log('✅ Email confirmed and session established');
+            logger.info('Email confirmed and session established');
             toast({
               title: "Email confirmed!",
               description: "Your account has been successfully verified.",
@@ -78,7 +79,7 @@ const AuthCallback = () => {
         const { data, error: sessionError } = await supabase.auth.getSession();
         
         if (sessionError) {
-          console.error('❌ Error getting session after OAuth callback:', sessionError);
+          logger.error('Error getting session after OAuth callback', sessionError);
           toast({
             variant: "destructive",
             title: "Authentication failed",
@@ -98,7 +99,7 @@ const AuthCallback = () => {
             .limit(1);
 
           if (behavioralsError) {
-            console.error('❌ Error checking behavioral interviews:', behavioralsError);
+            logger.error('Error checking behavioral interviews', behavioralsError);
             toast({
               variant: "destructive",
               title: "Error",
@@ -117,7 +118,7 @@ const AuthCallback = () => {
           }
           return;
         } else {
-          console.log('⚠️ No session found after OAuth callback, retrying...');
+          logger.debug('No session found after OAuth callback, retrying...');
           
           // Retry once more with longer delay
           await new Promise(resolve => setTimeout(resolve, 2000));
@@ -125,7 +126,7 @@ const AuthCallback = () => {
           const { data: retryData, error: retryError } = await supabase.auth.getSession();
           
           if (retryData.session) {
-            console.log('✅ Session established after retry');
+            logger.info('Session established after retry');
             const provider = retryData.session.user.app_metadata?.provider;
             const providerName = provider === 'google' ? 'Google' : 
                                provider === 'github' ? 'GitHub' : 
@@ -139,7 +140,7 @@ const AuthCallback = () => {
             
             navigate('/welcome', { replace: true });
           } else {
-            console.log('❌ Failed to establish session after OAuth');
+            logger.warn('Failed to establish session after OAuth');
             toast({
               variant: "destructive",
               title: "Authentication incomplete",
@@ -149,7 +150,7 @@ const AuthCallback = () => {
           }
         }
       } catch (error) {
-        console.error('❌ Unexpected error in auth callback:', error);
+        logger.error('Unexpected error in auth callback', error);
         toast({
           variant: "destructive",
           title: "Authentication error",

@@ -5,6 +5,7 @@ import { useAuthContext } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { filterValue } from '@/utils/supabaseTypes';
 import { shouldPerformFullSync, checkLocalSubscriptionStatus } from '@/utils/subscriptionUtils';
+import { logger } from '@/lib/logger';
 
 interface UsageData {
   current: number;
@@ -69,7 +70,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const fetchUserStatus = useCallback(async (reason: string = 'manual') => {
     if (!user?.id) return;
     
-    console.log(`📊 fetchUserStatus called with reason: ${reason}`);
+    logger.debug('fetchUserStatus called', { reason });
     setIsLoading(true);
     
     try {
@@ -77,7 +78,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       const needsFullSync = await shouldPerformFullSync(user.id, reason);
       
       if (needsFullSync) {
-        console.log(`🔄 Performing full Stripe sync for reason: ${reason}`);
+        logger.info('Performing full Stripe sync', { reason });
         
         // Call the Stripe sync function
         const { data: syncData, error: syncError } = await supabase.functions.invoke('stripe-subscription-manager', {
@@ -85,13 +86,13 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         });
 
         if (syncError) {
-          console.error('Stripe sync error:', syncError);
+          logger.error('Stripe sync error', syncError);
           // Fall back to local data on sync error
         } else {
-          console.log('✅ Stripe sync completed successfully');
+          logger.info('Stripe sync completed successfully');
         }
       } else {
-        console.log(`⚡ Using local subscription data for reason: ${reason}`);
+        logger.debug('Using local subscription data', { reason });
       }
       
       // Always fetch both plan status and custom_premium from hireme_user_status
@@ -103,12 +104,12 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      console.log('📊 Plan status fetched from database:', data);
+      logger.debug('Plan status fetched from database', data);
       setPlanStatus(data?.user_plan_status ?? null);
       setCustomPremium(data?.custom_premium ?? null);
       
     } catch (error) {
-      console.error('Error fetching user plan status:', error);
+      logger.error('Error fetching user plan status', error);
       toast({
         variant: "destructive",
         title: "Error fetching plan status",
@@ -129,16 +130,16 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       // If user is basic (not premium), ensure they have a usage record before fetching summary
       if (!currentIsPremium) {
-        console.log('👤 Basic user detected - ensuring usage record exists');
+        logger.info('Basic user detected - ensuring usage record exists');
         const { data: ensureData, error: ensureError } = await supabase.rpc('ensure_user_usage_record', {
           user_id: user.id
         });
         
         if (ensureError) {
-          console.warn('Warning: Could not ensure usage record:', ensureError);
+          logger.warn('Could not ensure usage record', ensureError);
           // Continue with summary fetch anyway - the get_user_monthly_usage_summary function has its own fallbacks
         } else {
-          console.log('✅ Usage record ensured:', ensureData);
+          logger.debug('Usage record ensured', ensureData);
         }
       }
       
@@ -148,10 +149,10 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       
       if (error) throw error;
       
-      console.log('📈 Usage summary fetched:', data);
+      logger.debug('Usage summary fetched', data);
       setUsageSummary(data as unknown as UsageSummary);
     } catch (error) {
-      console.error('Error fetching usage summary:', error);
+      logger.error('Error fetching usage summary', error);
       toast({
         variant: "destructive",
         title: "Error fetching usage data",
@@ -204,7 +205,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
         usageInfo: result // Include full usage info for soft gate display
       };
     } catch (error) {
-      console.error('Error checking usage limit:', error);
+      logger.error('Error checking usage limit', error);
       return { canProceed: false, message: 'Failed to check usage limits. Please try again.' };
     }
   }, [user?.id]);
@@ -216,7 +217,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     const checkDailyExpiration = async () => {
       const localStatus = await checkLocalSubscriptionStatus(user.id);
       if (localStatus?.isExpired && localStatus?.cancelAtPeriodEnd) {
-        console.log('📅 Daily check: subscription expired and set to cancel');
+        logger.info('Daily check: subscription expired and set to cancel');
         fetchUserStatus('daily_expiration_check');
       }
     };
@@ -231,7 +232,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   // Initial authentication handling with session tracking
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
-      console.log('🚫 User not authenticated - clearing token state');
+      logger.debug('User not authenticated - clearing token state');
       setPlanStatus(null);
       setCustomPremium(null);
       setUsageSummary(null);
@@ -241,7 +242,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
     
     // App initialization sync - only once per session
     if (!hasInitializedSession) {
-      console.log('🚀 App initialization - performing critical sync');
+      logger.info('App initialization - performing critical sync');
       setHasInitializedSession(true);
       fetchUserStatus('app_initialization');
       fetchUsageSummary();
@@ -251,7 +252,7 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
   const togglePremium = async () => {
     if (!user?.id) return { success: false, error: 'Not authenticated' };
     
-    console.log('🪙 Toggling premium status with optimistic update');
+    logger.info('Toggling premium status with optimistic update');
     
     // Store current state for potential rollback
     const previousPlanStatus = planStatus;
@@ -282,11 +283,11 @@ export const PlanStatusProvider: React.FC<PlanStatusProviderProps> = ({ children
       await fetchUsageSummary();
       
       const actualIsPremium = checkIsPremium(data, customPremium);
-      console.log(`✅ Successfully toggled to ${actualIsPremium ? 'premium' : 'basic'}. Server status: ${data}`);
+      logger.info('Successfully toggled premium status', { isPremium: actualIsPremium, serverStatus: data });
       
       return { success: true, isPremium: actualIsPremium, balance: data };
     } catch (error) {
-      console.error('Error toggling premium status:', error);
+      logger.error('Error toggling premium status', error);
       
       // Rollback optimistic update on error
       setPlanStatus(previousPlanStatus);

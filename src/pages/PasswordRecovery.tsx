@@ -258,12 +258,14 @@ export default PasswordRecovery;
 // Simple redirect component for OAuth-only flow
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/lib/logger';
 
 const PasswordRecovery = () => {
   const navigate = useNavigate();
   
   useEffect(() => {
     // Redirect to home page since password recovery is disabled
+    logger.debug('Password recovery disabled, redirecting to home');
     navigate('/', { replace: true });
   }, [navigate]);
   

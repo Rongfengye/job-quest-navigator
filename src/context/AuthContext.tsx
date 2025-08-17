@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
+import { logger } from '@/lib/logger';
 
 interface AuthContextType {
   user: UserData | null;
@@ -69,9 +70,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkSession = async () => {
     try {
-      console.log('🔍 Starting initial session check...');
+      logger.debug('Starting initial session check');
       const authDebugInfo = await debugSupabaseAuth();
-      console.log('🔧 Auth debug info:', authDebugInfo);
+      logger.debug('Auth debug info', authDebugInfo);
       
       const { data, error } = await supabase.auth.getSession();
       
@@ -79,12 +80,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
-      console.log('📊 Initial session check result:', data.session ? 'Session found' : 'No session found');
+      logger.debug('Initial session check result', { hasSession: !!data.session });
       
       if (data.session) {
-        console.log('✅ User is authenticated via session, userId:', data.session.user.id);
-        console.log('🔍 Actual OAuth Provider:', data.session.user.app_metadata?.provider);
-        console.log('🔍 User metadata:', data.session.user.user_metadata);
+        logger.info('User authenticated via session', { userId: data.session.user.id });
+        logger.debug('OAuth provider detected', { provider: data.session.user.app_metadata?.provider });
+        logger.debug('User metadata', data.session.user.user_metadata);
         
         const { firstName, lastName } = extractUserNames(data.session.user);
         const provider = data.session.user.app_metadata?.provider;
@@ -96,11 +97,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           provider
         });
       } else {
-        console.log('❌ No session found, user is not authenticated');
+        logger.debug('No session found, user not authenticated');
         auth.setUser(null);
       }
     } catch (error) {
-      console.error("❌ Error checking session:", error);
+      logger.error('Error checking session', error);
       setInitializationError(error instanceof Error ? error : new Error('Unknown session check error'));
       auth.setUser(null);
       
@@ -110,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         description: "There was a problem checking your login status. You might need to clear your browser cache.",
       });
     } finally {
-      console.log('✅ Finished initial session check, setting isLoading to false');
+      logger.debug('Finished initial session check');
       setIsLoading(false);
       setInitialCheckComplete(true);
     }
@@ -121,13 +122,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const { data } = supabase.auth.onAuthStateChange((event, session) => {
-        console.log("🔄 Auth state changed:", event, session ? 'Session exists' : 'No session');
+        logger.debug('Auth state changed', { event, hasSession: !!session });
         
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session) {
-            console.log('✅ User signed in or token refreshed, updating auth state, userId:', session.user.id);
-            console.log('🔍 OAuth Provider:', session.user.app_metadata?.provider);
-            console.log('🔍 User metadata:', session.user.user_metadata);
+            logger.info('User signed in or token refreshed', { userId: session.user.id });
+            logger.debug('OAuth provider', { provider: session.user.app_metadata?.provider });
+            logger.debug('User metadata', session.user.user_metadata);
             
             const { firstName, lastName } = extractUserNames(session.user);
             const provider = session.user.app_metadata?.provider;
@@ -143,7 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // (REMOVED: This is now handled in AuthCallback.tsx based on profile existence)
           }
         } else if (event === 'SIGNED_OUT') {
-          console.log('👋 User signed out, clearing auth state');
+          logger.info('User signed out, clearing auth state');
           auth.setUser(null);
           // setPasswordRecoveryMode(false); // Commented out for OAuth-only flow
         }
@@ -153,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       checkSession();
     } catch (error) {
-      console.error("❌ Error setting up auth listener:", error);
+      logger.error('Error setting up auth listener', error);
       setInitializationError(error instanceof Error ? error : new Error('Unknown auth listener error'));
       setIsLoading(false);
       setInitialCheckComplete(true);
@@ -179,7 +180,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const hasError = urlParams.get('error');
       
       if (hasError) {
-        console.log('❌ OAuth error detected:', hasError);
+        logger.warn('OAuth error detected', { hasError });
         toast({
           variant: "destructive",
           title: "Authentication failed",
@@ -189,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if ((hasAccessToken || hasAuthCode) && !isOAuthCallbackHandled) {
-        console.log('🔗 OAuth callback detected, checking session...');
+        logger.debug('OAuth callback detected, checking session');
         setIsOAuthCallbackHandled(true);
         
         // Wait for Supabase to process the callback
@@ -197,18 +198,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const { data, error } = await supabase.auth.getSession();
             if (data.session) {
-              console.log('✅ Session established after OAuth callback');
-              console.log('🔍 Provider after callback:', data.session.user.app_metadata?.provider);
+              logger.info('Session established after OAuth callback');
+              logger.debug('Provider after callback', { provider: data.session.user.app_metadata?.provider });
               // The auth state change handler will handle the redirect
             } else {
-              console.log('⚠️ No session after OAuth callback, retrying...');
+              logger.debug('No session after OAuth callback, retrying');
               // Retry once more with longer delay
               setTimeout(async () => {
                 const { data: retryData } = await supabase.auth.getSession();
                 if (retryData.session) {
-                  console.log('✅ Session established after retry');
+                  logger.info('Session established after retry');
                 } else {
-                  console.log('❌ Failed to establish session after OAuth');
+                  logger.warn('Failed to establish session after OAuth');
                   toast({
                     variant: "destructive",
                     title: "Authentication incomplete",
@@ -218,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               }, 1500);
             }
           } catch (error) {
-            console.error('❌ Error checking session after OAuth callback:', error);
+            logger.error('Error checking session after OAuth callback', error);
           }
         }, 1000);
       }
@@ -245,7 +246,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout: auth.logout
   };
 
-  console.log('🔧 AuthContext value updated:', { 
+  logger.debug('AuthContext value updated', { 
     isAuthenticated: value.isAuthenticated, 
     userExists: !!value.user,
     isLoading: value.isLoading

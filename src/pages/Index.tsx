@@ -9,6 +9,7 @@ import CallToAction from '@/components/CallToAction';
 import { Separator } from '@/components/ui/separator';
 import { useAuthContext } from '@/context/AuthContext';
 import { Navigate } from 'react-router-dom';
+import { logger } from '@/lib/logger';
 
 const Index = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
@@ -18,7 +19,7 @@ const Index = () => {
   
   // Debug logging - log all state changes
   useEffect(() => {
-    console.log('🔍 Index state debug:', { 
+    logger.debug('Index state debug', { 
       isAuthenticated, 
       isLoading,
       // showPasswordResetModal, // Commented out for OAuth-only flow
@@ -63,7 +64,7 @@ const Index = () => {
   
   // If authenticated, redirect to behavioral (password recovery disabled for OAuth-only flow)
   if (isAuthenticated && !isLoading) {
-    console.log('🔄 Redirecting to behavioral - user authenticated');
+    logger.debug('Redirecting to behavioral - user authenticated');
     return <Navigate to="/behavioral" replace />;
   }
 
@@ -100,7 +101,7 @@ const Index = () => {
   };
   */
   
-  console.log('🎨 Rendering Index page - landing page mode');
+  logger.debug('Rendering Index page - landing page mode');
   
   // Show landing page for non-authenticated users or users in password recovery mode
   return (
