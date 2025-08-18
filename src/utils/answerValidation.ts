@@ -11,7 +11,7 @@ export interface ValidationResult {
     avgWordLength: number;
     hasMinimumContent: boolean;
     hasStructure: boolean;
-    repetitionScore: number; // 0-1, lower is better
+    // repetitionScore: number; // 0-1, lower is better
   };
 }
 
@@ -146,10 +146,11 @@ export function validateAnswer(
   const wordCount = countWords(text);
   const sentenceCount = countSentences(text);
   const uniqueWordCount = countUniqueWords(text);
-  const repetitionScore = calculateRepetitionScore(text);
-  const spamWarnings = detectSpamPatterns(text);
+  // const repetitionScore = calculateRepetitionScore(text);
+  // const spamWarnings = detectSpamPatterns(text);
   
-  const warnings: string[] = [...spamWarnings];
+  // const warnings: string[] = [...spamWarnings];
+  const warnings: string[] = [];
   
   // Check thresholds
   if (wordCount < thresholds.minWordCount) {
@@ -164,17 +165,17 @@ export function validateAnswer(
     warnings.push(`Answer needs more variety - use at least ${thresholds.minUniqueWords} different words (currently ${uniqueWordCount})`);
   }
   
-  if (repetitionScore > 0.3) {
-    warnings.push('Answer contains too much repetition');
-  }
+  // if (repetitionScore > 0.3) {
+  //   warnings.push('Answer contains too much repetition');
+  // }
   
   // Calculate if valid
   const isValid = 
     wordCount >= thresholds.minWordCount &&
     sentenceCount >= thresholds.minSentenceCount &&
-    uniqueWordCount >= thresholds.minUniqueWords &&
-    spamWarnings.length === 0 &&
-    repetitionScore <= 0.3;
+    uniqueWordCount >= thresholds.minUniqueWords;
+    // spamWarnings.length === 0 &&
+    // repetitionScore <= 0.3;
   
   return {
     wordCount,
@@ -185,8 +186,8 @@ export function validateAnswer(
     metrics: {
       avgWordLength: text.length / Math.max(wordCount, 1),
       hasMinimumContent: wordCount >= 30, // Absolute minimum
-      hasStructure: sentenceCount >= 2,
-      repetitionScore
+      hasStructure: sentenceCount >= 2
+      // repetitionScore
     }
   };
 }
@@ -204,7 +205,7 @@ export function shouldBlockSubmission(
   // Block for ALL questions if answer is extremely poor quality
   // (Under 20 words OR high spam patterns)
   if (validation.wordCount < 20 || 
-      validation.metrics.repetitionScore > 0.5 ||
+      // validation.metrics.repetitionScore > 0.5 ||
       validation.warnings.some(w => 
         w.includes('Lorem Ipsum') || 
         w.includes('keyboard mashing') ||
@@ -225,7 +226,7 @@ export function getValidationMessage(
   // Option C: Consistent gentle warnings for all questions
   // More serious tone only for extreme cases that would be blocked
   const isExtreme = validation.wordCount < 20 || 
-                   validation.metrics.repetitionScore > 0.5 ||
+                  //  validation.metrics.repetitionScore > 0.5 ||
                    validation.warnings.some(w => 
                      w.includes('Lorem Ipsum') || 
                      w.includes('keyboard mashing') ||
