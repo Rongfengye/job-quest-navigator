@@ -99,30 +99,32 @@ export function detectSpamPatterns(text: string): string[] {
   
   // Check for repeated short phrases
   const words = text.toLowerCase().split(/\s+/);
-  if (words.length >= 3) {
-    for (let i = 0; i < words.length - 2; i++) {
-      const phrase = words.slice(i, i + 3).join(' ');
-      const occurrences = (text.toLowerCase().match(new RegExp(phrase, 'g')) || []).length;
-      if (occurrences > 10) {
-        warnings.push(`Repeated phrase detected: "${phrase}"`);
-        break;
-      }
-    }
-  }
+  // if (words.length >= 3) {
+  //   for (let i = 0; i < words.length - 2; i++) {
+  //     const phrase = words.slice(i, i + 3).join(' ');
+  //     // Escape special regex characters in the phrase
+  //     const escapedPhrase = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  //     const occurrences = (text.toLowerCase().match(new RegExp(escapedPhrase, 'g')) || []).length;
+  //     if (occurrences > 10) {
+  //       warnings.push(`Repeated phrase detected: "${phrase}"`);
+  //       break;
+  //     }
+  //   }
+  // }
   
   // Check for single word repeated many times
-  const wordCounts = words.reduce((acc, word) => {
-    if (word.length > 15) {
-      acc[word] = (acc[word] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  // const wordCounts = words.reduce((acc, word) => {
+  //   if (word.length > 15) {
+  //     acc[word] = (acc[word] || 0) + 1;
+  //   }
+  //   return acc;
+  // }, {} as Record<string, number>);
   
-  Object.entries(wordCounts).forEach(([word, count]) => {
-    if (count > 5 && count / words.length > 0.2) {
-      warnings.push(`Word "${word}" appears too frequently (${count} times)`);
-    }
-  });
+  // Object.entries(wordCounts).forEach(([word, count]) => {
+  //   if (count > 5 && count / words.length > 0.2) {
+  //     warnings.push(`Word "${word}" appears too frequently (${count} times)`);
+  //   }
+  // });
   
   // Check for Lorem Ipsum
   if (/lorem\s+ipsum/i.test(text)) {
