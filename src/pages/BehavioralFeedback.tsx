@@ -72,7 +72,8 @@ const BehavioralFeedback = () => {
       emptyFileData,
       emptyFileData,
       interviewId,
-      questions // Pass the original behavioral questions
+      questions, // Pass the original behavioral questions
+      true // skipGeneration: true for entry point B
     );
 
   // Check usage limits for question vault generation

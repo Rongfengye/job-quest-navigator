@@ -24,7 +24,8 @@ export const useJobPracticeSubmission = (
   coverLetterFile: FileData,
   additionalDocumentsFile: FileData,
   behavioralId?: string, // Optional parameter to link from behavioral interview
-  originalBehavioralQuestions?: string[] // New parameter for original questions
+  originalBehavioralQuestions?: string[], // New parameter for original questions
+  skipGeneration?: boolean // New parameter to skip question generation for entry point B
 ) => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -133,6 +134,7 @@ export const useJobPracticeSubmission = (
         behavioralId: behavioralId || null,
         generateFromBehavioral: !!behavioralId,
         originalBehavioralQuestions: originalBehavioralQuestions || [], // Pass original questions
+        skipGeneration: skipGeneration || false, // Add skipGeneration flag
         userId: userId // Add userId for usage tracking
       };
 
