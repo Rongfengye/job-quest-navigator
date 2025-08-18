@@ -249,8 +249,8 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     // Return structure with only original behavioral questions, no technical questions
     const skipGenerationResult = {
       technicalQuestions: [], // Empty for skip generation mode
-      behavioralQuestions: formattedOriginalQuestions,
-      originalBehavioralQuestions: formattedOriginalQuestions, // Keep both for backwards compatibility
+      behavioralQuestions: [], // Empty - questions go only in originalBehavioralQuestions
+      originalBehavioralQuestions: formattedOriginalQuestions, // Only original questions for Entry Point B
       isSkipGeneration: true // Flag to identify this response type
     };
     
