@@ -340,7 +340,7 @@ const BehavioralFeedback = () => {
                     disabled={isCreatingQuestions}
                   >
                     <BookOpen className="w-4 h-4" />
-                    {isCreatingQuestions ? 'Generating Questions...' : 'Generate individual practice questions'}
+                    {isCreatingQuestions ? 'Generating Practice Suite...' : 'Improve your responses with AI'}
                   </Button>
                 )
               ) : (
