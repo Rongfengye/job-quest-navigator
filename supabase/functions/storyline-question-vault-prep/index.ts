@@ -34,9 +34,76 @@ serve(async (req) => {
 
     // Route the request based on the requestType
     if (requestType === 'GENERATE_QUESTION') {
-      const { userId } = requestData;
+      const { userId, skipGeneration, behavioralId, originalBehavioralQuestions } = requestData;
 
-      // Check usage limits for question vault generation
+      // Phase 2 & 3: Handle skipGeneration for entry point B
+      if (skipGeneration) {
+        console.log('Skip generation mode - processing original behavioral questions only');
+        
+        // Phase 3: Validate that original questions exist
+        if (!originalBehavioralQuestions || !Array.isArray(originalBehavioralQuestions) || originalBehavioralQuestions.length === 0) {
+          console.error('Skip generation mode but no original behavioral questions provided');
+          
+          // Phase 3: Enhanced error handling - try to fetch from behavioral interview
+          if (behavioralId) {
+            try {
+              const { data: behavioralData, error: behavioralError } = await supabase
+                .from('storyline_behaviorals')
+                .select('questions')
+                .eq('id', behavioralId)
+                .single();
+              
+              if (behavioralError || !behavioralData?.questions || !Array.isArray(behavioralData.questions)) {
+                return new Response(JSON.stringify({
+                  error: 'Behavioral interview data not found',
+                  message: 'Unable to retrieve original behavioral interview questions. Please return to the feedback page and try again.',
+                  returnToFeedback: true,
+                  behavioralId: behavioralId
+                }), {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                  status: 404,
+                });
+              }
+              
+              // Update requestData with fetched questions
+              requestData.originalBehavioralQuestions = behavioralData.questions;
+            } catch (error) {
+              console.error('Error fetching behavioral interview data:', error);
+              return new Response(JSON.stringify({
+                error: 'Server error retrieving behavioral data',
+                message: 'There was an error retrieving your behavioral interview questions. Please return to the feedback page and try again.',
+                returnToFeedback: true,
+                behavioralId: behavioralId
+              }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 500,
+              });
+            }
+          } else {
+            return new Response(JSON.stringify({
+              error: 'No original questions available',
+              message: 'No behavioral interview questions found to display. Please start from the Create page instead.',
+              suggestCreatePage: true
+            }), {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 400,
+            });
+          }
+        }
+
+        // Generate question using skip mode (no Perplexity API call, no usage consumption)
+        const parsedContent = await generateQuestion(requestData, perplexityApiKey!);
+        
+        // No usage increment for skipGeneration mode
+        console.log('Skip generation completed - no usage consumed');
+        
+        return new Response(JSON.stringify(parsedContent), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        });
+      }
+
+      // Regular flow - check usage limits for question vault generation
       if (userId) {
         console.log('Checking question vault usage limits for user:', userId);
         

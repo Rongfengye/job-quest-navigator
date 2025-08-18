@@ -201,7 +201,8 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
     resumeText, 
     coverLetterText, 
     additionalDocumentsText,
-    originalBehavioralQuestions = [] // New parameter for original questions
+    originalBehavioralQuestions = [], // New parameter for original questions
+    skipGeneration = false // New parameter for skipGeneration mode
   } = requestData;
 
   // Generate unique request ID for tracking
@@ -216,7 +217,48 @@ export async function generateQuestion(requestData: any, perplexityApiKey: strin
   console.log(`[RESUME-ANALYSIS] ${requestId} - Extracted experiences:`, resumeExperiences);
   console.log(`[GENERATE-QUESTION] ${requestId} - Original behavioral questions count: ${originalBehavioralQuestions.length}`);
   console.log(`[GENERATE-QUESTION] ${requestId} - Technical questions enabled: ${ENABLE_TECHNICAL_QUESTIONS}`);
+  console.log(`[GENERATE-QUESTION] ${requestId} - Skip generation mode: ${skipGeneration}`);
 
+  // Phase 2: Handle skipGeneration mode - return only original behavioral questions
+  if (skipGeneration) {
+    console.log(`[SKIP-GENERATION] ${requestId} - Processing original behavioral questions only`);
+    
+    // Phase 3: Validate original questions exist (should have been validated in index.ts)
+    if (!originalBehavioralQuestions || originalBehavioralQuestions.length === 0) {
+      console.error(`[SKIP-GENERATION-ERROR] ${requestId} - No original behavioral questions provided`);
+      throw new Error('No original behavioral questions available for skip generation mode');
+    }
+    
+    // Format original questions to match expected structure
+    const formattedOriginalQuestions = originalBehavioralQuestions.map((question: string, index: number) => ({
+      question: question,
+      explanation: "This question was from your behavioral interview practice session. You can use your previous response as a foundation and refine it further.",
+      modelAnswer: "Use the STAR method (Situation, Task, Action, Result) to structure your response based on your previous answer during the interview.",
+      followUp: [`Can you elaborate on the results you achieved?`, `What would you do differently next time?`, `How did this experience prepare you for this role?`],
+      type: 'original-behavioral' as const,
+      originalIndex: index,
+      sourceAttribution: {
+        source: "behavioral-practice-session",
+        reliability: 5,
+        category: "practice_session"
+      }
+    }));
+    
+    console.log(`[SKIP-GENERATION] ${requestId} - Formatted ${formattedOriginalQuestions.length} original behavioral questions`);
+    
+    // Return structure with only original behavioral questions, no technical questions
+    const skipGenerationResult = {
+      technicalQuestions: [], // Empty for skip generation mode
+      behavioralQuestions: formattedOriginalQuestions,
+      originalBehavioralQuestions: formattedOriginalQuestions, // Keep both for backwards compatibility
+      isSkipGeneration: true // Flag to identify this response type
+    };
+    
+    console.log(`[SKIP-GENERATION] ${requestId} - Skip generation completed successfully`);
+    return skipGenerationResult;
+  }
+
+  // Regular flow - proceed with API generation
   // Log source attribution strategy
   logSourceAttribution(companyName, requestId);
 

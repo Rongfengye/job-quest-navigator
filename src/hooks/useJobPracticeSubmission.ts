@@ -150,6 +150,17 @@ export const useJobPracticeSubmission = (
           return;
         }
         
+        // Phase 3: Handle specific skipGeneration errors
+        if (error.message?.includes('Behavioral interview data not found')) {
+          console.log('Behavioral interview data not found, will handle in UI');
+          throw new Error('Behavioral interview data not found - returnToFeedback');
+        }
+        
+        if (error.message?.includes('No original questions available')) {
+          console.log('No original questions available, suggesting Create page');
+          throw new Error('No original questions available - suggestCreatePage');
+        }
+        
         throw new Error(`Error processing your application: ${error.message}`);
       }
 
@@ -158,6 +169,17 @@ export const useJobPracticeSubmission = (
         // Let the UI components handle the soft gate display
         console.log('Usage limit reached, letting soft gate handle it');
         return;
+      }
+
+      // Phase 3: Handle specific error responses from skipGeneration mode
+      if (data?.error) {
+        if (data.returnToFeedback) {
+          throw new Error('Behavioral interview data not found - returnToFeedback');
+        }
+        
+        if (data.suggestCreatePage) {
+          throw new Error('No original questions available - suggestCreatePage');
+        }
       }
 
       const { error: updateError } = await supabase

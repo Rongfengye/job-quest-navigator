@@ -211,12 +211,29 @@ const BehavioralFeedback = () => {
       // via the behavioralId, and the original questions will be passed via the hook
       submitJobPractice();
     } catch (error) {
-      console.error("Error generating technical questions:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to generate technical questions. Please try again."
-      });
+      console.error("Error generating practice questions:", error);
+      
+      // Phase 3: Enhanced error handling - check for specific error types
+      if (error.message?.includes('Behavioral interview data not found') || error.message?.includes('returnToFeedback')) {
+        toast({
+          variant: "destructive",
+          title: "Interview Data Not Found",
+          description: "Unable to retrieve your behavioral interview questions. Please refresh the page and try again.",
+        });
+      } else if (error.message?.includes('suggestCreatePage')) {
+        toast({
+          variant: "destructive",
+          title: "No Questions Available",
+          description: "No behavioral interview questions found. Please use the Create page instead.",
+        });
+        navigate('/create');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to generate practice questions. Please try again."
+        });
+      }
     }
   }
 
