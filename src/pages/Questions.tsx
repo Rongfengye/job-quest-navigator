@@ -39,10 +39,26 @@ const Questions = () => {
           {jobDetails.companyName && (
             <p className="text-gray-600 mb-4">{jobDetails.companyName}</p>
           )}
-          <p className="text-gray-700">
-            Here are your personalized behavioral interview questions based on the job description and your resume.
-            Review them carefully and prepare your answers to make a great impression.
-          </p>
+          {(() => {
+            const hasOnlyOriginalQuestions = questions.length > 0 && 
+              questions.every(q => q.type === 'original-behavioral');
+            
+            if (hasOnlyOriginalQuestions) {
+              return (
+                <p className="text-gray-700">
+                  Here are the behavioral questions from your recent interview practice session. 
+                  Review them again to strengthen your responses and build confidence.
+                </p>
+              );
+            } else {
+              return (
+                <p className="text-gray-700">
+                  Here are your personalized behavioral interview questions based on the job description and your resume.
+                  Review them carefully and prepare your answers to make a great impression.
+                </p>
+              );
+            }
+          })()}
         </div>
 
         <ErrorDisplay message={error} />

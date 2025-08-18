@@ -127,8 +127,13 @@ export const useQuestionData = (storylineId: string | null) => {
           const parsedResponse = safeJsonParse(safeData.openai_response);
           
           // Handle format with separate question categories including original behavioral questions
-          if (parsedResponse.technicalQuestions && Array.isArray(parsedResponse.technicalQuestions) && 
-              parsedResponse.behavioralQuestions && Array.isArray(parsedResponse.behavioralQuestions)) {
+          if (parsedResponse.technicalQuestions !== undefined && Array.isArray(parsedResponse.technicalQuestions) && 
+              parsedResponse.behavioralQuestions !== undefined && Array.isArray(parsedResponse.behavioralQuestions)) {
+            
+            console.log("Processing structured response format");
+            console.log("Technical questions:", parsedResponse.technicalQuestions?.length || 0);
+            console.log("Behavioral questions:", parsedResponse.behavioralQuestions?.length || 0);
+            console.log("Original behavioral questions:", parsedResponse.originalBehavioralQuestions?.length || 0);
             
             // Only process technical questions if feature flag is enabled
             const technical = ENABLE_TECHNICAL_QUESTIONS 
@@ -152,7 +157,12 @@ export const useQuestionData = (storylineId: string | null) => {
               : [];
             
             processedQuestions = [...technical, ...behavioral, ...originalBehavioral];
-          } 
+            
+            // Handle Entry Point B case - if we only have original behavioral questions and no new ones
+            if (behavioral.length === 0 && originalBehavioral.length > 0) {
+              console.log("Entry Point B detected - showing only original behavioral questions");
+            }
+          }
           // Handle format with a single questions array
           else if (parsedResponse.questions && Array.isArray(parsedResponse.questions)) {
             processedQuestions = parsedResponse.questions
