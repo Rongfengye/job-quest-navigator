@@ -204,7 +204,7 @@ const Behavioral = () => {
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
                 >
                   <Plus className="h-5 w-5 mr-2" />
-                  New Practice
+                  New Behavioral Interview
                 </Button>
               </div>
 

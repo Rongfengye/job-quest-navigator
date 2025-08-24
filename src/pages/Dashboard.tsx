@@ -68,7 +68,7 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="min-h-screen p-6">
         <div className="w-full max-w-6xl mx-auto">
-          <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
         <div>
           <h1 className="text-5xl font-bold text-interview-primary leading-tight">
             Question Vault
@@ -77,17 +77,14 @@ const Dashboard = () => {
           </h1>
           <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link to="/create">
-            <Button 
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              New Job Prep
-            </Button>
-          </Link>
-        </div>
+        <Button 
+          size="lg"
+          onClick={() => window.location.href = '/create'}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
+        >
+          <Plus className="h-5 w-5 mr-2" />
+          New Question Vault
+        </Button>
       </div>
       
       {isLoading ? (
