@@ -70,13 +70,20 @@ const Dashboard = () => {
         <div className="w-full max-w-6xl mx-auto">
           <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-interview-primary">Question Vault Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Manage your curated collections of interview questions</p>
+          <h1 className="text-5xl font-bold text-interview-primary leading-tight">
+            Question Vault
+            <br />
+            Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link to="/create">
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+            <Button 
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
+            >
+              <Plus className="h-5 w-5 mr-2" />
               New Job Prep
             </Button>
           </Link>
@@ -107,8 +114,8 @@ const Dashboard = () => {
         <div className="space-y-8">
           {jobs && jobs.length > 0 && (
             <div>
-              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                <Briefcase className="h-6 w-6" />
                 Your Question Vault
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
