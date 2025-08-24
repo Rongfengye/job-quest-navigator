@@ -66,7 +66,9 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout>
-      <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="min-h-screen p-6">
+        <div className="w-full max-w-6xl mx-auto">
+          <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-interview-primary">Interview Dashboard</h1>
           <p className="text-muted-foreground mt-1">Manage your interview preparations</p>
@@ -169,6 +171,8 @@ const Dashboard = () => {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </DashboardLayout>
   );
 };
