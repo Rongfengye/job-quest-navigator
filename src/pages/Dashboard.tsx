@@ -176,20 +176,19 @@ const Dashboard = () => {
                   <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
                 </div>
               </div>
-              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
-                <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
-                <h3 className="text-xl font-medium text-gray-900 mb-1">No interview preparations yet</h3>
-                <p className="text-gray-500 text-center mb-6">
-                  Create your first interview preparation to get personalized interview questions
+              <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
+                <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">No interview preparations yet</h3>
+                <p className="text-gray-500 mb-6 max-w-sm">
+                  Create your first interview preparation to get personalized interview questions.
                 </p>
-                <div className="flex gap-4">
-                  <Link to="/create">
-                    <Button>
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Question Vault
-                    </Button>
-                  </Link>
-                </div>
+                <Button 
+                  onClick={() => window.location.href = '/create'}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  New Question Vault
+                </Button>
               </div>
             </>
           )}
