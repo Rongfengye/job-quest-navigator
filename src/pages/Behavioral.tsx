@@ -192,11 +192,11 @@ const Behavioral = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
                   <h1 className="text-5xl font-bold text-interview-primary leading-tight">
-                    Behavioral Interview
+                    Behavioral Practice
                     <br />
-                    Dashboard
+                    Sessions
                   </h1>
-                  <p className="text-muted-foreground mt-2">Manage your interview preparation</p>
+                  <p className="text-muted-foreground mt-2">Simulate real interviews and get AI-powered feedback on your answers.</p>
                 </div>
                 <Button 
                   size="lg"
@@ -291,25 +291,25 @@ const Behavioral = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
                   <h1 className="text-5xl font-bold text-interview-primary leading-tight">
-                    Behavioral Interview
+                    Behavioral Practice
                     <br />
-                    Dashboard
+                    Sessions
                   </h1>
-                  <p className="text-muted-foreground mt-2">Manage your interview preparation</p>
+                  <p className="text-muted-foreground mt-2">Simulate real interviews and get AI-powered feedback on your answers.</p>
                 </div>
               </div>
               <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
                 <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No practice sessions yet</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">🗣️ No behavioral interviews yet</h3>
                 <p className="text-gray-500 mb-6 max-w-sm">
-                  Create your first behavioral practice to receive personalized feedback.
+                  Start a mock interview — answer 5 personalized questions and get instant AI feedback.
                 </p>
                 <Button 
                     onClick={() => navigate('/behavioral/create')}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                     <Plus className="h-4 w-4 mr-2" />
-                    Start Practice
+                    Start Practice Session
                 </Button>
               </div>
             </>
