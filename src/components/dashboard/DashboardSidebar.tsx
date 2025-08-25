@@ -28,7 +28,8 @@ const DashboardSidebar = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  const menuItems = [
+  // Core navigation items
+  const navigationItems = [
     {
       title: "Question Vault",
       url: "/dashboard",
@@ -39,6 +40,10 @@ const DashboardSidebar = () => {
       url: "/behavioral",
       icon: BookOpen,
     },
+  ];
+  
+  // Account-related items
+  const accountItems = [
     {
       title: "Profile",
       url: "/profile",
@@ -89,13 +94,13 @@ const DashboardSidebar = () => {
               <div className="flex items-center">
                 {isPremium ? (
                   <div className="flex items-center">
-                    <Crown className="h-4 w-4 mr-1 text-yellow-500" />
-                    <Badge className="bg-yellow-500 hover:bg-yellow-500/80 text-white">
+                    <Crown className="h-4 w-4 mr-1 text-yellow-600" />
+                    <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
                       Premium
                     </Badge>
                   </div>
                 ) : (
-                  <Badge variant="secondary">
+                  <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-200">
                     Basic
                   </Badge>
                 )}
@@ -105,20 +110,49 @@ const DashboardSidebar = () => {
         </div>
         
         <div className="flex-1 px-4">
-          <div className="mb-4">
-            <h3 className="text-sm font-medium text-gray-500 mb-2">Menu</h3>
+          {/* Core Navigation Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">Navigation</h3>
             <div className="space-y-1">
-              {menuItems.map((item) => (
+              {navigationItems.map((item) => (
                 <button
                   key={item.title}
                   onClick={() => navigate(item.url)}
-                  className={`w-full flex items-center px-3 py-2 text-sm rounded-md transition-colors ${
+                  className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-all duration-200 group ${
                     isActive(item.url)
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
+                      ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-500 pl-2'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
                   }`}
                 >
-                  <item.icon className="h-4 w-4 mr-3" />
+                  <item.icon className={`h-4 w-4 mr-3 transition-opacity ${
+                    isActive(item.url) ? 'opacity-100' : 'opacity-75 group-hover:opacity-90'
+                  }`} />
+                  <span>{item.title}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Divider */}
+          <div className="w-full h-px bg-gray-200 mb-6"></div>
+          
+          {/* Account Section */}
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">Account</h3>
+            <div className="space-y-1">
+              {accountItems.map((item) => (
+                <button
+                  key={item.title}
+                  onClick={() => navigate(item.url)}
+                  className={`w-full flex items-center px-3 py-2 text-sm rounded-lg transition-all duration-200 group ${
+                    isActive(item.url)
+                      ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-500 pl-2'
+                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer'
+                  }`}
+                >
+                  <item.icon className={`h-4 w-4 mr-3 transition-opacity ${
+                    isActive(item.url) ? 'opacity-100' : 'opacity-75 group-hover:opacity-90'
+                  }`} />
                   <span>{item.title}</span>
                 </button>
               ))}
@@ -128,9 +162,9 @@ const DashboardSidebar = () => {
           <div className="mt-4">
             <button
               onClick={handleSignOut}
-              className="w-full flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+              className="w-full flex items-center px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-all duration-200 group cursor-pointer"
             >
-              <LogOut className="h-4 w-4 mr-3" />
+              <LogOut className="h-4 w-4 mr-3 opacity-60 group-hover:opacity-80" />
               <span>Sign Out</span>
             </button>
           </div>
@@ -153,13 +187,13 @@ const DashboardSidebar = () => {
             <div className="flex items-center">
               {isPremium ? (
                 <div className="flex items-center">
-                  <Crown className="h-4 w-4 mr-1 text-yellow-500" />
-                  <Badge className="bg-yellow-500 hover:bg-yellow-500/80 text-white">
+                  <Crown className="h-4 w-4 mr-1 text-yellow-600" />
+                  <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-200">
                     Premium
                   </Badge>
                 </div>
               ) : (
-                <Badge variant="secondary">
+                <Badge className="bg-gray-100 text-gray-600 hover:bg-gray-200">
                   Basic
                 </Badge>
               )}
@@ -169,17 +203,25 @@ const DashboardSidebar = () => {
       </SidebarHeader>
       
       <SidebarContent>
+        {/* Core Navigation Section */}
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {navigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     onClick={() => navigate(item.url)} 
                     isActive={isActive(item.url)}
+                    className={`transition-all duration-200 group ${
+                      isActive(item.url)
+                        ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-500 pl-2 hover:bg-blue-100'
+                        : 'hover:bg-gray-100 cursor-pointer'
+                    }`}
                   >
-                    <item.icon className="h-4 w-4 mr-2" />
+                    <item.icon className={`h-4 w-4 mr-2 transition-opacity ${
+                      isActive(item.url) ? 'opacity-100' : 'opacity-75 group-hover:opacity-90'
+                    }`} />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -188,15 +230,45 @@ const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
         
-        {/* Sign Out button moved here, right after the menu */}
-        <div className="px-4 mt-2">
+        {/* Separator */}
+        <div className="mx-4 h-px bg-gray-200 my-4"></div>
+        
+        {/* Account Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {accountItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    onClick={() => navigate(item.url)} 
+                    isActive={isActive(item.url)}
+                    className={`transition-all duration-200 group ${
+                      isActive(item.url)
+                        ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-500 pl-2 hover:bg-blue-100'
+                        : 'hover:bg-gray-100 cursor-pointer'
+                    }`}
+                  >
+                    <item.icon className={`h-4 w-4 mr-2 transition-opacity ${
+                      isActive(item.url) ? 'opacity-100' : 'opacity-75 group-hover:opacity-90'
+                    }`} />
+                    <span>{item.title}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        
+        {/* Sign Out button */}
+        <div className="px-4 mt-4">
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton 
                 onClick={handleSignOut} 
-                className="text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all duration-200 group cursor-pointer"
               >
-                <LogOut className="h-4 w-4 mr-2" />
+                <LogOut className="h-4 w-4 mr-2 opacity-60 group-hover:opacity-80" />
                 <span>Sign Out</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
