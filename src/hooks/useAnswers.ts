@@ -88,7 +88,7 @@ export const useAnswers = (storylineId: string, questionIndex: number) => {
         .single();
 
       if (!storylineError && storylineJob?.behavioral_id) {
-        const behavioralQuestionIndex = questionIndex - 5;
+        const behavioralQuestionIndex = questionIndex;
         
         if (behavioralQuestionIndex >= 0 && behavioralQuestionIndex <= 4) {
           const behavioralIterations = await fetchBehavioralData(
