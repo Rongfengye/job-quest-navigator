@@ -10,7 +10,7 @@ interface QuestionPageHeaderProps {
 const QuestionPageHeader: React.FC<QuestionPageHeaderProps> = ({ behavioralId }) => {
   // Always navigate back to the dashboard for all question vault sessions
   const linkTo = '/dashboard';
-  const buttonText = 'Back to Question Vault Dashboard';
+  const buttonText = 'Back to Dashboard';
 
   return (
     <div className="mb-6">
