@@ -68,113 +68,131 @@ const Dashboard = () => {
     <DashboardLayout>
       <div className="min-h-screen p-6">
         <div className="w-full max-w-6xl mx-auto">
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
-        <div>
-          <h1 className="text-5xl font-bold text-interview-primary leading-tight">
-            Question Vault
-            <br />
-            Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
-        </div>
-        <Button 
-          size="lg"
-          onClick={() => window.location.href = '/create'}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          New Question Vault
-        </Button>
-      </div>
-      
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="opacity-60 animate-pulse">
-              <CardHeader className="h-24 bg-gray-100"></CardHeader>
-              <CardContent className="h-20 mt-4 bg-gray-100 rounded"></CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : hasError ? (
-        <Card className="bg-red-50 border-red-200">
-          <CardHeader>
-            <CardTitle className="text-red-700">Error loading data</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-red-600">
-              There was an error loading your interview preparations. Please try again later.
-            </p>
-          </CardContent>
-        </Card>
-      ) : hasData ? (
-        <div className="space-y-8">
-          {jobs && jobs.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                <Briefcase className="h-6 w-6" />
-                Your Question Vault
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {jobs.map(job => (
-                  <Link to={`/questions?id=${job.id}`} key={job.id}>
-                    <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-xl">{job.job_title}</CardTitle>
-                            {job.company_name && (
-                              <CardDescription>{job.company_name}</CardDescription>
-                            )}
-                          </div>
-                          <div className="flex flex-col gap-2 items-end">
-                            <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(job.status)}`}>
-                              {job.status}
-                            </div>
-                            {job.behavioral_id && (
-                              <Badge variant="outline" className="border-blue-300 text-blue-700">
-                                From Behavioral
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center text-muted-foreground text-sm mb-4">
-                          <Clock className="h-4 w-4 mr-2" />
-                          <span>Created on {formatDate(job.created_at)}</span>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="border-t pt-4">
-                        <Button variant="ghost" className="w-full" size="sm">
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Questions
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+          {isLoading ? (
+            <div className="space-y-4">
+              <div className="h-10 bg-gray-200 rounded w-1/3 mb-8 animate-pulse"></div>
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-white rounded-lg border border-gray-200 p-6 animate-pulse">
+                  <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-1/5"></div>
+                </div>
+              ))}
             </div>
+          ) : hasData ? (
+            <>
+              {/* Header for users with data */}
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
+                <div>
+                  <h1 className="text-5xl font-bold text-interview-primary leading-tight">
+                    Question Vault
+                    <br />
+                    Dashboard
+                  </h1>
+                  <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
+                </div>
+                <Button 
+                  size="lg"
+                  onClick={() => window.location.href = '/create'}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 text-base font-semibold"
+                >
+                  <Plus className="h-5 w-5 mr-2" />
+                  New Question Vault
+                </Button>
+              </div>
+
+              <div className="space-y-8">
+                {jobs && jobs.length > 0 && (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+                      <Briefcase className="h-6 w-6" />
+                      Your Question Vault
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {jobs.map(job => (
+                        <Link to={`/questions?id=${job.id}`} key={job.id}>
+                          <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
+                            <CardHeader>
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <CardTitle className="text-xl">{job.job_title}</CardTitle>
+                                  {job.company_name && (
+                                    <CardDescription>{job.company_name}</CardDescription>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2 items-end">
+                                  <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(job.status)}`}>
+                                    {job.status}
+                                  </div>
+                                  {job.behavioral_id && (
+                                    <Badge variant="outline" className="border-blue-300 text-blue-700">
+                                      From Behavioral
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="flex items-center text-muted-foreground text-sm mb-4">
+                                <Clock className="h-4 w-4 mr-2" />
+                                <span>Created on {formatDate(job.created_at)}</span>
+                              </div>
+                            </CardContent>
+                            <CardFooter className="border-t pt-4">
+                              <Button variant="ghost" className="w-full" size="sm">
+                                <FileText className="h-4 w-4 mr-2" />
+                                View Questions
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : hasError ? (
+            <Card className="bg-red-50 border-red-200">
+              <CardHeader>
+                <CardTitle className="text-red-700">Error loading data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-red-600">
+                  There was an error loading your interview preparations. Please try again later.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            // Empty State View
+            <>
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
+                <div>
+                  <h1 className="text-5xl font-bold text-interview-primary leading-tight">
+                    Question Vault
+                    <br />
+                    Dashboard
+                  </h1>
+                  <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
+                </div>
+              </div>
+              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
+                <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
+                <h3 className="text-xl font-medium text-gray-900 mb-1">No interview preparations yet</h3>
+                <p className="text-gray-500 text-center mb-6">
+                  Create your first interview preparation to get personalized interview questions
+                </p>
+                <div className="flex gap-4">
+                  <Link to="/create">
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      New Question Vault
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </>
           )}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed rounded-lg bg-gray-50">
-          <Briefcase className="h-12 w-12 text-gray-300 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-1">No interview preparations yet</h3>
-          <p className="text-gray-500 text-center mb-6">
-            Create your first interview preparation to get personalized interview questions
-          </p>
-          <div className="flex gap-4">
-            <Link to="/create">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                New Job Prep
-              </Button>
-            </Link>
-          </div>
-        </div>
-      )}
         </div>
       </div>
     </DashboardLayout>
