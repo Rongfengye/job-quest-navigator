@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, ArrowRight, Sparkles, Target, Users } from 'lucide-react';
+import { CheckCircle, ArrowRight, Sparkles, Target, Users, FileText, Briefcase } from 'lucide-react';
 import { useAuthContext } from '@/context/AuthContext';
 
 const Welcome = () => {
@@ -18,7 +18,7 @@ const Welcome = () => {
   }, [isAuthenticated, isLoading, navigate]);
 
   const handleGetStarted = () => {
-    navigate('/behavioral');
+    navigate('/dashboard');
   };
 
   if (isLoading) {
@@ -47,7 +47,7 @@ const Welcome = () => {
               Welcome to Storyline, {user?.firstName}! 🎉
             </h1>
             <p className="text-lg text-interview-text-secondary">
-              Your account has been confirmed and you're ready to start practicing interviews.
+              Your account has been confirmed and you're ready to build your personalized question vault.
             </p>
           </div>
         </div>
@@ -60,7 +60,7 @@ const Welcome = () => {
               What you can do with Storyline
             </CardTitle>
             <CardDescription>
-              Get ready to ace your next interview with our AI-powered practice tools
+              Get ready to ace your next interview with our AI-powered question vault and practice tools
             </CardDescription>
           </CardHeader>
           
@@ -68,24 +68,24 @@ const Welcome = () => {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="flex gap-3">
                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Target className="h-4 w-4 text-blue-600" />
+                  <Briefcase className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-interview-text-primary">Behavioral Interview Practice</h3>
+                  <h3 className="font-medium text-interview-text-primary">Personalized Question Vault</h3>
                   <p className="text-sm text-interview-text-secondary">
-                    Practice with AI-generated questions tailored to your experience and target role.
+                    Generate targeted questions from your resume, job postings, and interview history.
                   </p>
                 </div>
               </div>
               
               <div className="flex gap-3">
                 <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Users className="h-4 w-4 text-purple-600" />
+                  <Target className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-interview-text-primary">Personalized Feedback</h3>
+                  <h3 className="font-medium text-interview-text-primary">Behavioral Interview Practice</h3>
                   <p className="text-sm text-interview-text-secondary">
-                    Get detailed feedback on your responses to improve your interview skills.
+                    Practice with AI-generated questions and get detailed feedback on your responses.
                   </p>
                 </div>
               </div>
@@ -96,12 +96,12 @@ const Welcome = () => {
         {/* Call to Action */}
         <div className="text-center space-y-4">
           <Button onClick={handleGetStarted} size="lg" className="px-8">
-            Start Your First Practice Session
+            Go to Your Dashboard
             <ArrowRight className="h-4 w-4 ml-2" />
           </Button>
           
           <p className="text-sm text-interview-text-light">
-            Ready to practice? Let's create your first behavioral interview session.
+            Ready to get started? Create your first question vault and begin practicing.
           </p>
         </div>
       </div>
