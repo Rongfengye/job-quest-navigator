@@ -85,11 +85,11 @@ const Dashboard = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
                   <h1 className="text-5xl font-bold text-interview-primary leading-tight">
-                    Question Vault
+                    Your Personalized
                     <br />
-                    Dashboard
+                    Question Vault
                   </h1>
-                  <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
+                  <p className="text-muted-foreground mt-2">Practice targeted questions generated from your resume, job postings, and interview history.</p>
                 </div>
                 <Button 
                   size="lg"
@@ -169,25 +169,25 @@ const Dashboard = () => {
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
                   <h1 className="text-5xl font-bold text-interview-primary leading-tight">
-                    Question Vault
+                    Your Personalized
                     <br />
-                    Dashboard
+                    Question Vault
                   </h1>
-                  <p className="text-muted-foreground mt-2">Manage your curated collections of interview questions</p>
+                  <p className="text-muted-foreground mt-2">Practice targeted questions generated from your resume, job postings, and interview history.</p>
                 </div>
               </div>
               <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
                 <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No interview preparations yet</h3>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">👋 No question vaults yet</h3>
                 <p className="text-gray-500 mb-6 max-w-sm">
-                  Create your first interview preparation to get personalized interview questions.
+                  Get started by uploading your resume and job description — we'll generate practice questions tailored just for you.
                 </p>
                 <Button 
                   onClick={() => window.location.href = '/create'}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  New Question Vault
+                  Create Question Vault
                 </Button>
               </div>
             </>
