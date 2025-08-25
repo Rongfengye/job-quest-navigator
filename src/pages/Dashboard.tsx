@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Clock, FileText, Plus } from 'lucide-react';
+import { Briefcase, Clock, FileText, Plus, ChevronRight, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface JobCard {
@@ -108,42 +108,51 @@ const Dashboard = () => {
                       <Briefcase className="h-6 w-6" />
                       Your Question Vault
                     </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {jobs.map(job => (
                         <Link to={`/questions?id=${job.id}`} key={job.id}>
-                          <Card className="h-full transition-all hover:shadow-md feature-card-shadow">
-                            <CardHeader>
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <CardTitle className="text-xl">{job.job_title}</CardTitle>
+                          <Card className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start mb-3">
+                                <div className="flex-1 min-w-0">
+                                  <CardTitle className="text-lg font-semibold truncate">{job.job_title}</CardTitle>
                                   {job.company_name && (
-                                    <CardDescription>{job.company_name}</CardDescription>
+                                    <CardDescription className="text-sm text-gray-600 mt-1">{job.company_name}</CardDescription>
                                   )}
                                 </div>
-                                <div className="flex flex-col gap-2 items-end">
+                                <div className="flex gap-1 ml-3 flex-shrink-0">
                                   <div className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(job.status)}`}>
                                     {job.status}
                                   </div>
-                                  {job.behavioral_id && (
-                                    <Badge variant="outline" className="border-blue-300 text-blue-700">
-                                      From Behavioral
-                                    </Badge>
-                                  )}
                                 </div>
                               </div>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="flex items-center text-muted-foreground text-sm mb-4">
-                                <Clock className="h-4 w-4 mr-2" />
-                                <span>Created on {formatDate(job.created_at)}</span>
+                              
+                              <div className="mb-3">
+                                {job.behavioral_id ? (
+                                  <div className="flex items-center text-sm text-blue-700 mb-2">
+                                    <Info className="h-3 w-3 mr-1" />
+                                    <span>From Behavioral Interview</span>
+                                  </div>
+                                ) : (
+                                  <div className="text-sm text-gray-600 mb-2">
+                                    Questions generated from your profile
+                                  </div>
+                                )}
+                                
+                                <div className="flex items-center text-muted-foreground text-xs">
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  <span>Created {formatDate(job.created_at)}</span>
+                                </div>
                               </div>
-                            </CardContent>
-                            <CardFooter className="border-t pt-4">
-                              <Button variant="ghost" className="w-full" size="sm">
-                                <FileText className="h-4 w-4 mr-2" />
-                                View Questions
+
+                              <Button variant="outline" className="w-full justify-between text-sm h-8" size="sm">
+                                <span className="flex items-center">
+                                  <FileText className="h-3 w-3 mr-2" />
+                                  View Questions
+                                </span>
+                                <ChevronRight className="h-3 w-3" />
                               </Button>
-                            </CardFooter>
+                            </CardContent>
                           </Card>
                         </Link>
                       ))}
