@@ -8,10 +8,9 @@ interface QuestionPageHeaderProps {
 }
 
 const QuestionPageHeader: React.FC<QuestionPageHeaderProps> = ({ behavioralId }) => {
-  // If we have a behavioral ID, we link back to the behavioral feedback page
-  // Otherwise, we link back to the home page
-  const linkTo = behavioralId ? `/behavioralFeedback?id=${behavioralId}` : '/';
-  const buttonText = behavioralId ? 'Back to Behavioral Feedback' : 'Back to Home';
+  // Always navigate back to the dashboard for all question vault sessions
+  const linkTo = '/dashboard';
+  const buttonText = 'Back to Question Vault Dashboard';
 
   return (
     <div className="mb-6">
