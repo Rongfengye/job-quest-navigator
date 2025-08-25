@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Briefcase, Calendar, FileText, Plus, Play } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus, Play, CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePlanStatus } from '@/hooks/usePlanStatus';
@@ -84,26 +84,30 @@ const Behavioral = () => {
     
     if (state.status === 'complete') {
       return (
-        <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50">
+        <Badge variant="outline" className="border-green-500 text-green-700 bg-green-50 flex items-center gap-1">
+          <CheckCircle className="h-3 w-3" />
           Complete
         </Badge>
       );
     } else if (state.status === 'in-progress') {
       if (state.currentQuestionIndex >= 5) {
         return (
-          <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50">
+          <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50 flex items-center gap-1">
+            <Loader className="h-3 w-3 animate-spin" />
             Processing
           </Badge>
         );
       }
       return (
-        <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50">
+        <Badge variant="outline" className="border-orange-500 text-orange-700 bg-orange-50 flex items-center gap-1">
+          <Clock className="h-3 w-3" />
           Question {state.currentQuestionIndex + 1} of 5
         </Badge>
       );
     } else {
       return (
-        <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50">
+        <Badge variant="outline" className="border-gray-400 text-gray-600 bg-gray-50 flex items-center gap-1">
+          <AlertCircle className="h-3 w-3" />
           Not Started
         </Badge>
       );
@@ -146,27 +150,49 @@ const Behavioral = () => {
     if (state.status === 'complete') {
       return {
         icon: FileText,
-        text: 'View Feedback'
+        text: 'View Feedback',
+        variant: 'secondary' as const
       };
     } 
     
     if (state.status === 'in-progress') {
       if (state.currentQuestionIndex >= 5) {
         return {
-          icon: FileText,
-          text: 'Processing Feedback'
+          icon: Loader,
+          text: 'Processing…',
+          variant: 'secondary' as const,
+          disabled: true
         };
       }
       return {
         icon: Play,
-        text: 'Resume Interview'
+        text: 'Continue Session',
+        variant: 'default' as const
       };
     } 
     
     return {
       icon: FileText,
-      text: 'View Details'
+      text: 'View Details',
+      variant: 'secondary' as const
     };
+  };
+
+  const getQuestionProgress = (interview: BehavioralInterview) => {
+    const state = analyzeInterviewState(interview.questions, interview.responses, interview.feedback);
+    const totalQuestions = 5;
+    const completedQuestions = Math.min(state.currentQuestionIndex, totalQuestions);
+    
+    if (state.status === 'complete') {
+      return `${totalQuestions} questions · Complete`;
+    } else if (state.status === 'in-progress') {
+      if (state.currentQuestionIndex >= 5) {
+        return `${totalQuestions} questions · Processing`;
+      }
+      return `${completedQuestions}/${totalQuestions} questions`;
+    }
+    
+    return `${totalQuestions} questions · Not started`;
   };
 
   const hasData = (interviews && interviews.length > 0);
@@ -217,52 +243,63 @@ const Behavioral = () => {
               )}
 
               {/* Practice Sessions Section */}
-              <div className="mb-8">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                  <Briefcase className="h-6 w-6" />
+              <div className="mb-12">
+                <h2 className="text-xl font-semibold text-gray-900 mb-8 flex items-center gap-2">
+                  <Briefcase className="h-5 w-5" />
                   Previous Practice Sessions
                 </h2>
                 
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {interviews.map(interview => {
                     const ButtonComponent = getCardButtonText(interview);
                     const hasTechnicalPractices = interview._technical_count && interview._technical_count > 0;
 
-                    const practiceRow = (
-                      <div 
-                        className="bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-200 cursor-pointer"
-                        onClick={() => handleInterviewCardClick(interview)}
-                      >
-                        <div className="p-4">
-                          <div className="flex justify-between items-center">
-                            <div className="flex-1 mr-4">
-                              <h3 className="text-lg font-bold text-gray-900 truncate">
-                                {interview.job_title}
+                    const practiceCard = (
+                      <Card className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer">
+                        <CardContent className="p-6" onClick={() => handleInterviewCardClick(interview)}>
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1 min-w-0 mr-4">
+                              <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                🧠 {interview.job_title}
                               </h3>
                               {interview.company_name && (
-                                <p className="text-base text-gray-600">
+                                <p className="text-sm text-gray-600 mt-1">
                                   {interview.company_name}
                                 </p>
                               )}
                             </div>
-                            
-                            <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex-shrink-0">
                               {getInterviewBadge(interview)}
-                              <Button variant="outline" size="sm" className="shrink-0">
-                                <ButtonComponent.icon className="h-4 w-4 mr-2" />
-                                {ButtonComponent.text}
-                              </Button>
                             </div>
                           </div>
-                        </div>
-                      </div>
+                          
+                          <div className="flex items-center text-xs text-gray-500 mb-4 gap-2">
+                            <Calendar className="h-3 w-3" />
+                            <span>{formatDate(interview.created_at)} · {getQuestionProgress(interview)}</span>
+                          </div>
+
+                          <Button 
+                            variant={ButtonComponent.variant} 
+                            size="sm" 
+                            className="w-full"
+                            disabled={ButtonComponent.disabled}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInterviewCardClick(interview);
+                            }}
+                          >
+                            <ButtonComponent.icon className={`h-4 w-4 mr-2 ${ButtonComponent.disabled ? 'animate-spin' : ''}`} />
+                            {ButtonComponent.text}
+                          </Button>
+                        </CardContent>
+                      </Card>
                     );
 
                     if (hasTechnicalPractices) {
                       return (
                         <Tooltip key={interview.id} delayDuration={100}>
                           <TooltipTrigger asChild>
-                            {practiceRow}
+                            {practiceCard}
                           </TooltipTrigger>
                           <TooltipContent>
                             <div className="flex items-center">
@@ -278,7 +315,7 @@ const Behavioral = () => {
 
                     return (
                       <div key={interview.id}>
-                        {practiceRow}
+                        {practiceCard}
                       </div>
                     );
                   })}
