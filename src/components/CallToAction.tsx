@@ -11,8 +11,8 @@ const CallToAction = () => {
 
   const handleGetStarted = () => {
     if (isAuthenticated) {
-      // If user is already logged in, navigate directly to Behavioral page
-      navigate("/behavioral");
+      // If user is already logged in, navigate directly to Dashboard
+      navigate("/dashboard");
     } else {
       // Otherwise show auth modal for login/signup
       setShowAuthModal(true);

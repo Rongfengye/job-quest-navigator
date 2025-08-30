@@ -113,8 +113,8 @@ const AuthCallback = () => {
             // New user: show welcome
             navigate('/welcome', { replace: true });
           } else {
-            // Returning user: go to behavioral
-            navigate('/behavioral', { replace: true });
+            // Returning user: go to dashboard
+            navigate('/dashboard', { replace: true });
           }
           return;
         } else {
