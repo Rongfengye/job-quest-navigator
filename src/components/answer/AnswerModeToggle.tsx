@@ -49,8 +49,8 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
             onClick={() => onModeChange('guided')}
             className={`flex items-center gap-2 px-6 py-3 h-auto flex-col relative ${
               mode === 'guided' 
-                ? 'bg-blue-600 text-white border-blue-600' 
-                : 'hover:bg-blue-50 border-blue-200'
+                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' 
+                : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400'
             }`}
           >
             <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
