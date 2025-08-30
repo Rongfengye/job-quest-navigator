@@ -127,7 +127,7 @@ const Create = () => {
           />
 
           <div className="pt-4">
-            <p className="text-sm text-gray-500 mb-4">Note: All documents must be in PDF format.</p>
+            <p className="text-sm text-gray-500 mb-4">Note: All Resumes must be in PDF format.</p>
             
             <div className="space-y-4">
               <FileUpload
