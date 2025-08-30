@@ -24,6 +24,7 @@ const QuestionContent = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioSrc, setAudioSrc] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPulseEffect, setShowPulseEffect] = useState(false);
 
   // Clean up audio when component unmounts or question changes
   useEffect(() => {
@@ -41,6 +42,19 @@ const QuestionContent = ({
       processAndPlayAudio(currentQuestion.audio);
     }
   }, [currentQuestion?.audio]);
+
+  // Show pulse effect when question changes
+  useEffect(() => {
+    if (currentQuestion) {
+      setShowPulseEffect(true);
+      // Remove the effect after 5 seconds
+      const timer = setTimeout(() => {
+        setShowPulseEffect(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [currentQuestionIndex]);
 
   const processAndPlayAudio = async (base64Audio: string) => {
     if (!base64Audio) return;
@@ -124,7 +138,7 @@ const QuestionContent = ({
               size="sm"
               variant={isRecording ? "destructive" : "outline"}
               onClick={toggleRecording}
-              className="flex items-center gap-1"
+              className={`flex items-center gap-1 ${showPulseEffect && !isRecording ? 'animate-pulse-blue-mic' : ''}`}
             >
               <Mic className="h-4 w-4" />
               {isRecording ? 'Stop' : 'Record'}
