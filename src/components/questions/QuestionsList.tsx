@@ -63,7 +63,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
-              mode={mode}
+              type={type}
             />
           ))}
         </div>
@@ -84,7 +84,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
-              mode={mode}
+              type={type}
             />
           ))}
         </div>
@@ -108,7 +108,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
-              mode={mode}
+              type={type}
             />
           ))}
         </div>

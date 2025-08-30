@@ -15,7 +15,9 @@ const AnswerPage = () => {
   const storylineId = queryParams.get('id');
   const questionIndexStr = queryParams.get('questionIndex');
   const questionIndex = questionIndexStr ? parseInt(questionIndexStr, 10) : 0;
-  const mode = queryParams.get('mode') || 'manual'; // Get mode from URL params
+  const type = queryParams.get('type');
+  // Map type to mode: type=1 -> guided (new vault), type=2 -> manual (continuing)
+  const mode = type === '1' ? 'guided' : 'manual';
   
   // Get question data from navigation state
   const initialQuestion = (location.state as { question?: Question })?.question;
