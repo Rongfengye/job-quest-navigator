@@ -45,16 +45,19 @@ const QuestionContent = ({
 
   // Show pulse effect when question changes
   useEffect(() => {
-    if (currentQuestion) {
+    // Trigger pulse effect whenever we get a new question
+    if (currentQuestion && currentQuestion.question) {
+      console.log('New question detected, showing pulse effect');
       setShowPulseEffect(true);
       // Remove the effect after 5 seconds
       const timer = setTimeout(() => {
+        console.log('Hiding pulse effect after 5 seconds');
         setShowPulseEffect(false);
       }, 5000);
       
       return () => clearTimeout(timer);
     }
-  }, [currentQuestionIndex]);
+  }, [currentQuestion?.question]); // Trigger on actual question content change, not just index
 
   const processAndPlayAudio = async (base64Audio: string) => {
     if (!base64Audio) return;
@@ -139,6 +142,7 @@ const QuestionContent = ({
               variant={isRecording ? "destructive" : "outline"}
               onClick={toggleRecording}
               className={`flex items-center gap-1 ${showPulseEffect && !isRecording ? 'animate-pulse-blue-mic' : ''}`}
+              title={showPulseEffect ? "Pulse animation active" : "No pulse animation"}
             >
               <Mic className="h-4 w-4" />
               {isRecording ? 'Stop' : 'Record'}
