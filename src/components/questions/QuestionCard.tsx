@@ -26,9 +26,10 @@ interface QuestionCardProps {
   question: Question;
   index: number;
   storylineId: string;
+  mode?: string;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineId }) => {
+const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineId, mode = 'manual' }) => {
   const navigate = useNavigate();
   const [hasAnswer, setHasAnswer] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,8 +58,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
   }, [storylineId, index]);
 
   const handleQuestionClick = () => {
-    // Pass question data through navigation state
-    navigate(`/answer?id=${storylineId}&questionIndex=${index}`, {
+    // Pass question data and mode through navigation state
+    navigate(`/answer?id=${storylineId}&questionIndex=${index}&mode=${mode}`, {
       state: { question }
     });
   };

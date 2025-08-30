@@ -14,6 +14,9 @@ const Questions = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const storylineId = queryParams.get('id');
+  const type = queryParams.get('type');
+  // Map type to mode: type=1 -> guided (new vault), type=2 -> manual (continuing)
+  const mode = type === '1' ? 'guided' : 'manual';
   const { fetchUserStatus } = usePlanStatus();
   
   // Phase 3: Smart sync on premium feature entry
@@ -66,7 +69,7 @@ const Questions = () => {
         {questions.length > 0 ? (
           <>
             <SourceInfoPanel questions={questions} />
-            <QuestionsList questions={questions} storylineId={storylineId || ''} />
+            <QuestionsList questions={questions} storylineId={storylineId || ''} mode={mode} type={type || '2'} />
           </>
         ) : (
           <NoQuestions />

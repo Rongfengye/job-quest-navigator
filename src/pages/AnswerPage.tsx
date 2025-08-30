@@ -15,6 +15,7 @@ const AnswerPage = () => {
   const storylineId = queryParams.get('id');
   const questionIndexStr = queryParams.get('questionIndex');
   const questionIndex = questionIndexStr ? parseInt(questionIndexStr, 10) : 0;
+  const mode = queryParams.get('mode') || 'manual'; // Get mode from URL params
   
   // Get question data from navigation state
   const initialQuestion = (location.state as { question?: Question })?.question;
@@ -79,6 +80,7 @@ const AnswerPage = () => {
           feedback={feedback}
           isFeedbackLoading={isFeedbackLoading}
           feedbackError={feedbackError}
+          mode={mode}
         />
       </div>
     </div>

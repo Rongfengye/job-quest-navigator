@@ -23,6 +23,7 @@ interface AnswerTabsProps {
   feedback: QuestionVaultFeedback | null;
   isFeedbackLoading: boolean;
   feedbackError: string | null;
+  mode?: string;
 }
 
 const AnswerTabs: React.FC<AnswerTabsProps> = ({
@@ -39,7 +40,8 @@ const AnswerTabs: React.FC<AnswerTabsProps> = ({
   question,
   feedback,
   isFeedbackLoading,
-  feedbackError
+  feedbackError,
+  mode = 'manual'
 }) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -67,6 +69,7 @@ const AnswerTabs: React.FC<AnswerTabsProps> = ({
           feedback={feedback}
           isFeedbackLoading={isFeedbackLoading}
           feedbackError={feedbackError}
+          initialMode={mode}
         />
       </TabsContent>
       

@@ -9,9 +9,11 @@ const ENABLE_TECHNICAL_QUESTIONS = false;
 interface QuestionsListProps {
   questions: Question[];
   storylineId: string;
+  mode?: string;
+  type?: string;
 }
 
-const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId }) => {
+const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, mode = 'manual', type = '2' }) => {
   if (!questions.length) {
     return (
       <p className="text-gray-500 italic py-4">
@@ -61,6 +63,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
+              mode={mode}
             />
           ))}
         </div>
@@ -81,6 +84,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
+              mode={mode}
             />
           ))}
         </div>
@@ -104,6 +108,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId })
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
+              mode={mode}
             />
           ))}
         </div>

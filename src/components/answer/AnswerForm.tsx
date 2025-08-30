@@ -24,6 +24,7 @@ interface AnswerFormProps {
   isFeedbackLoading: boolean;
   feedbackError: string | null;
   processingThoughts: boolean;
+  initialMode?: string;
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -37,10 +38,11 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   feedback,
   isFeedbackLoading,
   feedbackError,
-  processingThoughts
+  processingThoughts,
+  initialMode = 'manual'
 }) => {
   const { toast } = useToast();
-  const [mode, setMode] = useState<AnswerMode>('guided'); // Changed default to 'guided'
+  const [mode, setMode] = useState<AnswerMode>(initialMode as AnswerMode);
   const [progressValue, setProgressValue] = useState(0);
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const [originalAnswer, setOriginalAnswer] = useState('');

@@ -110,7 +110,7 @@ const Dashboard = () => {
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {jobs.map(job => (
-                        <Link to={`/questions?id=${job.id}`} key={job.id}>
+                        <Link to={`/questions?id=${job.id}&type=2`} key={job.id}>
                           <Card className="transition-all hover:shadow-lg hover:scale-[1.02] cursor-pointer">
                             <CardContent className="p-4">
                               <div className="flex justify-between items-start mb-3">
