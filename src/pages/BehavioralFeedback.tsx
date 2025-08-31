@@ -308,11 +308,14 @@ const BehavioralFeedback = () => {
                 <PremiumNudge variant="post-practice-success" className="mt-6" />
               )}
               
-              <RelatedPracticesList 
-                practices={relatedPractices} 
-                isLoading={isLoadingPractices}
-                behavioralId={interviewId || ''}
-              />
+              {/* Only show related practices list if there are actually practices to show */}
+              {hasRelatedPractice && (
+                <RelatedPracticesList 
+                  practices={relatedPractices} 
+                  isLoading={isLoadingPractices}
+                  behavioralId={interviewId || ''}
+                />
+              )}
             </CardContent>
             <CardFooter className="flex flex-col items-center justify-center border-t pt-6">
               {!hasRelatedPractice ? (
