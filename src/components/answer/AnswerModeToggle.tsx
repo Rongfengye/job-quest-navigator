@@ -31,7 +31,7 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
             onClick={() => onModeChange('manual')}
             className={`flex items-center gap-2 px-6 py-3 h-auto flex-col ${
               mode === 'manual' 
-                ? 'bg-gray-900 text-white border-gray-900' 
+                ? 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50' 
                 : 'hover:bg-gray-50'
             }`}
           >
