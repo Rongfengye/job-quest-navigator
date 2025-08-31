@@ -27,17 +27,17 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
         
         <div className="flex gap-3 justify-center">
           <Button
-            variant={mode === 'manual' ? 'default' : 'outline'}
+            variant="outline"
             onClick={() => onModeChange('manual')}
-            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col ${
+            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col rounded-lg ${
               mode === 'manual' 
-                ? 'bg-white text-blue-600 border-2 border-blue-600 hover:bg-blue-50' 
-                : 'hover:bg-gray-50'
+                ? 'border-2 border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' 
+                : 'border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-black bg-white'
             }`}
           >
             <PenTool className="w-5 h-5" />
             <div className="text-center">
-              <div className="font-medium">Write from scratch</div>
+              <div className="font-medium">Write from Scratch</div>
               <div className="text-xs opacity-80 mt-1">
                 I'll write my own answer
               </div>
@@ -45,21 +45,21 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
           </Button>
           
           <Button
-            variant={mode === 'guided' ? 'default' : 'outline'}
+            variant="default"
             onClick={() => onModeChange('guided')}
-            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col relative ${
+            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col relative rounded-lg transform transition-all ${
               mode === 'guided' 
-                ? 'bg-blue-600 text-white border-blue-600 hover:bg-blue-700' 
-                : 'bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100 hover:border-blue-400'
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0 hover:from-blue-700 hover:to-blue-800 shadow-lg scale-105' 
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg hover:scale-105'
             }`}
           >
-            <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+            <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
               Recommended
             </div>
             <Sparkles className="w-5 h-5" />
             <div className="text-center">
-              <div className="font-medium">Get AI Coaching</div>
-              <div className="text-xs opacity-80 mt-1">
+              <div className="font-semibold text-base">Get AI Coaching</div>
+              <div className="text-xs opacity-90 mt-1">
                 Turn thoughts into structured responses
               </div>
             </div>
