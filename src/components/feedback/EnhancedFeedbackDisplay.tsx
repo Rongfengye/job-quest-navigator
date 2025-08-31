@@ -10,6 +10,13 @@ interface EnhancedFeedbackDisplayProps {
   questionIndex?: number;
 }
 
+// Move getScoreColor outside component to be accessible
+const getScoreColor = (score: number) => {
+  if (score >= 80) return 'bg-green-100 text-green-700';
+  if (score >= 60) return 'bg-yellow-100 text-yellow-700';
+  return 'bg-orange-100 text-orange-700';
+};
+
 const ScoreBreakdownChart: React.FC<{ breakdown: ScoreBreakdown; confidence: number }> = ({ breakdown, confidence }) => {
   const dimensions = [
     { key: 'structure', label: 'STAR Structure', value: breakdown.structure },
@@ -18,12 +25,6 @@ const ScoreBreakdownChart: React.FC<{ breakdown: ScoreBreakdown; confidence: num
     { key: 'specificity', label: 'Specificity', value: breakdown.specificity },
     { key: 'professionalism', label: 'Professionalism', value: breakdown.professionalism }
   ];
-
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-100 text-green-700';
-    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
-    return 'bg-orange-100 text-orange-700';
-  };
 
   const getConfidenceColor = (confidence: number) => {
     if (confidence >= 0.8) return 'text-green-600';
