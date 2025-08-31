@@ -1,9 +1,17 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, ExternalLink, Globe, Brain, Users, Star, Info, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, ExternalLink, Globe, Brain, Users, Star, Info, ChevronDown, ChevronUp, Search } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 interface SourceInfoPanelProps {
   questions: Array<{
@@ -94,6 +102,52 @@ export const SourceInfoPanel: React.FC<SourceInfoPanelProps> = ({ questions }) =
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="ml-2 text-sm text-blue-600 hover:underline">
+                How are questions sourced?
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Search className="w-5 h-5" />
+                  🔍 How Do We Source These Questions?
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  We use a mix of AI scraping and user-contributed data to build your personalized interview questions:
+                </p>
+                
+                <div className="space-y-3">
+                  <div className="flex gap-3">
+                    <Globe className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm">Real Interview Experiences</p>
+                      <p className="text-sm text-gray-600">
+                        We scan real interview experiences shared by candidates to extract the most common behavioral prompts at companies like Google, Amazon, and Meta.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <Brain className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-sm">AI Generated</p>
+                      <p className="text-sm text-gray-600">
+                        When there aren't enough real-world samples, our AI fills the gap by generating high-quality behavioral questions tailored to your resume and job title.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-700 border-t pt-3">
+                  Each question includes a source badge and a reliability score to help you trust the content you're practicing with.
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
         </CardTitle>
       </CardHeader>
       <CardContent>
