@@ -355,7 +355,7 @@ const Behavioral = () => {
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-blue-600 mb-2">①</div>
                       <p className="text-sm font-medium text-gray-700">Get 5 targeted questions</p>
-                      <p className="text-xs text-gray-500 mt-1">based on your vault</p>
+                      <p className="text-xs text-gray-500 mt-1">dynamically generated in real-time</p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-blue-600 mb-2">②</div>
@@ -390,10 +390,15 @@ const Behavioral = () => {
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowExampleSession(!showExampleSession)}
-                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 mb-4"
                   >
                     🔍 See example session
                   </Button>
+
+                  {/* Connection Nudge */}
+                  <p className="text-sm text-gray-500 mt-2 text-center max-w-lg mx-auto">
+                    📘 Want to keep improving? You can revisit these questions and practice follow-ups later in your <a href="/questions" className="text-blue-600 hover:underline">Question Vault</a>.
+                  </p>
 
                 </div>
               </div>
