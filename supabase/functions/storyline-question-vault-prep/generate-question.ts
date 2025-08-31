@@ -94,7 +94,7 @@ const SOURCE_ATTRIBUTION = {
   'reddit-internships': { priority: 3, reliability: 3, category: 'community_forum', platform: 'Reddit' },
   'reddit-company': { priority: 2, reliability: 4, category: 'community_forum', platform: 'Reddit' },
   'forum-general': { priority: 4, reliability: 2, category: 'general_forum', platform: 'Various' },
-  'ai-generated': { priority: 5, reliability: 2, category: 'ai_fallback', platform: 'AI' }
+  'ai-generated': { priority: 5, reliability: 4, category: 'ai_fallback', platform: 'AI' }
 };
 
 // Phase 2: Company-specific search patterns

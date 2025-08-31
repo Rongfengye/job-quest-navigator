@@ -163,7 +163,7 @@ export const SourceInfoPanel: React.FC<SourceInfoPanelProps> = ({ questions }) =
           {/* Legend */}
           <div className="pt-3 border-t">
             <p className="text-xs text-gray-500">
-              <strong>Reliability Scale:</strong> 5/5 = Official/Verified sources, 4/5 = Community verified, 3/5 = General forums, 2/5 = AI generated
+              <strong>Reliability Scale:</strong> 5/5 = Official/Verified sources, 4/5 = AI generated & Community verified, 3/5 = General forums
             </p>
           </div>
         </div>

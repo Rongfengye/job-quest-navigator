@@ -74,7 +74,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         return {
           icon: Brain,
           variant: 'secondary' as const,
-          label: 'Technical',
+          label: '',
           bgColor: 'bg-blue-100',
           textColor: 'text-blue-800',
           borderColor: 'border-blue-300'
@@ -83,7 +83,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         return {
           icon: MessageSquare,
           variant: 'default' as const,
-          label: 'Behavioral',
+          label: '',
           bgColor: 'bg-green-100',
           textColor: 'text-green-800',
           borderColor: 'border-green-300'
@@ -92,7 +92,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         return {
           icon: Users,
           variant: 'outline' as const,
-          label: 'From Interview',
+          label: '',
           bgColor: 'bg-purple-100',
           textColor: 'text-purple-800',
           borderColor: 'border-purple-300'
@@ -101,7 +101,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         return {
           icon: MessageSquare,
           variant: 'default' as const,
-          label: 'Question',
+          label: '',
           bgColor: 'bg-gray-100',
           textColor: 'text-gray-800',
           borderColor: 'border-gray-300'
@@ -241,7 +241,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
               variant={typeConfig.variant}
               className={`${typeConfig.bgColor} ${typeConfig.textColor} ${typeConfig.borderColor}`}
             >
-              <TypeIcon className="w-3 h-3 mr-1" />
+              <TypeIcon className="w-3 h-3" />
               {typeConfig.label}
             </Badge>
             {sourceConfig && (
