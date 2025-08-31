@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Globe } from 'lucide-react';
 import FormField from '@/components/FormField';
 import FileUpload from '@/components/FileUpload';
@@ -14,6 +14,7 @@ import { ExtractedJobData } from '@/types/jobScraper';
 const Create = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -36,6 +37,14 @@ const Create = () => {
     handleStructuredScrapedData, // NEW: Phase 3
     handleSubmit,
   } = useCreateForm();
+
+  // Handle resume data passed from dashboard
+  useEffect(() => {
+    const state = location.state as { resumeFile?: File; resumeText?: string; fromDashboard?: boolean };
+    if (state?.fromDashboard && state.resumeFile && state.resumeText) {
+      handleResumeChange(state.resumeFile, state.resumeText);
+    }
+  }, [location.state, handleResumeChange]);
 
   const handleScrapedCompanyInfo = (companyName: string, companyDescription: string) => {
     console.log("Received company info in Create.tsx:", { companyName, companyDescription });
