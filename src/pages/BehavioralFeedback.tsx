@@ -317,9 +317,9 @@ const BehavioralFeedback = () => {
             <CardFooter className="flex flex-col items-center justify-center border-t pt-6">
               {!hasRelatedPractice ? (
                 <>
-                  {/* Explanatory text above CTA */}
-                  <div className="text-sm text-gray-500 text-center mb-4 max-w-md">
-                    Ready to level up? Re-enter a mock session with all 5 questions, new follow-up prompts, and live feedback.
+                  {/* Supporting lead text above CTA */}
+                  <div className="text-sm text-gray-600 text-center mb-2 max-w-md">
+                    Struggled on a few questions? Start a targeted follow-up session to refine your answers with fresh AI coaching.
                   </div>
                   
                   {showQuestionVaultGate && usageSummary ? (
@@ -347,13 +347,21 @@ const BehavioralFeedback = () => {
                         }}
                         disabled={isCreatingQuestions}
                       >
-                        <BookOpen className="w-4 h-4" />
-                        {isCreatingQuestions ? 'Generating Practice Suite...' : '📘 Practice All 5 Questions Again'}
+                        {isCreatingQuestions ? (
+                          <>
+                            <BookOpen className="w-4 h-4 animate-spin" />
+                            Generating Practice Suite...
+                          </>
+                        ) : (
+                          <>
+                            🔁 Follow Up & Improve All 5 Answers
+                          </>
+                        )}
                       </Button>
                       
-                      {/* Subtitle for additional clarity */}
-                      <p className="text-xs text-gray-500 mt-2 text-center">
-                        Get fresh follow-up questions & AI feedback to refine your answers
+                      {/* Subtext under button */}
+                      <p className="text-xs text-gray-500 text-center mt-1">
+                        Revisit each question, get dynamic follow-up prompts, and receive new feedback — all in one session.
                       </p>
                     </div>
                   )}
