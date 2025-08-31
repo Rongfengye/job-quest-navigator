@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, Brain, MessageSquare, Users } from 'lucide-react';
+import { FileText, Brain, MessageSquare, Users, Globe, Sparkles } from 'lucide-react';
 import QuestionCard, { Question } from './QuestionCard';
 
 // Feature flag to control technical questions display (matches backend)
@@ -29,6 +29,18 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
   const behavioralQuestions = questions.filter(q => q.type === 'behavioral');
   const originalBehavioralQuestions = questions.filter(q => q.type === 'original-behavioral');
 
+  // Categorize questions by source (Real-World vs AI Practice)
+  const isRealWorldQuestion = (question: Question) => {
+    const realWorldSources = ['glassdoor-verified', 'blind-verified', 'company-official', 
+                             'reddit-cscareerquestions', 'reddit-internships', 'reddit-company', 
+                             'forum-general'];
+    return question.sourceAttribution?.source && 
+           realWorldSources.includes(question.sourceAttribution.source);
+  };
+
+  const realWorldQuestions = questions.filter(isRealWorldQuestion);
+  const aiPracticeQuestions = questions.filter(q => !isRealWorldQuestion(q));
+
   const hasOriginalQuestions = originalBehavioralQuestions.length > 0;
   
   // Update total count calculation to exclude technical questions when disabled
@@ -48,63 +60,45 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
         </div>
       </div>
 
-      {/* Technical Questions Section - Conditionally rendered */}
-      {ENABLE_TECHNICAL_QUESTIONS && technicalQuestions.length > 0 && (
+      {/* Real-World Interview Questions Section */}
+      {realWorldQuestions.length > 0 && (
         <div className="mb-8">
           <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-            <Brain className="w-4 h-4 mr-2 text-blue-600" />
-            <h3 className="text-lg font-medium text-gray-800">
-              Technical Questions ({technicalQuestions.length})
+            <Globe className="w-5 h-5 mr-2 text-green-600" />
+            <h3 className="text-lg font-semibold text-gray-800">
+              🧠 Real-World Interview Questions
             </h3>
-          </div>
-          {technicalQuestions.map((question, index) => (
-            <QuestionCard 
-              key={`technical-${index}`} 
-              question={question} 
-              index={questions.indexOf(question)} 
-              storylineId={storylineId} 
-              type={type}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* New Behavioral Questions Section */}
-      {behavioralQuestions.length > 0 && (
-        <div className="mb-8">
-          <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-            <MessageSquare className="w-4 h-4 mr-2 text-green-600" />
-            <h3 className="text-lg font-medium text-gray-800">
-              New Behavioral Questions ({behavioralQuestions.length})
-            </h3>
-          </div>
-          {behavioralQuestions.map((question, index) => (
-            <QuestionCard 
-              key={`behavioral-${index}`} 
-              question={question} 
-              index={questions.indexOf(question)} 
-              storylineId={storylineId} 
-              type={type}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Original Behavioral Questions Section */}
-      {hasOriginalQuestions && (
-        <div className="mb-8">
-          <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
-            <Users className="w-4 h-4 mr-2 text-purple-600" />
-            <h3 className="text-lg font-medium text-gray-800">
-              From Your Interview ({originalBehavioralQuestions.length})
-            </h3>
-            <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-              Practice Again
+            <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+              Scraped from Glassdoor, Blind
             </span>
           </div>
-          {originalBehavioralQuestions.map((question, index) => (
+          {realWorldQuestions.map((question, index) => (
             <QuestionCard 
-              key={`original-${index}`} 
+              key={`real-${index}`} 
+              question={question} 
+              index={questions.indexOf(question)} 
+              storylineId={storylineId} 
+              type={type}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* AI Practice Questions Section */}
+      {aiPracticeQuestions.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
+            <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
+            <h3 className="text-lg font-semibold text-gray-800">
+              🪄 AI Practice Questions
+            </h3>
+            <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+              Generated from your responses
+            </span>
+          </div>
+          {aiPracticeQuestions.map((question, index) => (
+            <QuestionCard 
+              key={`ai-${index}`} 
               question={question} 
               index={questions.indexOf(question)} 
               storylineId={storylineId} 
