@@ -219,7 +219,7 @@
 }
 
 .animate-pulse-color-blue {
-  animation: pulse-color-blue 1s ease-in-out infinite;
+  animation: pulse-color-blue 1.5s ease-in-out infinite;
 }
 
 /* Mobile scrolling optimizations */

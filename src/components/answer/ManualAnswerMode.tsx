@@ -37,7 +37,7 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
     setShowPulse(true);
     const timer = setTimeout(() => {
       setShowPulse(false);
-    }, 3000);
+    }, 4500);
     
     return () => clearTimeout(timer);
   }, []); // Empty dependency array means this runs once on mount
