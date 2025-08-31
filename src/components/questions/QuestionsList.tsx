@@ -96,6 +96,15 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
               Generated from your resume and job description
             </span>
           </div>
+          
+          {/* Check if any questions are from practice sessions */}
+          {aiPracticeQuestions.some(q => q.sourceAttribution?.source === 'behavioral-practice-session') && (
+            <div className="border-l-4 border-blue-300 bg-blue-50 text-blue-800 p-3 text-sm rounded-md mb-4">
+              These questions were generated based on your past responses in a practice session. 
+              Use them as a foundation to refine your thinking and improve your performance.
+            </div>
+          )}
+          
           {aiPracticeQuestions.map((question, index) => (
             <QuestionCard 
               key={`ai-${index}`} 

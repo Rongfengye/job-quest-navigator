@@ -262,7 +262,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {question.explanation && (
+        {question.explanation && 
+         !question.explanation.includes("This question was from your behavioral interview practice session") && (
           <p className="text-gray-600 text-sm line-clamp-2">
             {question.explanation}
           </p>

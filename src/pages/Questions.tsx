@@ -46,6 +46,15 @@ const Questions = () => {
             const hasOnlyOriginalQuestions = questions.length > 0 && 
               questions.every(q => q.type === 'original-behavioral');
             
+            // Check if questions are primarily from real-world sources
+            const realWorldSources = ['glassdoor-verified', 'blind-verified', 'company-official', 
+                                     'reddit-cscareerquestions', 'reddit-internships', 'reddit-company', 
+                                     'forum-general'];
+            const realWorldQuestions = questions.filter(q => 
+              q.sourceAttribution?.source && realWorldSources.includes(q.sourceAttribution.source)
+            );
+            const hasMainlyRealWorldQuestions = realWorldQuestions.length > questions.length / 2;
+            
             if (hasOnlyOriginalQuestions) {
               return (
                 <p className="text-gray-700">
@@ -53,11 +62,20 @@ const Questions = () => {
                   Review them again to strengthen your responses and build confidence.
                 </p>
               );
+            } else if (hasMainlyRealWorldQuestions) {
+              return (
+                <p className="text-gray-700 font-medium">
+                  These questions were carefully scraped from trusted sources like Glassdoor and Blind, 
+                  tailored to your job description and resume. Practice answering them to reflect what 
+                  real interviewers are likely to ask.
+                </p>
+              );
             } else {
               return (
                 <p className="text-gray-700">
-                  Here are your personalized behavioral interview questions based on the job description and your resume.
-                  Review them carefully and prepare your answers to make a great impression.
+                  Our AI has generated these personalized behavioral interview questions based on your 
+                  job description and resume. Each question is designed to help you prepare for the 
+                  specific role and showcase your relevant experience.
                 </p>
               );
             }
