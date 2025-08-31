@@ -20,9 +20,9 @@ const ScoreBreakdownChart: React.FC<{ breakdown: ScoreBreakdown; confidence: num
   ];
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-green-100 text-green-700';
+    if (score >= 60) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-orange-100 text-orange-700';
   };
 
   const getConfidenceColor = (confidence: number) => {
@@ -32,19 +32,14 @@ const ScoreBreakdownChart: React.FC<{ breakdown: ScoreBreakdown; confidence: num
   };
 
   return (
-    <Card className="border-blue-200 bg-blue-50/30">
+    <Card className="border-0 bg-gray-50 shadow-sm rounded-lg">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium flex items-center justify-between">
           <span className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-blue-600" />
             Score Breakdown
           </span>
-          <div className="flex items-center gap-1">
-            <Star className="h-3 w-3 text-blue-600" />
-            <span className={`text-xs font-medium ${getConfidenceColor(confidence)}`}>
-              {Math.round(confidence * 100)}% confidence
-            </span>
-          </div>
+          {/* AI confidence moved to tooltip or removed entirely */}
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
@@ -57,10 +52,7 @@ const ScoreBreakdownChart: React.FC<{ breakdown: ScoreBreakdown; confidence: num
               </div>
               <Progress 
                 value={value} 
-                className="h-2"
-                style={{
-                  ['--progress-background' as any]: value >= 80 ? '#10b981' : value >= 60 ? '#f59e0b' : '#ef4444'
-                }}
+                className="h-1.5 bg-gray-200"
               />
             </div>
           ))}
@@ -93,57 +85,49 @@ const EnhancedFeedbackDisplay: React.FC<EnhancedFeedbackDisplayProps> = ({ feedb
       {/* Overall Score */}
       <div className="flex items-center justify-between">
         <span className="font-medium text-gray-700">Overall Score</span>
-        <Badge className={`${feedback.score >= 80 ? 'bg-green-500' : feedback.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'} text-white`}>
+        <Badge className={`${getScoreColor(feedback.score)}`}>
           {feedback.score}/100
         </Badge>
       </div>
 
       {/* Strengths Section */}
-      <div>
-        <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-green-700">
-          <CheckCircle className="h-4 w-4" /> 
+      <div className="border-l-4 border-green-200 pl-4">
+        <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-gray-700">
+          <CheckCircle className="h-4 w-4 text-green-600" /> 
           Strengths
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <ul className="space-y-1">
           {feedback.pros.map((pro, index) => (
-            <Badge 
-              key={`pro-${index}`} 
-              variant="secondary" 
-              className="bg-green-100 text-green-800 border-green-300 text-sm px-3 py-1.5 rounded-full"
-            >
-              {pro}
-            </Badge>
+            <li key={`pro-${index}`} className="text-sm text-gray-600">
+              ✓ {pro}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       {/* Areas for Improvement Section */}
-      <div>
-        <h4 className="font-semibold text-md flex items-center gap-2 mb-3 text-red-700">
-          <XCircle className="h-4 w-4" /> 
+      <div className="border-l-4 border-orange-200 pl-4">
+        <h4 className="font-medium text-sm flex items-center gap-2 mb-2 text-gray-700">
+          <XCircle className="h-4 w-4 text-orange-600" /> 
           Areas for Improvement
         </h4>
-        <div className="flex flex-wrap gap-2">
+        <ul className="space-y-1">
           {feedback.cons.map((con, index) => (
-            <Badge 
-              key={`con-${index}`} 
-              variant="secondary" 
-              className="bg-red-100 text-red-800 border-red-300 text-sm px-3 py-1.5 rounded-full"
-            >
-              {con}
-            </Badge>
+            <li key={`con-${index}`} className="text-sm text-gray-600">
+              ⚠ {con}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       {/* Improvement Suggestions */}
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-blue-800">
-          <Lightbulb className="h-4 w-4" />
+      <div className="border-l-4 border-blue-200 pl-4">
+        <h4 className="font-medium text-sm mb-2 flex items-center gap-2 text-gray-700">
+          <Lightbulb className="h-4 w-4 text-blue-600" />
           Suggestions
         </h4>
-        <p className="text-blue-700 text-sm leading-relaxed">
-          {feedback.suggestions || 
+        <p className="text-sm text-gray-600 leading-relaxed">
+          💡 {feedback.suggestions || 
            (feedback as any).improvementSuggestions || 
            'No specific suggestions available'}
         </p>
@@ -151,11 +135,11 @@ const EnhancedFeedbackDisplay: React.FC<EnhancedFeedbackDisplayProps> = ({ feedb
 
       {/* Overall Assessment */}
       {feedback.overall && (
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-          <h4 className="font-semibold text-md mb-2 text-gray-800">
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <h4 className="font-medium text-sm mb-2 text-gray-700">
             Overall Assessment
           </h4>
-          <p className="text-gray-700 text-sm leading-relaxed">{feedback.overall}</p>
+          <p className="text-sm text-gray-600 leading-relaxed">{feedback.overall}</p>
         </div>
       )}
     </div>

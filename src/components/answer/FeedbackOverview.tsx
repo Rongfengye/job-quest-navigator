@@ -65,9 +65,9 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
     : 0;
 
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (score >= 60) return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+    return 'bg-orange-50 text-orange-700 border-orange-100';
   };
 
   const toggleResponseExpand = (index: number) => {
@@ -96,7 +96,7 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
     <div className="space-y-6 p-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Interview Feedback</h2>
-        <Badge className={`${getScoreColor(averageScore)} text-white px-3 py-1`}>
+        <Badge className={`${getScoreColor(averageScore)} px-3 py-1`}>
           Overall Score: {averageScore}/100
         </Badge>
       </div>
@@ -117,25 +117,18 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                       {questionText === `Question ${index + 1}` ? 'Question not available' : questionText}
                     </span>
                   </div>
-                  <Badge className={`${getScoreColor(feedbackItem?.score || 0)} text-white ml-4`}>
-                    Score: {feedbackItem?.score || 0}/100
+                  <Badge className={`${getScoreColor(feedbackItem?.score || 0)} ml-4`}>
+                    {feedbackItem?.score || 0}/100
                   </Badge>
                 </div>
               </AccordionTrigger>
-              <AccordionContent className="pt-2">
-                <Card className="border-0 shadow-none">
-                  <CardContent className="p-2">
-                    <div className="space-y-4">
-                      <div className="bg-gray-50 p-3 rounded-md">
-                        <h4 className="font-semibold text-gray-800">Question:</h4>
-                        <p className="mt-1 text-gray-700">
-                          {questionText === `Question ${index + 1}` ? 'Question not available' : questionText}
-                        </p>
-                      </div>
+              <AccordionContent className="px-4 py-4">
+                <div className="space-y-4">
+                      {/* Question text removed - already shown in accordion header */}
 
                       {responseText && (
-                        <div className="bg-blue-50 p-3 rounded-md">
-                          <h4 className="font-semibold text-blue-800">Your Response:</h4>
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                          <h4 className="font-medium text-sm text-gray-700 mb-2">Your Response</h4>
                           <Collapsible
                             open={expandedResponses[index]}
                             onOpenChange={() => toggleResponseExpand(index)}
@@ -151,7 +144,7 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                             
                             {responseText.length > 150 && (
                               <CollapsibleTrigger asChild>
-                                <button className="flex items-center text-sm text-blue-600 hover:text-blue-800 mt-1">
+                                <button className="flex items-center text-sm text-gray-500 hover:text-gray-700 mt-1">
                                   {expandedResponses[index] ? (
                                     <>Show less <ChevronUp className="h-4 w-4 ml-1" /></>
                                   ) : (
@@ -167,28 +160,11 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                       )}
 
                       {feedbackItem && (
-                        <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
-                          <div className="p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                              <Lightbulb className="w-5 h-5 text-green-500 flex-shrink-0" />
-                              <div>
-                                <div className="font-semibold text-gray-900">Answer Feedback</div>
-                                <div className="text-sm text-gray-600">
-                                  {isEnhancedFeedback(feedbackItem) 
-                                    ? `AI confidence: ${Math.round(feedbackItem.confidence * 100)}%`
-                                    : 'Detailed analysis of your response'
-                                  }
-                                </div>
-                              </div>
-                            </div>
-
-                            <EnhancedFeedbackDisplay feedback={feedbackItem} questionIndex={index} />
-                          </div>
-                        </Card>
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <EnhancedFeedbackDisplay feedback={feedbackItem} questionIndex={index} />
+                        </div>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
+                </div>
               </AccordionContent>
             </AccordionItem>
           );
