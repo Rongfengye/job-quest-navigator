@@ -46,13 +46,10 @@ const RelatedPracticesList: React.FC<RelatedPracticesListProps> = ({
       <div className="mt-6">
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           <Book className="h-4 w-4" />
-          📘 Saved Follow-Up Practice
+          Follow up Question Vault Practices
         </h3>
-        <div className="text-sm text-gray-600">
-          You haven't saved any questions to your vault yet.{' '}
-          <a href="#questions" className="text-blue-600 hover:underline">
-            Start by selecting questions above.
-          </a>
+        <div className="text-sm text-muted-foreground italic">
+          No question vault practice sessions created yet
         </div>
       </div>
     );
