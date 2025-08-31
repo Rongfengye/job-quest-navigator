@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Briefcase, Clock, FileText, Plus, ChevronRight, Info, Target, CheckCircle, Eye, Upload, HelpCircle, Globe, Sparkles, Bot, Shield, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import FileUpload from '@/components/FileUpload';
 
@@ -23,10 +23,22 @@ interface JobCard {
 
 const Dashboard = () => {
   const { user } = useAuthContext();
+  const navigate = useNavigate();
   const [showExampleVault, setShowExampleVault] = useState(false);
   const [resumeFile, setResumeFile] = useState<File | null>(null);
-  const [jobDescriptionText, setJobDescriptionText] = useState('');
   const [resumeText, setResumeText] = useState('');
+
+  const handleAddJobDetails = () => {
+    if (resumeFile && resumeText) {
+      navigate('/create', { 
+        state: { 
+          resumeFile,
+          resumeText,
+          fromDashboard: true 
+        }
+      });
+    }
+  };
   
   // Fetch user's storyline jobs
   const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
@@ -396,11 +408,10 @@ const Dashboard = () => {
                   )}
 
                   {/* Upload Section */}
-                  <div className="grid md:grid-cols-2 gap-6 mb-8">
-                    {/* Resume Upload */}
+                  <div className="max-w-md mx-auto mb-8">
                     <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-gray-700">Resume</label>
+                      <div className="flex items-center gap-2 justify-center">
+                        <label className="text-sm font-medium text-gray-700">Upload Your Resume</label>
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -423,45 +434,22 @@ const Dashboard = () => {
                         currentFile={resumeFile}
                       />
                     </div>
-
-                    {/* Job Description Upload */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <label className="text-sm font-medium text-gray-700">Job Description</label>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="text-sm">Copy and paste the job posting or upload as a file. This helps us find relevant questions for your target role.</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-                      <textarea
-                        placeholder="Paste job description here..."
-                        value={jobDescriptionText}
-                        onChange={(e) => setJobDescriptionText(e.target.value)}
-                        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      />
-                    </div>
                   </div>
 
                   {/* CTA Button */}
                   <div className="text-center">
                     <Button
                       size="lg"
-                      disabled={!resumeFile || !jobDescriptionText}
-                      onClick={() => window.location.href = '/create'}
+                      disabled={!resumeFile}
+                      onClick={handleAddJobDetails}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
                     >
                       <Plus className="h-5 w-5 mr-2" />
-                      🚀 Create Vault & Get My Questions
+                      Add Job Details
                     </Button>
-                    {(!resumeFile || !jobDescriptionText) && (
+                    {!resumeFile && (
                       <p className="text-sm text-gray-500 mt-2">
-                        Upload both files to get started
+                        Upload your resume to continue
                       </p>
                     )}
                   </div>
