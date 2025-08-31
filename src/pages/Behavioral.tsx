@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -8,7 +8,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Book, Briefcase, Calendar, FileText, Plus, Play, CheckCircle, Clock, AlertCircle, Loader } from 'lucide-react';
+import { Book, Briefcase, Calendar, FileText, Plus, Play, CheckCircle, Clock, AlertCircle, Loader, X } from 'lucide-react';
 import { analyzeInterviewState } from '@/utils/interviewStateUtils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePlanStatus } from '@/hooks/usePlanStatus';
@@ -33,6 +33,7 @@ interface BehavioralInterview {
 const Behavioral = () => {
   const navigate = useNavigate();
   const { usageSummary, isLoadingUsage, isPremium, isBasic, fetchUserStatus } = usePlanStatus();
+  const [showExampleSession, setShowExampleSession] = useState(false);
 
   // Phase 3: Smart sync on premium feature entry
   React.useEffect(() => {
@@ -388,7 +389,7 @@ const Behavioral = () => {
                   <Button 
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate('/questions')}
+                    onClick={() => setShowExampleSession(!showExampleSession)}
                     className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
                   >
                     🔍 See example session
@@ -396,6 +397,39 @@ const Behavioral = () => {
 
                 </div>
               </div>
+
+              {/* Example Session Video Modal */}
+              {showExampleSession && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => setShowExampleSession(false)}>
+                  <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between p-4 border-b">
+                      <h3 className="text-lg font-semibold">Example Behavioral Interview Session</h3>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setShowExampleSession(false)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="p-6">
+                      <video 
+                        controls 
+                        className="w-full h-auto rounded-lg"
+                        preload="metadata"
+                      >
+                        <source src="/video-assets/CreateBehavioralFlow.mov" type="video/quicktime" />
+                        <source src="/video-assets/CreateBehavioralFlow.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                      </video>
+                      <p className="text-sm text-gray-600 mt-4 text-center">
+                        See how the behavioral interview process works from start to finish
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
