@@ -357,7 +357,7 @@ const BehavioralFeedback = () => {
                           </>
                         ) : (
                           <>
-                            🔁 Click here!
+                            Click here!
                           </>
                         )}
                       </Button>
