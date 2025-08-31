@@ -351,7 +351,7 @@ const CreateBehavioral = () => {
             <SoftUsageGate
               usageType="behavioral"
               currentCount={usageSummary?.behavioral.current || 0}
-              limit={usageSummary?.behavioral.limit || 5}
+              limit={usageSummary?.behavioral.limit || 3}
               onContinue={() => navigate('/settings')}
               onWaitUntilNextMonth={() => navigate('/behavioral')}
             />

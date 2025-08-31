@@ -105,7 +105,7 @@ const Create = () => {
                   {usageSummary.questionVault.remaining} of {usageSummary.questionVault.limit} remaining this month
                 </p>
               </div>
-              {usageSummary.questionVault.remaining <= 1 && (
+              {usageSummary.questionVault.remaining <= 0 && (
                 <Link to="/settings">
                   <Button variant="outline" size="sm">
                     Upgrade to Premium
