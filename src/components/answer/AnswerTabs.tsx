@@ -70,6 +70,7 @@ const AnswerTabs: React.FC<AnswerTabsProps> = ({
           isFeedbackLoading={isFeedbackLoading}
           feedbackError={feedbackError}
           initialMode={mode}
+          iterations={iterations}
         />
       </TabsContent>
       

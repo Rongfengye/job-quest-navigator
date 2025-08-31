@@ -3,11 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Question } from '@/hooks/useQuestionData';
 import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
+import { AnswerIteration } from '@/hooks/useAnswers';
 import AnswerModeToggle, { AnswerMode } from './AnswerModeToggle';
 import ManualAnswerMode from './ManualAnswerMode';
 import GuidedAnswerMode from './GuidedAnswerMode';
 import AnswerFeedback from './AnswerFeedback';
 import ProgressIndicator from './ProgressIndicator';
+import EnhancedFeedbackDisplay from '@/components/feedback/EnhancedFeedbackDisplay';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card } from '@/components/ui/card';
 import { Lightbulb } from 'lucide-react';
@@ -25,6 +27,7 @@ interface AnswerFormProps {
   feedbackError: string | null;
   processingThoughts: boolean;
   initialMode?: string;
+  iterations?: AnswerIteration[];
 }
 
 const AnswerForm: React.FC<AnswerFormProps> = ({
@@ -39,7 +42,8 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   isFeedbackLoading,
   feedbackError,
   processingThoughts,
-  initialMode = 'manual'
+  initialMode = 'manual',
+  iterations = []
 }) => {
   const { toast } = useToast();
   const [mode, setMode] = useState<AnswerMode>(initialMode as AnswerMode);
@@ -174,16 +178,51 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         <>
           {/* Manual Mode */}
           {mode === 'manual' && (
-            <ManualAnswerMode
-              inputAnswer={inputAnswer}
-              setInputAnswer={setInputAnswer}
-              handleSubmit={handleSaveAnswer}
-              isSaving={isSaving}
-              feedback={feedback}
-              hasUnsavedDraft={hasUnsavedDraft}
-              onModeChange={setMode}
-              currentMode={mode}
-            />
+            <>
+              <ManualAnswerMode
+                inputAnswer={inputAnswer}
+                setInputAnswer={setInputAnswer}
+                handleSubmit={handleSaveAnswer}
+                isSaving={isSaving}
+                feedback={feedback}
+                hasUnsavedDraft={hasUnsavedDraft}
+                onModeChange={setMode}
+                currentMode={mode}
+              />
+              
+              {/* Previous Iteration Feedback - show below Your Answer in manual mode */}
+              {iterations.length > 0 && (
+                <Card className="border-0 bg-gray-50 rounded-xl shadow-sm">
+                  <Accordion type="single" collapsible className="w-full">
+                    <AccordionItem value="previous-feedback" className="border-none">
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-100">
+                        <div className="flex items-center gap-3 text-left">
+                          <Lightbulb className="w-5 h-5 text-gray-500 flex-shrink-0" />
+                          <div>
+                            <div className="font-semibold text-gray-900">Previous Feedback</div>
+                            <div className="text-sm text-gray-600 mt-1">
+                              Review feedback from your last attempt
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-6">
+                        <div className="border-t border-gray-200 pt-6">
+                          {(() => {
+                            const latestIteration = iterations[iterations.length - 1];
+                            return latestIteration?.feedback ? (
+                              <EnhancedFeedbackDisplay feedback={latestIteration.feedback} />
+                            ) : (
+                              <p className="text-gray-500 text-sm">No previous feedback available</p>
+                            );
+                          })()}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Guided Mode */}
