@@ -303,8 +303,8 @@ const BehavioralFeedback = () => {
                 responses={responses} 
               />
               
-              {/* Post-Practice Success Nudge for Basic Users */}
-              {isBasic && !hasRelatedPractice && (
+              {/* Post-Practice Success Nudge for Basic Users - only show if they have related practices */}
+              {isBasic && hasRelatedPractice && (
                 <PremiumNudge variant="post-practice-success" className="mt-6" />
               )}
               
@@ -319,7 +319,7 @@ const BehavioralFeedback = () => {
                 <>
                   {/* Supporting lead text above CTA */}
                   <div className="text-sm text-gray-600 text-center mb-2 max-w-md">
-                    Struggled on a few questions? Start a targeted follow-up session to refine your answers with fresh AI coaching.
+                    Want to improve your answers? Follow up and further refine your responses.
                   </div>
                   
                   {showQuestionVaultGate && usageSummary ? (
@@ -354,7 +354,7 @@ const BehavioralFeedback = () => {
                           </>
                         ) : (
                           <>
-                            🔁 Follow Up & Improve All 5 Answers
+                            🔁 Click here!
                           </>
                         )}
                       </Button>
