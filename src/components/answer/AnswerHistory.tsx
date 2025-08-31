@@ -28,9 +28,9 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
 
   // Calculate score color for feedback
   const getScoreColor = (score: number) => {
-    if (score >= 80) return 'bg-green-500';
-    if (score >= 60) return 'bg-yellow-500';
-    return 'bg-red-500';
+    if (score >= 80) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    if (score >= 60) return 'bg-yellow-50 text-yellow-700 border-yellow-100';
+    return 'bg-orange-50 text-orange-700 border-orange-100';
   };
 
   // Get score from feedback object
@@ -64,9 +64,9 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
                     <div className="flex items-center gap-2">
                      {iteration.feedback && (
                        <Badge 
-                         className={`text-white text-xs px-2 py-1 ${getScoreColor(getScore(iteration.feedback))}`}
+                         className={`text-xs px-2 py-1 ${getScoreColor(getScore(iteration.feedback))}`}
                        >
-                         Score: {getScore(iteration.feedback)}/100
+                         {getScore(iteration.feedback)}/100
                        </Badge>
                      )}
                     <p className="text-xs text-gray-400">
@@ -80,12 +80,12 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
                 
                 {/* Feedback Section - Updated to match AnswerForm styling */}
                 {iteration.feedback && (
-                  <Card className="mt-4 border-2 border-dashed border-green-200 bg-green-50/30">
+                  <Card className="mt-4 border-0 bg-gray-50 rounded-xl shadow-sm">
                     <Accordion type="single" collapsible className="w-full">
                       <AccordionItem value="feedback" className="border-none">
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-green-50/50">
+                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-100">
                           <div className="flex items-center gap-3 text-left">
-                            <Lightbulb className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <Lightbulb className="w-5 h-5 text-gray-500 flex-shrink-0" />
                             <div>
                               <div className="font-semibold text-gray-900">Answer Feedback</div>
                               <div className="text-sm text-gray-600 mt-1">
@@ -95,7 +95,7 @@ const AnswerHistory: React.FC<AnswerHistoryProps> = ({
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="px-6 pb-6">
-                          <div className="border-t border-green-200 pt-6">
+                          <div className="border-t border-gray-200 pt-6">
                             {/* Use Enhanced Feedback Display */}
                             <EnhancedFeedbackDisplay feedback={iteration.feedback} />
                           </div>
