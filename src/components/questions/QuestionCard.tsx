@@ -216,6 +216,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
     ? 'bg-blue-50/50 hover:bg-blue-50/70' 
     : 'bg-purple-50/50 hover:bg-purple-50/70';
 
+  // Split question text into main prompt and subtext
+  const splitQuestion = (text: string) => {
+    // Find the first sentence ending with . ? or !
+    const firstSentenceMatch = text.match(/^[^.?!]+[.?!]/);
+    if (firstSentenceMatch && firstSentenceMatch[0].length < text.length) {
+      const mainPrompt = firstSentenceMatch[0].trim();
+      const subtext = text.substring(firstSentenceMatch[0].length).trim();
+      return { mainPrompt, subtext };
+    }
+    return { mainPrompt: text, subtext: '' };
+  };
+
+  const { mainPrompt, subtext } = splitQuestion(question.question);
+
   return (
     <Card 
       key={index} 
@@ -227,8 +241,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
           <span className="text-gray-500 font-mono font-medium">{formatIndex(index)}</span>
           <div className="flex-1">
             <CardTitle className="text-lg font-semibold text-gray-800 group-hover:text-interview-primary transition-colors">
-              {question.question}
+              {mainPrompt}
             </CardTitle>
+            {subtext && (
+              <p className="text-sm text-gray-500 mt-1">
+                {subtext}
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {hasAnswer && !isLoading && (
