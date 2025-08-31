@@ -93,7 +93,7 @@ const QuestionsList: React.FC<QuestionsListProps> = ({ questions, storylineId, m
               🪄 AI Practice Questions
             </h3>
             <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
-              Generated from your responses
+              Generated from your resume and job description
             </span>
           </div>
           {aiPracticeQuestions.map((question, index) => (
