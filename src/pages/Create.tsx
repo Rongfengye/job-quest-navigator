@@ -10,11 +10,15 @@ import { useCreateForm } from '@/hooks/useCreateForm';
 import { useAuthContext } from '@/context/AuthContext';
 import JobScraper from '@/components/JobScraper';
 import { ExtractedJobData } from '@/types/jobScraper';
+import { usePlanStatus } from '@/hooks/usePlanStatus';
+import SoftUsageGate from '@/components/SoftUsageGate';
 
 const Create = () => {
   const { isAuthenticated, isLoading } = useAuthContext();
   const navigate = useNavigate();
   const location = useLocation();
+  const { usageSummary } = usePlanStatus();
+  const [showSoftGate, setShowSoftGate] = React.useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -89,6 +93,29 @@ const Create = () => {
           Create Interview Prep Material
         </h1>
 
+        {/* Usage Status Display */}
+        {usageSummary && !usageSummary.isPremium && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-800">
+                  Question Vault Generations
+                </p>
+                <p className="text-sm text-blue-600">
+                  {usageSummary.questionVault.remaining} of {usageSummary.questionVault.limit} remaining this month
+                </p>
+              </div>
+              {usageSummary.questionVault.remaining <= 1 && (
+                <Link to="/settings">
+                  <Button variant="outline" size="sm">
+                    Upgrade to Premium
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
           {/* Job URL Scraper - Auto-fills multiple fields */}
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -149,13 +176,31 @@ const Create = () => {
             </div>
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
-            disabled={formLoading}
-          >
-            {formLoading ? 'Processing...' : 'Submit'}
-          </Button>
+          {showSoftGate && usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0 ? (
+            <SoftUsageGate
+              usageType="question_vault"
+              currentCount={usageSummary.questionVault.current}
+              limit={usageSummary.questionVault.limit}
+              onContinue={() => navigate('/settings')}
+              onWaitUntilNextMonth={() => navigate('/')}
+            />
+          ) : (
+            <Button 
+              type="submit" 
+              onClick={(e) => {
+                if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
+                  e.preventDefault();
+                  setShowSoftGate(true);
+                  return;
+                }
+                // Continue with normal form submission
+              }}
+              className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
+              disabled={formLoading}
+            >
+              {formLoading ? 'Processing...' : 'Submit'}
+            </Button>
+          )}
         </form>
       </div>
 
