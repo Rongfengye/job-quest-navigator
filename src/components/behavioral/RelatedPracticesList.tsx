@@ -30,7 +30,7 @@ const RelatedPracticesList: React.FC<RelatedPracticesListProps> = ({
       <div className="mt-6">
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           <Book className="h-4 w-4" />
-          Related Technical Practices
+          Follow up Question Vault Practices
         </h3>
         <div className="space-y-2">
           {[1, 2].map((i) => (
@@ -46,10 +46,10 @@ const RelatedPracticesList: React.FC<RelatedPracticesListProps> = ({
       <div className="mt-6">
         <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
           <Book className="h-4 w-4" />
-          Related Technical Practices
+          Follow up Question Vault Practices
         </h3>
         <div className="text-sm text-muted-foreground italic">
-          No technical practice sessions created yet
+          No question vault practice sessions created yet
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ const RelatedPracticesList: React.FC<RelatedPracticesListProps> = ({
     <div className="mt-6">
       <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
         <Book className="h-4 w-4" />
-        Related Technical Practices
+        Follow up Question Vault Practices
       </h3>
       <div className="space-y-2">
         {practices.map((practice) => (
