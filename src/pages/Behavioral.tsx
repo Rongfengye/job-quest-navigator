@@ -421,12 +421,22 @@ const Behavioral = () => {
                     <div className="p-6">
                       <video 
                         controls 
-                        className="w-full h-auto rounded-lg"
+                        muted
+                        playsInline
+                        className="w-full h-auto rounded-lg bg-gray-100"
                         preload="metadata"
+                        onError={(e) => console.error('Video load error:', e)}
+                        onLoadStart={() => console.log('Video loading started')}
+                        onLoadedData={() => console.log('Video data loaded')}
                       >
-                        <source src="/video-assets/CreateBehavioralFlow.mov" type="video/quicktime" />
-                        <source src="/video-assets/CreateBehavioralFlow.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
+                        <source src="/video-assets/CreateBehavioralFlow.mov" type="video/mp4" />
+                        <p className="text-center p-4 text-gray-600">
+                          Your browser does not support the video tag or the video failed to load.
+                          <br />
+                          <a href="/video-assets/CreateBehavioralFlow.mov" className="text-blue-600 hover:underline">
+                            Download video instead
+                          </a>
+                        </p>
                       </video>
                       <p className="text-sm text-gray-600 mt-4 text-center">
                         See how the behavioral interview process works from start to finish
