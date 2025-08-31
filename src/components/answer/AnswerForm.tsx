@@ -193,7 +193,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
               {/* Previous Iteration Feedback - show below Your Answer in manual mode */}
               {iterations.length > 0 && (
                 <Card className="border-0 bg-gray-50 rounded-xl shadow-sm">
-                  <Accordion type="single" collapsible className="w-full">
+                  <Accordion type="single" collapsible className="w-full" defaultValue="previous-feedback">
                     <AccordionItem value="previous-feedback" className="border-none">
                       <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-100">
                         <div className="flex items-center gap-3 text-left">
