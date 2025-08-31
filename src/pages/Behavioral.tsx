@@ -323,7 +323,7 @@ const Behavioral = () => {
               </div>
             </>
           ) : (
-            // Empty State View from previous design
+            // Enhanced Empty State View with designer recommendations
             <>
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
@@ -335,19 +335,66 @@ const Behavioral = () => {
                   <p className="text-muted-foreground mt-2">Simulate real interviews and get AI-powered feedback on your answers.</p>
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
-                <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">🗣️ No behavioral interviews yet</h3>
-                <p className="text-gray-500 mb-6 max-w-sm">
-                  Start a mock interview — answer 5 personalized questions and get instant AI feedback.
-                </p>
-                <Button 
-                    onClick={() => navigate('/behavioral/create')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Start Practice Session
-                </Button>
+              
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-8">
+                <div className="max-w-4xl mx-auto text-center">
+                  
+                  {/* Main Headline */}
+                  <div className="mb-8">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-4">
+                      🎙️ Practice Real-Time Behavioral Interviews
+                    </h2>
+                    <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+                      Simulate interviews with personalized, AI-generated questions and receive immediate feedback on your responses.
+                    </p>
+                  </div>
+
+                  {/* 3-Step Visualization */}
+                  <div className="grid grid-cols-3 gap-4 text-center mt-8 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">①</div>
+                      <p className="text-sm font-medium text-gray-700">Get 5 targeted questions</p>
+                      <p className="text-xs text-gray-500 mt-1">based on your vault</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">②</div>
+                      <p className="text-sm font-medium text-gray-700">Answer out loud or in text</p>
+                      <p className="text-xs text-gray-500 mt-1">AI listens & evaluates</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">③</div>
+                      <p className="text-sm font-medium text-gray-700">Receive structured feedback</p>
+                      <p className="text-xs text-gray-500 mt-1">for each response</p>
+                    </div>
+                  </div>
+
+                  {/* Call to Action Button */}
+                  <div className="mb-6">
+                    <Button 
+                      size="lg"
+                      onClick={() => navigate('/behavioral/create')}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
+                    >
+                      💬 Start My Mock Interview →
+                    </Button>
+                  </div>
+
+                  {/* Reassurance Subtext */}
+                  <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
+                    Don't worry — you'll have a chance to preview each question and retry responses. Great for practicing at your own pace.
+                  </p>
+
+                  {/* Optional: See Example Session Link */}
+                  <Button 
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate('/questions')}
+                    className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                  >
+                    🔍 See example session
+                  </Button>
+
+                </div>
               </div>
             </>
           )}
