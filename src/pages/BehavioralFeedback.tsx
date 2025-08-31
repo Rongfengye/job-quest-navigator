@@ -327,21 +327,32 @@ const BehavioralFeedback = () => {
                     />
                   </div>
                 ) : (
-                  <Button
-                    className="w-full max-w-md flex items-center gap-2"
-                    onClick={(e) => {
-                      if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
-                        e.preventDefault();
-                        setShowQuestionVaultGate(true);
-                        return;
-                      }
-                      handleContinueToQuestions();
-                    }}
-                    disabled={isCreatingQuestions}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    {isCreatingQuestions ? 'Generating Practice Suite...' : 'Improve your responses with AI'}
-                  </Button>
+                  <>
+                    <Button
+                      className="w-full max-w-md flex items-center gap-2"
+                      onClick={(e) => {
+                        if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
+                          e.preventDefault();
+                          setShowQuestionVaultGate(true);
+                          return;
+                        }
+                        handleContinueToQuestions();
+                      }}
+                      disabled={isCreatingQuestions}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      {isCreatingQuestions ? 'Generating Practice Suite...' : 'Improve your responses with AI'}
+                    </Button>
+                    
+                    {/* Secondary CTA - Connection to Question Vault */}
+                    <div className="mt-4 text-sm text-gray-600 text-center max-w-md">
+                      Want to revisit these questions later? Save them to your{' '}
+                      <a href="/questions" className="text-blue-600 hover:underline font-medium">
+                        Question Vault
+                      </a>{' '}
+                      to practice follow-ups anytime.
+                    </div>
+                  </>
                 )
               ) : (
                 <div className="w-full max-w-md text-center">

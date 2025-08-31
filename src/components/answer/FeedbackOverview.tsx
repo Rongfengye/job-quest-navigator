@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
+import { CheckCircle, XCircle, ChevronDown, ChevronUp, Lightbulb, Plus } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -111,15 +111,28 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
             <AccordionItem key={index} value={`question-${index}`}>
               <AccordionTrigger className="py-4 hover:no-underline">
                 <div className="flex items-center justify-between w-full pr-4">
-                  <div className="flex flex-col items-start text-left">
+                  <div className="flex flex-col items-start text-left flex-1">
                     <span className="font-medium">Question {index + 1}</span>
-                    <span className="text-sm text-gray-600 truncate max-w-[500px]">
+                    <span className="text-sm text-gray-600 truncate max-w-[400px]">
                       {questionText === `Question ${index + 1}` ? 'Question not available' : questionText}
                     </span>
                   </div>
-                  <Badge className={`${getScoreColor(feedbackItem?.score || 0)} text-white ml-4`}>
-                    Score: {feedbackItem?.score || 0}/100
-                  </Badge>
+                  <div className="flex items-center gap-2 ml-4">
+                    <button 
+                      className="text-blue-600 hover:underline text-xs font-medium flex items-center gap-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Implement save to vault functionality
+                        console.log('Save to vault:', questionText);
+                      }}
+                    >
+                      <Plus className="h-3 w-3" />
+                      Add to Vault
+                    </button>
+                    <Badge className={`${getScoreColor(feedbackItem?.score || 0)} text-white`}>
+                      Score: {feedbackItem?.score || 0}/100
+                    </Badge>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-2">
@@ -183,6 +196,14 @@ const FeedbackOverview: React.FC<FeedbackOverviewProps> = ({ feedback, questions
                             </div>
 
                             <EnhancedFeedbackDisplay feedback={feedbackItem} questionIndex={index} />
+                            
+                            {/* Nudge for low-scoring questions */}
+                            {feedbackItem?.score && feedbackItem.score < 70 && (
+                              <div className="mt-3 text-xs text-gray-500 flex items-center gap-1">
+                                <Lightbulb className="h-3 w-3" />
+                                💡 This might be worth practicing again in your Question Vault.
+                              </div>
+                            )}
                           </div>
                         </Card>
                       )}
