@@ -422,6 +422,7 @@ const Behavioral = () => {
                       <video 
                         controls 
                         muted
+                        autoPlay
                         playsInline
                         className="w-full h-auto rounded-lg bg-gray-100"
                         preload="metadata"
