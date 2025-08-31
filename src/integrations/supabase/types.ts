@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
@@ -40,26 +40,26 @@ export type Database = {
       }
       hireme_user_status: {
         Row: {
-          created_at: string
+          created_at: string | null
           custom_premium: number
           id: string
-          updated_at: string
+          updated_at: string | null
           user_id: string
           user_plan_status: number
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           custom_premium?: number
           id?: string
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
           user_plan_status?: number
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           custom_premium?: number
           id?: string
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
           user_plan_status?: number
         }
@@ -68,7 +68,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
-          credits: number | null
+          credits: number
           email: string | null
           email_sent: boolean | null
           first_name: string | null
@@ -80,7 +80,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          credits?: number | null
+          credits?: number
           email?: string | null
           email_sent?: boolean | null
           first_name?: string | null
@@ -92,7 +92,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          credits?: number | null
+          credits?: number
           email?: string | null
           email_sent?: boolean | null
           first_name?: string | null
@@ -108,6 +108,7 @@ export type Database = {
         Row: {
           analysis_results: Json
           analyzed_at: string | null
+          crawled_content: Json | null
           created_at: string
           file_type: string | null
           file_url: string | null
@@ -131,6 +132,7 @@ export type Database = {
         Insert: {
           analysis_results: Json
           analyzed_at?: string | null
+          crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
           file_url?: string | null
@@ -154,6 +156,7 @@ export type Database = {
         Update: {
           analysis_results?: Json
           analyzed_at?: string | null
+          crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
           file_url?: string | null
@@ -178,30 +181,30 @@ export type Database = {
       }
       resume_analyses: {
         Row: {
-          created_at: string | null
+          created_at: string
           current_version: Json
           id: string
           improved_version: Json
           resume_path: string
-          updated_at: string | null
+          updated_at: string
           user_id: string
         }
         Insert: {
-          created_at?: string | null
+          created_at?: string
           current_version: Json
           id?: string
           improved_version: Json
           resume_path: string
-          updated_at?: string | null
+          updated_at?: string
           user_id: string
         }
         Update: {
-          created_at?: string | null
+          created_at?: string
           current_version?: Json
           id?: string
           improved_version?: Json
           resume_path?: string
-          updated_at?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -475,7 +478,7 @@ export type Database = {
       }
       waitlist_contacts: {
         Row: {
-          auth_provider: Database["public"]["Enums"]["auth_provider_enum"]
+          auth_provider: Database["public"]["Enums"]["auth_provider"]
           completed_at: string | null
           created_at: string | null
           email: string
@@ -487,7 +490,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
-          auth_provider: Database["public"]["Enums"]["auth_provider_enum"]
+          auth_provider: Database["public"]["Enums"]["auth_provider"]
           completed_at?: string | null
           created_at?: string | null
           email: string
@@ -499,7 +502,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
-          auth_provider?: Database["public"]["Enums"]["auth_provider_enum"]
+          auth_provider?: Database["public"]["Enums"]["auth_provider"]
           completed_at?: string | null
           created_at?: string | null
           email?: string
@@ -555,7 +558,7 @@ export type Database = {
       }
     }
     Enums: {
-      auth_provider_enum:
+      auth_provider:
         | "google"
         | "github"
         | "linkedin"
@@ -688,13 +691,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      auth_provider_enum: [
-        "google",
-        "github",
-        "linkedin",
-        "email",
-        "linkedin_oidc",
-      ],
+      auth_provider: ["google", "github", "linkedin", "email", "linkedin_oidc"],
     },
   },
 } as const
