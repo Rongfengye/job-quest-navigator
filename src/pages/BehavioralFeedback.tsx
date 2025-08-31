@@ -356,7 +356,7 @@ const BehavioralFeedback = () => {
                         Get fresh follow-up questions & AI feedback to refine your answers
                       </p>
                     </div>
-                  )
+                  )}
                 </>
               ) : (
                 <div className="w-full max-w-md text-center">
