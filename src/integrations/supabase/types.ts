@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -107,6 +107,7 @@ export type Database = {
       resubump_analysis: {
         Row: {
           analysis_results: Json
+          analyzed_at: string | null
           crawled_content: Json | null
           created_at: string
           file_type: string | null
@@ -115,10 +116,12 @@ export type Database = {
           guiding_questions: Json | null
           id: string
           job_descriptions: Json | null
+          original_structured_resume: Json | null
           question_answers: Json | null
           resume_text: string
+          role: string | null
+          structured_changes: Json | null
           structured_resume: Json | null
-          tailored_content: string | null
           tailoring_timestamp: string | null
           title: string | null
           updated_at: string
@@ -128,6 +131,7 @@ export type Database = {
         }
         Insert: {
           analysis_results: Json
+          analyzed_at?: string | null
           crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
@@ -136,10 +140,12 @@ export type Database = {
           guiding_questions?: Json | null
           id?: string
           job_descriptions?: Json | null
+          original_structured_resume?: Json | null
           question_answers?: Json | null
           resume_text: string
+          role?: string | null
+          structured_changes?: Json | null
           structured_resume?: Json | null
-          tailored_content?: string | null
           tailoring_timestamp?: string | null
           title?: string | null
           updated_at?: string
@@ -149,6 +155,7 @@ export type Database = {
         }
         Update: {
           analysis_results?: Json
+          analyzed_at?: string | null
           crawled_content?: Json | null
           created_at?: string
           file_type?: string | null
@@ -157,10 +164,12 @@ export type Database = {
           guiding_questions?: Json | null
           id?: string
           job_descriptions?: Json | null
+          original_structured_resume?: Json | null
           question_answers?: Json | null
           resume_text?: string
+          role?: string | null
+          structured_changes?: Json | null
           structured_resume?: Json | null
-          tailored_content?: string | null
           tailoring_timestamp?: string | null
           title?: string | null
           updated_at?: string
@@ -512,15 +521,15 @@ export type Database = {
     }
     Functions: {
       add_user_tokens: {
-        Args: { user_id: string; amount: number }
+        Args: { amount: number; user_id: string }
         Returns: number
       }
       check_user_monthly_usage: {
-        Args: { user_id: string; usage_type: string }
+        Args: { usage_type: string; user_id: string }
         Returns: Json
       }
       deduct_user_tokens: {
-        Args: { user_id: string; amount: number }
+        Args: { amount: number; user_id: string }
         Returns: number
       }
       ensure_user_usage_record: {
@@ -532,15 +541,15 @@ export type Database = {
         Returns: Json
       }
       increment_user_monthly_usage: {
-        Args: { user_id: string; usage_type: string }
+        Args: { usage_type: string; user_id: string }
         Returns: Json
       }
       make_user_basic: {
-        Args: { user_id: string; amount?: number }
+        Args: { amount?: number; user_id: string }
         Returns: number
       }
       make_user_premium: {
-        Args: { user_id: string; amount?: number }
+        Args: { amount?: number; user_id: string }
         Returns: number
       }
       toggle_user_premium: {
