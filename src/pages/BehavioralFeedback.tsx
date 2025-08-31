@@ -314,35 +314,50 @@ const BehavioralFeedback = () => {
                 behavioralId={interviewId || ''}
               />
             </CardContent>
-            <CardFooter className="flex flex-col justify-center border-t pt-4">
+            <CardFooter className="flex flex-col items-center justify-center border-t pt-6">
               {!hasRelatedPractice ? (
-                showQuestionVaultGate && usageSummary ? (
-                  <div className="w-full max-w-md">
-                    <SoftUsageGate
-                      usageType="question_vault"
-                      currentCount={usageSummary.questionVault.current}
-                      limit={usageSummary.questionVault.limit}
-                      onContinue={() => navigate('/settings')}
-                      onWaitUntilNextMonth={() => setShowQuestionVaultGate(false)}
-                    />
+                <>
+                  {/* Explanatory text above CTA */}
+                  <div className="text-sm text-gray-500 text-center mb-4 max-w-md">
+                    Ready to level up? Re-enter a mock session with all 5 questions, new follow-up prompts, and live feedback.
                   </div>
-                ) : (
-                  <Button
-                    className="w-full max-w-md flex items-center gap-2"
-                    onClick={(e) => {
-                      if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
-                        e.preventDefault();
-                        setShowQuestionVaultGate(true);
-                        return;
-                      }
-                      handleContinueToQuestions();
-                    }}
-                    disabled={isCreatingQuestions}
-                  >
-                    <BookOpen className="w-4 h-4" />
-                    {isCreatingQuestions ? 'Generating Practice Suite...' : 'Improve your responses with AI'}
-                  </Button>
-                )
+                  
+                  {showQuestionVaultGate && usageSummary ? (
+                    <div className="w-full max-w-md">
+                      <SoftUsageGate
+                        usageType="question_vault"
+                        currentCount={usageSummary.questionVault.current}
+                        limit={usageSummary.questionVault.limit}
+                        onContinue={() => navigate('/settings')}
+                        onWaitUntilNextMonth={() => setShowQuestionVaultGate(false)}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-md flex flex-col items-center">
+                      <Button
+                        className="w-full flex items-center justify-center gap-2"
+                        size="lg"
+                        onClick={(e) => {
+                          if (usageSummary && !usageSummary.isPremium && usageSummary.questionVault.remaining === 0) {
+                            e.preventDefault();
+                            setShowQuestionVaultGate(true);
+                            return;
+                          }
+                          handleContinueToQuestions();
+                        }}
+                        disabled={isCreatingQuestions}
+                      >
+                        <BookOpen className="w-4 h-4" />
+                        {isCreatingQuestions ? 'Generating Practice Suite...' : '📘 Practice All 5 Questions Again'}
+                      </Button>
+                      
+                      {/* Subtitle for additional clarity */}
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        Get fresh follow-up questions & AI feedback to refine your answers
+                      </p>
+                    </div>
+                  )
+                </>
               ) : (
                 <div className="w-full max-w-md text-center">
                   <div className="flex items-center justify-center gap-2 text-muted-foreground mb-1">
