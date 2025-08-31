@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -30,6 +30,18 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   onModeChange,
   currentMode
 }) => {
+  const [showPulse, setShowPulse] = useState(false);
+  
+  // Show pulse animation for 3 seconds when component mounts (when switching to manual mode)
+  useEffect(() => {
+    setShowPulse(true);
+    const timer = setTimeout(() => {
+      setShowPulse(false);
+    }, 3000);
+    
+    return () => clearTimeout(timer);
+  }, []); // Empty dependency array means this runs once on mount
+  
   const { isRecording, startRecording, stopRecording } = useVoiceRecording((text) => {
     setInputAnswer(inputAnswer + (inputAnswer ? ' ' : '') + text);
   });
@@ -57,7 +69,9 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
                   variant="ghost"
                   size="sm"
                   onClick={() => onModeChange('guided')}
-                  className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 h-auto rounded-md border border-blue-200"
+                  className={`text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 h-auto rounded-md border border-blue-200 ${
+                    showPulse ? 'animate-pulse-color-blue' : ''
+                  }`}
                 >
                   <Sparkles className="w-3 h-3 mr-1.5" />
                   Switch to Guided

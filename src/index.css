@@ -203,6 +203,25 @@
   animation: pulse-blue-mic 1.5s ease-out infinite;
 }
 
+@keyframes pulse-color-blue {
+  0% {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+  50% {
+    background-color: rgba(59, 130, 246, 0.2);
+    border-color: rgba(59, 130, 246, 0.8);
+  }
+  100% {
+    background-color: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.5);
+  }
+}
+
+.animate-pulse-color-blue {
+  animation: pulse-color-blue 1s ease-in-out infinite;
+}
+
 /* Mobile scrolling optimizations */
 .mobile-scroll {
   -webkit-overflow-scrolling: touch;
