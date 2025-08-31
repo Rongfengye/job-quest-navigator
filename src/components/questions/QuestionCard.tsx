@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, CheckCircle, Brain, MessageSquare, Users, Globe, Shield, Star, ExternalLink } from 'lucide-react';
+import { ArrowRight, CheckCircle, Brain, MessageSquare, Users, Globe, Shield, Star, ExternalLink, Briefcase, MessageCircle, Bot } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { filterValue } from '@/utils/supabaseTypes';
@@ -116,20 +116,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
     
     const configs: Record<string, any> = {
       'glassdoor-verified': {
-        icon: Shield,
-        label: 'Glassdoor Verified',
+        icon: Briefcase,
+        label: '✅ Glassdoor',
         variant: 'default',
-        bgColor: 'bg-emerald-100',
-        textColor: 'text-emerald-800',
-        borderColor: 'border-emerald-300'
+        bgColor: 'bg-teal-100',
+        textColor: 'text-teal-800',
+        borderColor: 'border-teal-300'
       },
       'blind-verified': {
         icon: Shield,
-        label: 'Blind Verified',
+        label: 'Blind',
         variant: 'default',
-        bgColor: 'bg-blue-100',
-        textColor: 'text-blue-800',
-        borderColor: 'border-blue-300'
+        bgColor: 'bg-navy-100',
+        textColor: 'text-navy-800',
+        borderColor: 'border-navy-300',
+        customBg: 'bg-blue-900/10',
+        customText: 'text-blue-900'
       },
       'company-official': {
         icon: Shield,
@@ -172,20 +174,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         borderColor: 'border-gray-300'
       },
       'ai-generated': {
-        icon: Brain,
-        label: 'AI Generated',
+        icon: Bot,
+        label: '🤖 AI Generated',
         variant: 'outline',
-        bgColor: 'bg-slate-100',
-        textColor: 'text-slate-800',
-        borderColor: 'border-slate-300'
+        bgColor: 'bg-blue-100',
+        textColor: 'text-blue-700',
+        borderColor: 'border-blue-300',
+        customBg: 'bg-slate-100',
+        customText: 'text-slate-700'
       },
       'behavioral-practice-session': {
-        icon: Users,
-        label: 'Practice Session',
+        icon: MessageCircle,
+        label: '💬 Practice Session',
         variant: 'outline',
-        bgColor: 'bg-violet-100',
-        textColor: 'text-violet-800',
-        borderColor: 'border-violet-300'
+        bgColor: 'bg-purple-100',
+        textColor: 'text-purple-800',
+        borderColor: 'border-purple-300'
       }
     };
     
@@ -203,10 +207,19 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
   const sourceConfig = getSourceConfig(question.sourceAttribution);
   const TypeIcon = typeConfig.icon;
 
+  // Determine if this is a real-world question or AI-generated
+  const isRealWorldQuestion = question.sourceAttribution?.source && 
+    !['ai-generated', 'behavioral-practice-session'].includes(question.sourceAttribution.source);
+  
+  // Apply background tinting based on question origin
+  const cardBackgroundClass = isRealWorldQuestion 
+    ? 'bg-blue-50/50 hover:bg-blue-50/70' 
+    : 'bg-purple-50/50 hover:bg-purple-50/70';
+
   return (
     <Card 
       key={index} 
-      className="mb-4 hover:shadow-md transition-all cursor-pointer group"
+      className={`mb-4 hover:shadow-md transition-all cursor-pointer group ${cardBackgroundClass}`}
       onClick={handleQuestionClick}
     >
       <CardHeader className="pb-3">
@@ -234,7 +247,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
             {sourceConfig && (
               <Badge 
                 variant={sourceConfig.variant}
-                className={`${sourceConfig.bgColor} ${sourceConfig.textColor} ${sourceConfig.borderColor}`}
+                className={`${sourceConfig.customBg || sourceConfig.bgColor} ${sourceConfig.customText || sourceConfig.textColor} ${sourceConfig.borderColor}`}
                 title={`Source: ${sourceConfig.label} | Reliability: ${question.sourceAttribution?.reliability}/5`}
               >
                 <sourceConfig.icon className="w-3 h-3 mr-1" />
