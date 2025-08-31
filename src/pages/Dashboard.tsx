@@ -7,7 +7,7 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Clock, FileText, Plus, ChevronRight, Info, Target, CheckCircle, Eye, Upload, HelpCircle } from 'lucide-react';
+import { Briefcase, Clock, FileText, Plus, ChevronRight, Info, Target, CheckCircle, Eye, Upload, HelpCircle, Globe, Sparkles, Bot, Shield, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import FileUpload from '@/components/FileUpload';
@@ -195,7 +195,6 @@ const Dashboard = () => {
               <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-8">
                 <div className="max-w-4xl mx-auto">
                   <div className="text-center mb-8">
-                    <Target className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                     <h2 className="text-3xl font-bold text-gray-800 mb-2">
                       🎯 Let's build your first Question Vault
                     </h2>
@@ -234,30 +233,165 @@ const Dashboard = () => {
 
                   {/* Example Vault Preview */}
                   {showExampleVault && (
-                    <div className="mb-8">
-                      <Card className="bg-white/80 border-blue-200">
-                        <CardHeader>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle>Software Engineer - Meta</CardTitle>
-                              <CardDescription>Meta Platforms</CardDescription>
+                    <div className="mb-8 max-h-96 overflow-y-auto border rounded-lg bg-white">
+                      <div className="p-6 space-y-6">
+                        {/* Header */}
+                        <div className="bg-white rounded-lg shadow-sm p-6">
+                          <h1 className="text-3xl font-bold text-interview-primary mb-2">Software Engineer</h1>
+                          <p className="text-gray-600 mb-4">Google</p>
+                          <p className="text-gray-700 font-medium">
+                            These questions were carefully scraped from trusted sources like Glassdoor and Blind, 
+                            tailored to your job description and resume. Practice answering them to reflect what 
+                            real interviewers are likely to ask.
+                          </p>
+                        </div>
+
+                        {/* Source Info Panel */}
+                        <Card className="mb-6">
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Info className="w-5 h-5" />
+                              Question Sources & Authenticity
+                              <span className="text-sm text-blue-600">How are questions sourced?</span>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-4">
+                              <div className="flex flex-wrap gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="w-4 h-4 text-green-600" />
+                                  <span className="font-medium">4/5</span>
+                                  <span className="text-gray-600">real interview questions found</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Star className="w-4 h-4 text-yellow-500" />
+                                  <span className="font-medium">4/5</span>
+                                  <span className="text-gray-600">average reliability</span>
+                                </div>
+                              </div>
+                              <div className="text-xs text-gray-500 pt-3 border-t">
+                                <strong>Reliability Scale:</strong> 5/5 = Official/Verified sources, 4/5 = AI generated & Community verified, 3/5 = General forums
+                              </div>
                             </div>
-                            <Badge className="bg-green-100 text-green-800">Example</Badge>
+                          </CardContent>
+                        </Card>
+
+                        {/* Questions List */}
+                        <div className="pt-2">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center">
+                              <FileText className="w-5 h-5 mr-2 text-interview-primary" />
+                              <h2 className="text-xl font-semibold">Practice Interview Questions</h2>
+                            </div>
+                            <div className="text-sm text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                              5 Total Questions
+                            </div>
                           </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2 text-sm text-gray-600">
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4" />
-                              <span>12 targeted behavioral questions ready</span>
+
+                          {/* Real-World Questions Section */}
+                          <div className="mb-8">
+                            <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
+                              <Globe className="w-5 h-5 mr-2 text-green-600" />
+                              <h3 className="text-lg font-semibold text-gray-800">🧠 Real-World Interview Questions</h3>
+                              <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                                Scraped from Glassdoor, Blind
+                              </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Info className="h-4 w-4" />
-                              <span>Sources: Glassdoor (8), Blind (3), AI Generated (1)</span>
-                            </div>
+
+                            {/* Example Questions */}
+                            {[
+                              {
+                                question: "Can you describe a time when you worked closely with a cross-functional team to achieve a project goal?",
+                                source: "glassdoor",
+                                explanation: "This question assesses teamwork and collaboration skills, which are critical at Google where engineers often work with diverse teams.",
+                                reliability: 5
+                              },
+                              {
+                                question: "Tell me about a time when you had to learn a new technology or skill quickly to complete a project.",
+                                source: "blind", 
+                                explanation: "Google values learning agility, especially for new graduates who must adapt to evolving technologies.",
+                                reliability: 4
+                              },
+                              {
+                                question: "Describe an instance where you took initiative to improve a process or system at work or school.",
+                                source: "glassdoor",
+                                explanation: "Initiative is important at Google to drive innovation and efficiency beyond assigned tasks.",
+                                reliability: 5
+                              },
+                              {
+                                question: "Can you share a challenging problem you solved and how you approached it?",
+                                source: "glassdoor",
+                                explanation: "Problem-solving skills are essential for software engineers at Google to overcome technical challenges effectively.",
+                                reliability: 5
+                              }
+                            ].map((q, index) => (
+                              <Card key={index} className="mb-4 bg-blue-50/50 opacity-75">
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-start gap-3">
+                                    <span className="text-gray-500 font-mono font-medium">{String(index + 1).padStart(2, '0')}</span>
+                                    <div className="flex-1">
+                                      <CardTitle className="text-lg font-semibold text-gray-800">
+                                        {q.question}
+                                      </CardTitle>
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Badge className={q.source === 'glassdoor' ? 'bg-teal-100 text-teal-800' : 'bg-blue-900/10 text-blue-900'}>
+                                        <Briefcase className="w-3 h-3 mr-1" />
+                                        {q.source === 'glassdoor' ? '✅ Glassdoor' : 'Blind'}
+                                        {q.reliability >= 4 && <Star className="w-3 h-3 ml-1 fill-current" />}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  <p className="text-gray-600 text-sm line-clamp-2">{q.explanation}</p>
+                                  <div className="mt-2 text-xs text-gray-500">
+                                    Source reliability: {q.reliability}/5 | Category: {q.source === 'glassdoor' ? 'interview_review' : 'professional_forum'}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
                           </div>
-                        </CardContent>
-                      </Card>
+
+                          {/* AI Questions Section */}
+                          <div className="mb-8">
+                            <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
+                              <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
+                              <h3 className="text-lg font-semibold text-gray-800">🪄 AI Practice Questions</h3>
+                              <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+                                Generated from your resume and job description
+                              </span>
+                            </div>
+
+                            <Card className="mb-4 bg-purple-50/50 opacity-75">
+                              <CardHeader className="pb-3">
+                                <div className="flex items-start gap-3">
+                                  <span className="text-gray-500 font-mono font-medium">05</span>
+                                  <div className="flex-1">
+                                    <CardTitle className="text-lg font-semibold text-gray-800">
+                                      Give an example of how you communicated complex technical information to a non-technical audience.
+                                    </CardTitle>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <Badge className="bg-slate-100 text-slate-700">
+                                      <Bot className="w-3 h-3 mr-1" />
+                                      🤖 AI Generated
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <p className="text-gray-600 text-sm line-clamp-2">
+                                  Effective communication is vital at Google to ensure cross-team understanding and collaboration.
+                                </p>
+                                <div className="mt-2 text-xs text-gray-500">
+                                  Source reliability: 4/5 | Category: ai_fallback
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
 
