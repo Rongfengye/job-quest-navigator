@@ -199,7 +199,8 @@ export const useJobPracticeSubmission = (
         description: "Your interview questions have been generated. Redirecting to results page.",
       });
 
-      navigate(`/questions?id=${storylineId}&type=1`);
+      // Use type=2 to allow user to choose between manual/guided mode
+      navigate(`/questions?id=${storylineId}&type=2`);
 
     } catch (error) {
       console.error('Error creating storyline job:', error);
