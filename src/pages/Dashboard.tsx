@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/context/AuthContext';
@@ -7,8 +7,10 @@ import DashboardLayout from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Briefcase, Clock, FileText, Plus, ChevronRight, Info } from 'lucide-react';
+import { Briefcase, Clock, FileText, Plus, ChevronRight, Info, Target, CheckCircle, Eye, Upload, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import FileUpload from '@/components/FileUpload';
 
 interface JobCard {
   id: string;
@@ -21,6 +23,10 @@ interface JobCard {
 
 const Dashboard = () => {
   const { user } = useAuthContext();
+  const [showExampleVault, setShowExampleVault] = useState(false);
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [jobDescriptionText, setJobDescriptionText] = useState('');
+  const [resumeText, setResumeText] = useState('');
   
   // Fetch user's storyline jobs
   const { data: jobs, isLoading: jobsLoading, error: jobsError } = useQuery({
@@ -173,7 +179,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           ) : (
-            // Empty State View
+            // Zero State Wizard
             <>
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-8">
                 <div>
@@ -185,19 +191,147 @@ const Dashboard = () => {
                   <p className="text-muted-foreground mt-2">Practice targeted questions generated from your resume, job postings, and interview history.</p>
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-lg border border-dashed p-12 flex flex-col items-center justify-center text-center">
-                <Briefcase className="h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">👋 No question vaults yet</h3>
-                <p className="text-gray-500 mb-6 max-w-sm">
-                  Get started by uploading your resume and job description — we'll generate practice questions tailored just for you.
-                </p>
-                <Button 
-                  onClick={() => window.location.href = '/create'}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Question Vault
-                </Button>
+
+              <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-8">
+                <div className="max-w-4xl mx-auto">
+                  <div className="text-center mb-8">
+                    <Target className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                    <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                      🎯 Let's build your first Question Vault
+                    </h2>
+                    <p className="text-gray-600 max-w-2xl mx-auto">
+                      Upload your resume and job description to get personalized interview questions from real-world sources.
+                    </p>
+                  </div>
+
+                  {/* Benefits List */}
+                  <div className="grid md:grid-cols-3 gap-4 mb-8">
+                    <div className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700">Targeted behavioral questions</span>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700">Real-world examples from Glassdoor and Blind</span>
+                    </div>
+                    <div className="flex items-center gap-3 bg-white p-4 rounded-lg shadow-sm">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                      <span className="text-sm font-medium text-gray-700">AI feedback coaching after practice</span>
+                    </div>
+                  </div>
+
+                  {/* Example Vault Button */}
+                  <div className="text-center mb-8">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowExampleVault(!showExampleVault)}
+                      className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      📊 See Example Vault
+                    </Button>
+                  </div>
+
+                  {/* Example Vault Preview */}
+                  {showExampleVault && (
+                    <div className="mb-8">
+                      <Card className="bg-white/80 border-blue-200">
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle>Software Engineer - Meta</CardTitle>
+                              <CardDescription>Meta Platforms</CardDescription>
+                            </div>
+                            <Badge className="bg-green-100 text-green-800">Example</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              <span>12 targeted behavioral questions ready</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Info className="h-4 w-4" />
+                              <span>Sources: Glassdoor (8), Blind (3), AI Generated (1)</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+
+                  {/* Upload Section */}
+                  <div className="grid md:grid-cols-2 gap-6 mb-8">
+                    {/* Resume Upload */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-700">Resume</label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Upload your resume in PDF, DOC, or TXT format. We'll extract your experience to generate relevant questions.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <FileUpload
+                        id="resume"
+                        label="Resume"
+                        required
+                        onFileChange={(file, text) => {
+                          setResumeFile(file);
+                          setResumeText(text);
+                        }}
+                        currentFile={resumeFile}
+                      />
+                    </div>
+
+                    {/* Job Description Upload */}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <label className="text-sm font-medium text-gray-700">Job Description</label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-sm">Copy and paste the job posting or upload as a file. This helps us find relevant questions for your target role.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <textarea
+                        placeholder="Paste job description here..."
+                        value={jobDescriptionText}
+                        onChange={(e) => setJobDescriptionText(e.target.value)}
+                        className="w-full min-h-[120px] p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="text-center">
+                    <Button
+                      size="lg"
+                      disabled={!resumeFile || !jobDescriptionText}
+                      onClick={() => window.location.href = '/create'}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      🚀 Create Vault & Get My Questions
+                    </Button>
+                    {(!resumeFile || !jobDescriptionText) && (
+                      <p className="text-sm text-gray-500 mt-2">
+                        Upload both files to get started
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </>
           )}
