@@ -319,7 +319,7 @@ const BehavioralFeedback = () => {
                 <>
                   {/* Supporting lead text above CTA */}
                   <div className="text-sm text-gray-600 text-center mb-2 max-w-md">
-                    Want to improve your answers? Follow up and further refine your responses.
+                    Want to improve your answers?
                   </div>
                   
                   {showQuestionVaultGate && usageSummary ? (
