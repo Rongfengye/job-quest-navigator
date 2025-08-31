@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, debugSupabaseAuth } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth, UserData } from '@/hooks/useAuth';
 import { useToast } from '@/components/ui/use-toast';
 import { logger } from '@/lib/logger';
@@ -71,8 +71,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const checkSession = async () => {
     try {
       logger.debug('Starting initial session check');
-      const authDebugInfo = await debugSupabaseAuth();
-      logger.debug('Auth debug info', authDebugInfo);
       
       const { data, error } = await supabase.auth.getSession();
       
