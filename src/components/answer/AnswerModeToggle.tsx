@@ -22,7 +22,7 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
           <h3 className="text-xl font-bold text-gray-900 mb-3">How Would You Like to Answer?</h3>
           <div className="max-w-2xl mx-auto space-y-2">
             <p className="text-base text-gray-700 font-medium">
-              ✨ Not sure where to start? Let the AI Coach guide you step-by-step
+              Not sure where to start? Let the AI Coach guide you step-by-step
             </p>
             <p className="text-sm text-gray-600">
               Answering behavioral questions can be overwhelming. Our AI Coach breaks it down into bite-sized steps 

@@ -208,7 +208,7 @@ const Dashboard = () => {
                 <div className="max-w-4xl mx-auto">
                   <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                      🎯 Let's build your first Question Vault
+                      Let's build your first Question Vault
                     </h2>
                     <p className="text-gray-600 max-w-2xl mx-auto">
                       Upload your resume and job description to get personalized interview questions from real-world sources.
@@ -239,7 +239,7 @@ const Dashboard = () => {
                       className="border-blue-300 text-blue-700 hover:bg-blue-50"
                     >
                       <Eye className="h-4 w-4 mr-2" />
-                      📊 See Example Vault
+                      See Example Vault
                     </Button>
                   </div>
 
@@ -304,7 +304,7 @@ const Dashboard = () => {
                           <div className="mb-8">
                             <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
                               <Globe className="w-5 h-5 mr-2 text-green-600" />
-                              <h3 className="text-lg font-semibold text-gray-800">🧠 Real-World Interview Questions</h3>
+                              <h3 className="text-lg font-semibold text-gray-800">Real-World Interview Questions</h3>
                               <span className="ml-2 text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
                                 Scraped from Glassdoor, Blind
                               </span>
@@ -349,7 +349,7 @@ const Dashboard = () => {
                                     <div className="flex items-center gap-2 shrink-0">
                                       <Badge className={q.source === 'glassdoor' ? 'bg-teal-100 text-teal-800' : 'bg-blue-900/10 text-blue-900'}>
                                         <Briefcase className="w-3 h-3 mr-1" />
-                                        {q.source === 'glassdoor' ? '✅ Glassdoor' : 'Blind'}
+                                        {q.source === 'glassdoor' ? 'Glassdoor' : 'Blind'}
                                         {q.reliability >= 4 && <Star className="w-3 h-3 ml-1 fill-current" />}
                                       </Badge>
                                     </div>
@@ -369,7 +369,7 @@ const Dashboard = () => {
                           <div className="mb-8">
                             <div className="flex items-center mb-4 pb-2 border-b border-gray-200">
                               <Sparkles className="w-5 h-5 mr-2 text-purple-600" />
-                              <h3 className="text-lg font-semibold text-gray-800">🪄 AI Practice Questions</h3>
+                              <h3 className="text-lg font-semibold text-gray-800">AI Practice Questions</h3>
                               <span className="ml-2 text-xs text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
                                 Generated from your resume and job description
                               </span>
@@ -387,7 +387,7 @@ const Dashboard = () => {
                                   <div className="flex items-center gap-2 shrink-0">
                                     <Badge className="bg-slate-100 text-slate-700">
                                       <Bot className="w-3 h-3 mr-1" />
-                                      🤖 AI Generated
+                                      AI Generated
                                     </Badge>
                                   </div>
                                 </div>
