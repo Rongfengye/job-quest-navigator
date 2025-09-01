@@ -66,15 +66,15 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
               <div className="flex items-center gap-3 mb-1">
                 <CardTitle className="text-xl">Your Answer</CardTitle>
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
                   onClick={() => onModeChange('guided')}
-                  className={`text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 px-2 py-1 h-auto rounded-md border border-blue-200 ${
+                  className={`text-sm font-medium text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 h-auto rounded-md border border-blue-300 hover:border-blue-400 ${
                     showPulse ? 'animate-pulse-color-blue' : ''
                   }`}
                 >
-                  <Sparkles className="w-3 h-3 mr-1.5" />
-                  Switch to Guided
+                  <Sparkles className="w-4 h-4 mr-1.5" />
+                  Struggling? Get AI Help
                 </Button>
               </div>
               <p className="text-sm text-gray-600">

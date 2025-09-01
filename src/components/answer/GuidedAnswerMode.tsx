@@ -115,22 +115,26 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
         {/* Step 1: Generate Questions */}
         {currentStep === 'questions' && !guidingQuestions && (
           <div className="text-center py-8">
-            <div className="mb-4">
+            <div className="mb-6">
               <HelpCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Ready to get started?
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Let's Break This Down Together 🤝
               </h3>
-              <p className="text-gray-600 max-w-md mx-auto">
-              I'll analyze the question and create personalized guiding questions to help you structure your response.
+              <p className="text-gray-700 max-w-lg mx-auto mb-2">
+                Struggling to start? No worries — that's totally normal with behavioral questions!
+              </p>
+              <p className="text-gray-600 text-sm max-w-md mx-auto">
+                I'll ask you a few targeted questions to help uncover the perfect story from your experience.
               </p>
             </div>
             <Button 
               onClick={handleStartGuided}
               disabled={generatingAnswer}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 px-6 py-3"
             >
-              <Sparkles className="w-4 h-4" />
-              {generatingAnswer ? 'Generating Questions...' : 'Generate Guiding Questions'}
+              <Sparkles className="w-5 h-5" />
+              {generatingAnswer ? 'Creating Your Questions...' : 'Break It Down With AI →'}
             </Button>
           </div>
         )}
@@ -166,17 +170,20 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             </div>
 
             {/* Thoughts Input */}
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-semibold mb-2 text-gray-900">Share Your Thoughts</h3>
+            <div className="bg-white p-6 rounded-lg border border-gray-200">
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Now, Share Your Thoughts 💭</h3>
+              <p className="text-base text-gray-700 mb-4">
+                Just brain dump! Don't worry about perfect sentences or structure — I'll help you polish it.
+              </p>
               <p className="text-sm text-gray-600 mb-4">
-                Jot down your thoughts, experiences, or ideas related to these questions. Don't worry about structure—just brain dump!
+                Think about: What happened? What did you do? What was the result?
               </p>
               
               <Textarea
                 value={thoughts}
                 onChange={(e) => setThoughts(e.target.value)}
-                placeholder="Share your thoughts, experiences, or examples related to these questions..."
-                className="min-h-[150px] resize-y mb-4"
+                placeholder="Type your raw thoughts here... What situation comes to mind? What actions did you take? No need to be perfect!"
+                className="min-h-[200px] resize-y mb-4 text-base"
                 disabled={processingThoughts}
               />
               
@@ -184,10 +191,11 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
                 <Button
                   onClick={handleSubmitThoughts}
                   disabled={!thoughts.trim() || processingThoughts}
-                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 px-6"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  {processingThoughts ? 'Creating Your Response...' : 'Generate Structured Response'}
+                  <Sparkles className="h-5 w-5" />
+                  {processingThoughts ? 'Creating Your STAR Answer...' : 'Transform Into STAR Answer →'}
                 </Button>
               </div>
             </div>

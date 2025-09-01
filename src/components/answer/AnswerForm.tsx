@@ -42,7 +42,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   isFeedbackLoading,
   feedbackError,
   processingThoughts,
-  initialMode = 'manual',
+  initialMode = 'guided',
   iterations = []
 }) => {
   const { toast } = useToast();
