@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, HelpCircle, ArrowRight, PenTool } from 'lucide-react';
+import { Sparkles, HelpCircle, ArrowRight, PenTool, CheckCircle, Brain, MessageSquare } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { AnswerMode } from './AnswerModeToggle';
 
@@ -84,31 +84,72 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
         </div>
       </CardHeader>
       <CardContent className="pt-6 space-y-6">
-        {/* Step Indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-            currentStep === 'questions' 
-              ? 'bg-blue-600 text-white' 
-              : guidingQuestions 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-gray-100 text-gray-600'
-          }`}>
-            <span className="w-4 h-4 rounded-full bg-current bg-opacity-20 flex items-center justify-center text-xs">1</span>
-            Generate Questions
+        {/* Enhanced Journey Step Indicator */}
+        <div className="relative px-4">
+          {/* Progress Line */}
+          <div className="absolute top-8 left-0 right-0 h-0.5 bg-gray-200">
+            <div 
+              className="h-full bg-blue-600 transition-all duration-500 ease-out"
+              style={{ 
+                width: currentStep === 'questions' && !guidingQuestions ? '0%' 
+                     : currentStep === 'questions' && guidingQuestions ? '33%'
+                     : currentStep === 'thoughts' ? '66%' 
+                     : '100%' 
+              }}
+            />
           </div>
-          <ArrowRight className="w-4 h-4 text-gray-400" />
-          <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${
-            currentStep === 'thoughts' 
-              ? 'bg-blue-600 text-white' 
-              : 'bg-gray-100 text-gray-600'
-          }`}>
-            <span className="w-4 h-4 rounded-full bg-current bg-opacity-20 flex items-center justify-center text-xs">2</span>
-            Share Your Thoughts
-          </div>
-          <ArrowRight className="w-4 h-4 text-gray-400" />
-          <div className="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-            <span className="w-4 h-4 rounded-full bg-current bg-opacity-20 flex items-center justify-center text-xs">3</span>
-            Review & Use
+          
+          {/* Steps */}
+          <div className="relative flex items-start justify-between">
+            {/* Step 1: Understand */}
+            <div className={`flex flex-col items-center transition-all duration-300 ${
+              currentStep === 'questions' ? 'scale-110' : ''
+            }`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                guidingQuestions 
+                  ? 'bg-green-100 border-2 border-green-500' 
+                  : currentStep === 'questions'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 animate-pulse'
+                    : 'bg-gray-100 border-2 border-gray-300'
+              }`}>
+                {guidingQuestions ? (
+                  <CheckCircle className="w-8 h-8 text-green-600" />
+                ) : (
+                  <Brain className="w-8 h-8" />
+                )}
+              </div>
+              <span className="text-xs font-medium mt-2 text-center">
+                Understand<br />the Question
+              </span>
+            </div>
+
+            {/* Step 2: Share */}
+            <div className={`flex flex-col items-center transition-all duration-300 ${
+              currentStep === 'thoughts' ? 'scale-110' : ''
+            }`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                currentStep === 'thoughts'
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 animate-pulse'
+                  : processingThoughts
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 border-2 border-gray-300'
+              }`}>
+                <MessageSquare className="w-8 h-8" />
+              </div>
+              <span className="text-xs font-medium mt-2 text-center">
+                Share Your<br />Thoughts
+              </span>
+            </div>
+
+            {/* Step 3: Get Answer */}
+            <div className="flex flex-col items-center">
+              <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
+                <Sparkles className="w-8 h-8 text-gray-400" />
+              </div>
+              <span className="text-xs font-medium mt-2 text-center text-gray-500">
+                Get Your<br />Answer
+              </span>
+            </div>
           </div>
         </div>
 
@@ -118,7 +159,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             <div className="mb-6">
               <HelpCircle className="w-12 h-12 text-blue-500 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-900 mb-3">
-                Let's Break This Down Together 🤝
+                Let's Break This Down Together
               </h3>
               <p className="text-gray-700 max-w-lg mx-auto mb-2">
                 Struggling to start? No worries — that's totally normal with behavioral questions!
@@ -142,8 +183,14 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
         {/* Loading State for Questions */}
         {generatingAnswer && currentStep === 'questions' && (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-blue-700">Analyzing the question and generating personalized guidance...</p>
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full bg-blue-100 animate-ping"></div>
+              <div className="relative w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center">
+                <Brain className="w-10 h-10 text-white animate-pulse" />
+              </div>
+            </div>
+            <p className="text-blue-700 font-medium">Analyzing the question...</p>
+            <p className="text-blue-600 text-sm mt-1">Creating personalized guidance just for you</p>
           </div>
         )}
 
@@ -171,7 +218,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
 
             {/* Thoughts Input */}
             <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Now, Share Your Thoughts 💭</h3>
+              <h3 className="text-lg font-bold mb-2 text-gray-900">Now, Share Your Thoughts</h3>
               <p className="text-base text-gray-700 mb-4">
                 Just brain dump! Don't worry about perfect sentences or structure — I'll help you polish it.
               </p>
@@ -204,9 +251,15 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
 
         {/* Processing State */}
         {processingThoughts && (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto mb-2"></div>
-            <p className="text-blue-700 text-sm">Transforming your thoughts into a structured response...</p>
+          <div className="text-center py-8">
+            <div className="relative w-20 h-20 mx-auto mb-4">
+              <div className="absolute inset-0 rounded-full bg-purple-100 animate-ping"></div>
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <Sparkles className="w-10 h-10 text-white animate-spin" />
+              </div>
+            </div>
+            <p className="text-purple-700 font-medium">Working my magic...</p>
+            <p className="text-purple-600 text-sm mt-1">Transforming your thoughts into a polished STAR answer</p>
           </div>
         )}
       </CardContent>
