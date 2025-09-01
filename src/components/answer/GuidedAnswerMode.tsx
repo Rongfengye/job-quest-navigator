@@ -30,12 +30,21 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
   const [currentStep, setCurrentStep] = useState<'questions' | 'thoughts'>('questions');
   const [guidingQuestions, setGuidingQuestions] = useState<string[] | null>(null);
   const [thoughts, setThoughts] = useState('');
+  const [shouldPulse, setShouldPulse] = useState(false);
+  const [shouldPulseThoughts, setShouldPulseThoughts] = useState(false);
+  const [shouldPulseAnswer, setShouldPulseAnswer] = useState(false);
 
   // Listen for guidance received event
   useEffect(() => {
     const handleGuidanceReceived = (event: CustomEvent) => {
       setGuidingQuestions(event.detail.guidingQuestions);
       setCurrentStep('thoughts');
+      setShouldPulseThoughts(true);
+      
+      // Stop pulsing thoughts after 5 seconds
+      setTimeout(() => {
+        setShouldPulseThoughts(false);
+      }, 5000);
     };
 
     window.addEventListener('guidanceReceived' as any, handleGuidanceReceived);
@@ -47,11 +56,25 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
 
   const handleStartGuided = () => {
     setCurrentStep('questions');
+    setShouldPulse(true);
+    
+    // Stop pulsing after 5 seconds
+    setTimeout(() => {
+      setShouldPulse(false);
+    }, 5000);
+    
     handleGenerateAnswer();
   };
 
   const handleSubmitThoughts = () => {
     if (thoughts.trim()) {
+      setShouldPulseAnswer(true);
+      
+      // Stop pulsing answer after 5 seconds
+      setTimeout(() => {
+        setShouldPulseAnswer(false);
+      }, 5000);
+      
       onThoughtsSubmit(thoughts);
       setThoughts('');
     }
@@ -109,7 +132,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
                 guidingQuestions 
                   ? 'bg-green-100 border-2 border-green-500' 
                   : currentStep === 'questions'
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 animate-pulse'
+                    ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulse ? 'animate-pulse' : ''}`
                     : 'bg-gray-100 border-2 border-gray-300'
               }`}>
                 {guidingQuestions ? (
@@ -129,7 +152,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             }`}>
               <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
                 currentStep === 'thoughts'
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 animate-pulse'
+                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseThoughts ? 'animate-pulse' : ''}`
                   : processingThoughts
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 border-2 border-gray-300'
@@ -143,10 +166,16 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
 
             {/* Step 3: Get Answer */}
             <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 border-2 border-gray-300 flex items-center justify-center">
-                <Sparkles className="w-8 h-8 text-gray-400" />
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
+                processingThoughts
+                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseAnswer ? 'animate-pulse' : ''}`
+                  : 'bg-gray-100 border-2 border-gray-300'
+              }`}>
+                <Sparkles className={`w-8 h-8 ${processingThoughts ? 'text-white' : 'text-gray-400'}`} />
               </div>
-              <span className="text-xs font-medium mt-2 text-center text-gray-500">
+              <span className={`text-xs font-medium mt-2 text-center ${
+                processingThoughts ? 'text-gray-900' : 'text-gray-500'
+              }`}>
                 Get Your<br />Answer
               </span>
             </div>
