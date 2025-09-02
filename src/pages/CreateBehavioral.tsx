@@ -383,7 +383,7 @@ const CreateBehavioral = () => {
               }}
               className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
             >
-              Submit
+              Start Interview Practice
             </Button>
           )}
         </form>
