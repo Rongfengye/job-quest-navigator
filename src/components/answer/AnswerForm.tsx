@@ -243,35 +243,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         loadingText={loadingText}
       />
 
-      {/* Feedback Section - only show in manual mode and when not in initial selection */}
-      {!showInitialModeSelection && mode === 'manual' && (isFeedbackLoading || feedback) && (
-        <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
-          <Accordion type="single" collapsible className="w-full" defaultValue="feedback">
-            <AccordionItem value="feedback" className="border-none">
-              <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-green-50/50">
-                <div className="flex items-center gap-2 text-left">
-                  <Lightbulb className="w-4 h-4 text-green-500 flex-shrink-0" />
-                  <div>
-                    <div className="font-medium text-gray-900 text-sm">Answer Feedback</div>
-                    <div className="text-xs text-gray-600">
-                      Review your score and improvement suggestions
-                    </div>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-4 pb-4">
-                <div className="border-t border-green-200 pt-4">
-                  <AnswerFeedback 
-                    feedback={feedback}
-                    isLoading={isFeedbackLoading}
-                    error={feedbackError} 
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Card>
-      )}
     </div>
   );
 };

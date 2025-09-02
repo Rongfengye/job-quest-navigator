@@ -60,58 +60,43 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   return (
     <Card className="border-2 border-gray-200">
       <CardHeader className="border-b bg-gray-50/50">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <PenTool className="w-5 h-5 text-gray-600" />
-            <div>
-              <CardTitle className="text-xl">Your Answer</CardTitle>
-              <p className="text-sm text-gray-600 mt-1">
+        <div className="flex justify-between items-start">
+          <div className="flex items-start gap-3">
+            <PenTool className="w-5 h-5 text-gray-600 mt-0.5" />
+            <div className="flex-1">
+              <div className="flex items-center gap-3 mb-1">
+                <CardTitle className="text-xl">Your Answer</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onModeChange('guided')}
+                  className={`text-sm font-medium text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 h-auto rounded-md border border-blue-300 hover:border-blue-400 ${
+                    showPulse ? 'animate-pulse-color-blue' : ''
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 mr-1.5" />
+                  Struggling? Get AI Help
+                </Button>
+              </div>
+              <p className="text-sm text-gray-600">
                 Write your response directly in the text area below
               </p>
             </div>
           </div>
-          
           <div className="flex items-center gap-2">
-            {/* Badge Strip */}
-            <div className="flex items-center gap-2">
-              {feedback && (
-                <Badge 
-                  variant="secondary" 
-                  className="bg-blue-100 text-blue-800 border-blue-300 text-xs"
-                >
-                  Score: {feedback.score}/100
-                </Badge>
-              )}
-              {hasUnsavedDraft && (
-                <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
-                  Draft
-                </Badge>
-              )}
-            </div>
-            
-            {/* More Options Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-                >
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => onModeChange('guided')}
-                  className={`cursor-pointer ${
-                    showPulse ? 'animate-pulse-color-blue' : ''
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Get AI Help
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {feedback && (
+              <Badge 
+                variant="secondary" 
+                className="bg-blue-100 text-blue-800 border-blue-300"
+              >
+                Score: {feedback.score}/100
+              </Badge>
+            )}
+            {hasUnsavedDraft && (
+              <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
+                Draft
+              </Badge>
+            )}
           </div>
         </div>
       </CardHeader>
