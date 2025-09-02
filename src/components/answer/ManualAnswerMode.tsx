@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Save, Mic, PenTool, Sparkles, AlertCircle } from 'lucide-react';
+import { Save, Mic, PenTool, Sparkles, AlertCircle, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { QuestionVaultFeedback } from '@/hooks/useAnswerFeedback';
 import { useVoiceRecording } from '@/hooks/useVoiceRecording';
 import { AnswerMode } from './AnswerModeToggle';
@@ -59,85 +60,102 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   return (
     <Card className="border-2 border-gray-200">
       <CardHeader className="border-b bg-gray-50/50">
-        <div className="flex justify-between items-start">
-          <div className="flex items-start gap-3">
-            <PenTool className="w-5 h-5 text-gray-600 mt-0.5" />
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-1">
-                <CardTitle className="text-xl">Your Answer</CardTitle>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onModeChange('guided')}
-                  className={`text-sm font-medium text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 h-auto rounded-md border border-blue-300 hover:border-blue-400 ${
-                    showPulse ? 'animate-pulse-color-blue' : ''
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 mr-1.5" />
-                  Struggling? Get AI Help
-                </Button>
-              </div>
-              <p className="text-sm text-gray-600">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <PenTool className="w-5 h-5 text-gray-600" />
+            <div>
+              <CardTitle className="text-xl">Your Answer</CardTitle>
+              <p className="text-sm text-gray-600 mt-1">
                 Write your response directly in the text area below
               </p>
             </div>
           </div>
+          
           <div className="flex items-center gap-2">
-            {feedback && (
-              <Badge 
-                variant="secondary" 
-                className="bg-blue-100 text-blue-800 border-blue-300"
-              >
-                Score: {feedback.score}/100
-              </Badge>
-            )}
-            {hasUnsavedDraft && (
-              <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
-                Draft
-              </Badge>
-            )}
+            {/* Badge Strip */}
+            <div className="flex items-center gap-2">
+              {feedback && (
+                <Badge 
+                  variant="secondary" 
+                  className="bg-blue-100 text-blue-800 border-blue-300 text-xs"
+                >
+                  Score: {feedback.score}/100
+                </Badge>
+              )}
+              {hasUnsavedDraft && (
+                <Badge variant="outline" className="text-xs text-yellow-700 border-yellow-300">
+                  Draft
+                </Badge>
+              )}
+            </div>
+            
+            {/* More Options Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => onModeChange('guided')}
+                  className={`cursor-pointer ${
+                    showPulse ? 'animate-pulse-color-blue' : ''
+                  }`}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Get AI Help
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-6">
-        {/* Draft Warning */}
+      <CardContent className="pt-4">
+        {/* Compact Draft Warning */}
         {hasUnsavedDraft && (
-          <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
-            <AlertCircle className="w-4 h-4 text-yellow-600 flex-shrink-0" />
-            <span className="text-sm text-yellow-800">
-              You have unsaved changes. Click "Save Answer" to preserve this version.
+          <div className="flex items-center gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md mb-3 text-xs">
+            <AlertCircle className="w-3 h-3 text-yellow-600 flex-shrink-0" />
+            <span className="text-yellow-800">
+              Unsaved changes - click Save to preserve
             </span>
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <div className="relative">
             <Textarea 
               value={inputAnswer}
               onChange={(e) => setInputAnswer(e.target.value)}
               placeholder="Type your response here..."
-              className="min-h-[250px] resize-y pr-10"
+              className="min-h-[250px] resize-y pr-20"
             />
-            <Button 
-              type="button" 
-              size="icon" 
-              variant={isRecording ? "default" : "ghost"}
-              className="absolute right-2 top-2 opacity-70 hover:opacity-100"
-              onClick={handleMicClick}
-            >
-              <Mic className={`h-4 w-4 ${isRecording ? 'text-white animate-pulse' : ''}`} />
-            </Button>
-          </div>
-          
-          <div className="flex justify-end pt-2">
-            <Button 
-              type="submit" 
-              disabled={isSaving || !isAnswerValid}
-              className="flex items-center gap-2"
-            >
-              <Save className="w-4 h-4" />
-              {isSaving ? 'Saving...' : 'Save Answer'}
-            </Button>
+            <div className="absolute right-2 top-2 flex items-center gap-1">
+              <Button 
+                type="button" 
+                size="icon" 
+                variant={isRecording ? "default" : "ghost"}
+                className="opacity-70 hover:opacity-100 w-8 h-8"
+                onClick={handleMicClick}
+              >
+                <Mic className={`h-4 w-4 ${isRecording ? 'text-white animate-pulse' : ''}`} />
+              </Button>
+              
+              {/* Floating Save Button */}
+              <Button 
+                type="submit" 
+                disabled={isSaving || !isAnswerValid}
+                size="sm"
+                className="flex items-center gap-1 px-3 py-1 h-8 text-xs font-medium"
+              >
+                <Save className="w-3 h-3" />
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+            </div>
           </div>
         </form>
       </CardContent>

@@ -106,11 +106,22 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pt-6 space-y-6">
-        {/* Enhanced Journey Step Indicator */}
+      <CardContent className="pt-4 space-y-4">
+        {/* Enhanced Journey Step Indicator - Only in Guided Mode */}
         <div className="relative px-4">
+          {/* Current Step Label */}
+          <div className="text-center mb-4">
+            <p className="text-sm font-medium text-gray-700">
+              Step {currentStep === 'questions' && !guidingQuestions ? '1' : currentStep === 'thoughts' ? '2' : '3'} of 3: 
+              <span className="text-blue-600">
+                {currentStep === 'questions' && !guidingQuestions ? 'Understand the Question' 
+                 : currentStep === 'thoughts' ? 'Share Your Thoughts'
+                 : 'Get Your Answer'}
+              </span>
+            </p>
+          </div>
           {/* Progress Line */}
-          <div className="absolute top-8 left-0 right-0 h-0.5 bg-gray-200">
+          <div className="absolute top-14 left-0 right-0 h-0.5 bg-gray-200">
             <div 
               className="h-full bg-blue-600 transition-all duration-500 ease-out"
               style={{ 
@@ -123,7 +134,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
           </div>
           
           {/* Steps */}
-          <div className="relative flex items-start justify-between">
+          <div className="relative flex items-start justify-between pt-2">
             {/* Step 1: Understand */}
             <div className={`flex flex-col items-center transition-all duration-300 ${
               currentStep === 'questions' ? 'scale-110' : ''
@@ -223,57 +234,42 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
           </div>
         )}
 
-        {/* Step 2: Show Guiding Questions and Thoughts Input */}
+        {/* Step 2: Integrated Guiding Questions and Thoughts Input */}
         {guidingQuestions && currentStep === 'thoughts' && (
-          <div className="space-y-6">
-            {/* Guiding Questions */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-900">
-                <HelpCircle className="w-5 h-5" />
-                Your Guiding Questions
-              </h3>
-              <p className="text-sm text-blue-700 mb-3">
-                Consider these questions to help structure your response:
-              </p>
-              <ul className="space-y-2">
-                {guidingQuestions.map((question, index) => (
-                  <li key={`question-${index}`} className="flex gap-2">
-                    <span className="font-medium text-blue-600 flex-shrink-0">{index + 1}.</span>
-                    <span className="text-gray-800 text-sm">{question}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Thoughts Input */}
-            <div className="bg-white p-6 rounded-lg border border-gray-200">
-              <h3 className="text-lg font-bold mb-2 text-gray-900">Now, Share Your Thoughts</h3>
-              <p className="text-base text-gray-700 mb-4">
-                Just brain dump! Don't worry about perfect sentences or structure — I'll help you polish it.
-              </p>
-              <p className="text-sm text-gray-600 mb-4">
-                Think about: What happened? What did you do? What was the result?
-              </p>
-              
-              <Textarea
-                value={thoughts}
-                onChange={(e) => setThoughts(e.target.value)}
-                placeholder="Type your raw thoughts here... What situation comes to mind? What actions did you take? No need to be perfect!"
-                className="min-h-[200px] resize-y mb-4 text-base"
-                disabled={processingThoughts}
-              />
-              
-              <div className="flex justify-end">
-                <Button
-                  onClick={handleSubmitThoughts}
-                  disabled={!thoughts.trim() || processingThoughts}
-                  size="lg"
-                  className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 px-6"
-                >
-                  <Sparkles className="h-5 w-5" />
-                  {processingThoughts ? 'Creating Your STAR Answer...' : 'Transform Into STAR Answer →'}
-                </Button>
-              </div>
+          <div className="bg-white p-6 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-bold mb-3 text-gray-900 flex items-center gap-2">
+              <Brain className="w-5 h-5 text-blue-600" />
+              Reflect on these before typing:
+            </h3>
+            
+            {/* Integrated Guiding Questions */}
+            <ul className="space-y-2 mb-6 pl-4">
+              {guidingQuestions.map((question, index) => (
+                <li key={`question-${index}`} className="flex gap-2 text-sm">
+                  <span className="font-medium text-blue-600 flex-shrink-0">•</span>
+                  <span className="text-gray-700">{question}</span>
+                </li>
+              ))}
+            </ul>
+            
+            <Textarea
+              value={thoughts}
+              onChange={(e) => setThoughts(e.target.value)}
+              placeholder="Type your raw thoughts here... What situation comes to mind? What actions did you take? No need to be perfect!"
+              className="min-h-[200px] resize-y mb-4 text-base"
+              disabled={processingThoughts}
+            />
+            
+            <div className="flex justify-end">
+              <Button
+                onClick={handleSubmitThoughts}
+                disabled={!thoughts.trim() || processingThoughts}
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 px-6"
+              >
+                <Sparkles className="h-5 w-5" />
+                {processingThoughts ? 'Creating Your STAR Answer...' : 'Transform Into STAR Answer →'}
+              </Button>
             </div>
           </div>
         )}
