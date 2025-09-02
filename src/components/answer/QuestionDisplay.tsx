@@ -22,7 +22,8 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
   };
 
   return (
-    <Card className="mb-8">
+    <TooltipProvider>
+      <Card className="mb-8">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -48,17 +49,15 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
         <CardDescription className="text-lg font-medium text-gray-800 mt-2 flex items-start gap-2">
           <span className="flex-1">{question.question}</span>
           {question.explanation && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help flex-shrink-0 mt-0.5" />
-                </TooltipTrigger>
-                <TooltipContent side="left" className="max-w-xs">
-                  <p className="text-sm font-medium mb-2">Why this matters:</p>
-                  <p className="text-sm">{question.explanation}</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help flex-shrink-0 mt-0.5" />
+              </TooltipTrigger>
+              <TooltipContent side="left" className="max-w-xs">
+                <p className="text-sm font-medium mb-2">Why this matters:</p>
+                <p className="text-sm">{question.explanation}</p>
+              </TooltipContent>
+            </Tooltip>
           )}
         </CardDescription>
       </CardHeader>
@@ -86,7 +85,8 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
           </Collapsible>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </TooltipProvider>
   );
 };
 
