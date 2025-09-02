@@ -51,7 +51,13 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
           {question.explanation && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help flex-shrink-0 mt-0.5" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 flex-shrink-0"
+                >
+                  <Info className="w-4 h-4" />
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="left" className="max-w-xs">
                 <p className="text-sm font-medium mb-2">Why this matters:</p>

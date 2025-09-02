@@ -143,7 +143,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
                 guidingQuestions 
                   ? 'bg-green-100 border-2 border-green-500' 
                   : currentStep === 'questions'
-                    ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulse ? 'animate-pulse' : ''}`
+                    ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulse ? 'animate-slow-pulse' : ''}`
                     : 'bg-gray-100 border-2 border-gray-300'
               }`}>
                 {guidingQuestions ? (
@@ -163,7 +163,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             }`}>
               <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
                 currentStep === 'thoughts'
-                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseThoughts ? 'animate-pulse' : ''}`
+                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseThoughts ? 'animate-slow-pulse' : ''}`
                   : processingThoughts
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 border-2 border-gray-300'
@@ -179,7 +179,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             <div className="flex flex-col items-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 ${
                 processingThoughts
-                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseAnswer ? 'animate-pulse' : ''}`
+                  ? `bg-blue-600 text-white shadow-lg shadow-blue-200 ${shouldPulseAnswer ? 'animate-slow-pulse' : ''}`
                   : 'bg-gray-100 border-2 border-gray-300'
               }`}>
                 <Sparkles className={`w-8 h-8 ${processingThoughts ? 'text-white' : 'text-gray-400'}`} />
@@ -268,7 +268,7 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
                 className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2 px-6"
               >
                 <Sparkles className="h-5 w-5" />
-                {processingThoughts ? 'Creating Your STAR Answer...' : 'Transform Into STAR Answer →'}
+                {processingThoughts ? 'Creating Your Structured Answer...' : 'Transform Into Structured Answer →'}
               </Button>
             </div>
           </div>
