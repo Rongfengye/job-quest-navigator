@@ -82,7 +82,7 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   ${questionType === 'technical' ? 
     '- Depth of technical knowledge\n- Clarity of explanation\n- Problem-solving approach\n- Relevant experience with technologies' : 
     questionType === 'behavioral' ? 
-    '- Structure using the STAR method (Situation, Task, Action, Result)\n- Specific examples that demonstrate relevant soft skills\n- Quantifiable results or impact\n- Self-reflection and learning\n- Relevance to the job requirements\n- Depth of experience\n- Challenges faced and solutions implemented\n' :
+    '- Structure \n- Specific examples that demonstrate relevant soft skills\n- Quantifiable results or impact\n- Self-reflection and learning\n- Relevance to the job requirements\n- Depth of experience\n- Challenges faced and solutions implemented\n' :
     '- Clarity and structure\n- Relevance to the question\n- Specific examples\n- Results and impact'}`
 
   const jobContextSpecifications = `${jobTitle ? `For a ${jobTitle} position` : 'For this position'}

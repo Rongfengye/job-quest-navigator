@@ -25,23 +25,23 @@ const structureGuidelines = `Provide feedback in JSON format with the following 
   }`
 
 const considerationGuidelines = `Consider:
-  1. Use of the STAR method (Situation, Task, Action, Result). 
+  1. Overall structure and logical flow of the response
   2. Relevance to the question asked
   3. Clarity, Specificity, and detail level
   4. Professional communication
   5. Alignment with job requirements`
 
 const contentConsiderations = `Additionally, please keep these in mind:
-  1. Place emphasis on having more developed Action and Results that demonstrate self-reflection, growth, and lessons learned from the situation.
-  2. Ensure that situation and task only goes into just enough detail to explain action and result of the scenario.
-  3. If mentioning a weakness in the STAR method, clarify whether the Situation, Task, Action, or Result was missing or under/overdeveloped, while keeping in mind of the suggestions from points 1,2 
+  1. Place emphasis on having concrete examples that demonstrate self-reflection, growth, and lessons learned.
+  2. Ensure background context is appropriately balanced with actions taken and outcomes achieved.
+  3. When identifying structural weaknesses, focus on logical flow and completeness rather than adherence to specific frameworks 
   4. When applicable, refer to specific parts of the response to explain strengths and weaknesses
   5. Group similar critiques into a single point where possible to avoid redundancy.
   6. In the 'suggestions' section, build on the 'cons' by proposing **specific ways to improve**, such as example techniques, frameworks, or prompts.  
   7. Respond directly addressing the user with 'You ___' rather than describing the person's responses in third person.
 
   Base your score (0–100) on a weighted evaluation of:
-  - STAR structure clarity (structure score)
+  - How well the answer is organized and follows logical flow (structure score)
   - Specificity of examples (specificity score)
   - Relevance to the question (relevance score)
   - Clarity and communication quality (clarity score)
