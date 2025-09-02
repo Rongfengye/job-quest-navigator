@@ -114,9 +114,9 @@ const GuidedAnswerMode: React.FC<GuidedAnswerModeProps> = ({
             <p className="text-sm font-medium text-gray-700">
               Step {currentStep === 'questions' && !guidingQuestions ? '1' : currentStep === 'thoughts' ? '2' : '3'} of 3 :  
               <span className="text-blue-600">
-                {currentStep === 'questions' && !guidingQuestions ? 'Understand the Question' 
-                 : currentStep === 'thoughts' ? 'Share Your Thoughts'
-                 : 'Get Your Answer'}
+                {currentStep === 'questions' && !guidingQuestions ? ' Understand the Question' 
+                 : currentStep === 'thoughts' ? ' Share Your Thoughts'
+                 : ' Get Your Answer'}
               </span>
             </p>
           </div>
