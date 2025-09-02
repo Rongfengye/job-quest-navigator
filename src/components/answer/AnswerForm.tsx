@@ -195,6 +195,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
                 hasUnsavedDraft={hasUnsavedDraft}
                 onModeChange={setMode}
                 currentMode={mode}
+                hasPreviousIterations={iterations.length > 0}
               />
               
               {/* Previous Iteration Feedback - show below Your Answer in manual mode */}

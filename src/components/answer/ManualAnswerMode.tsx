@@ -19,6 +19,7 @@ interface ManualAnswerModeProps {
   hasUnsavedDraft: boolean;
   onModeChange: (mode: AnswerMode) => void;
   currentMode: AnswerMode;
+  hasPreviousIterations?: boolean;
 }
 
 const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
@@ -29,7 +30,8 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
   feedback,
   hasUnsavedDraft,
   onModeChange,
-  currentMode
+  currentMode,
+  hasPreviousIterations = false
 }) => {
   const [showPulse, setShowPulse] = useState(false);
   
@@ -75,7 +77,7 @@ const ManualAnswerMode: React.FC<ManualAnswerModeProps> = ({
                   }`}
                 >
                   <Sparkles className="w-4 h-4 mr-1.5" />
-                  Struggling? Get AI Help
+                  {hasPreviousIterations ? 'Need Help Implementing Feedback?' : 'Struggling? Get AI Help'}
                 </Button>
               </div>
               <p className="text-sm text-gray-600">
