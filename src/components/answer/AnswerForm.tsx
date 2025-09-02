@@ -173,6 +173,13 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         />
       )}
 
+      {/* Progress Indicator */}
+      <ProgressIndicator 
+        isLoading={isFeedbackLoading || generatingAnswer || processingThoughts} 
+        progressValue={progressValue}
+        loadingText={loadingText}
+      />
+
       {/* Don't show mode components until initial selection is made */}
       {!showInitialModeSelection && (
         <>
@@ -235,13 +242,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
           )}
         </>
       )}
-
-      {/* Progress Indicator */}
-      <ProgressIndicator 
-        isLoading={isFeedbackLoading || generatingAnswer || processingThoughts} 
-        progressValue={progressValue}
-        loadingText={loadingText}
-      />
 
     </div>
   );
