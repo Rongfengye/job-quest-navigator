@@ -49,19 +49,15 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
         <CardDescription className="text-lg font-medium text-gray-800 mt-2 flex items-start gap-2">
           <span className="flex-1">{question.question}</span>
           {question.explanation && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600 flex-shrink-0"
-                >
-                  <Info className="w-4 h-4" />
-                </Button>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger className="flex-shrink-0 mt-0.5">
+                <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
               </TooltipTrigger>
-              <TooltipContent side="left" className="max-w-xs">
-                <p className="text-sm font-medium mb-2">Why this matters:</p>
-                <p className="text-sm">{question.explanation}</p>
+              <TooltipContent side="bottom" className="max-w-sm p-3">
+                <div>
+                  <p className="text-sm font-semibold mb-2">Why this matters:</p>
+                  <p className="text-sm text-gray-700">{question.explanation}</p>
+                </div>
               </TooltipContent>
             </Tooltip>
           )}
