@@ -42,7 +42,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
   isFeedbackLoading,
   feedbackError,
   processingThoughts,
-  initialMode = 'manual',
+  initialMode = 'guided',
   iterations = []
 }) => {
   const { toast } = useToast();
@@ -164,7 +164,7 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         : 'Completing...';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Show big mode selection only initially */}
       {showInitialModeSelection && (
         <AnswerModeToggle 
@@ -191,37 +191,33 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
               />
               
               {/* Previous Iteration Feedback - show below Your Answer in manual mode */}
-              {iterations.length > 0 && (
-                <Card className="border-0 bg-gray-50 rounded-xl shadow-sm">
-                  <Accordion type="single" collapsible className="w-full" defaultValue="previous-feedback">
-                    <AccordionItem value="previous-feedback" className="border-none">
-                      <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-gray-100">
-                        <div className="flex items-center gap-3 text-left">
-                          <Lightbulb className="w-5 h-5 text-gray-500 flex-shrink-0" />
-                          <div>
-                            <div className="font-semibold text-gray-900">Previous Feedback</div>
-                            <div className="text-sm text-gray-600 mt-1">
-                              Review feedback from your last attempt
+              {iterations.length > 0 && (() => {
+                const latestIteration = iterations[iterations.length - 1];
+                return latestIteration?.feedback ? (
+                  <Card className="border-0 bg-gray-50 rounded-xl shadow-sm">
+                    <Accordion type="single" collapsible className="w-full" defaultValue="previous-feedback">
+                      <AccordionItem value="previous-feedback" className="border-none">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-gray-100">
+                          <div className="flex items-center gap-2 text-left">
+                            <Lightbulb className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <div>
+                              <div className="font-medium text-gray-900 text-sm">Previous Feedback</div>
+                              <div className="text-xs text-gray-600">
+                                Review feedback from your last attempt
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-6 pb-6">
-                        <div className="border-t border-gray-200 pt-6">
-                          {(() => {
-                            const latestIteration = iterations[iterations.length - 1];
-                            return latestIteration?.feedback ? (
-                              <EnhancedFeedbackDisplay feedback={latestIteration.feedback} />
-                            ) : (
-                              <p className="text-gray-500 text-sm">No previous feedback available</p>
-                            );
-                          })()}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                </Card>
-              )}
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="border-t border-gray-200 pt-4">
+                            <EnhancedFeedbackDisplay feedback={latestIteration.feedback} />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </Card>
+                ) : null;
+              })()}
             </>
           )}
 
@@ -247,35 +243,6 @@ const AnswerForm: React.FC<AnswerFormProps> = ({
         loadingText={loadingText}
       />
 
-      {/* Feedback Section - only show in manual mode and when not in initial selection */}
-      {!showInitialModeSelection && mode === 'manual' && (isFeedbackLoading || feedback) && (
-        <Card className="border-2 border-dashed border-green-200 bg-green-50/30">
-          <Accordion type="single" collapsible className="w-full" defaultValue="feedback">
-            <AccordionItem value="feedback" className="border-none">
-              <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-green-50/50">
-                <div className="flex items-center gap-3 text-left">
-                  <Lightbulb className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <div>
-                    <div className="font-semibold text-gray-900">Answer Feedback</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Review your score and improvement suggestions
-                    </div>
-                  </div>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6">
-                <div className="border-t border-green-200 pt-6">
-                  <AnswerFeedback 
-                    feedback={feedback}
-                    isLoading={isFeedbackLoading}
-                    error={feedbackError} 
-                  />
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </Card>
-      )}
     </div>
   );
 };

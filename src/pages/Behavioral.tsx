@@ -261,7 +261,7 @@ const Behavioral = () => {
                           <div className="flex justify-between items-start mb-4">
                             <div className="flex-1 min-w-0 mr-4">
                               <h3 className="text-lg font-semibold text-gray-900 truncate">
-                                🧠 {interview.job_title}
+                                {interview.job_title}
                               </h3>
                               {interview.company_name && (
                                 <p className="text-sm text-gray-600 mt-1">
@@ -343,7 +343,7 @@ const Behavioral = () => {
                   {/* Main Headline */}
                   <div className="mb-8">
                     <h2 className="text-3xl font-bold text-gray-800 mb-4">
-                      🎙️ Practice Real-Time Behavioral Interviews
+                      Practice Real-Time Behavioral Interviews
                     </h2>
                     <p className="text-gray-600 max-w-2xl mx-auto text-lg">
                       Simulate interviews with personalized, AI-generated questions and receive immediate feedback on your responses.
@@ -376,7 +376,7 @@ const Behavioral = () => {
                       onClick={() => navigate('/behavioral/create')}
                       className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold"
                     >
-                      💬 Start My Mock Interview →
+                      Start My Mock Interview →
                     </Button>
                   </div>
 
@@ -386,18 +386,18 @@ const Behavioral = () => {
                   </p>
 
                   {/* Optional: See Example Session Link */}
-                  <Button 
+                  {/* <Button 
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowExampleSession(!showExampleSession)}
                     className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 mb-4"
                   >
-                    🔍 See example session
-                  </Button>
+                    See example session
+                  </Button> */}
 
                   {/* Connection Nudge */}
                   <p className="text-sm text-gray-500 mt-2 text-center max-w-lg mx-auto">
-                    📘 Want to keep improving? You can revisit these questions and practice follow-ups later in your <a href="/questions" className="text-blue-600 hover:underline">Question Vault</a>.
+                    Want to keep improving? You can revisit these questions and practice follow-ups later in your <a href="/questions" className="text-blue-600 hover:underline">Question Vault</a>.
                   </p>
 
                 </div>

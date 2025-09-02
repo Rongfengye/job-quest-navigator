@@ -16,51 +16,59 @@ const AnswerModeToggle: React.FC<AnswerModeToggleProps> = ({
   onModeChange
 }) => {
   return (
-    <Card className="mb-6 border-2 border-dashed border-gray-300">
-      <CardContent className="p-4">
-        <div className="text-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">How Would You Like to Answer?</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Most users find the AI coach helps them create better answers faster
-          </p>
+    <Card className="mb-6 border-0 bg-gradient-to-b from-blue-50 to-white shadow-lg">
+      <CardContent className="p-6">
+        <div className="text-center mb-6">
+          <h3 className="text-xl font-bold text-gray-900 mb-3">How Would You Like to Answer?</h3>
+          <div className="max-w-2xl mx-auto space-y-2">
+            <p className="text-base text-gray-700 font-medium">
+              Not sure where to start? Let the AI Coach guide you step-by-step
+            </p>
+            <p className="text-sm text-gray-600">
+              Answering behavioral questions can be overwhelming. Our AI Coach breaks it down into bite-sized steps 
+              and helps you shape a STAR-based answer — perfect if you're not sure where to start.
+            </p>
+          </div>
         </div>
         
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-4 justify-center">
+          {/* Guided Mode - Primary/Default */}
           <Button
-            variant="outline"
-            onClick={() => onModeChange('manual')}
-            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col rounded-lg ${
-              mode === 'manual' 
-                ? 'border-2 border-blue-500 bg-blue-50 text-blue-700 hover:bg-blue-100' 
-                : 'border border-gray-300 hover:border-gray-400 text-gray-700 hover:text-black bg-white'
+            variant="default"
+            onClick={() => onModeChange('guided')}
+            className={`flex items-center gap-3 px-8 py-4 h-auto flex-col relative rounded-xl transform transition-all min-w-[240px] ${
+              mode === 'guided' 
+                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-2 border-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-xl scale-105 ring-4 ring-blue-100' 
+                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl hover:scale-105'
             }`}
           >
-            <PenTool className="w-5 h-5" />
+            <div className="absolute -top-3 -right-3 bg-green-500 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-lg">
+              Recommended
+            </div>
+            <Sparkles className="w-6 h-6" />
             <div className="text-center">
-              <div className="font-medium">Write from Scratch</div>
-              <div className="text-xs opacity-80 mt-1">
-                I'll write my own answer
+              <div className="font-bold text-lg">Get Step-by-Step Coaching</div>
+              <div className="text-sm opacity-95 mt-1">
+                AI breaks it down & guides you
               </div>
             </div>
           </Button>
           
+          {/* Manual Mode - Secondary */}
           <Button
-            variant="default"
-            onClick={() => onModeChange('guided')}
-            className={`flex items-center gap-2 px-6 py-3 h-auto flex-col relative rounded-lg transform transition-all ${
-              mode === 'guided' 
-                ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white border-0 hover:from-blue-700 hover:to-blue-800 shadow-lg scale-105' 
-                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg hover:scale-105'
+            variant="outline"
+            onClick={() => onModeChange('manual')}
+            className={`flex items-center gap-3 px-8 py-4 h-auto flex-col rounded-xl min-w-[240px] ${
+              mode === 'manual' 
+                ? 'border-2 border-gray-700 bg-gray-50 text-gray-900 hover:bg-gray-100 shadow-md' 
+                : 'border-2 border-gray-300 hover:border-gray-400 text-gray-600 hover:text-gray-800 bg-white hover:bg-gray-50'
             }`}
           >
-            <div className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium shadow-sm">
-              Recommended
-            </div>
-            <Sparkles className="w-5 h-5" />
+            <PenTool className="w-6 h-6" />
             <div className="text-center">
-              <div className="font-semibold text-base">Get AI Coaching</div>
-              <div className="text-xs opacity-90 mt-1">
-                Turn thoughts into structured responses
+              <div className="font-semibold text-lg">Manual Mode</div>
+              <div className="text-sm opacity-80 mt-1">
+                Write your answer directly
               </div>
             </div>
           </Button>

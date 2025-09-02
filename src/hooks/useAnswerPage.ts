@@ -45,7 +45,20 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
     return iterationWithFeedback?.feedback || null;
   };
 
+  // Get the most recent answer text from iterations or fall back to saved answer
+  const getCurrentAnswerText = () => {
+    if (iterations.length > 0) {
+      const mostRecentIteration = [...iterations].sort((a, b) => 
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )[0];
+      
+      return mostRecentIteration?.answerText || answer || '';
+    }
+    return answer || '';
+  };
+
   const previousFeedback = getPreviousFeedback();
+  const currentAnswerText = getCurrentAnswerText();
   
   // Pass storylineId directly as a parameter
   const { generatingAnswer, processingThoughts, generateGuidedResponse } = useGuidedResponse(
@@ -55,11 +68,12 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
     previousFeedback
   );
 
+  // Sync inputAnswer with currentAnswerText
   useEffect(() => {
-    if (answer && answer !== inputAnswer) {
-      setInputAnswer(answer);
+    if (currentAnswerText !== inputAnswer) {
+      setInputAnswer(currentAnswerText);
     }
-  }, [answer]);
+  }, [currentAnswerText]);
 
   useEffect(() => {
     // Clear feedback when switching tabs or when the answer changes
@@ -122,7 +136,7 @@ export const useAnswerPage = (storylineId: string | null, questionIndex: number,
 
   const handleGenerateAnswer = async () => {
     if (!question) return;
-    await generateGuidedResponse(inputAnswer, resumeText);
+    await generateGuidedResponse(currentAnswerText, resumeText);
   };
 
   return {

@@ -1,7 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { Question } from '@/hooks/useQuestionData';
 import { SourceBadge } from '@/components/questions/SourceBadge';
 
@@ -11,12 +15,15 @@ interface QuestionDisplayProps {
 }
 
 const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionIndex }) => {
+  const [showFollowUp, setShowFollowUp] = useState(false);
+  
   const formatQuestionIndex = (index: number) => {
     return index < 9 ? `0${index + 1}` : `${index + 1}`;
   };
 
   return (
-    <Card className="mb-8">
+    <TooltipProvider>
+      <Card className="mb-8">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -39,30 +46,49 @@ const QuestionDisplay: React.FC<QuestionDisplayProps> = ({ question, questionInd
             </div>
           )}
         </div>
-        <CardDescription className="text-lg font-medium text-gray-800 mt-2">
-          {question.question}
+        <CardDescription className="text-lg font-medium text-gray-800 mt-2 flex items-start gap-2">
+          <span className="flex-1">{question.question}</span>
+          {question.explanation && (
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger className="flex-shrink-0 mt-0.5">
+                <Info className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-sm p-3">
+                <div>
+                  <p className="text-sm font-semibold mb-2">Why this matters:</p>
+                  <p className="text-sm text-gray-700">{question.explanation}</p>
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-4">
-        {question.explanation && (
-          <div className="mb-4 p-4 bg-gray-50 rounded-md">
-            <p className="text-sm font-medium text-gray-700">Why this matters:</p>
-            <p className="text-sm text-gray-600 mt-1">{question.explanation}</p>
-          </div>
-        )}
-        
         {question.followUp && question.followUp.length > 0 && (
-          <div className="mt-4">
-            <p className="font-medium text-sm text-gray-700">Follow-up questions to consider:</p>
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              {question.followUp.map((followUpQ, idx) => (
-                <li key={idx} className="text-sm text-gray-600">{followUpQ}</li>
-              ))}
-            </ul>
-          </div>
+          <Collapsible open={showFollowUp} onOpenChange={setShowFollowUp}>
+            <CollapsibleTrigger asChild>
+              <Button 
+                variant="ghost" 
+                className="h-auto p-0 text-sm text-gray-600 hover:text-gray-800 font-normal justify-start"
+              >
+                <span className="flex items-center gap-1">
+                  + Show follow-up questions 
+                  {showFollowUp ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <ul className="list-disc pl-5 space-y-1">
+                {question.followUp.map((followUpQ, idx) => (
+                  <li key={idx} className="text-sm text-gray-600">{followUpQ}</li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </TooltipProvider>
   );
 };
 

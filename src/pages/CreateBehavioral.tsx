@@ -247,9 +247,20 @@ const CreateBehavioral = () => {
           </Link>
         </div>
 
-        <h1 className="text-3xl md:text-4xl font-bold mb-6 text-interview-primary text-center">
-          Create Behavioral Interview Prep
-        </h1>
+        {/* Enhanced Header with Progress */}
+        <div className="text-center mb-8">
+          <div className="mb-2">
+            <span className="inline-block px-3 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+              Step 1 of 3 – Upload Your Resume & Job Details
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-interview-primary">
+            Create a Personalized Interview Practice Plan
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Get tailored behavioral questions based on your resume and job description.
+          </p>
+        </div>
 
         {/* Usage Status Display */}
         {usageSummary && !usageSummary.isPremium && (
@@ -275,76 +286,80 @@ const CreateBehavioral = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
-          {/* Job URL Scraper - Auto-fills multiple fields */}
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-lg font-semibold mb-2 text-blue-900">🚀 Quick Fill from Job URL</h3>
-            <p className="text-sm text-blue-700 mb-3">
-              Paste a job posting URL to automatically fill Job Title, Company Name, and Job Description
+          {/* Enhanced Auto-Fill Section */}
+          <div className="mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 relative">
+            <div className="absolute top-4 right-4">
+              <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-500 text-white rounded-full">
+                Recommended
+              </span>
+            </div>
+            <h3 className="text-xl font-bold mb-2 text-blue-900 flex items-center gap-2">
+              Save time with Auto-Fill
+            </h3>
+            <p className="text-sm text-blue-700 mb-4">
+              Paste a job post URL and we'll grab the title, company, and description for you.
             </p>
             <JobScraper 
               onScrapedContent={handleScrapedContent} 
               onCompanyInfoFound={handleScrapedCompanyInfo}
-              onStructuredDataExtracted={handleStructuredScrapedData} // NEW: Phase 3
+              onStructuredDataExtracted={handleStructuredScrapedData}
               className="" 
             />
           </div>
 
-          <FormField
-            id="companyName"
-            name="companyName"
-            label="Company Name"
-            value={formData.companyName}
-            onChange={handleInputChange}
-            placeholder="Enter company name"
-            required
-          />
-
-          <FormField
-            id="jobTitle"
-            name="jobTitle"
-            label="Job Title"
-            value={formData.jobTitle}
-            onChange={handleInputChange}
-            placeholder="Enter job title"
-            required
-          />
-
-          <FormField
-            id="jobDescription"
-            name="jobDescription"
-            label="Job Description"
-            value={formData.jobDescription}
-            onChange={handleInputChange}
-            placeholder="Paste the job description here"
-            required
-            isTextarea
-          />
-
-          <div className="pt-4">
-            
+          {/* Job Info Section */}
+          <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 flex items-center gap-2">
+              Job Info
+            </h3>
             <div className="space-y-4">
-              <FileUpload
-                id="resume"
-                label="Resume"
-                required
-                onFileChange={handleResumeChange}
-                currentFile={resumeFile}
-              />
 
-              {/* <FileUpload
-                id="coverLetter"
-                label="Cover Letter (Optional)"
-                onFileChange={handleCoverLetterChange}
-                currentFile={coverLetterFile}
-              />
+            <FormField
+              id="companyName"
+              name="companyName"
+              label="Company Name"
+              value={formData.companyName}
+              onChange={handleInputChange}
+              placeholder="Amazon"
+              required
+            />
 
-              <FileUpload
-                id="additionalDocuments"
-                label="Additional Documents (Optional)"
-                onFileChange={handleAdditionalDocumentsChange}
-                currentFile={additionalDocumentsFile}
-              /> */}
+            <FormField
+              id="jobTitle"
+              name="jobTitle"
+              label="Job Title"
+              value={formData.jobTitle}
+              onChange={handleInputChange}
+              placeholder="Software Engineer"
+              required
+            />
+
+            <FormField
+              id="jobDescription"
+              name="jobDescription"
+              label="Job Description"
+              value={formData.jobDescription}
+              onChange={handleInputChange}
+              placeholder="Paste the full job description here..."
+              required
+              isTextarea
+            />
             </div>
+          </div>
+
+          {/* Upload Resume Section */}
+          <div className="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 flex items-center gap-2">
+              Upload Resume
+            </h3>
+
+            <FileUpload
+              id="resume"
+              label="Resume"
+              required
+              onFileChange={handleResumeChange}
+              currentFile={resumeFile}
+            />
           </div>
 
           {showSoftGate && hasReachedLimit ? (
@@ -368,7 +383,7 @@ const CreateBehavioral = () => {
               }}
               className="w-full bg-interview-primary hover:bg-interview-dark text-white py-6"
             >
-              Submit
+              Start Interview Practice
             </Button>
           )}
         </form>
