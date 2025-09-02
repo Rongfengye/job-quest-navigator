@@ -118,7 +118,7 @@ export async function generateFeedbackHelper(
     ${jobDescription ? `Job Description: ${jobDescription}` : ''}
     ${resumeText ? `Based on the candidate's resume: ${resumeText}` : ''}
     ${questionTopics[index] ? `This question explores the competency: "${questionTopics[index]}"` : ''}
-    Your task is to provide detailed, constructive feedback on the candidate's response.
+    Your task is to provide detailed, PERSONALIZED (referring to resume and experience if applicable), and constructive feedback on the candidate's response.
     
     ${considerationGuidelines}
     

@@ -107,7 +107,7 @@ export async function generateAnswer(requestData: any, openAIApiKey: string) {
   
   ${competencyContext}
   
-  Make your feedback specific, actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.
+  Make your feedback specific, PERSONALIZED (referring to resume and experience if applicable), actionable, and balanced. The feedback should help the candidate improve their answer while recognizing what they did well.
   
   IMPORTANT: You must return valid JSON with all required fields. The competencyFocus should be set to: "${detectedCompetency}"`;
 
