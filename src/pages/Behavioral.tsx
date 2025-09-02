@@ -386,14 +386,14 @@ const Behavioral = () => {
                   </p>
 
                   {/* Optional: See Example Session Link */}
-                  <Button 
+                  {/* <Button 
                     variant="ghost"
                     size="sm"
                     onClick={() => setShowExampleSession(!showExampleSession)}
                     className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 mb-4"
                   >
                     See example session
-                  </Button>
+                  </Button> */}
 
                   {/* Connection Nudge */}
                   <p className="text-sm text-gray-500 mt-2 text-center max-w-lg mx-auto">
