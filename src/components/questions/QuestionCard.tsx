@@ -289,7 +289,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, index, storylineI
         )}
         {question.sourceAttribution && (
           <div className="mt-2 text-xs text-gray-500">
-            Source reliability: {question.sourceAttribution.reliability}/5 | Category: {question.sourceAttribution.category}
+            Source reliability: {question.sourceAttribution.reliability}/5
           </div>
         )}
       </CardContent>

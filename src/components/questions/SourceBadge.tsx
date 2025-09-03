@@ -128,7 +128,7 @@ export const SourceBadge: React.FC<SourceBadgeProps> = ({
     <Badge 
       variant={config.variant}
       className={`${config.bgColor} ${config.textColor} ${config.borderColor} ${className}`}
-      title={`${config.description} | Reliability: ${reliability}/5 | Category: ${category}`}
+      title={`${config.description} | Reliability: ${reliability}/5`}
     >
       <IconComponent className="w-3 h-3 mr-1" />
       {config.label}
